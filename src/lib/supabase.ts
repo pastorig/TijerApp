@@ -13,14 +13,17 @@ type AppointmentInsert = {
   status: "pending";
 };
 
+type AppointmentRow = Omit<AppointmentInsert, "status"> & {
+  id?: string;
+  created_at?: string;
+  status: string;
+};
+
 type Database = {
   public: {
     Tables: {
       appointments: {
-        Row: AppointmentInsert & {
-          id?: string;
-          created_at?: string;
-        };
+        Row: AppointmentRow;
         Insert: AppointmentInsert;
         Update: Partial<AppointmentInsert>;
         Relationships: [];
@@ -56,4 +59,4 @@ export function getSupabaseClient() {
   return supabaseClient;
 }
 
-export type { AppointmentInsert };
+export type { AppointmentInsert, AppointmentRow };

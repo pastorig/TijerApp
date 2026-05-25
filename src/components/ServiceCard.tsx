@@ -1,12 +1,9 @@
 import type { BarbershopService } from "@/data/demo-barbershops";
+import { formatPrice } from "@/lib/format";
 
 type ServiceCardProps = {
   service: BarbershopService;
 };
-
-function formatPrice(price: number) {
-  return `$${price.toLocaleString("es-AR")}`;
-}
 
 export function ServiceCard({ service }: ServiceCardProps) {
   return (

@@ -11,7 +11,8 @@ export function BookingCTA({
   href,
   label = "Reservar turno",
 }: BookingCTAProps) {
-  const bookingHref = href ?? (barbershopSlug ? `/${barbershopSlug}/reservar` : "#");
+  const bookingHref =
+    href ?? (barbershopSlug ? `/${barbershopSlug}/reservar` : "#");
 
   return (
     <Link

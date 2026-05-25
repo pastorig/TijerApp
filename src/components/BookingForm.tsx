@@ -3,28 +3,16 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
-import { getSupabaseClient } from "@/lib/supabase";
+import { createPendingAppointment } from "@/lib/appointments";
+import { formatDateForDisplay, formatPrice } from "@/lib/format";
 import { createWhatsAppBookingLink } from "@/lib/whatsapp";
 
 type BookingFormProps = {
   barbershop: DemoBarbershop;
 };
 
-function formatPrice(price: number) {
-  return `$${price.toLocaleString("es-AR")}`;
-}
-
 function getTodayInputValue() {
   return new Date().toISOString().split("T")[0];
-}
-
-function formatDateForMessage(date: string) {
-  if (!date) {
-    return "";
-  }
-
-  const [year, month, day] = date.split("-");
-  return `${day}/${month}/${year}`;
 }
 
 function buildTimeSlots(start: string, end: string, intervalMinutes: number) {
@@ -101,13 +89,10 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       appointment_date: selectedDate,
       appointment_time: selectedTime,
       comment: comment.trim(),
-      status: "pending" as const,
     };
 
     try {
-      const { error } = await getSupabaseClient()
-        .from("appointments")
-        .insert(appointment);
+      const { error } = await createPendingAppointment(appointment);
 
       if (error) {
         setFormError(
@@ -130,7 +115,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       clientName: appointment.customer_name,
       clientPhone: appointment.customer_phone,
       serviceName: selectedService.name,
-      date: formatDateForMessage(selectedDate),
+      date: formatDateForDisplay(selectedDate),
       time: selectedTime,
       comment,
     });
@@ -152,8 +137,8 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             {barbershop.name}
           </h1>
           <p className="mt-4 max-w-2xl text-lg leading-8 text-stone-300">
-            Elegí el servicio, la fecha y el horario. Esta primera versión solo
-            muestra la experiencia visual de reserva.
+            Elegi el servicio, la fecha y el horario. Guardamos tu reserva y
+            despues abrimos WhatsApp con el mensaje listo.
           </p>
         </div>
 
@@ -168,6 +153,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             <select
               id="service"
               value={selectedServiceId}
+              disabled={isSaving}
               onChange={(event) => {
                 setSelectedServiceId(event.target.value);
                 setFormError("");
@@ -195,6 +181,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 id="date"
                 type="date"
                 value={selectedDate}
+                disabled={isSaving}
                 onChange={(event) => {
                   setSelectedDate(event.target.value);
                   setFormError("");
@@ -214,6 +201,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               <select
                 id="time"
                 value={selectedTime}
+                disabled={isSaving}
                 onChange={(event) => {
                   setSelectedTime(event.target.value);
                   setFormError("");
@@ -243,6 +231,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 id="clientName"
                 type="text"
                 value={clientName}
+                disabled={isSaving}
                 onChange={(event) => {
                   setClientName(event.target.value);
                   setFormError("");
@@ -264,6 +253,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 id="clientPhone"
                 type="tel"
                 value={clientPhone}
+                disabled={isSaving}
                 onChange={(event) => {
                   setClientPhone(event.target.value);
                   setFormError("");
@@ -285,7 +275,11 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             <textarea
               id="comment"
               value={comment}
-              onChange={(event) => setComment(event.target.value)}
+              onChange={(event) => {
+                setComment(event.target.value);
+                setFormError("");
+              }}
+              disabled={isSaving}
               placeholder="Detalle o preferencia para el turno"
               rows={4}
               className="mt-2 w-full rounded-md border border-stone-700 bg-stone-900 px-4 py-3 text-base text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
@@ -354,10 +348,18 @@ export function BookingForm({ barbershop }: BookingFormProps) {
         </dl>
 
         {formError ? (
-          <p className="mt-6 rounded-md border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200">
+          <p
+            role="alert"
+            className="mt-6 rounded-md border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200"
+          >
             {formError}
           </p>
         ) : null}
+
+        <p className="mt-6 text-sm leading-6 text-stone-400">
+          Al reservar, se guarda el turno y se abre WhatsApp para confirmar el
+          mensaje.
+        </p>
 
         <button
           type="submit"
