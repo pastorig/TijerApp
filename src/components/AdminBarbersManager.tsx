@@ -4,13 +4,21 @@ import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import {
+  createBarberService,
+  deleteBarberServiceLogically,
+  listServicesByBarber,
+  toggleBarberServiceActive,
+  updateBarberService,
+} from "@/lib/barber-services";
+import {
   createBarber,
   deleteBarber,
   listBarbersByBarbershop,
   toggleBarberActive,
   updateBarber,
 } from "@/lib/barbers";
-import type { BarberRow } from "@/lib/supabase";
+import { formatPrice } from "@/lib/format";
+import type { BarberRow, BarberServiceRow } from "@/lib/supabase";
 
 type AdminBarbersManagerProps = {
   barbershop: DemoBarbershop;
@@ -21,6 +29,12 @@ type BarberFormValues = {
   displayName: string;
   role: string;
   whatsapp: string;
+};
+
+type ServiceFormValues = {
+  name: string;
+  price: string;
+  durationMinutes: string;
 };
 
 function getDisplayName(barber: BarberRow) {
@@ -36,18 +50,39 @@ function getInitialEditValues(barber: BarberRow): BarberFormValues {
   };
 }
 
+function getInitialServiceValues(service?: BarberServiceRow): ServiceFormValues {
+  return {
+    name: service?.name ?? "",
+    price: service ? String(service.price) : "",
+    durationMinutes: service ? String(service.duration_minutes) : "30",
+  };
+}
+
 export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
   const [barbers, setBarbers] = useState<BarberRow[]>([]);
+  const [servicesByBarber, setServicesByBarber] = useState<
+    Record<string, BarberServiceRow[]>
+  >({});
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [updatingBarberId, setUpdatingBarberId] = useState<string | null>(null);
+  const [updatingServiceId, setUpdatingServiceId] = useState<string | null>(
+    null,
+  );
   const [editingBarberId, setEditingBarberId] = useState<string | null>(null);
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [addingServiceBarberId, setAddingServiceBarberId] = useState<
+    string | null
+  >(null);
   const [editValues, setEditValues] = useState<BarberFormValues>({
     name: "",
     displayName: "",
     role: "",
     whatsapp: "",
   });
+  const [serviceValues, setServiceValues] = useState<ServiceFormValues>(
+    getInitialServiceValues(),
+  );
   const [errorMessage, setErrorMessage] = useState("");
   const [name, setName] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -74,11 +109,29 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
           return;
         }
 
-        setBarbers(data ?? []);
+        const nextBarbers = data ?? [];
+        const servicesResults = await Promise.all(
+          nextBarbers.map((barber) =>
+            listServicesByBarber({
+              barbershopSlug: barbershop.slug,
+              barberId: barber.id,
+            }),
+          ),
+        );
+        const nextServicesByBarber = nextBarbers.reduce<
+          Record<string, BarberServiceRow[]>
+        >((currentServices, barber, index) => {
+          currentServices[barber.id] = servicesResults[index]?.data ?? [];
+          return currentServices;
+        }, {});
+
+        setBarbers(nextBarbers);
+        setServicesByBarber(nextServicesByBarber);
       } catch {
         if (isMounted) {
           setErrorMessage("No pudimos cargar los barberos.");
           setBarbers([]);
+          setServicesByBarber({});
         }
       } finally {
         if (isMounted) {
@@ -253,6 +306,204 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
     }
   }
 
+  function handleStartAddService(barberId: string) {
+    setErrorMessage("");
+    setEditingServiceId(null);
+    setAddingServiceBarberId(barberId);
+    setServiceValues(getInitialServiceValues());
+  }
+
+  function handleStartEditService(service: BarberServiceRow) {
+    setErrorMessage("");
+    setAddingServiceBarberId(null);
+    setEditingServiceId(service.id);
+    setServiceValues(getInitialServiceValues(service));
+  }
+
+  function handleCancelServiceForm() {
+    setAddingServiceBarberId(null);
+    setEditingServiceId(null);
+    setServiceValues(getInitialServiceValues());
+  }
+
+  function validateServiceValues() {
+    const price = Number(serviceValues.price);
+    const durationMinutes = Number(serviceValues.durationMinutes);
+
+    if (!serviceValues.name.trim()) {
+      return { error: "El nombre del servicio es obligatorio." };
+    }
+
+    if (!Number.isFinite(price) || price <= 0) {
+      return { error: "El precio del servicio debe ser mayor a cero." };
+    }
+
+    if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+      return { error: "La duracion debe ser mayor a cero." };
+    }
+
+    return {
+      error: "",
+      values: {
+        name: serviceValues.name.trim(),
+        price,
+        duration_minutes: durationMinutes,
+      },
+    };
+  }
+
+  async function handleCreateService(
+    event: FormEvent<HTMLFormElement>,
+    barber: BarberRow,
+  ) {
+    event.preventDefault();
+
+    const validation = validateServiceValues();
+
+    if (validation.error || !validation.values) {
+      setErrorMessage(validation.error);
+      return;
+    }
+
+    setErrorMessage("");
+    setUpdatingServiceId(`new-${barber.id}`);
+
+    try {
+      const { data, error } = await createBarberService({
+        barbershop_slug: barbershop.slug,
+        barber_id: barber.id,
+        name: validation.values.name,
+        price: validation.values.price,
+        duration_minutes: validation.values.duration_minutes,
+        is_active: true,
+        deleted_at: null,
+      });
+
+      if (error || !data) {
+        setErrorMessage("No pudimos crear el servicio.");
+        return;
+      }
+
+      setServicesByBarber((currentServices) => ({
+        ...currentServices,
+        [barber.id]: [...(currentServices[barber.id] ?? []), data],
+      }));
+      handleCancelServiceForm();
+    } catch {
+      setErrorMessage("No pudimos crear el servicio.");
+    } finally {
+      setUpdatingServiceId(null);
+    }
+  }
+
+  async function handleUpdateService(
+    event: FormEvent<HTMLFormElement>,
+    service: BarberServiceRow,
+  ) {
+    event.preventDefault();
+
+    const validation = validateServiceValues();
+
+    if (validation.error || !validation.values) {
+      setErrorMessage(validation.error);
+      return;
+    }
+
+    setErrorMessage("");
+    setUpdatingServiceId(service.id);
+
+    try {
+      const { data, error } = await updateBarberService({
+        serviceId: service.id,
+        values: validation.values,
+      });
+
+      if (error || !data) {
+        setErrorMessage("No pudimos editar el servicio.");
+        return;
+      }
+
+      setServicesByBarber((currentServices) => ({
+        ...currentServices,
+        [service.barber_id]: (currentServices[service.barber_id] ?? []).map(
+          (currentService) =>
+            currentService.id === service.id ? data : currentService,
+        ),
+      }));
+      handleCancelServiceForm();
+    } catch {
+      setErrorMessage("No pudimos editar el servicio.");
+    } finally {
+      setUpdatingServiceId(null);
+    }
+  }
+
+  async function handleToggleService(service: BarberServiceRow) {
+    setErrorMessage("");
+    setUpdatingServiceId(service.id);
+
+    try {
+      const { data, error } = await toggleBarberServiceActive({
+        serviceId: service.id,
+        isActive: !service.is_active,
+      });
+
+      if (error || !data) {
+        setErrorMessage("No pudimos actualizar el servicio.");
+        return;
+      }
+
+      setServicesByBarber((currentServices) => ({
+        ...currentServices,
+        [service.barber_id]: (currentServices[service.barber_id] ?? []).map(
+          (currentService) =>
+            currentService.id === service.id ? data : currentService,
+        ),
+      }));
+    } catch {
+      setErrorMessage("No pudimos actualizar el servicio.");
+    } finally {
+      setUpdatingServiceId(null);
+    }
+  }
+
+  async function handleDeleteService(service: BarberServiceRow) {
+    const shouldDelete = window.confirm(
+      `Eliminar visualmente el servicio ${service.name}?`,
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    setErrorMessage("");
+    setUpdatingServiceId(service.id);
+
+    try {
+      const { error } = await deleteBarberServiceLogically(service.id);
+
+      if (error) {
+        setErrorMessage("No pudimos eliminar el servicio.");
+        return;
+      }
+
+      setServicesByBarber((currentServices) => ({
+        ...currentServices,
+        [service.barber_id]: (currentServices[service.barber_id] ?? []).filter(
+          (currentService) => currentService.id !== service.id,
+        ),
+      }));
+
+      if (editingServiceId === service.id) {
+        handleCancelServiceForm();
+      }
+    } catch {
+      setErrorMessage("No pudimos eliminar el servicio.");
+    } finally {
+      setUpdatingServiceId(null);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-stone-950 text-stone-50">
       <section className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:px-12 lg:py-12">
@@ -404,7 +655,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                       </h2>
                       <p className="mt-1 text-sm font-semibold text-stone-300">
                         {getDisplayName(barber)}
-                        {barber.role ? ` · ${barber.role}` : ""}
+                        {barber.role ? ` - ${barber.role}` : ""}
                       </p>
                       {barber.whatsapp ? (
                         <p className="mt-1 text-xs text-stone-400">
@@ -424,12 +675,237 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                   </div>
 
                   <div className="mt-4 rounded-md border border-stone-800 bg-stone-950 px-3 py-3">
-                    <p className="text-xs font-bold uppercase text-amber-300">
-                      Servicios
-                    </p>
-                    <p className="mt-1 text-sm text-stone-400">
-                      Los servicios se configuraran luego.
-                    </p>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs font-bold uppercase text-amber-300">
+                        Servicios
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleStartAddService(barber.id)}
+                        className="inline-flex min-h-8 items-center justify-center rounded-md border border-stone-700 px-2.5 py-1.5 text-[10px] font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200"
+                      >
+                        Agregar
+                      </button>
+                    </div>
+
+                    {(servicesByBarber[barber.id] ?? []).length === 0 ? (
+                      <p className="mt-3 text-sm text-stone-400">
+                        Este barbero todavia no tiene servicios configurados.
+                      </p>
+                    ) : (
+                      <div className="mt-3 grid gap-2">
+                        {(servicesByBarber[barber.id] ?? []).map((service) => (
+                          <div
+                            key={service.id}
+                            className="rounded-md border border-stone-800 bg-stone-900/70 p-3"
+                          >
+                            {editingServiceId === service.id ? (
+                              <form
+                                onSubmit={(event) =>
+                                  handleUpdateService(event, service)
+                                }
+                                className="grid gap-2"
+                              >
+                                <div className="grid gap-2 sm:grid-cols-[1fr_0.7fr_0.7fr]">
+                                  <input
+                                    aria-label="Nombre del servicio"
+                                    value={serviceValues.name}
+                                    disabled={updatingServiceId === service.id}
+                                    onChange={(event) =>
+                                      setServiceValues((currentValues) => ({
+                                        ...currentValues,
+                                        name: event.target.value,
+                                      }))
+                                    }
+                                    className="min-h-9 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                                    placeholder="Servicio"
+                                    required
+                                  />
+                                  <input
+                                    aria-label="Precio del servicio"
+                                    type="number"
+                                    min="1"
+                                    value={serviceValues.price}
+                                    disabled={updatingServiceId === service.id}
+                                    onChange={(event) =>
+                                      setServiceValues((currentValues) => ({
+                                        ...currentValues,
+                                        price: event.target.value,
+                                      }))
+                                    }
+                                    className="min-h-9 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                                    placeholder="Precio"
+                                    required
+                                  />
+                                  <input
+                                    aria-label="Duracion del servicio"
+                                    type="number"
+                                    min="1"
+                                    value={serviceValues.durationMinutes}
+                                    disabled={updatingServiceId === service.id}
+                                    onChange={(event) =>
+                                      setServiceValues((currentValues) => ({
+                                        ...currentValues,
+                                        durationMinutes: event.target.value,
+                                      }))
+                                    }
+                                    className="min-h-9 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                                    placeholder="Min"
+                                    required
+                                  />
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <button
+                                    type="submit"
+                                    disabled={updatingServiceId === service.id}
+                                    className="inline-flex min-h-9 items-center justify-center rounded-md bg-amber-300 px-3 py-2 text-[11px] font-bold uppercase text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {updatingServiceId === service.id
+                                      ? "Guardando..."
+                                      : "Guardar"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={updatingServiceId === service.id}
+                                    onClick={handleCancelServiceForm}
+                                    className="inline-flex min-h-9 items-center justify-center rounded-md border border-stone-700 px-3 py-2 text-[11px] font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    Cancelar
+                                  </button>
+                                </div>
+                              </form>
+                            ) : (
+                              <>
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <p className="font-semibold text-stone-100">
+                                      {service.name}
+                                    </p>
+                                    <p className="mt-0.5 text-xs text-stone-400">
+                                      {formatPrice(service.price)} -{" "}
+                                      {service.duration_minutes} min
+                                    </p>
+                                  </div>
+                                  <span
+                                    className={`shrink-0 rounded-md border px-2 py-1 text-[10px] font-bold uppercase ${
+                                      service.is_active
+                                        ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-200"
+                                        : "border-red-300/30 bg-red-400/10 text-red-200"
+                                    }`}
+                                  >
+                                    {service.is_active ? "Activo" : "Inactivo"}
+                                  </span>
+                                </div>
+                                <div className="mt-3 grid grid-cols-3 gap-2">
+                                  <button
+                                    type="button"
+                                    disabled={updatingServiceId === service.id}
+                                    onClick={() => handleStartEditService(service)}
+                                    className="inline-flex min-h-8 items-center justify-center rounded-md border border-stone-700 px-2 py-1.5 text-[10px] font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    Editar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={updatingServiceId === service.id}
+                                    onClick={() => handleToggleService(service)}
+                                    className="inline-flex min-h-8 items-center justify-center rounded-md border border-stone-700 px-2 py-1.5 text-[10px] font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {service.is_active ? "Pausar" : "Activar"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={updatingServiceId === service.id}
+                                    onClick={() => handleDeleteService(service)}
+                                    className="inline-flex min-h-8 items-center justify-center rounded-md border border-red-300/40 px-2 py-1.5 text-[10px] font-bold uppercase text-red-100 transition hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    Eliminar
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {addingServiceBarberId === barber.id ? (
+                      <form
+                        onSubmit={(event) => handleCreateService(event, barber)}
+                        className="mt-3 rounded-md border border-amber-300/30 bg-amber-300/10 p-3"
+                      >
+                        <p className="text-[11px] font-bold uppercase text-amber-200">
+                          Nuevo servicio
+                        </p>
+                        <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_0.7fr_0.7fr]">
+                          <input
+                            aria-label="Nombre del nuevo servicio"
+                            value={serviceValues.name}
+                            disabled={updatingServiceId === `new-${barber.id}`}
+                            onChange={(event) =>
+                              setServiceValues((currentValues) => ({
+                                ...currentValues,
+                                name: event.target.value,
+                              }))
+                            }
+                            className="min-h-9 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                            placeholder="Servicio"
+                            required
+                          />
+                          <input
+                            aria-label="Precio del nuevo servicio"
+                            type="number"
+                            min="1"
+                            value={serviceValues.price}
+                            disabled={updatingServiceId === `new-${barber.id}`}
+                            onChange={(event) =>
+                              setServiceValues((currentValues) => ({
+                                ...currentValues,
+                                price: event.target.value,
+                              }))
+                            }
+                            className="min-h-9 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                            placeholder="Precio"
+                            required
+                          />
+                          <input
+                            aria-label="Duracion del nuevo servicio"
+                            type="number"
+                            min="1"
+                            value={serviceValues.durationMinutes}
+                            disabled={updatingServiceId === `new-${barber.id}`}
+                            onChange={(event) =>
+                              setServiceValues((currentValues) => ({
+                                ...currentValues,
+                                durationMinutes: event.target.value,
+                              }))
+                            }
+                            className="min-h-9 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                            placeholder="Min"
+                            required
+                          />
+                        </div>
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          <button
+                            type="submit"
+                            disabled={updatingServiceId === `new-${barber.id}`}
+                            className="inline-flex min-h-9 items-center justify-center rounded-md bg-amber-300 px-3 py-2 text-[11px] font-bold uppercase text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {updatingServiceId === `new-${barber.id}`
+                              ? "Creando..."
+                              : "Crear servicio"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={updatingServiceId === `new-${barber.id}`}
+                            onClick={handleCancelServiceForm}
+                            className="inline-flex min-h-9 items-center justify-center rounded-md border border-stone-700 px-3 py-2 text-[11px] font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </form>
+                    ) : null}
                   </div>
 
                   {editingBarberId === barber.id ? (

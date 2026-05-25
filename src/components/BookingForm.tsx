@@ -13,13 +13,14 @@ import {
   listOccupiedAppointmentTimes,
   validateAppointmentTimeIsAvailable,
 } from "@/lib/appointments";
+import { listActiveServicesByBarber } from "@/lib/barber-services";
 import { listActiveBarbersByBarbershop } from "@/lib/barbers";
 import {
   formatDateForDisplay,
   formatPrice,
   getLocalDateInputValue,
 } from "@/lib/format";
-import type { BarberRow } from "@/lib/supabase";
+import type { BarberRow, BarberServiceRow } from "@/lib/supabase";
 import { createWhatsAppBookingLink } from "@/lib/whatsapp";
 
 type BookingFormProps = {
@@ -27,6 +28,7 @@ type BookingFormProps = {
 };
 
 type BookingBarber = Barber;
+type BookingService = BookingBarber["services"][number];
 
 function getTodayInputValue() {
   return getLocalDateInputValue();
@@ -72,6 +74,10 @@ export function BookingForm({ barbershop }: BookingFormProps) {
   const [selectedServiceId, setSelectedServiceId] = useState(
     initialBarber?.services[0]?.id ?? "",
   );
+  const [selectedBarberServices, setSelectedBarberServices] = useState<
+    BookingService[]
+  >(initialBarber?.services ?? []);
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [selectedDate, setSelectedDate] = useState(getTodayInputValue());
   const [selectedTime, setSelectedTime] = useState("");
   const [clientName, setClientName] = useState("");
@@ -98,10 +104,16 @@ export function BookingForm({ barbershop }: BookingFormProps) {
   const selectedBarberName = selectedBarber
     ? getBarberDisplayName(selectedBarber)
     : "";
-  const availableServices = selectedBarber?.services ?? [];
+  const availableServices = selectedBarberServices;
   const selectedService =
     availableServices.find((service) => service.id === selectedServiceId) ??
     availableServices[0];
+  const isSubmitDisabled =
+    isSaving ||
+    isLoadingBarbers ||
+    isLoadingServices ||
+    !selectedBarber ||
+    availableServices.length === 0;
   const compactSummary = [
     selectedService?.name,
     selectedBarberName,
@@ -121,7 +133,8 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     );
 
     setSelectedBarberId(barberId);
-    setSelectedServiceId(barber?.services[0]?.id ?? "");
+    setSelectedBarberServices(barber?.services ?? []);
+    setSelectedServiceId("");
     setFormError("");
   }
 
@@ -178,7 +191,8 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             nextBarbers.find((barber) => barber.id === currentBarberId) ??
             nextBarbers[0];
 
-          setSelectedServiceId(nextSelectedBarber?.services[0]?.id ?? "");
+          setSelectedBarberServices(nextSelectedBarber?.services ?? []);
+          setSelectedServiceId("");
 
           return nextSelectedBarber?.id ?? "";
         });
@@ -202,6 +216,71 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       isMounted = false;
     };
   }, [barbershop.slug, demoActiveBarbers, fallbackServices]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadRealServices() {
+      if (!selectedBarber) {
+        setSelectedBarberServices([]);
+        setSelectedServiceId("");
+        return;
+      }
+
+      setIsLoadingServices(true);
+
+      try {
+        const { data, error } = await listActiveServicesByBarber({
+          barbershopSlug: barbershop.slug,
+          barberId: selectedBarber.id,
+        });
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (error) {
+          setSelectedBarberServices(selectedBarber.services);
+          setSelectedServiceId(selectedBarber.services[0]?.id ?? "");
+          setFormError(
+            "No pudimos cargar los servicios reales. Mostramos la demo temporalmente.",
+          );
+          return;
+        }
+
+        const nextServices =
+          data && data.length > 0
+            ? data.map((service: BarberServiceRow) => ({
+                id: service.id,
+                name: service.name,
+                price: service.price,
+                durationMinutes: service.duration_minutes,
+              }))
+            : selectedBarber.services;
+
+        setSelectedBarberServices(nextServices);
+        setSelectedServiceId(nextServices[0]?.id ?? "");
+      } catch {
+        if (isMounted) {
+          setSelectedBarberServices(selectedBarber.services);
+          setSelectedServiceId(selectedBarber.services[0]?.id ?? "");
+          setFormError(
+            "No pudimos cargar los servicios reales. Mostramos la demo temporalmente.",
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingServices(false);
+        }
+      }
+    }
+
+    loadRealServices();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [barbershop.slug, selectedBarber]);
 
   useEffect(() => {
     let isMounted = true;
@@ -427,23 +506,40 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             >
               Servicio
             </label>
+            {isLoadingServices ? (
+              <p className="mt-1.5 text-xs text-stone-400 sm:mt-2 sm:text-sm">
+                Actualizando servicios del barbero...
+              </p>
+            ) : null}
             <select
               id="service"
               value={selectedService?.id ?? ""}
-              disabled={isSaving || isLoadingBarbers || !selectedBarber}
+              disabled={
+                isSaving ||
+                isLoadingBarbers ||
+                isLoadingServices ||
+                !selectedBarber ||
+                availableServices.length === 0
+              }
               onChange={(event) => handleServiceChange(event.target.value)}
               className="mt-1.5 min-h-10 w-full rounded-md border border-stone-700 bg-stone-900 px-3 text-base text-stone-50 outline-none transition focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20 sm:mt-2 sm:min-h-12 sm:px-4"
               required
             >
+              {availableServices.length === 0 ? (
+                <option value="">Sin servicios disponibles</option>
+              ) : null}
               {availableServices.map((service) => (
                 <option key={service.id} value={service.id}>
                   {service.name} - {formatPrice(service.price)}
                 </option>
               ))}
             </select>
-            {!isLoadingBarbers && selectedBarber && availableServices.length === 0 ? (
+            {!isLoadingServices &&
+            !isLoadingBarbers &&
+            selectedBarber &&
+            availableServices.length === 0 ? (
               <p className="mt-2 text-xs font-semibold text-red-200">
-                Este barbero todavia no tiene servicios configurados.
+                Este barbero no tiene servicios activos configurados.
               </p>
             ) : null}
           </div>
@@ -485,7 +581,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               <select
                 id="time"
                 value={selectedTime}
-                disabled={isSaving || isLoadingTimes}
+                disabled={isSaving || isLoadingTimes || isLoadingServices}
                 onChange={(event) => {
                   setSelectedTime(event.target.value);
                   setFormError("");
@@ -657,7 +753,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
 
         <button
           type="submit"
-          disabled={isSaving}
+          disabled={isSubmitDisabled}
           className="mt-5 hidden min-h-11 w-full items-center justify-center rounded-md bg-amber-300 px-5 py-2.5 text-sm font-bold uppercase text-stone-950 transition hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:ring-offset-2 focus:ring-offset-stone-950 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-amber-300 lg:inline-flex lg:min-h-12 lg:px-6 lg:py-3"
         >
           {isSaving ? "Guardando..." : "Reservar turno"}
@@ -676,7 +772,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           </div>
           <button
             type="submit"
-            disabled={isSaving}
+            disabled={isSubmitDisabled}
             className="inline-flex min-h-11 items-center justify-center rounded-md bg-amber-300 px-4 py-2 text-xs font-bold uppercase text-stone-950 transition hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:ring-offset-2 focus:ring-offset-stone-950 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-amber-300"
           >
             {isSaving ? "Guardando..." : "Reservar turno"}
