@@ -15,10 +15,17 @@ type AdminAppointmentsProps = {
   barbershop: DemoBarbershop;
 };
 
+type AppointmentFilter = "all" | "today" | "pending" | "confirmed" | "cancelled";
+
+function getTodayInputValue() {
+  return new Date().toISOString().split("T")[0];
+}
+
 export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [activeFilter, setActiveFilter] = useState<AppointmentFilter>("all");
   const [confirmingAppointmentId, setConfirmingAppointmentId] = useState<
     string | null
   >(null);
@@ -37,6 +44,43 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
 
     return "border-amber-300/30 bg-amber-300/10 text-amber-200";
   }
+
+  const today = getTodayInputValue();
+  const filterCounts: Record<AppointmentFilter, number> = {
+    all: appointments.length,
+    today: appointments.filter(
+      (appointment) => appointment.appointment_date === today,
+    ).length,
+    pending: appointments.filter((appointment) => appointment.status === "pending")
+      .length,
+    confirmed: appointments.filter(
+      (appointment) => appointment.status === "confirmed",
+    ).length,
+    cancelled: appointments.filter(
+      (appointment) => appointment.status === "cancelled",
+    ).length,
+  };
+  const filterOptions: Array<{ label: string; value: AppointmentFilter }> = [
+    { label: "Todos", value: "all" },
+    { label: "Hoy", value: "today" },
+    { label: "Pendientes", value: "pending" },
+    { label: "Confirmados", value: "confirmed" },
+    { label: "Cancelados", value: "cancelled" },
+  ];
+  const filteredAppointments = appointments.filter((appointment) => {
+    if (activeFilter === "all") {
+      return true;
+    }
+
+    if (activeFilter === "today") {
+      return appointment.appointment_date === today;
+    }
+
+    return appointment.status === activeFilter;
+  });
+  const activeFilterLabel =
+    filterOptions.find((filter) => filter.value === activeFilter)?.label ??
+    "este filtro";
 
   async function handleConfirmAppointment(appointment: AppointmentRow) {
     if (!appointment.id) {
@@ -202,13 +246,45 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
             </div>
           ) : null}
 
+          {!isLoading && !errorMessage && appointments.length > 0 ? (
+            <div className="mb-5 flex gap-2 overflow-x-auto pb-2">
+              {filterOptions.map((filter) => {
+                const isActive = activeFilter === filter.value;
+
+                return (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    onClick={() => setActiveFilter(filter.value)}
+                    className={`min-h-11 shrink-0 rounded-md border px-4 py-2 text-sm font-bold transition ${
+                      isActive
+                        ? "border-amber-300 bg-amber-300 text-stone-950"
+                        : "border-stone-800 bg-stone-900 text-stone-300 hover:border-stone-600"
+                    }`}
+                  >
+                    {filter.label} ({filterCounts[filter.value]})
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+
           {!isLoading && !errorMessage && appointments.length === 0 ? (
             <div className="border border-stone-800 bg-stone-900/70 p-6 text-stone-300">
               Todavia no hay reservas para esta barberia.
             </div>
           ) : null}
 
-          {!isLoading && !errorMessage && appointments.length > 0 ? (
+          {!isLoading &&
+          !errorMessage &&
+          appointments.length > 0 &&
+          filteredAppointments.length === 0 ? (
+            <div className="border border-stone-800 bg-stone-900/70 p-6 text-stone-300">
+              No hay reservas para el filtro {activeFilterLabel}.
+            </div>
+          ) : null}
+
+          {!isLoading && !errorMessage && filteredAppointments.length > 0 ? (
             <div className="overflow-hidden border border-stone-800 bg-stone-900/70">
               <div className="hidden grid-cols-[0.8fr_0.65fr_1fr_0.95fr_0.95fr_0.65fr_1fr_0.75fr_1.35fr] gap-4 border-b border-stone-800 px-5 py-4 text-xs font-bold uppercase text-stone-400 lg:grid">
                 <span>Fecha</span>
@@ -223,7 +299,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
               </div>
 
               <div className="divide-y divide-stone-800">
-                {appointments.map((appointment) => (
+                {filteredAppointments.map((appointment) => (
                   <article
                     key={
                       appointment.id ??
