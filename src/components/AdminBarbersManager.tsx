@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
+import { BarberAvailabilityManager } from "@/components/BarberAvailabilityManager";
 import {
   createBarberService,
   deleteBarberServiceLogically,
@@ -505,44 +506,41 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
   }
 
   return (
-    <main className="min-h-screen bg-stone-950 text-stone-50">
-      <section className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:px-12 lg:py-12">
-        <div className="flex flex-col gap-4 border-b border-stone-800 pb-5 sm:pb-8">
-          <p className="text-sm font-semibold uppercase text-amber-300">
-            BarberSync admin
+    <div>
+      <header className="mb-8 flex flex-col gap-4 animate-fade-up sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
+            Admin · Barberos
           </p>
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-            <div>
-              <h1 className="text-3xl font-black text-balance sm:text-5xl">
-                Barberos de {barbershop.name}
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-300 sm:text-base sm:leading-7">
-                Gestion real de barberos desde Supabase. Los servicios se
-                configuraran en una fase posterior.
-              </p>
-            </div>
-            <Link
-              href={`/${barbershop.slug}/admin`}
-              className="inline-flex min-h-10 items-center justify-center rounded-md border border-stone-700 px-4 py-2 text-sm font-bold text-stone-100 transition hover:border-amber-300 hover:text-amber-200 sm:min-h-11"
-            >
-              Volver al panel
-            </Link>
-          </div>
+          <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
+            Equipo de {barbershop.name}
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
+            Gestión real de barberos desde Supabase con servicios y horarios
+            por profesional.
+          </p>
         </div>
+        <Link
+          href={`/${barbershop.slug}/admin`}
+          className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] sm:self-end"
+        >
+          ← Agenda
+        </Link>
+      </header>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
           <form
             onSubmit={handleCreateBarber}
-            className="rounded-lg border border-stone-800 bg-stone-900/70 p-4 shadow-2xl shadow-black/20 sm:p-5"
+            className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-4 shadow-2xl shadow-black/20 sm:p-5"
           >
-            <p className="text-xs font-bold uppercase text-amber-300">
+            <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
               Agregar barbero
             </p>
             <div className="mt-4 grid gap-3">
               <div>
                 <label
                   htmlFor="barber-name"
-                  className="text-[11px] font-bold uppercase text-stone-400"
+                  className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
                 >
                   Nombre
                 </label>
@@ -551,7 +549,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                   value={name}
                   disabled={isCreating}
                   onChange={(event) => setName(event.target.value)}
-                  className="mt-1 min-h-10 w-full rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                  className="mt-1 min-h-10 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                   placeholder="Nombre del barbero"
                   required
                 />
@@ -560,7 +558,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                 <div>
                   <label
                     htmlFor="barber-display-name"
-                    className="text-[11px] font-bold uppercase text-stone-400"
+                    className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
                   >
                     Display
                   </label>
@@ -569,14 +567,14 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                     value={displayName}
                     disabled={isCreating}
                     onChange={(event) => setDisplayName(event.target.value)}
-                    className="mt-1 min-h-10 w-full rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                    className="mt-1 min-h-10 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                     placeholder="Alias"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="barber-role"
-                    className="text-[11px] font-bold uppercase text-stone-400"
+                    className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
                   >
                     Rol
                   </label>
@@ -585,7 +583,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                     value={role}
                     disabled={isCreating}
                     onChange={(event) => setRole(event.target.value)}
-                    className="mt-1 min-h-10 w-full rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                    className="mt-1 min-h-10 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                     placeholder="Barbero"
                   />
                 </div>
@@ -593,7 +591,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
               <div>
                 <label
                   htmlFor="barber-whatsapp"
-                  className="text-[11px] font-bold uppercase text-stone-400"
+                  className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
                 >
                   WhatsApp
                 </label>
@@ -602,7 +600,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                   value={whatsapp}
                   disabled={isCreating}
                   onChange={(event) => setWhatsapp(event.target.value)}
-                  className="mt-1 min-h-10 w-full rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                  className="mt-1 min-h-10 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                   placeholder="+54..."
                 />
               </div>
@@ -611,7 +609,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
             {errorMessage ? (
               <p
                 role="alert"
-                className="mt-4 rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200"
+                className="mt-4 rounded-md border-l-2 border-[color:var(--danger)] px-3 py-2 text-sm font-semibold text-[color:var(--danger)]"
               >
                 {errorMessage}
               </p>
@@ -620,7 +618,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
             <button
               type="submit"
               disabled={isCreating}
-              className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-amber-300 px-4 py-2 text-xs font-bold uppercase text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-[color:var(--brand-gold)] px-4 py-2 text-xs font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isCreating ? "Creando..." : "Agregar barbero"}
             </button>
@@ -628,13 +626,13 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
 
           <section className="grid gap-3">
             {isLoading ? (
-              <div className="rounded-lg border border-stone-800 bg-stone-900/70 p-5 text-stone-300">
+              <div className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 text-[color:var(--text-secondary)]">
                 Cargando barberos...
               </div>
             ) : null}
 
             {!isLoading && !errorMessage && barbers.length === 0 ? (
-              <div className="rounded-lg border border-stone-800 bg-stone-900/70 p-5 text-stone-300">
+              <div className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 text-[color:var(--text-secondary)]">
                 Todavia no hay barberos cargados en Supabase.
               </div>
             ) : null}
@@ -643,22 +641,22 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
               barbers.map((barber) => (
                 <article
                   key={barber.id}
-                  className="rounded-lg border border-stone-800 bg-stone-900/70 p-4 shadow-lg shadow-black/20 sm:p-5"
+                  className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-4 shadow-lg shadow-black/20 sm:p-5"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-xs font-bold uppercase text-stone-500">
+                      <p className="text-xs font-bold uppercase text-[color:var(--text-subtle)]">
                         Barbero
                       </p>
-                      <h2 className="mt-1 truncate text-xl font-black text-stone-100 sm:text-2xl">
+                      <h2 className="mt-1 truncate text-xl font-black text-white sm:text-2xl">
                         {barber.name}
                       </h2>
-                      <p className="mt-1 text-sm font-semibold text-stone-300">
+                      <p className="mt-1 text-sm font-semibold text-[color:var(--text-secondary)]">
                         {getDisplayName(barber)}
                         {barber.role ? ` - ${barber.role}` : ""}
                       </p>
                       {barber.whatsapp ? (
-                        <p className="mt-1 text-xs text-stone-400">
+                        <p className="mt-1 text-xs text-[color:var(--text-muted)]">
                           {barber.whatsapp}
                         </p>
                       ) : null}
@@ -666,30 +664,30 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                     <span
                       className={`shrink-0 rounded-md border px-2 py-1 text-[10px] font-bold uppercase ${
                         barber.is_active
-                          ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-200"
-                          : "border-red-300/30 bg-red-400/10 text-red-200"
+                          ? "border-[color:var(--success)]/40 bg-[color:var(--success-soft)] text-[color:var(--success)]"
+                          : "border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] text-[color:var(--danger)]"
                       }`}
                     >
                       {barber.is_active ? "Activo" : "Inactivo"}
                     </span>
                   </div>
 
-                  <div className="mt-4 rounded-md border border-stone-800 bg-stone-950 px-3 py-3">
+                  <div className="mt-4 rounded-md border border-[color:var(--border-default)] bg-black px-3 py-3">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs font-bold uppercase text-amber-300">
+                      <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
                         Servicios
                       </p>
                       <button
                         type="button"
                         onClick={() => handleStartAddService(barber.id)}
-                        className="inline-flex min-h-8 items-center justify-center rounded-md border border-stone-700 px-2.5 py-1.5 text-[10px] font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200"
+                        className="inline-flex min-h-8 items-center justify-center rounded-md border border-[color:var(--border-default)] px-2.5 py-1.5 text-[10px] font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
                       >
                         Agregar
                       </button>
                     </div>
 
                     {(servicesByBarber[barber.id] ?? []).length === 0 ? (
-                      <p className="mt-3 text-sm text-stone-400">
+                      <p className="mt-3 text-sm text-[color:var(--text-muted)]">
                         Este barbero todavia no tiene servicios configurados.
                       </p>
                     ) : (
@@ -697,7 +695,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                         {(servicesByBarber[barber.id] ?? []).map((service) => (
                           <div
                             key={service.id}
-                            className="rounded-md border border-stone-800 bg-stone-900/70 p-3"
+                            className="rounded-md border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-3"
                           >
                             {editingServiceId === service.id ? (
                               <form
@@ -717,7 +715,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                         name: event.target.value,
                                       }))
                                     }
-                                    className="min-h-9 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                                    className="min-h-9 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                                     placeholder="Servicio"
                                     required
                                   />
@@ -733,7 +731,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                         price: event.target.value,
                                       }))
                                     }
-                                    className="min-h-9 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                                    className="min-h-9 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                                     placeholder="Precio"
                                     required
                                   />
@@ -749,7 +747,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                         durationMinutes: event.target.value,
                                       }))
                                     }
-                                    className="min-h-9 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                                    className="min-h-9 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                                     placeholder="Min"
                                     required
                                   />
@@ -758,7 +756,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                   <button
                                     type="submit"
                                     disabled={updatingServiceId === service.id}
-                                    className="inline-flex min-h-9 items-center justify-center rounded-md bg-amber-300 px-3 py-2 text-[11px] font-bold uppercase text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="inline-flex min-h-9 items-center justify-center rounded-md bg-[color:var(--brand-gold)] px-3 py-2 text-[11px] font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     {updatingServiceId === service.id
                                       ? "Guardando..."
@@ -768,7 +766,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                     type="button"
                                     disabled={updatingServiceId === service.id}
                                     onClick={handleCancelServiceForm}
-                                    className="inline-flex min-h-9 items-center justify-center rounded-md border border-stone-700 px-3 py-2 text-[11px] font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="inline-flex min-h-9 items-center justify-center rounded-md border border-[color:var(--border-default)] px-3 py-2 text-[11px] font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     Cancelar
                                   </button>
@@ -778,10 +776,10 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                               <>
                                 <div className="flex items-start justify-between gap-3">
                                   <div>
-                                    <p className="font-semibold text-stone-100">
+                                    <p className="font-semibold text-white">
                                       {service.name}
                                     </p>
-                                    <p className="mt-0.5 text-xs text-stone-400">
+                                    <p className="mt-0.5 text-xs text-[color:var(--text-muted)]">
                                       {formatPrice(service.price)} -{" "}
                                       {service.duration_minutes} min
                                     </p>
@@ -789,8 +787,8 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                   <span
                                     className={`shrink-0 rounded-md border px-2 py-1 text-[10px] font-bold uppercase ${
                                       service.is_active
-                                        ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-200"
-                                        : "border-red-300/30 bg-red-400/10 text-red-200"
+                                        ? "border-[color:var(--success)]/40 bg-[color:var(--success-soft)] text-[color:var(--success)]"
+                                        : "border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] text-[color:var(--danger)]"
                                     }`}
                                   >
                                     {service.is_active ? "Activo" : "Inactivo"}
@@ -801,7 +799,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                     type="button"
                                     disabled={updatingServiceId === service.id}
                                     onClick={() => handleStartEditService(service)}
-                                    className="inline-flex min-h-8 items-center justify-center rounded-md border border-stone-700 px-2 py-1.5 text-[10px] font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="inline-flex min-h-8 items-center justify-center rounded-md border border-[color:var(--border-default)] px-2 py-1.5 text-[10px] font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     Editar
                                   </button>
@@ -809,7 +807,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                     type="button"
                                     disabled={updatingServiceId === service.id}
                                     onClick={() => handleToggleService(service)}
-                                    className="inline-flex min-h-8 items-center justify-center rounded-md border border-stone-700 px-2 py-1.5 text-[10px] font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="inline-flex min-h-8 items-center justify-center rounded-md border border-[color:var(--border-default)] px-2 py-1.5 text-[10px] font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     {service.is_active ? "Pausar" : "Activar"}
                                   </button>
@@ -817,7 +815,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                     type="button"
                                     disabled={updatingServiceId === service.id}
                                     onClick={() => handleDeleteService(service)}
-                                    className="inline-flex min-h-8 items-center justify-center rounded-md border border-red-300/40 px-2 py-1.5 text-[10px] font-bold uppercase text-red-100 transition hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="inline-flex min-h-8 items-center justify-center rounded-md border border-[color:var(--danger)]/40 px-2 py-1.5 text-[10px] font-bold uppercase text-[color:var(--danger)] transition hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     Eliminar
                                   </button>
@@ -832,9 +830,9 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                     {addingServiceBarberId === barber.id ? (
                       <form
                         onSubmit={(event) => handleCreateService(event, barber)}
-                        className="mt-3 rounded-md border border-amber-300/30 bg-amber-300/10 p-3"
+                        className="mt-3 rounded-md border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] p-3"
                       >
-                        <p className="text-[11px] font-bold uppercase text-amber-200">
+                        <p className="text-[11px] font-bold uppercase text-[color:var(--brand-gold)]">
                           Nuevo servicio
                         </p>
                         <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_0.7fr_0.7fr]">
@@ -848,7 +846,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                 name: event.target.value,
                               }))
                             }
-                            className="min-h-9 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                            className="min-h-9 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                             placeholder="Servicio"
                             required
                           />
@@ -864,7 +862,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                 price: event.target.value,
                               }))
                             }
-                            className="min-h-9 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                            className="min-h-9 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                             placeholder="Precio"
                             required
                           />
@@ -880,7 +878,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                 durationMinutes: event.target.value,
                               }))
                             }
-                            className="min-h-9 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                            className="min-h-9 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                             placeholder="Min"
                             required
                           />
@@ -889,7 +887,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                           <button
                             type="submit"
                             disabled={updatingServiceId === `new-${barber.id}`}
-                            className="inline-flex min-h-9 items-center justify-center rounded-md bg-amber-300 px-3 py-2 text-[11px] font-bold uppercase text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex min-h-9 items-center justify-center rounded-md bg-[color:var(--brand-gold)] px-3 py-2 text-[11px] font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {updatingServiceId === `new-${barber.id}`
                               ? "Creando..."
@@ -899,7 +897,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                             type="button"
                             disabled={updatingServiceId === `new-${barber.id}`}
                             onClick={handleCancelServiceForm}
-                            className="inline-flex min-h-9 items-center justify-center rounded-md border border-stone-700 px-3 py-2 text-[11px] font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex min-h-9 items-center justify-center rounded-md border border-[color:var(--border-default)] px-3 py-2 text-[11px] font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             Cancelar
                           </button>
@@ -908,12 +906,17 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                     ) : null}
                   </div>
 
+                  <BarberAvailabilityManager
+                    barber={barber}
+                    barbershop={barbershop}
+                  />
+
                   {editingBarberId === barber.id ? (
                     <form
                       onSubmit={handleUpdateBarber}
-                      className="mt-4 rounded-md border border-amber-300/30 bg-amber-300/10 p-3"
+                      className="mt-4 rounded-md border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] p-3"
                     >
-                      <p className="text-xs font-bold uppercase text-amber-200">
+                      <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
                         Editar barbero
                       </p>
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -927,7 +930,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                               name: event.target.value,
                             }))
                           }
-                          className="min-h-10 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                          className="min-h-10 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                           placeholder="Nombre"
                           required
                         />
@@ -941,7 +944,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                               displayName: event.target.value,
                             }))
                           }
-                          className="min-h-10 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                          className="min-h-10 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                           placeholder="Display"
                         />
                         <input
@@ -954,7 +957,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                               role: event.target.value,
                             }))
                           }
-                          className="min-h-10 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                          className="min-h-10 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                           placeholder="Rol"
                         />
                         <input
@@ -967,7 +970,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                               whatsapp: event.target.value,
                             }))
                           }
-                          className="min-h-10 rounded-md border border-stone-700 bg-stone-950 px-3 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                          className="min-h-10 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                           placeholder="WhatsApp"
                         />
                       </div>
@@ -975,7 +978,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                         <button
                           type="submit"
                           disabled={updatingBarberId === barber.id}
-                          className="inline-flex min-h-10 items-center justify-center rounded-md bg-amber-300 px-3 py-2 text-xs font-bold uppercase text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="inline-flex min-h-10 items-center justify-center rounded-md bg-[color:var(--brand-gold)] px-3 py-2 text-xs font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {updatingBarberId === barber.id
                             ? "Guardando..."
@@ -985,7 +988,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                           type="button"
                           disabled={updatingBarberId === barber.id}
                           onClick={handleCancelEdit}
-                          className="inline-flex min-h-10 items-center justify-center rounded-md border border-stone-700 px-3 py-2 text-xs font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="inline-flex min-h-10 items-center justify-center rounded-md border border-[color:var(--border-default)] px-3 py-2 text-xs font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Cancelar
                         </button>
@@ -997,7 +1000,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                         type="button"
                         disabled={updatingBarberId === barber.id}
                         onClick={() => handleStartEdit(barber)}
-                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-stone-700 px-3 py-2 text-xs font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-[color:var(--border-default)] px-3 py-2 text-xs font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Editar
                       </button>
@@ -1005,7 +1008,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                         type="button"
                         disabled={updatingBarberId === barber.id}
                         onClick={() => handleToggleBarber(barber)}
-                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-stone-700 px-3 py-2 text-xs font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-[color:var(--border-default)] px-3 py-2 text-xs font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {updatingBarberId === barber.id
                           ? "Actualizando..."
@@ -1017,14 +1020,14 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                         type="button"
                         disabled={updatingBarberId === barber.id}
                         onClick={() => handleDeleteBarber(barber)}
-                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-red-300/40 px-3 py-2 text-xs font-bold uppercase text-red-100 transition hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-[color:var(--danger)]/40 px-3 py-2 text-xs font-bold uppercase text-[color:var(--danger)] transition hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Eliminar
                       </button>
                       <button
                         type="button"
                         disabled
-                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-stone-800 px-3 py-2 text-xs font-bold uppercase text-stone-500 disabled:cursor-not-allowed"
+                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-[color:var(--border-default)] px-3 py-2 text-xs font-bold uppercase text-[color:var(--text-subtle)] disabled:cursor-not-allowed"
                       >
                         Servicios luego
                       </button>
@@ -1033,8 +1036,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                 </article>
               ))}
           </section>
-        </div>
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }

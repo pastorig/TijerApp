@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { ArrowLeft } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { signInWithEmailAndPassword } from "@/lib/auth";
+import { Button, Field, Input, Logo } from "@/components/ui";
 
 type AdminLoginFormProps = {
   barbershop: DemoBarbershop;
@@ -20,7 +23,7 @@ export function AdminLoginForm({ barbershop }: AdminLoginFormProps) {
     event.preventDefault();
 
     if (!email.trim() || !password) {
-      setErrorMessage("Ingresa email y contrasena.");
+      setErrorMessage("Ingresá email y contraseña.");
       return;
     }
 
@@ -34,42 +37,47 @@ export function AdminLoginForm({ barbershop }: AdminLoginFormProps) {
       });
 
       if (error) {
-        setErrorMessage("Email o contrasena incorrectos.");
+        setErrorMessage("Email o contraseña incorrectos.");
         return;
       }
 
       router.replace(`/${barbershop.slug}/admin`);
     } catch {
-      setErrorMessage("No pudimos iniciar sesion. Intenta nuevamente.");
+      setErrorMessage("No pudimos iniciar sesión. Intentá nuevamente.");
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-stone-950 text-stone-50">
-      <section className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-10">
-        <div className="border border-stone-800 bg-stone-900/70 p-6 shadow-2xl shadow-black/30">
-          <p className="text-sm font-semibold uppercase text-amber-300">
-            BarberSync
+    <main className="min-h-screen bg-black text-white">
+      <nav className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-5 sm:px-8 sm:py-6 lg:px-12">
+        <Link
+          href={`/${barbershop.slug}`}
+          className="inline-flex min-w-0 items-center gap-1 truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:tracking-[0.2em]"
+        >
+          <ArrowLeft className="size-3.5 shrink-0" />
+          <span className="truncate">{barbershop.name}</span>
+        </Link>
+        <Logo variant="mark" size="sm" className="shrink-0" />
+      </nav>
+
+      <section className="mx-auto flex min-h-[calc(100vh-80px)] w-full max-w-md flex-col justify-center px-5 pb-20 pt-8 sm:px-8">
+        <div className="animate-fade-up">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
+            Acceso administrador
           </p>
-          <h1 className="mt-3 text-4xl font-black text-stone-50">
-            Panel de administracion
+          <h1 className="mt-4 text-3xl font-black uppercase leading-[0.95] tracking-tight text-balance sm:text-4xl">
+            Panel de {barbershop.name}
           </h1>
-          <p className="mt-3 text-sm leading-6 text-stone-300">
-            Inicia sesion para gestionar turnos, confirmaciones y cancelaciones
-            desde BarberSync.
+          <p className="mt-4 max-w-md text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
+            Iniciá sesión para gestionar turnos, confirmaciones y cancelaciones
+            de tu barbería.
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="text-sm font-bold uppercase text-stone-300"
-              >
-                Email
-              </label>
-              <input
+          <form onSubmit={handleSubmit} className="mt-10 space-y-5">
+            <Field label="Email" htmlFor="email" required>
+              <Input
                 id="email"
                 type="email"
                 value={email}
@@ -78,20 +86,15 @@ export function AdminLoginForm({ barbershop }: AdminLoginFormProps) {
                   setEmail(event.target.value);
                   setErrorMessage("");
                 }}
-                className="mt-2 min-h-12 w-full rounded-md border border-stone-700 bg-stone-950 px-4 text-base text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
                 placeholder="admin@barberia.com"
+                autoComplete="email"
+                inputMode="email"
                 required
               />
-            </div>
+            </Field>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="text-sm font-bold uppercase text-stone-300"
-              >
-                Contrasena
-              </label>
-              <input
+            <Field label="Contraseña" htmlFor="password" required>
+              <Input
                 id="password"
                 type="password"
                 value={password}
@@ -100,28 +103,30 @@ export function AdminLoginForm({ barbershop }: AdminLoginFormProps) {
                   setPassword(event.target.value);
                   setErrorMessage("");
                 }}
-                className="mt-2 min-h-12 w-full rounded-md border border-stone-700 bg-stone-950 px-4 text-base text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
-                placeholder="Tu contrasena"
+                placeholder="••••••••"
+                autoComplete="current-password"
                 required
               />
-            </div>
+            </Field>
 
             {errorMessage ? (
-              <p
+              <div
                 role="alert"
-                className="rounded-md border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200"
+                className="border-l-2 border-[color:var(--danger)] pl-4 text-sm font-semibold text-[color:var(--danger)]"
               >
                 {errorMessage}
-              </p>
+              </div>
             ) : null}
 
-            <button
+            <Button
               type="submit"
-              disabled={isSubmitting}
-              className="inline-flex min-h-12 w-full items-center justify-center rounded-md bg-amber-300 px-6 py-3 text-sm font-bold uppercase text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+              size="lg"
+              fullWidth
+              loading={isSubmitting}
+              className="mt-2"
             >
-              {isSubmitting ? "Ingresando..." : "Ingresar"}
-            </button>
+              {isSubmitting ? "Ingresando…" : "Ingresar"}
+            </Button>
           </form>
         </div>
       </section>

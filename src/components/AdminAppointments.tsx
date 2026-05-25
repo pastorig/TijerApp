@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { DemoBarbershop } from "@/data/demo-barbershops";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ExternalLink, LogOut, Plus, Users } from "lucide-react";
+import type { DemoBarbershop } from "@/data/demo-barbershops";
 import {
   cancelAppointment,
   confirmAppointment,
@@ -13,33 +13,44 @@ import {
 } from "@/lib/appointments";
 import { signOut } from "@/lib/auth";
 import { listBarbersByBarbershop } from "@/lib/barbers";
+import { cn } from "@/lib/cn";
 import {
   formatDateForDisplay,
-  formatPrice,
-  getLocalDateInputValue,
   normalizeDateValue,
   normalizeTimeValue,
   timeValueToMinutes,
 } from "@/lib/format";
 import type { AppointmentRow, BarberRow } from "@/lib/supabase";
 import { createWhatsAppConfirmationLink } from "@/lib/whatsapp";
+import { Button, Select } from "@/components/ui";
+import { AgendaCalendar } from "./admin/AgendaCalendar";
+import { AppointmentRow as AppointmentCard } from "./admin/AppointmentRow";
+import {
+  formatDayHeading,
+  getTodayYmd,
+  normalizeTimeShort,
+} from "./admin/date-utils";
 
 type AdminAppointmentsProps = {
   barbershop: DemoBarbershop;
 };
 
 type AppointmentFilter =
+  | "day"
   | "all"
-  | "selectedDate"
-  | "today"
   | "pending"
   | "confirmed"
   | "cancelled"
   | "deleted";
 
-function getTodayInputValue() {
-  return getLocalDateInputValue();
-}
+const FILTER_OPTIONS: Array<{ value: AppointmentFilter; label: string }> = [
+  { value: "day", label: "Día" },
+  { value: "all", label: "Todos" },
+  { value: "pending", label: "Pendientes" },
+  { value: "confirmed", label: "Confirmados" },
+  { value: "cancelled", label: "Cancelados" },
+  { value: "deleted", label: "Eliminados" },
+];
 
 function getCurrentTimeValue() {
   return normalizeTimeValue(
@@ -57,8 +68,8 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const [barbers, setBarbers] = useState<BarberRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-  const [selectedDate, setSelectedDate] = useState(getTodayInputValue());
-  const [activeFilter, setActiveFilter] = useState<AppointmentFilter>("today");
+  const [focusDate, setFocusDate] = useState(getTodayYmd());
+  const [activeFilter, setActiveFilter] = useState<AppointmentFilter>("day");
   const [selectedBarberFilter, setSelectedBarberFilter] = useState("all");
   const [confirmingAppointmentId, setConfirmingAppointmentId] = useState<
     string | null
@@ -74,209 +85,154 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   >(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  function getStatusClasses(status: string) {
-    if (status === "confirmed") {
-      return "border-emerald-300/30 bg-emerald-300/10 text-emerald-200";
-    }
-
-    if (status === "cancelled") {
-      return "border-red-300/30 bg-red-400/10 text-red-200";
-    }
-
-    if (status === "deleted") {
-      return "border-stone-500/40 bg-stone-700/30 text-stone-300";
-    }
-
-    return "border-amber-300/30 bg-amber-300/10 text-amber-200";
-  }
-
-  const today = getTodayInputValue();
+  const today = getTodayYmd();
   const currentTime = getCurrentTimeValue();
   const currentTimeMinutes = timeValueToMinutes(currentTime);
-  const isSelectedDateToday = selectedDate === today;
-  const isSelectedDateFuture = selectedDate > today;
-  const canShowUpcomingAppointment = isSelectedDateToday || isSelectedDateFuture;
-  const appointmentMatchesSelectedBarber = (appointment: AppointmentRow) =>
-    selectedBarberFilter === "all" ||
-    appointment.barber_id === selectedBarberFilter;
-  const visibleAppointments = appointments.filter(
-    (appointment) =>
-      appointment.status !== "deleted" &&
-      appointmentMatchesSelectedBarber(appointment),
-  );
-  const deletedAppointments = appointments.filter(
-    (appointment) =>
-      appointment.status === "deleted" &&
-      appointmentMatchesSelectedBarber(appointment),
-  );
-  const uniqueAppointmentBarbers = appointments.reduce<
-    Array<{ id: string; name: string }>
-  >((currentBarbers, appointment) => {
-    if (
-      currentBarbers.some((barber) => barber.id === appointment.barber_id)
-    ) {
-      return currentBarbers;
-    }
+  const isFocusToday = focusDate === today;
+  const isFocusFuture = focusDate > today;
+  const canShowUpcoming = isFocusToday || isFocusFuture;
 
-    return [
-      ...currentBarbers,
-      {
-        id: appointment.barber_id,
-        name: appointment.barber_name,
+  const matchesBarber = useMemo(() => {
+    return (a: AppointmentRow) =>
+      selectedBarberFilter === "all" || a.barber_id === selectedBarberFilter;
+  }, [selectedBarberFilter]);
+
+  const visibleAppointments = useMemo(
+    () =>
+      appointments.filter((a) => a.status !== "deleted" && matchesBarber(a)),
+    [appointments, matchesBarber],
+  );
+
+  const deletedAppointments = useMemo(
+    () =>
+      appointments.filter((a) => a.status === "deleted" && matchesBarber(a)),
+    [appointments, matchesBarber],
+  );
+
+  const countsByDay = useMemo(() => {
+    const counts: Record<string, number> = {};
+    visibleAppointments.forEach((a) => {
+      const date = normalizeDateValue(a.appointment_date);
+      counts[date] = (counts[date] ?? 0) + 1;
+    });
+    return counts;
+  }, [visibleAppointments]);
+
+  const focusDateAppointments = useMemo(
+    () =>
+      visibleAppointments.filter(
+        (a) => normalizeDateValue(a.appointment_date) === focusDate,
+      ),
+    [visibleAppointments, focusDate],
+  );
+
+  const upcomingAppointment = useMemo(() => {
+    return focusDateAppointments
+      .filter(
+        (a) =>
+          (a.status === "pending" || a.status === "confirmed") &&
+          canShowUpcoming &&
+          (isFocusFuture ||
+            (isFocusToday &&
+              timeValueToMinutes(a.appointment_time) >= currentTimeMinutes)),
+      )
+      .sort(
+        (a, b) =>
+          timeValueToMinutes(a.appointment_time) -
+          timeValueToMinutes(b.appointment_time),
+      )[0];
+  }, [
+    focusDateAppointments,
+    canShowUpcoming,
+    isFocusFuture,
+    isFocusToday,
+    currentTimeMinutes,
+  ]);
+
+  const dayStats = useMemo(() => {
+    return {
+      total: focusDateAppointments.length,
+      pending: focusDateAppointments.filter((a) => a.status === "pending")
+        .length,
+      confirmed: focusDateAppointments.filter((a) => a.status === "confirmed")
+        .length,
+      cancelled: focusDateAppointments.filter((a) => a.status === "cancelled")
+        .length,
+    };
+  }, [focusDateAppointments]);
+
+  const filteredAppointments = useMemo(() => {
+    return appointments
+      .filter((a) => {
+        if (!matchesBarber(a)) return false;
+        if (activeFilter === "deleted") return a.status === "deleted";
+        if (a.status === "deleted") return false;
+        if (activeFilter === "all") return true;
+        if (activeFilter === "day")
+          return normalizeDateValue(a.appointment_date) === focusDate;
+        return a.status === activeFilter;
+      })
+      .sort((a, b) => {
+        const dateCompare = normalizeDateValue(a.appointment_date).localeCompare(
+          normalizeDateValue(b.appointment_date),
+        );
+        if (dateCompare !== 0) return dateCompare;
+        return (
+          timeValueToMinutes(a.appointment_time) -
+          timeValueToMinutes(b.appointment_time)
+        );
+      });
+  }, [appointments, activeFilter, focusDate, matchesBarber]);
+
+  const filterCounts: Record<AppointmentFilter, number> = useMemo(
+    () => ({
+      day: focusDateAppointments.length,
+      all: visibleAppointments.length,
+      pending: visibleAppointments.filter((a) => a.status === "pending").length,
+      confirmed: visibleAppointments.filter((a) => a.status === "confirmed")
+        .length,
+      cancelled: visibleAppointments.filter((a) => a.status === "cancelled")
+        .length,
+      deleted: deletedAppointments.length,
+    }),
+    [focusDateAppointments, visibleAppointments, deletedAppointments],
+  );
+
+  const barberFilterOptions = useMemo(() => {
+    if (barbers.length > 0) {
+      return barbers.map((b) => ({
+        id: b.id,
+        name: b.display_name?.trim() || b.name,
+      }));
+    }
+    const seen = new Set<string>();
+    return appointments.reduce<Array<{ id: string; name: string }>>(
+      (acc, a) => {
+        if (seen.has(a.barber_id)) return acc;
+        seen.add(a.barber_id);
+        acc.push({ id: a.barber_id, name: a.barber_name });
+        return acc;
       },
-    ];
-  }, []);
-  const barberFilterOptions =
-    barbers.length > 0
-      ? barbers.map((barber) => ({
-          id: barber.id,
-          name: barber.display_name?.trim() || barber.name,
-        }))
-      : uniqueAppointmentBarbers;
-  const todayAppointments = visibleAppointments.filter(
-    (appointment) => normalizeDateValue(appointment.appointment_date) === today,
-  );
-  const activeTodayAppointments = todayAppointments.filter(
-    (appointment) =>
-      appointment.status === "pending" || appointment.status === "confirmed",
-  );
-  const selectedDateAppointments = visibleAppointments.filter(
-    (appointment) =>
-      normalizeDateValue(appointment.appointment_date) === selectedDate,
-  );
-  const upcomingAppointment = selectedDateAppointments
-    .filter(
-      (appointment) =>
-        (appointment.status === "pending" ||
-          appointment.status === "confirmed") &&
-        canShowUpcomingAppointment &&
-        (isSelectedDateFuture ||
-          (isSelectedDateToday &&
-            timeValueToMinutes(appointment.appointment_time) >=
-              currentTimeMinutes)),
-    )
-    .sort((firstAppointment, secondAppointment) =>
-      timeValueToMinutes(firstAppointment.appointment_time) -
-      timeValueToMinutes(secondAppointment.appointment_time),
-    )[0];
-  const todaySummaryCards = [
-    {
-      label: "Turnos del dia",
-      value: selectedDateAppointments.length,
-    },
-    {
-      label: "Pendientes del dia",
-      value: selectedDateAppointments.filter(
-        (appointment) => appointment.status === "pending",
-      ).length,
-    },
-    {
-      label: "Confirmados del dia",
-      value: selectedDateAppointments.filter(
-        (appointment) => appointment.status === "confirmed",
-      ).length,
-    },
-    {
-      label: "Cancelados del dia",
-      value: selectedDateAppointments.filter(
-        (appointment) => appointment.status === "cancelled",
-      ).length,
-    },
-  ];
-  const filterCounts: Record<AppointmentFilter, number> = {
-    all: visibleAppointments.length,
-    selectedDate: selectedDateAppointments.length,
-    today: activeTodayAppointments.length,
-    pending: visibleAppointments.filter(
-      (appointment) => appointment.status === "pending",
-    ).length,
-    confirmed: visibleAppointments.filter(
-      (appointment) => appointment.status === "confirmed",
-    ).length,
-    cancelled: visibleAppointments.filter(
-      (appointment) => appointment.status === "cancelled",
-    ).length,
-    deleted: deletedAppointments.length,
-  };
-  const filterOptions: Array<{ label: string; value: AppointmentFilter }> = [
-    { label: "Hoy", value: "today" },
-    { label: "Fecha seleccionada", value: "selectedDate" },
-    { label: "Todos", value: "all" },
-    { label: "Pendientes", value: "pending" },
-    { label: "Confirmados", value: "confirmed" },
-    { label: "Cancelados", value: "cancelled" },
-    { label: "Eliminados", value: "deleted" },
-  ];
-  const filteredAppointments = appointments.filter((appointment) => {
-    if (!appointmentMatchesSelectedBarber(appointment)) {
-      return false;
-    }
-
-    if (activeFilter === "deleted") {
-      return appointment.status === "deleted";
-    }
-
-    if (appointment.status === "deleted") {
-      return false;
-    }
-
-    if (activeFilter === "all") {
-      return true;
-    }
-
-    if (activeFilter === "today") {
-      return (
-        normalizeDateValue(appointment.appointment_date) === today &&
-        (appointment.status === "pending" || appointment.status === "confirmed")
-      );
-    }
-
-    if (activeFilter === "selectedDate") {
-      return normalizeDateValue(appointment.appointment_date) === selectedDate;
-    }
-
-    return appointment.status === activeFilter;
-  });
-  const activeFilterLabel =
-    filterOptions.find((filter) => filter.value === activeFilter)?.label ??
-    "este filtro";
-  const quickActions = [
-    {
-      label: "Gestionar barberos",
-      href: `/${barbershop.slug}/admin/barbers`,
-    },
-    {
-      label: "Ver reservas",
-      href: "#reservas",
-    },
-    {
-      label: "Pagina publica",
-      href: `/${barbershop.slug}`,
-    },
-  ];
+      [],
+    );
+  }, [barbers, appointments]);
 
   async function handleConfirmAppointment(appointment: AppointmentRow) {
     if (!appointment.id) {
       setErrorMessage("No pudimos identificar la reserva.");
       return;
     }
-
     setErrorMessage("");
     setConfirmingAppointmentId(appointment.id);
-
     try {
       const { error } = await confirmAppointment(appointment.id);
-
       if (error) {
         setErrorMessage("No pudimos confirmar la reserva.");
         return;
       }
-
-      setAppointments((currentAppointments) =>
-        currentAppointments.map((currentAppointment) =>
-          currentAppointment.id === appointment.id
-            ? { ...currentAppointment, status: "confirmed" }
-            : currentAppointment,
+      setAppointments((current) =>
+        current.map((a) =>
+          a.id === appointment.id ? { ...a, status: "confirmed" } : a,
         ),
       );
     } catch {
@@ -287,11 +243,9 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   }
 
   function handleSendWhatsApp(appointment: AppointmentRow) {
-    if (appointment.status === "cancelled" || appointment.status === "deleted") {
+    if (appointment.status === "cancelled" || appointment.status === "deleted")
       return;
-    }
-
-    const whatsappLink = createWhatsAppConfirmationLink({
+    const link = createWhatsAppConfirmationLink({
       barbershopName: barbershop.name,
       clientName: appointment.customer_name,
       clientPhone: appointment.customer_phone,
@@ -299,8 +253,38 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
       date: formatDateForDisplay(appointment.appointment_date),
       time: appointment.appointment_time,
     });
+    window.open(link, "_blank", "noopener,noreferrer");
+  }
 
-    window.open(whatsappLink, "_blank", "noopener,noreferrer");
+  async function handleCancelAppointment(appointment: AppointmentRow) {
+    if (!appointment.id) {
+      setErrorMessage("No pudimos identificar la reserva.");
+      return;
+    }
+    const ok = window.confirm(
+      `¿Cancelar el turno de ${appointment.customer_name} del ${formatDateForDisplay(
+        appointment.appointment_date,
+      )} a las ${normalizeTimeShort(appointment.appointment_time)}?`,
+    );
+    if (!ok) return;
+    setErrorMessage("");
+    setCancellingAppointmentId(appointment.id);
+    try {
+      const { error } = await cancelAppointment(appointment.id);
+      if (error) {
+        setErrorMessage("No pudimos cancelar la reserva.");
+        return;
+      }
+      setAppointments((current) =>
+        current.map((a) =>
+          a.id === appointment.id ? { ...a, status: "cancelled" } : a,
+        ),
+      );
+    } catch {
+      setErrorMessage("No pudimos cancelar la reserva.");
+    } finally {
+      setCancellingAppointmentId(null);
+    }
   }
 
   async function handleDeleteAppointment(appointment: AppointmentRow) {
@@ -308,31 +292,21 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
       setErrorMessage("No pudimos identificar la reserva.");
       return;
     }
-
-    const shouldDelete = window.confirm(
-      `Eliminar visualmente el turno cancelado de ${appointment.customer_name}?`,
+    const ok = window.confirm(
+      `¿Eliminar visualmente el turno cancelado de ${appointment.customer_name}?`,
     );
-
-    if (!shouldDelete) {
-      return;
-    }
-
+    if (!ok) return;
     setErrorMessage("");
     setDeletingAppointmentId(appointment.id);
-
     try {
       const { error } = await deleteAppointment(appointment.id);
-
       if (error) {
         setErrorMessage("No pudimos eliminar visualmente la reserva.");
         return;
       }
-
-      setAppointments((currentAppointments) =>
-        currentAppointments.map((currentAppointment) =>
-          currentAppointment.id === appointment.id
-            ? { ...currentAppointment, status: "deleted" }
-            : currentAppointment,
+      setAppointments((current) =>
+        current.map((a) =>
+          a.id === appointment.id ? { ...a, status: "deleted" } : a,
         ),
       );
     } catch {
@@ -347,23 +321,17 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
       setErrorMessage("No pudimos identificar la reserva.");
       return;
     }
-
     setErrorMessage("");
     setRestoringAppointmentId(appointment.id);
-
     try {
       const { error } = await restoreDeletedAppointment(appointment.id);
-
       if (error) {
         setErrorMessage("No pudimos restaurar la reserva.");
         return;
       }
-
-      setAppointments((currentAppointments) =>
-        currentAppointments.map((currentAppointment) =>
-          currentAppointment.id === appointment.id
-            ? { ...currentAppointment, status: "cancelled" }
-            : currentAppointment,
+      setAppointments((current) =>
+        current.map((a) =>
+          a.id === appointment.id ? { ...a, status: "cancelled" } : a,
         ),
       );
     } catch {
@@ -373,59 +341,15 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     }
   }
 
-  async function handleCancelAppointment(appointment: AppointmentRow) {
-    if (!appointment.id) {
-      setErrorMessage("No pudimos identificar la reserva.");
-      return;
-    }
-
-    const shouldCancel = window.confirm(
-      `¿Cancelar el turno de ${appointment.customer_name} del ${formatDateForDisplay(
-        appointment.appointment_date,
-      )} a las ${appointment.appointment_time}?`,
-    );
-
-    if (!shouldCancel) {
-      return;
-    }
-
-    setErrorMessage("");
-    setCancellingAppointmentId(appointment.id);
-
-    try {
-      const { error } = await cancelAppointment(appointment.id);
-
-      if (error) {
-        setErrorMessage("No pudimos cancelar la reserva.");
-        return;
-      }
-
-      setAppointments((currentAppointments) =>
-        currentAppointments.map((currentAppointment) =>
-          currentAppointment.id === appointment.id
-            ? { ...currentAppointment, status: "cancelled" }
-            : currentAppointment,
-        ),
-      );
-    } catch {
-      setErrorMessage("No pudimos cancelar la reserva.");
-    } finally {
-      setCancellingAppointmentId(null);
-    }
-  }
-
   async function handleSignOut() {
     setErrorMessage("");
     setIsSigningOut(true);
-
     try {
       const { error } = await signOut();
-
       if (error) {
         setErrorMessage("No pudimos cerrar sesión.");
         return;
       }
-
       router.replace("/login");
     } catch {
       setErrorMessage("No pudimos cerrar sesión.");
@@ -434,36 +358,23 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     }
   }
 
-  function handleGoToToday() {
-    const currentDate = getTodayInputValue();
-    setSelectedDate(currentDate);
-    setActiveFilter("selectedDate");
-  }
-
   useEffect(() => {
     let isMounted = true;
-
-    async function loadAppointments() {
+    async function load() {
       setIsLoading(true);
       setErrorMessage("");
-
       try {
-        const [appointmentsResult, barbersResult] = await Promise.all([
+        const [appsResult, barbersResult] = await Promise.all([
           listAppointmentsByBarbershop(barbershop.slug),
           listBarbersByBarbershop(barbershop.slug),
         ]);
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (appointmentsResult.error) {
+        if (!isMounted) return;
+        if (appsResult.error) {
           setErrorMessage("No pudimos cargar las reservas.");
           setAppointments([]);
           return;
         }
-
-        setAppointments(appointmentsResult.data ?? []);
+        setAppointments(appsResult.data ?? []);
         setBarbers(barbersResult.data ?? []);
       } catch {
         if (isMounted) {
@@ -472,542 +383,305 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           setBarbers([]);
         }
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     }
-
-    loadAppointments();
-
+    load();
     return () => {
       isMounted = false;
     };
   }, [barbershop.slug]);
 
+  const activeFilterLabel =
+    FILTER_OPTIONS.find((o) => o.value === activeFilter)?.label.toLowerCase() ??
+    "este filtro";
+
   return (
-    <main className="min-h-screen bg-stone-950 text-stone-50">
-      <section className="mx-auto w-full max-w-6xl px-3 py-4 sm:px-6 sm:py-8 lg:px-12 lg:py-12">
-        <div className="flex flex-col gap-3 pb-4 sm:border-b sm:border-stone-800 sm:pb-8">
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-            <div>
-              <p className="text-xs font-semibold uppercase text-amber-300 sm:text-sm">
-                BarberSync admin
-              </p>
-              <h1 className="mt-1 text-2xl font-black text-balance sm:text-5xl">
-                Reservas de {barbershop.name}
-              </h1>
-              <p className="mt-1 max-w-2xl text-xs leading-5 text-stone-400 sm:mt-2 sm:text-base sm:leading-7">
-                Agenda operativa cargada desde Supabase para esta barberia.
-                Confirmar turnos y enviar WhatsApp son acciones separadas.
-              </p>
-            </div>
-            <div className="hidden rounded-md border border-stone-800 bg-stone-900 px-4 py-3 text-sm text-stone-300 sm:block">
-              <span className="font-mono text-amber-300">
-                {visibleAppointments.length}
-              </span>{" "}
-              reservas
-            </div>
-            <button
-              type="button"
-              disabled={isSigningOut}
-              onClick={handleSignOut}
-              className="hidden min-h-10 rounded-md border border-stone-700 px-3 py-2 text-sm font-bold text-stone-100 transition hover:border-amber-300 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-11 sm:px-4 lg:inline-flex lg:items-center lg:justify-center"
-            >
-              {isSigningOut ? "Cerrando..." : "Cerrar sesión"}
-            </button>
+    <div className="grid gap-10 lg:grid-cols-[1fr_320px] lg:gap-12">
+      {/* Columna principal */}
+      <section className="min-w-0">
+        <header className="mb-8 animate-fade-up">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
+            Agenda admin
+          </p>
+          <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
+            {barbershop.name}
+          </h1>
+          <p className="mt-3 max-w-xl text-sm text-[color:var(--text-secondary)] sm:text-base">
+            Gestioná las reservas del día. Confirmar y enviar WhatsApp son
+            acciones separadas.
+          </p>
+        </header>
+
+        {isLoading ? (
+          <div className="rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] p-6 text-sm text-[color:var(--text-secondary)]">
+            Cargando reservas…
           </div>
-        </div>
+        ) : null}
 
-        <div className="mt-3 sm:mt-8">
-          {isLoading ? (
-            <div className="border border-stone-800 bg-stone-900/70 p-6 text-stone-300">
-              Cargando reservas...
+        {!isLoading && errorMessage ? (
+          <div
+            role="alert"
+            className="mb-6 border-l-2 border-[color:var(--danger)] pl-4 text-sm font-semibold text-[color:var(--danger)]"
+          >
+            {errorMessage}
+          </div>
+        ) : null}
+
+        {!isLoading && !errorMessage ? (
+          <>
+            {/* Calendario */}
+            <div className="mb-8">
+              <AgendaCalendar
+                focusDate={focusDate}
+                onFocusDateChange={(date) => {
+                  setFocusDate(date);
+                  setActiveFilter("day");
+                }}
+                countsByDay={countsByDay}
+              />
             </div>
-          ) : null}
 
-          {!isLoading && errorMessage ? (
-            <div className="border border-red-400/30 bg-red-500/10 p-6 text-sm font-semibold text-red-200">
-              {errorMessage}
-            </div>
-          ) : null}
-
-          {!isLoading && !errorMessage ? (
-            <section className="mb-5 rounded-lg border border-stone-800 bg-stone-900/70 p-3 shadow-2xl shadow-black/25 sm:mb-8 sm:p-5">
-              <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr] lg:items-start">
-                <div>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-bold uppercase text-amber-300">
-                        Resumen por fecha
-                      </p>
-                      <h2 className="mt-1 text-2xl font-black text-stone-100 sm:text-3xl">
-                        {formatDateForDisplay(selectedDate)}
-                      </h2>
-                    </div>
-                    <div className="rounded-md border border-stone-800 bg-stone-950 px-3 py-2 text-xs text-stone-400 sm:hidden">
-                      <span className="font-mono font-black text-amber-300">
-                        {visibleAppointments.length}
-                      </span>{" "}
-                      total
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
-                    <div>
-                      <label
-                        htmlFor="admin-date"
-                        className="text-[11px] font-bold uppercase text-stone-500"
-                      >
-                        Fecha
-                      </label>
-                      <input
-                        id="admin-date"
-                        type="date"
-                        value={selectedDate}
-                        onChange={(event) => {
-                          setSelectedDate(event.target.value);
-                          setActiveFilter("selectedDate");
-                        }}
-                        className="mt-1 min-h-10 w-full rounded-md border border-stone-700 bg-stone-950 px-3 text-base text-stone-50 outline-none transition focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20 sm:min-h-11 sm:px-4"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleGoToToday}
-                      className="min-h-10 self-end rounded-md border border-stone-700 px-4 py-2 text-sm font-bold text-stone-100 transition hover:border-amber-300 hover:text-amber-200 sm:min-h-11"
-                    >
-                      Hoy
-                    </button>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3">
-                    {todaySummaryCards.map((card) => (
-                      <article
-                        key={card.label}
-                        className="rounded-md border border-stone-800 bg-stone-950 p-3 sm:p-4"
-                      >
-                        <p className="text-[10px] font-bold uppercase leading-4 text-stone-500 sm:text-xs">
-                          {card.label}
-                        </p>
-                        <p className="mt-1 font-mono text-2xl font-black text-amber-300 sm:text-3xl">
-                          {card.value}
-                        </p>
-                      </article>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid gap-3">
-                  <article className="rounded-lg border border-amber-300/30 bg-amber-300/10 p-4 shadow-lg shadow-black/20 sm:p-5">
-                    <p className="text-[11px] font-bold uppercase leading-4 text-amber-200 sm:text-xs">
-                      Proximo turno del dia
-                    </p>
-                    {upcomingAppointment ? (
-                      <div className="mt-3 grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1 lg:block">
-                        <p className="font-mono text-4xl font-black leading-none text-amber-300 sm:text-5xl">
-                          {upcomingAppointment.appointment_time}
-                        </p>
-                        <div>
-                          <p className="font-semibold text-stone-100 lg:mt-3">
-                            {upcomingAppointment.customer_name}
-                          </p>
-                          <p className="text-sm text-stone-300 lg:mt-1">
-                            {upcomingAppointment.service_name}
-                          </p>
-                          <p className="text-xs font-semibold text-stone-400 lg:mt-1">
-                            {upcomingAppointment.barber_name}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="mt-3 text-sm font-semibold text-stone-300">
-                        Sin proximos turnos
-                      </p>
-                    )}
-                  </article>
-
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2">
-                    {quickActions.map((action) => (
-                      <Link
-                        key={action.label}
-                        href={action.href}
-                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-stone-700 bg-stone-950 px-3 py-2 text-center text-[11px] font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200 sm:min-h-11 sm:text-xs"
-                      >
-                        {action.label}
-                      </Link>
-                    ))}
-                    <button
-                      type="button"
-                      disabled={isSigningOut}
-                      onClick={handleSignOut}
-                      className="inline-flex min-h-10 items-center justify-center rounded-md border border-stone-700 bg-stone-950 px-3 py-2 text-[11px] font-bold uppercase text-stone-100 transition hover:border-amber-300 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-11 sm:text-xs"
-                    >
-                      {isSigningOut ? "Cerrando..." : "Cerrar sesion"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </section>
-          ) : null}
-
-          {!isLoading && !errorMessage && appointments.length > 0 ? (
-            <div id="reservas" className="scroll-mt-4">
+            {/* Filtros */}
+            <div className="mb-6 space-y-3">
               {barberFilterOptions.length > 1 ? (
-                <div className="mb-3 grid gap-1.5 sm:mb-4 sm:max-w-xs">
+                <div className="grid gap-2 sm:max-w-xs">
                   <label
-                    htmlFor="admin-barber-filter"
-                    className="text-[11px] font-bold uppercase text-stone-500"
+                    htmlFor="barber-filter"
+                    className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
                   >
                     Barbero
                   </label>
-                  <select
-                    id="admin-barber-filter"
+                  <Select
+                    id="barber-filter"
                     value={selectedBarberFilter}
-                    onChange={(event) =>
-                      setSelectedBarberFilter(event.target.value)
-                    }
-                    className="min-h-10 w-full rounded-md border border-stone-700 bg-stone-900 px-3 text-sm font-semibold text-stone-100 outline-none transition focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20 sm:min-h-11"
+                    onChange={(e) => setSelectedBarberFilter(e.target.value)}
                   >
                     <option value="all">Todos los barberos</option>
-                    {barberFilterOptions.map((barber) => (
-                      <option key={barber.id} value={barber.id}>
-                        {barber.name}
+                    {barberFilterOptions.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               ) : null}
 
-              <div className="mb-3 flex gap-2 overflow-x-auto pb-2 sm:mb-5">
-                {filterOptions.map((filter) => {
-                  const isActive = activeFilter === filter.value;
-
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {FILTER_OPTIONS.map((opt) => {
+                  const isActive = activeFilter === opt.value;
                   return (
                     <button
-                      key={filter.value}
+                      key={opt.value}
                       type="button"
-                      onClick={() => setActiveFilter(filter.value)}
-                      className={`min-h-10 shrink-0 rounded-md border px-3 py-2 text-xs font-bold transition sm:min-h-11 sm:px-4 sm:text-sm ${
+                      onClick={() => setActiveFilter(opt.value)}
+                      className={cn(
+                        "inline-flex min-h-9 shrink-0 items-center gap-2 rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
                         isActive
-                          ? "border-amber-300 bg-amber-300 text-stone-950"
-                          : "border-stone-800 bg-stone-900 text-stone-300 hover:border-stone-600"
-                      }`}
+                          ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                          : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
+                      )}
                     >
-                      {filter.label} ({filterCounts[filter.value]})
+                      {opt.label}
+                      <span
+                        className={cn(
+                          "rounded-[var(--radius-xs)] px-1 font-mono text-[10px] tabular-nums",
+                          isActive
+                            ? "bg-black/10 text-black"
+                            : "text-[color:var(--text-subtle)]",
+                        )}
+                      >
+                        {filterCounts[opt.value]}
+                      </span>
                     </button>
                   );
                 })}
               </div>
             </div>
-          ) : null}
 
-          {!isLoading && !errorMessage && appointments.length === 0 ? (
-            <div className="border border-stone-800 bg-stone-900/70 p-6 text-stone-300">
-              Todavia no hay reservas para esta barberia.
-            </div>
-          ) : null}
-
-          {!isLoading &&
-          !errorMessage &&
-          appointments.length > 0 &&
-          filteredAppointments.length === 0 ? (
-            <div className="border border-stone-800 bg-stone-900/70 p-6 text-stone-300">
-              No hay reservas para el filtro {activeFilterLabel}.
-            </div>
-          ) : null}
-
-          {!isLoading && !errorMessage && filteredAppointments.length > 0 ? (
-            <div className="overflow-hidden lg:border lg:border-stone-800 lg:bg-stone-900/70">
-              <div className="hidden grid-cols-[0.75fr_0.6fr_0.95fr_0.85fr_0.85fr_0.9fr_0.6fr_0.95fr_0.7fr_1.25fr] gap-4 border-b border-stone-800 px-5 py-4 text-xs font-bold uppercase text-stone-400 lg:grid">
-                <span>Fecha</span>
-                <span>Horario</span>
-                <span>Cliente</span>
-                <span>Teléfono</span>
-                <span>Barbero</span>
-                <span>Servicio</span>
-                <span>Precio</span>
-                <span>Comentario</span>
-                <span>Estado</span>
-                <span>Acción</span>
-              </div>
-
-              <div className="grid gap-3 lg:hidden">
+            {/* Lista de turnos */}
+            {appointments.length === 0 ? (
+              <EmptyState
+                title="Sin reservas todavía"
+                description="Cuando alguien reserve por la página pública, aparecerá acá."
+              />
+            ) : filteredAppointments.length === 0 ? (
+              <EmptyState
+                title="Nada en este filtro"
+                description={`No hay reservas para ${activeFilterLabel}.`}
+              />
+            ) : (
+              <ul className="grid gap-3">
                 {filteredAppointments.map((appointment) => (
-                  <article
+                  <AppointmentCard
                     key={
                       appointment.id ??
                       `${appointment.customer_phone}-${appointment.appointment_date}-${appointment.appointment_time}`
                     }
-                    className="relative rounded-lg border border-stone-800 bg-stone-900/70 px-3 py-3 shadow-lg shadow-black/20"
-                  >
-                    {appointment.status === "cancelled" ? (
-                      <button
-                        type="button"
-                        disabled={deletingAppointmentId === appointment.id}
-                        onClick={() => handleDeleteAppointment(appointment)}
-                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-md border border-stone-700 bg-stone-950 text-sm font-black text-stone-300 transition hover:border-red-300/50 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-60"
-                        aria-label="Eliminar turno cancelado"
-                      >
-                        ×
-                      </button>
-                    ) : null}
-                    <div className="grid grid-cols-[auto_1fr] items-start gap-3">
-                      <div className="min-w-14">
-                        <p className="font-mono text-xl font-black text-amber-300">
-                          {normalizeTimeValue(appointment.appointment_time)}
-                        </p>
-                        <p className="mt-0.5 text-[11px] font-bold uppercase text-stone-500">
-                          {formatDateForDisplay(appointment.appointment_date)}
-                        </p>
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="truncate text-base font-bold text-stone-100">
-                            {appointment.customer_name}
-                          </h3>
-                          <span
-                            className={`inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase ${getStatusClasses(
-                              appointment.status,
-                            )}`}
-                          >
-                            {appointment.status}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-sm font-semibold text-stone-300">
-                          {appointment.service_name} ·{" "}
-                          {formatPrice(appointment.service_price)}
-                        </p>
-                        <p className="mt-0.5 truncate text-xs font-semibold text-amber-200">
-                          {appointment.barber_name}
-                        </p>
-                        <p className="mt-1 truncate text-xs text-stone-400">
-                          {appointment.customer_phone}
-                          {appointment.comment
-                            ? ` · ${appointment.comment}`
-                            : ""}
-                        </p>
-                      </div>
-                    </div>
-
-                    {appointment.status === "deleted" ? (
-                      <button
-                        type="button"
-                        disabled={restoringAppointmentId === appointment.id}
-                        onClick={() => handleRestoreAppointment(appointment)}
-                        className="mt-3 inline-flex min-h-9 w-full items-center justify-center rounded-md bg-amber-300 px-3 py-2 text-[11px] font-bold uppercase text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-amber-300"
-                      >
-                        {restoringAppointmentId === appointment.id
-                          ? "Restaurando..."
-                          : "Restaurar"}
-                      </button>
-                    ) : (
-                      <div className="mt-3 grid grid-cols-3 gap-2">
-                        <button
-                          type="button"
-                          disabled={
-                            appointment.status === "confirmed" ||
-                            appointment.status === "cancelled" ||
-                            confirmingAppointmentId === appointment.id ||
-                            cancellingAppointmentId === appointment.id
-                          }
-                          onClick={() => handleConfirmAppointment(appointment)}
-                          className="inline-flex min-h-9 items-center justify-center rounded-md bg-amber-300 px-3 py-2 text-[11px] font-bold uppercase text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-amber-300"
-                        >
-                          {confirmingAppointmentId === appointment.id
-                            ? "Confirmando..."
-                            : appointment.status === "confirmed"
-                              ? "Confirmado"
-                              : "Confirmar"}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={
-                            appointment.status === "cancelled" ||
-                            confirmingAppointmentId === appointment.id ||
-                            cancellingAppointmentId === appointment.id
-                          }
-                          onClick={() => handleSendWhatsApp(appointment)}
-                          className="inline-flex min-h-9 items-center justify-center rounded-md border border-emerald-300/40 px-2 py-2 text-[11px] font-bold uppercase text-emerald-100 transition hover:bg-emerald-400/10 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
-                        >
-                          WhatsApp
-                        </button>
-                        <button
-                          type="button"
-                          disabled={
-                            appointment.status === "cancelled" ||
-                            confirmingAppointmentId === appointment.id ||
-                            cancellingAppointmentId === appointment.id
-                          }
-                          onClick={() => handleCancelAppointment(appointment)}
-                          className="inline-flex min-h-9 items-center justify-center rounded-md border border-red-300/40 px-3 py-2 text-[11px] font-bold uppercase text-red-100 transition hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
-                        >
-                          {cancellingAppointmentId === appointment.id
-                            ? "Cancelando..."
-                            : appointment.status === "cancelled"
-                              ? "Cancelado"
-                              : "Cancelar"}
-                        </button>
-                      </div>
-                    )}
-                  </article>
+                    appointment={appointment}
+                    onConfirm={handleConfirmAppointment}
+                    onWhatsApp={handleSendWhatsApp}
+                    onCancel={handleCancelAppointment}
+                    onRestore={handleRestoreAppointment}
+                    onDelete={handleDeleteAppointment}
+                    confirmingId={confirmingAppointmentId}
+                    cancellingId={cancellingAppointmentId}
+                    restoringId={restoringAppointmentId}
+                    deletingId={deletingAppointmentId}
+                  />
                 ))}
-              </div>
-
-              <div className="hidden divide-y divide-stone-800 lg:block">
-                {filteredAppointments.map((appointment) => (
-                  <article
-                    key={
-                      appointment.id ??
-                      `${appointment.customer_phone}-${appointment.appointment_date}-${appointment.appointment_time}`
-                    }
-                    className="relative grid gap-4 px-5 py-5 text-sm text-stone-100 lg:grid-cols-[0.75fr_0.6fr_0.95fr_0.85fr_0.85fr_0.9fr_0.6fr_0.95fr_0.7fr_1.25fr] lg:items-center"
-                  >
-                    {appointment.status === "cancelled" ? (
-                      <button
-                        type="button"
-                        disabled={deletingAppointmentId === appointment.id}
-                        onClick={() => handleDeleteAppointment(appointment)}
-                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-md border border-stone-700 bg-stone-950 text-sm font-black text-stone-300 transition hover:border-red-300/50 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-60"
-                        aria-label="Eliminar turno cancelado"
-                      >
-                        ×
-                      </button>
-                    ) : null}
-                    <div>
-                      <p className="text-xs font-bold uppercase text-stone-500 lg:hidden">
-                        Fecha
-                      </p>
-                      {formatDateForDisplay(appointment.appointment_date)}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase text-stone-500 lg:hidden">
-                        Horario
-                      </p>
-                      <span className="font-mono text-amber-300">
-                        {appointment.appointment_time}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase text-stone-500 lg:hidden">
-                        Cliente
-                      </p>
-                      {appointment.customer_name}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase text-stone-500 lg:hidden">
-                        Teléfono
-                      </p>
-                      {appointment.customer_phone}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase text-stone-500 lg:hidden">
-                        Barbero
-                      </p>
-                      {appointment.barber_name}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase text-stone-500 lg:hidden">
-                        Servicio
-                      </p>
-                      {appointment.service_name}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase text-stone-500 lg:hidden">
-                        Precio
-                      </p>
-                      {formatPrice(appointment.service_price)}
-                    </div>
-                    <div className="text-stone-300">
-                      <p className="text-xs font-bold uppercase text-stone-500 lg:hidden">
-                        Comentario
-                      </p>
-                      {appointment.comment || "Sin comentario"}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase text-stone-500 lg:hidden">
-                        Estado
-                      </p>
-                      <span
-                        className={`inline-flex rounded-md border px-2 py-1 text-xs font-bold uppercase ${getStatusClasses(
-                          appointment.status,
-                        )}`}
-                      >
-                        {appointment.status}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold uppercase text-stone-500 lg:hidden">
-                        Acción
-                      </p>
-                      {appointment.status === "deleted" ? (
-                        <button
-                          type="button"
-                          disabled={restoringAppointmentId === appointment.id}
-                          onClick={() => handleRestoreAppointment(appointment)}
-                          className="mt-2 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-amber-300 px-4 py-2 text-xs font-bold uppercase text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-amber-300 lg:mt-0"
-                        >
-                          {restoringAppointmentId === appointment.id
-                            ? "Restaurando..."
-                            : "Restaurar"}
-                        </button>
-                      ) : (
-                      <div className="mt-2 grid gap-2 lg:mt-0">
-                        <button
-                          type="button"
-                          disabled={
-                            appointment.status === "confirmed" ||
-                            appointment.status === "cancelled" ||
-                            confirmingAppointmentId === appointment.id ||
-                            cancellingAppointmentId === appointment.id
-                          }
-                          onClick={() => handleConfirmAppointment(appointment)}
-                          className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-amber-300 px-4 py-2 text-xs font-bold uppercase text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-amber-300"
-                        >
-                          {confirmingAppointmentId === appointment.id
-                            ? "Confirmando..."
-                            : appointment.status === "confirmed"
-                              ? "Confirmado"
-                              : "Confirmar turno"}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={
-                            appointment.status === "cancelled" ||
-                            confirmingAppointmentId === appointment.id ||
-                            cancellingAppointmentId === appointment.id
-                          }
-                          onClick={() => handleSendWhatsApp(appointment)}
-                          className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-emerald-300/40 px-4 py-2 text-xs font-bold uppercase text-emerald-100 transition hover:bg-emerald-400/10 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
-                        >
-                          Enviar WhatsApp
-                        </button>
-                        <button
-                          type="button"
-                          disabled={
-                            appointment.status === "cancelled" ||
-                            confirmingAppointmentId === appointment.id ||
-                            cancellingAppointmentId === appointment.id
-                          }
-                          onClick={() => handleCancelAppointment(appointment)}
-                          className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-red-300/40 px-4 py-2 text-xs font-bold uppercase text-red-100 transition hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
-                        >
-                          {cancellingAppointmentId === appointment.id
-                            ? "Cancelando..."
-                            : appointment.status === "cancelled"
-                              ? "Cancelado"
-                              : "Cancelar turno"}
-                        </button>
-                      </div>
-                      )}
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
+              </ul>
+            )}
+          </>
+        ) : null}
       </section>
-    </main>
+
+      {/* Aside derecho — resumen y acciones */}
+      <aside className="lg:sticky lg:top-12">
+        <div
+          className="animate-fade-up border-t border-[color:var(--border-subtle)] pt-8 sm:border-t-0 sm:border-l sm:pl-6 sm:pt-0 lg:pl-8"
+          style={{ animationDelay: "100ms" }}
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)]">
+            Resumen del día
+          </p>
+          <p className="mt-3 text-sm text-[color:var(--text-secondary)]">
+            {formatDayHeading(focusDate)}
+          </p>
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <StatCell label="Turnos" value={dayStats.total} highlight />
+            <StatCell label="Pendientes" value={dayStats.pending} />
+            <StatCell label="Confirmados" value={dayStats.confirmed} />
+            <StatCell label="Cancelados" value={dayStats.cancelled} />
+          </div>
+
+          {/* Próximo turno */}
+          {upcomingAppointment ? (
+            <div className="mt-6 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
+                Próximo turno
+              </p>
+              <p className="mt-2 font-mono text-3xl font-black tabular-nums leading-none text-[color:var(--brand-gold)]">
+                {normalizeTimeShort(upcomingAppointment.appointment_time)}
+              </p>
+              <p className="mt-3 text-sm font-bold text-white">
+                {upcomingAppointment.customer_name}
+              </p>
+              <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
+                {upcomingAppointment.service_name}
+              </p>
+              <p className="mt-0.5 text-xs text-[color:var(--text-muted)]">
+                {upcomingAppointment.barber_name}
+              </p>
+            </div>
+          ) : (
+            <div className="mt-6 rounded-[var(--radius-sm)] border border-dashed border-[color:var(--border-subtle)] p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                Próximo turno
+              </p>
+              <p className="mt-2 text-sm text-[color:var(--text-subtle)]">
+                Sin próximos turnos para esta fecha.
+              </p>
+            </div>
+          )}
+
+          {/* Acciones */}
+          <div className="mt-8 grid gap-2">
+            <Button
+              as="link"
+              href={`/${barbershop.slug}/admin/barbers`}
+              variant="secondary"
+              size="md"
+              fullWidth
+              iconLeft={<Users className="size-3.5" />}
+            >
+              Gestionar barberos
+            </Button>
+            <Button
+              as="link"
+              href={`/${barbershop.slug}`}
+              variant="ghost"
+              size="md"
+              fullWidth
+              iconLeft={<ExternalLink className="size-3.5" />}
+            >
+              Página pública
+            </Button>
+            <Button
+              as="link"
+              href={`/${barbershop.slug}/reservar`}
+              variant="ghost"
+              size="md"
+              fullWidth
+              iconLeft={<Plus className="size-3.5" />}
+            >
+              Nuevo turno (público)
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="md"
+              fullWidth
+              loading={isSigningOut}
+              onClick={handleSignOut}
+              iconLeft={<LogOut className="size-3.5" />}
+            >
+              Cerrar sesión
+            </Button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function EmptyState({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-[var(--radius-sm)] border border-dashed border-[color:var(--border-subtle)] p-10 text-center">
+      <p className="text-sm font-bold text-white">{title}</p>
+      <p className="mt-2 text-xs text-[color:var(--text-muted)] sm:text-sm">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+function StatCell({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: number;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-[var(--radius-sm)] border p-3 sm:p-4",
+        highlight
+          ? "border-[color:var(--border-default)] bg-[color:var(--surface-1)]"
+          : "border-[color:var(--border-subtle)]",
+      )}
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "mt-1 font-mono text-2xl font-black tabular-nums leading-none sm:text-3xl",
+          highlight ? "text-[color:var(--brand-gold)]" : "text-white",
+        )}
+      >
+        {value}
+      </p>
+    </div>
   );
 }

@@ -16,24 +16,22 @@ export function ServicesSection({
   return (
     <section
       id="servicios"
-      className="border border-stone-800 bg-stone-900/70 p-6 shadow-2xl shadow-black/30"
+      className="animate-fade-up sm:border-l sm:border-[color:var(--border-subtle)] sm:pl-6 lg:pl-10"
+      style={{ animationDelay: "120ms" }}
     >
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase text-amber-300">
-            Servicios
-          </p>
-          <h2 className="mt-2 text-2xl font-black text-stone-100">
-            Elegí tu turno
-          </h2>
-        </div>
-        <p className="text-sm text-stone-400">
-          {workingHours.start} a {workingHours.end} - cada{" "}
-          {workingHours.intervalMinutes} min
+      <header>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
+          Servicios
         </p>
-      </div>
+        <h2 className="mt-3 text-2xl font-black uppercase tracking-tight text-white sm:mt-4 sm:text-3xl lg:text-4xl">
+          Elegí tu turno
+        </h2>
+        <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:tracking-[0.2em]">
+          {workingHours.start} → {workingHours.end} · cada {workingHours.intervalMinutes}min
+        </p>
+      </header>
 
-      <div className="mt-5">
+      <div className="mt-6 divide-y divide-[color:var(--border-subtle)] sm:mt-8">
         {services.map((service) => (
           <ServiceCard key={service.id} service={service} />
         ))}

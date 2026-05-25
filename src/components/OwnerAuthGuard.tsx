@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { getCurrentSession } from "@/lib/auth";
+import { getCurrentPlatformOwnerAccess } from "@/lib/platform-owner-access";
 
 type OwnerAuthGuardProps = {
   children: ReactNode;
@@ -17,14 +17,19 @@ export function OwnerAuthGuard({ children }: OwnerAuthGuardProps) {
     let isMounted = true;
 
     async function checkSession() {
-      const { data } = await getCurrentSession();
+      const ownerAccess = await getCurrentPlatformOwnerAccess();
 
       if (!isMounted) {
         return;
       }
 
-      if (!data.session) {
-        router.replace("/login");
+      if (!ownerAccess.isAuthenticated) {
+        router.replace("/owner/login");
+        return;
+      }
+
+      if (!ownerAccess.isOwner) {
+        router.replace("/owner/login?error=not-owner");
         return;
       }
 
@@ -41,9 +46,9 @@ export function OwnerAuthGuard({ children }: OwnerAuthGuardProps) {
 
   if (isCheckingSession || !isAuthenticated) {
     return (
-      <main className="min-h-screen bg-stone-950 text-stone-50">
+      <main className="min-h-screen bg-black text-white">
         <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-6 py-10 sm:px-10 lg:px-12">
-          <div className="w-full rounded-lg border border-stone-800 bg-stone-900/70 p-6 text-stone-300">
+          <div className="w-full rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-6 text-[color:var(--text-secondary)]">
             Verificando acceso owner...
           </div>
         </div>

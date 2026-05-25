@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import { AdminAuthGuard } from "@/components/AdminAuthGuard";
 import { AdminBarbersManager } from "@/components/AdminBarbersManager";
+import { AdminShell } from "@/components/admin/AdminShell";
 import {
-  demoBarbershops,
-  getDemoBarbershopBySlug,
-} from "@/data/demo-barbershops";
+  listKnownBarbershops,
+  resolveManagedBarbershopBySlug,
+} from "@/lib/barbershops";
 
 type AdminBarbersPageProps = {
   params: Promise<{
@@ -12,8 +13,10 @@ type AdminBarbersPageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return demoBarbershops.map((barbershop) => ({
+export async function generateStaticParams() {
+  const { data } = await listKnownBarbershops();
+
+  return data.map((barbershop) => ({
     barbershopSlug: barbershop.slug,
   }));
 }
@@ -22,7 +25,8 @@ export default async function AdminBarbersPage({
   params,
 }: AdminBarbersPageProps) {
   const { barbershopSlug } = await params;
-  const barbershop = getDemoBarbershopBySlug(barbershopSlug);
+  const { data: barbershop } =
+    await resolveManagedBarbershopBySlug(barbershopSlug);
 
   if (!barbershop) {
     notFound();
@@ -30,7 +34,14 @@ export default async function AdminBarbersPage({
 
   return (
     <AdminAuthGuard barbershopSlug={barbershop.slug}>
-      <AdminBarbersManager barbershop={barbershop} />
+      <AdminShell
+        barbershopSlug={barbershop.slug}
+        barbershopName={barbershop.name}
+        backHref={`/${barbershop.slug}/admin`}
+        backLabel="← Agenda"
+      >
+        <AdminBarbersManager barbershop={barbershop} />
+      </AdminShell>
     </AdminAuthGuard>
   );
 }

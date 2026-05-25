@@ -2,7 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { ShieldOff } from "lucide-react";
 import { requireBarbershopAccess } from "@/lib/barbershop-access";
+import { getCurrentPlatformOwnerAccess } from "@/lib/platform-owner-access";
+import { Logo } from "@/components/ui";
 
 type AdminAuthGuardProps = {
   barbershopSlug: string;
@@ -23,21 +26,30 @@ export function AdminAuthGuard({
     let isMounted = true;
 
     async function checkAccess() {
-      const access = await requireBarbershopAccess(barbershopSlug);
+      const [access, ownerAccess] = await Promise.all([
+        requireBarbershopAccess(barbershopSlug),
+        getCurrentPlatformOwnerAccess(),
+      ]);
 
       if (!isMounted) {
         return;
       }
 
-      if (!access.isAuthenticated) {
-        router.replace(`/${barbershopSlug}/admin/login`);
+      if (!access.isAuthenticated && !ownerAccess.isAuthenticated) {
+        router.replace(`/login?next=/${barbershopSlug}/admin`);
+        return;
+      }
+
+      if (ownerAccess.isOwner) {
+        setIsAuthorized(true);
+        setIsCheckingAccess(false);
         return;
       }
 
       if (!access.hasAccess) {
         setAccessError(
           access.error
-            ? "No pudimos validar tus permisos. Intenta nuevamente."
+            ? "No pudimos validar tus permisos. Intentá nuevamente."
             : "",
         );
         setIsUnauthorized(true);
@@ -58,11 +70,12 @@ export function AdminAuthGuard({
 
   if (isCheckingAccess) {
     return (
-      <main className="min-h-screen bg-stone-950 text-stone-50">
-        <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-6 py-10 sm:px-10 lg:px-12">
-          <div className="w-full border border-stone-800 bg-stone-900/70 p-6 text-stone-300">
-            Verificando acceso...
-          </div>
+      <main className="min-h-screen bg-black text-white">
+        <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center justify-center px-5 py-10">
+          <Logo variant="mark" size="lg" className="mb-6 opacity-40" />
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+            Verificando acceso…
+          </p>
         </div>
       </main>
     );
@@ -70,25 +83,25 @@ export function AdminAuthGuard({
 
   if (isUnauthorized || !isAuthorized) {
     return (
-      <main className="min-h-screen bg-stone-950 text-stone-50">
-        <div className="mx-auto flex min-h-screen w-full max-w-3xl items-center px-6 py-10 sm:px-10">
-          <section className="w-full rounded-lg border border-red-300/30 bg-red-500/10 p-6 shadow-2xl shadow-black/30 sm:p-8">
-            <p className="text-xs font-bold uppercase text-red-200">
-              Acceso restringido
+      <main className="min-h-screen bg-black text-white">
+        <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center px-5 py-10 text-center">
+          <div className="inline-flex size-14 items-center justify-center rounded-full border border-[color:var(--danger)]/30 text-[color:var(--danger)]">
+            <ShieldOff className="size-6" />
+          </div>
+          <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--danger)]">
+            Acceso restringido
+          </p>
+          <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl">
+            No autorizado
+          </h1>
+          <p className="mt-4 text-sm leading-6 text-[color:var(--text-secondary)]">
+            Tu usuario no tiene permisos para administrar esta barbería.
+          </p>
+          {accessError ? (
+            <p className="mt-6 border-l-2 border-[color:var(--danger)] pl-4 text-left text-xs font-semibold text-[color:var(--danger)]">
+              {accessError}
             </p>
-            <h1 className="mt-2 text-3xl font-black text-stone-50">
-              No autorizado
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-stone-300 sm:text-base">
-              Tu usuario no tiene permisos para administrar esta barberia en
-              BarberSync.
-            </p>
-            {accessError ? (
-              <p className="mt-4 rounded-md border border-red-300/30 bg-stone-950/60 px-3 py-2 text-sm font-semibold text-red-100">
-                {accessError}
-              </p>
-            ) : null}
-          </section>
+          ) : null}
         </div>
       </main>
     );

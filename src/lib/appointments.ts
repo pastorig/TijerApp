@@ -1,21 +1,25 @@
 import {
   getSupabaseClient,
   type AppointmentInsert,
-  type AppointmentStatus,
 } from "@/lib/supabase";
+import { getBarberDayAvailability } from "@/lib/barber-availability";
 
 type AppointmentDraft = Omit<AppointmentInsert, "status">;
 type AppointmentAvailabilityInput = {
   barbershopSlug: string;
   barberId: string;
   appointmentDate: string;
+  appointmentDurationMinutes: number;
+  workingHours: {
+    start: string;
+    end: string;
+  };
+  barbershopIntervalMinutes: number;
 };
 
 type AppointmentTimeInput = AppointmentAvailabilityInput & {
   appointmentTime: string;
 };
-
-const activeAppointmentStatuses: AppointmentStatus[] = ["pending", "confirmed"];
 
 export async function createPendingAppointment(appointment: AppointmentDraft) {
   return getSupabaseClient()
@@ -68,17 +72,21 @@ export async function listOccupiedAppointmentTimes({
   barbershopSlug,
   barberId,
   appointmentDate,
+  appointmentDurationMinutes,
+  workingHours,
+  barbershopIntervalMinutes,
 }: AppointmentAvailabilityInput) {
-  const { data, error } = await getSupabaseClient()
-    .from("appointments")
-    .select("appointment_time")
-    .eq("barbershop_slug", barbershopSlug)
-    .eq("barber_id", barberId)
-    .eq("appointment_date", appointmentDate)
-    .in("status", activeAppointmentStatuses);
+  const { data, error } = await getBarberDayAvailability({
+    barbershopSlug,
+    barberId,
+    appointmentDate,
+    appointmentDurationMinutes,
+    barbershopIntervalMinutes,
+    workingHours,
+  });
 
   return {
-    data: data?.map((appointment) => appointment.appointment_time) ?? [],
+    data: data.filter((slot) => !slot.isAvailable).map((slot) => slot.time),
     error,
   };
 }
@@ -88,19 +96,27 @@ export async function validateAppointmentTimeIsAvailable({
   barberId,
   appointmentDate,
   appointmentTime,
+  appointmentDurationMinutes,
+  workingHours,
+  barbershopIntervalMinutes,
 }: AppointmentTimeInput) {
-  const { data, error } = await listOccupiedAppointmentTimes({
+  const { data, error } = await getBarberDayAvailability({
     barbershopSlug,
     barberId,
     appointmentDate,
+    appointmentDurationMinutes,
+    workingHours,
+    barbershopIntervalMinutes,
   });
 
   if (error) {
     return { isAvailable: false, error };
   }
 
+  const selectedSlot = data.find((slot) => slot.time === appointmentTime);
+
   return {
-    isAvailable: !data.includes(appointmentTime),
+    isAvailable: Boolean(selectedSlot?.isAvailable),
     error: null,
   };
 }

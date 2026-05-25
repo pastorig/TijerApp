@@ -9,6 +9,10 @@ export async function getCurrentSession() {
   return getSupabaseClient().auth.getSession();
 }
 
+export async function getCurrentUser() {
+  return getSupabaseClient().auth.getUser();
+}
+
 export async function signInWithEmailAndPassword({
   email,
   password,

@@ -8,7 +8,20 @@ import { getCurrentUserAdminBarbershops } from "@/lib/barbershop-access";
 import { signInWithEmailAndPassword } from "@/lib/auth";
 import type { BarbershopAdminRow } from "@/lib/supabase";
 
-export function GlobalLoginForm() {
+type GlobalLoginFormProps = {
+  nextPath?: string;
+};
+
+function getBarbershopSlugFromNextPath(nextPath?: string) {
+  if (!nextPath) {
+    return "";
+  }
+
+  const match = nextPath.match(/^\/([^/]+)\/admin(?:\/.*)?$/);
+  return match?.[1] ?? "";
+}
+
+export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +31,7 @@ export function GlobalLoginForm() {
     BarbershopAdminRow[]
   >([]);
   const [hasCheckedAssignments, setHasCheckedAssignments] = useState(false);
+  const requestedBarbershopSlug = getBarbershopSlugFromNextPath(nextPath);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,6 +67,18 @@ export function GlobalLoginForm() {
         return;
       }
 
+      if (
+        nextPath &&
+        requestedBarbershopSlug &&
+        data.some(
+          (adminAccess) =>
+            adminAccess.barbershop_slug === requestedBarbershopSlug,
+        )
+      ) {
+        router.replace(nextPath);
+        return;
+      }
+
       if (data.length === 1) {
         router.replace(`/${data[0].barbershop_slug}/admin`);
         return;
@@ -68,24 +94,29 @@ export function GlobalLoginForm() {
   }
 
   return (
-    <main className="min-h-screen bg-stone-950 text-stone-50">
+    <main className="min-h-screen bg-black text-white">
       <section className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-10">
-        <div className="rounded-lg border border-stone-800 bg-stone-900/70 p-6 shadow-2xl shadow-black/30">
-          <p className="text-sm font-semibold uppercase text-amber-300">
+        <div className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-6 shadow-2xl shadow-black/30">
+          <p className="text-sm font-semibold uppercase text-[color:var(--brand-gold)]">
             BarberSync
           </p>
-          <h1 className="mt-3 text-4xl font-black text-stone-50">
+          <h1 className="mt-3 text-4xl font-black text-white">
             Iniciar sesion
           </h1>
-          <p className="mt-3 text-sm leading-6 text-stone-300">
+          <p className="mt-3 text-sm leading-6 text-[color:var(--text-secondary)]">
             Accede al panel de administracion de tus barberias asignadas.
           </p>
+          {requestedBarbershopSlug ? (
+            <p className="mt-3 rounded-md border border-[color:var(--border-default)] bg-black px-3 py-2 text-xs font-semibold text-[color:var(--text-secondary)]">
+              Destino solicitado: /{requestedBarbershopSlug}/admin
+            </p>
+          ) : null}
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <div>
               <label
                 htmlFor="global-email"
-                className="text-sm font-bold uppercase text-stone-300"
+                className="text-sm font-bold uppercase text-[color:var(--text-secondary)]"
               >
                 Email
               </label>
@@ -98,7 +129,7 @@ export function GlobalLoginForm() {
                   setEmail(event.target.value);
                   setErrorMessage("");
                 }}
-                className="mt-2 min-h-12 w-full rounded-md border border-stone-700 bg-stone-950 px-4 text-base text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                className="mt-2 min-h-12 w-full rounded-md border border-[color:var(--border-default)] bg-black px-4 text-base text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                 placeholder="admin@barberia.com"
                 required
               />
@@ -107,7 +138,7 @@ export function GlobalLoginForm() {
             <div>
               <label
                 htmlFor="global-password"
-                className="text-sm font-bold uppercase text-stone-300"
+                className="text-sm font-bold uppercase text-[color:var(--text-secondary)]"
               >
                 Contrasena
               </label>
@@ -120,7 +151,7 @@ export function GlobalLoginForm() {
                   setPassword(event.target.value);
                   setErrorMessage("");
                 }}
-                className="mt-2 min-h-12 w-full rounded-md border border-stone-700 bg-stone-950 px-4 text-base text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20"
+                className="mt-2 min-h-12 w-full rounded-md border border-[color:var(--border-default)] bg-black px-4 text-base text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                 placeholder="Tu contrasena"
                 required
               />
@@ -129,7 +160,7 @@ export function GlobalLoginForm() {
             {errorMessage ? (
               <p
                 role="alert"
-                className="rounded-md border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200"
+                className="rounded-md border border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--danger)]"
               >
                 {errorMessage}
               </p>
@@ -138,21 +169,21 @@ export function GlobalLoginForm() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex min-h-12 w-full items-center justify-center rounded-md bg-amber-300 px-6 py-3 text-sm font-bold uppercase text-stone-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-md bg-[color:var(--brand-gold)] px-6 py-3 text-sm font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? "Ingresando..." : "Ingresar"}
             </button>
           </form>
 
           {hasCheckedAssignments && assignedBarbershops.length === 0 ? (
-            <div className="mt-5 rounded-md border border-amber-300/30 bg-amber-300/10 px-4 py-3 text-sm font-semibold text-amber-100">
+            <div className="mt-5 rounded-md border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--brand-gold)]">
               No tenes barberias asignadas.
             </div>
           ) : null}
 
           {assignedBarbershops.length > 1 ? (
-            <section className="mt-5 rounded-md border border-stone-800 bg-stone-950 p-3">
-              <p className="text-xs font-bold uppercase text-amber-300">
+            <section className="mt-5 rounded-md border border-[color:var(--border-default)] bg-black p-3">
+              <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
                 Elegi barberia
               </p>
               <div className="mt-3 grid gap-2">
@@ -164,11 +195,16 @@ export function GlobalLoginForm() {
                   return (
                     <Link
                       key={admin.barbershop_slug}
-                      href={`/${admin.barbershop_slug}/admin`}
-                      className="rounded-md border border-stone-800 bg-stone-900 px-3 py-3 text-sm font-semibold text-stone-100 transition hover:border-amber-300 hover:text-amber-200"
+                      href={
+                        nextPath &&
+                        admin.barbershop_slug === requestedBarbershopSlug
+                          ? nextPath
+                          : `/${admin.barbershop_slug}/admin`
+                      }
+                      className="rounded-md border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 py-3 text-sm font-semibold text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
                     >
                       {barbershop?.name ?? admin.barbershop_slug}
-                      <span className="mt-1 block text-xs font-normal text-stone-500">
+                      <span className="mt-1 block text-xs font-normal text-[color:var(--text-subtle)]">
                         Rol: {admin.role}
                       </span>
                     </Link>

@@ -1,4 +1,5 @@
-import { demoBarbershops } from "@/data/demo-barbershops";
+import { demoBarbershops, getActiveBarbers } from "@/data/demo-barbershops";
+import { listKnownBarbershops } from "@/lib/barbershops";
 import { getLocalDateInputValue } from "@/lib/format";
 import { getSupabaseClient } from "@/lib/supabase";
 
@@ -7,6 +8,8 @@ export type OwnerBarbershopSummary = {
   slug: string;
   barberCount: number;
   appointmentCount: number;
+  isDemo: boolean;
+  isRemovable: boolean;
 };
 
 export type OwnerDashboardMetrics = {
@@ -46,6 +49,15 @@ async function countAppointmentsForBarbershop(barbershopSlug: string) {
 
 export async function getOwnerDashboardMetrics() {
   const today = getLocalDateInputValue();
+  const { data: knownBarbershops } = await listKnownBarbershops();
+  const demoSlugs = new Set(demoBarbershops.map((barbershop) => barbershop.slug));
+  const { data: dbBarbershops } = await getSupabaseClient()
+    .from("barbershops")
+    .select("slug")
+    .eq("is_active", true);
+  const dbBarbershopSlugs = new Set(
+    (dbBarbershops ?? []).map((barbershop) => barbershop.slug),
+  );
 
   const [
     totalBarbersResult,
@@ -73,15 +85,13 @@ export async function getOwnerDashboardMetrics() {
       .eq("is_active", true)
       .is("deleted_at", null),
     Promise.all(
-      demoBarbershops.map(async (barbershop) => {
+      knownBarbershops.map(async (barbershop) => {
         const [barbersResult, appointmentsResult] = await Promise.all([
           countBarbersForBarbershop(barbershop.slug),
           countAppointmentsForBarbershop(barbershop.slug),
         ]);
 
-        const fallbackBarberCount = barbershop.barbers.filter(
-          (barber) => barber.isActive,
-        ).length;
+        const fallbackBarberCount = getActiveBarbers(barbershop).length;
 
         return {
           name: barbershop.name,
@@ -91,6 +101,10 @@ export async function getOwnerDashboardMetrics() {
               ? fallbackBarberCount
               : barbersResult.count,
           appointmentCount: appointmentsResult.count,
+          isDemo: demoSlugs.has(barbershop.slug),
+          isRemovable:
+            dbBarbershopSlugs.has(barbershop.slug) &&
+            !demoSlugs.has(barbershop.slug),
         };
       }),
     ),
@@ -98,13 +112,13 @@ export async function getOwnerDashboardMetrics() {
 
   const fallbackTotalBarbers = demoBarbershops.reduce(
     (total, barbershop) =>
-      total + barbershop.barbers.filter((barber) => barber.isActive).length,
+      total + getActiveBarbers(barbershop).length,
     0,
   );
 
   return {
     data: {
-      knownBarbershopsCount: demoBarbershops.length,
+      knownBarbershopsCount: knownBarbershops.length,
       totalBarbersCount:
         totalBarbersResult.error || (totalBarbersResult.count ?? 0) === 0
           ? fallbackTotalBarbers

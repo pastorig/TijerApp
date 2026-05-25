@@ -1,9 +1,6 @@
 import { notFound } from "next/navigation";
 import { PublicBarbershopLanding } from "@/components/PublicBarbershopLanding";
-import {
-  demoBarbershops,
-  getDemoBarbershopBySlug,
-} from "@/data/demo-barbershops";
+import { listKnownBarbershops, resolveBarbershopBySlug } from "@/lib/barbershops";
 
 type BarbershopPageProps = {
   params: Promise<{
@@ -11,8 +8,10 @@ type BarbershopPageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return demoBarbershops.map((barbershop) => ({
+export async function generateStaticParams() {
+  const { data } = await listKnownBarbershops();
+
+  return data.map((barbershop) => ({
     barbershopSlug: barbershop.slug,
   }));
 }
@@ -21,7 +20,7 @@ export default async function BarbershopPage({
   params,
 }: BarbershopPageProps) {
   const { barbershopSlug } = await params;
-  const barbershop = getDemoBarbershopBySlug(barbershopSlug);
+  const { data: barbershop } = await resolveBarbershopBySlug(barbershopSlug);
 
   if (!barbershop) {
     notFound();

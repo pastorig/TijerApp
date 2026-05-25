@@ -1,26 +1,254 @@
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────
+   BarberSync — minimalist tokens
+   Black / antique gold / silver. Ver BRAND.md.
+   ───────────────────────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* surfaces — negro puro, sin tinte */
+  --surface-0: #000000;
+  --surface-1: #0d0d0d;
+  --surface-2: #161616;
+  --surface-3: #1f1f1f;
+
+  /* borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  /* text */
+  --text-primary: #ffffff;
+  --text-secondary: #c8c8c8;
+  --text-muted: #8a8a8a;
+  --text-subtle: #5a5a5a;
+
+  /* brand gold (antique / champagne, match isotipo) */
+  --brand-gold: #c9a23e;
+  --brand-gold-hi: #e2c266;
+  --brand-gold-lo: #8a6e25;
+  --brand-gold-soft: rgba(201, 162, 62, 0.08);
+  --brand-gold-ring: rgba(201, 162, 62, 0.4);
+
+  /* brand silver (segunda mitad del wordmark, separadores) */
+  --brand-silver: #d8d8d8;
+  --brand-silver-mid: #9c9c9c;
+
+  /* aliases */
+  --brand-accent: var(--brand-gold);
+  --brand-accent-hi: var(--brand-gold-hi);
+  --brand-accent-lo: var(--brand-gold-lo);
+  --brand-accent-soft: var(--brand-gold-soft);
+  --brand-accent-ring: var(--brand-gold-ring);
+
+  /* semantic */
+  --success: #6ee7b7;
+  --success-soft: rgba(110, 231, 183, 0.08);
+  --danger: #fca5a5;
+  --danger-soft: rgba(252, 165, 165, 0.08);
+  --info: #93c5fd;
+
+  /* radii */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+
+  /* shadows */
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+  --shadow-elevated: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 24px 64px -32px rgba(0, 0, 0, 0.9);
+
+  /* motion */
+  --duration-fast: 150ms;
+  --duration-base: 220ms;
+  --duration-slow: 360ms;
+  --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* legacy compatibility */
+  --background: var(--surface-0);
+  --foreground: var(--text-primary);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+
+  --color-fg: var(--text-primary);
+  --color-fg-secondary: var(--text-secondary);
+  --color-fg-muted: var(--text-muted);
+  --color-fg-subtle: var(--text-subtle);
+
+  --color-brand: var(--brand-gold);
+  --color-brand-hi: var(--brand-gold-hi);
+  --color-brand-lo: var(--brand-gold-lo);
+  --color-brand-soft: var(--brand-gold-soft);
+  --color-silver: var(--brand-silver);
+  --color-silver-mid: var(--brand-silver-mid);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+
   --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─────────────────────────────────────────────────────────────
+   Base
+   ───────────────────────────────────────────────────────────── */
+
+html {
+  color-scheme: dark;
+  /* Safety net: ningún overflow horizontal en ninguna vista. */
+  overflow-x: clip;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Imágenes y video siempre fluid; los SVG mantienen su sizing explícito. */
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+svg {
+  max-width: 100%;
+}
+
+::selection {
+  background: var(--brand-gold);
+  color: var(--surface-0);
+}
+
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--surface-3);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-subtle);
+  }
+}
+
+:focus-visible {
+  outline: 1px solid var(--brand-gold);
+  outline-offset: 2px;
+}
+
+/* Dropdown nativo de <select> — forzamos fondo oscuro consistente.
+   Sin esto, Chrome/Edge usan blanco para las options aunque el select esté en dark. */
+option {
+  background-color: var(--surface-1);
+  color: var(--text-primary);
+}
+option:checked,
+option:hover {
+  background-color: var(--surface-3);
+  color: var(--brand-gold);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Utilidades minimalistas
+   ───────────────────────────────────────────────────────────── */
+
+.shadow-card {
+  box-shadow: var(--shadow-card);
+}
+.shadow-elevated {
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Línea de hairline horizontal con degradado de gold (acento sutil) */
+.hairline-gold {
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--brand-gold) 50%,
+    transparent
+  );
+  height: 1px;
+}
+
+/* Animaciones suaves */
+@keyframes barbersync-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes barbersync-shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-up {
+  animation: barbersync-fade-in var(--duration-slow) var(--ease-out-soft) both;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 0%,
+    var(--surface-3) 50%,
+    var(--surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: barbersync-shimmer 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

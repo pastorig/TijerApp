@@ -32,6 +32,7 @@ export type DemoBarbershop = {
   whatsapp: string;
   barbers: Barber[];
   workingHours: WorkingHours;
+  isActive?: boolean;
 };
 
 export const demoBarbershops: DemoBarbershop[] = [
@@ -70,6 +71,7 @@ export const demoBarbershops: DemoBarbershop[] = [
       end: "21:00",
       intervalMinutes: 30,
     },
+    isActive: true,
   },
   {
     id: "barbershop_gino_barber",
@@ -112,6 +114,7 @@ export const demoBarbershops: DemoBarbershop[] = [
       end: "21:00",
       intervalMinutes: 30,
     },
+    isActive: true,
   },
 ];
 

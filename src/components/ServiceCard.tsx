@@ -7,16 +7,16 @@ type ServiceCardProps = {
 
 export function ServiceCard({ service }: ServiceCardProps) {
   return (
-    <article className="flex items-center justify-between gap-4 border-b border-stone-800 py-5 last:border-b-0">
-      <div>
-        <h3 className="text-lg font-semibold text-stone-100">
+    <article className="group flex items-center justify-between gap-4 py-5 transition-colors duration-[var(--duration-base)]">
+      <div className="min-w-0">
+        <h3 className="truncate text-base font-bold text-white sm:text-lg">
           {service.name}
         </h3>
-        <p className="mt-1 text-sm text-stone-400">
-          {service.durationMinutes} minutos
+        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
+          {service.durationMinutes} min
         </p>
       </div>
-      <p className="font-mono text-xl font-bold text-amber-300">
+      <p className="shrink-0 font-mono text-xl font-bold tabular-nums text-[color:var(--brand-gold)] sm:text-2xl">
         {formatPrice(service.price)}
       </p>
     </article>

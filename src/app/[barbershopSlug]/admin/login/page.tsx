@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { AdminLoginForm } from "@/components/AdminLoginForm";
 import {
-  demoBarbershops,
-  getDemoBarbershopBySlug,
-} from "@/data/demo-barbershops";
+  listKnownBarbershops,
+  resolveManagedBarbershopBySlug,
+} from "@/lib/barbershops";
 
 type AdminLoginPageProps = {
   params: Promise<{
@@ -11,8 +11,10 @@ type AdminLoginPageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return demoBarbershops.map((barbershop) => ({
+export async function generateStaticParams() {
+  const { data } = await listKnownBarbershops();
+
+  return data.map((barbershop) => ({
     barbershopSlug: barbershop.slug,
   }));
 }
@@ -21,7 +23,8 @@ export default async function AdminLoginPage({
   params,
 }: AdminLoginPageProps) {
   const { barbershopSlug } = await params;
-  const barbershop = getDemoBarbershopBySlug(barbershopSlug);
+  const { data: barbershop } =
+    await resolveManagedBarbershopBySlug(barbershopSlug);
 
   if (!barbershop) {
     notFound();

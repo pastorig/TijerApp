@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   type Barber,
   getActiveBarbers,
@@ -10,11 +9,13 @@ import {
 } from "@/data/demo-barbershops";
 import {
   createPendingAppointment,
-  listOccupiedAppointmentTimes,
   validateAppointmentTimeIsAvailable,
 } from "@/lib/appointments";
+import { getBarberDayAvailability } from "@/lib/barber-availability";
+import type { AvailabilitySlot } from "@/lib/availability";
 import { listActiveServicesByBarber } from "@/lib/barber-services";
 import { listActiveBarbersByBarbershop } from "@/lib/barbers";
+import { cn } from "@/lib/cn";
 import {
   formatDateForDisplay,
   formatPrice,
@@ -22,6 +23,13 @@ import {
 } from "@/lib/format";
 import type { BarberRow, BarberServiceRow } from "@/lib/supabase";
 import { createWhatsAppBookingLink } from "@/lib/whatsapp";
+import {
+  Button,
+  Field,
+  Input,
+  Select,
+  Textarea,
+} from "@/components/ui";
 
 type BookingFormProps = {
   barbershop: DemoBarbershop;
@@ -34,26 +42,13 @@ function getTodayInputValue() {
   return getLocalDateInputValue();
 }
 
-function buildTimeSlots(start: string, end: string, intervalMinutes: number) {
-  const [startHour, startMinute] = start.split(":").map(Number);
-  const [endHour, endMinute] = end.split(":").map(Number);
-  const slots: string[] = [];
-  const current = new Date(2026, 0, 1, startHour, startMinute);
-  const limit = new Date(2026, 0, 1, endHour, endMinute);
-
-  while (current < limit) {
-    slots.push(
-      current.toLocaleTimeString("es-AR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }),
-    );
-    current.setMinutes(current.getMinutes() + intervalMinutes);
-  }
-
-  return slots;
-}
+const SLOT_REASON_TITLE: Record<AvailabilitySlot["reason"], string> = {
+  available: "",
+  occupied: "Ocupado",
+  blocked: "Bloqueado",
+  past: "Horario pasado",
+  "outside-hours": "Fuera de horario",
+};
 
 export function BookingForm({ barbershop }: BookingFormProps) {
   const demoActiveBarbers = useMemo(
@@ -85,18 +80,10 @@ export function BookingForm({ barbershop }: BookingFormProps) {
   const [comment, setComment] = useState("");
   const [formError, setFormError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [occupiedTimes, setOccupiedTimes] = useState<string[]>([]);
-  const [isLoadingTimes, setIsLoadingTimes] = useState(false);
-
-  const timeSlots = useMemo(
-    () =>
-      buildTimeSlots(
-        barbershop.workingHours.start,
-        barbershop.workingHours.end,
-        barbershop.workingHours.intervalMinutes,
-      ),
-    [barbershop.workingHours],
+  const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>(
+    [],
   );
+  const [isLoadingTimes, setIsLoadingTimes] = useState(false);
 
   const selectedBarber = activeBarbers.find(
     (barber) => barber.id === selectedBarberId,
@@ -113,6 +100,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     isLoadingBarbers ||
     isLoadingServices ||
     !selectedBarber ||
+    !selectedService ||
     availableServices.length === 0;
   const compactSummary = [
     selectedService?.name,
@@ -122,10 +110,6 @@ export function BookingForm({ barbershop }: BookingFormProps) {
   ]
     .filter(Boolean)
     .join(" · ");
-  const occupiedTimeSet = useMemo(
-    () => new Set(occupiedTimes),
-    [occupiedTimes],
-  );
 
   function handleBarberChange(barberId: string) {
     const barber = activeBarbers.find(
@@ -135,11 +119,19 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     setSelectedBarberId(barberId);
     setSelectedBarberServices(barber?.services ?? []);
     setSelectedServiceId("");
+    setSelectedTime("");
     setFormError("");
   }
 
   function handleServiceChange(serviceId: string) {
     setSelectedServiceId(serviceId);
+    setSelectedTime("");
+    setFormError("");
+  }
+
+  function handleSlotSelect(slot: AvailabilitySlot) {
+    if (!slot.isAvailable) return;
+    setSelectedTime(slot.time);
     setFormError("");
   }
 
@@ -185,17 +177,14 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               })
             : demoActiveBarbers;
 
+        const nextSelectedBarber =
+          nextBarbers.find((barber) => barber.id === selectedBarberId) ??
+          nextBarbers[0];
+
         setActiveBarbers(nextBarbers);
-        setSelectedBarberId((currentBarberId) => {
-          const nextSelectedBarber =
-            nextBarbers.find((barber) => barber.id === currentBarberId) ??
-            nextBarbers[0];
-
-          setSelectedBarberServices(nextSelectedBarber?.services ?? []);
-          setSelectedServiceId("");
-
-          return nextSelectedBarber?.id ?? "";
-        });
+        setSelectedBarberId(nextSelectedBarber?.id ?? "");
+        setSelectedBarberServices(nextSelectedBarber?.services ?? []);
+        setSelectedServiceId(nextSelectedBarber?.services[0]?.id ?? "");
       } catch {
         if (isMounted) {
           setActiveBarbers(demoActiveBarbers);
@@ -215,7 +204,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     return () => {
       isMounted = false;
     };
-  }, [barbershop.slug, demoActiveBarbers, fallbackServices]);
+  }, [barbershop.slug, demoActiveBarbers, fallbackServices, selectedBarberId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -259,7 +248,11 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             : selectedBarber.services;
 
         setSelectedBarberServices(nextServices);
-        setSelectedServiceId(nextServices[0]?.id ?? "");
+        setSelectedServiceId(
+          nextServices.find((service) => service.id === selectedServiceId)?.id ??
+            nextServices[0]?.id ??
+            "",
+        );
       } catch {
         if (isMounted) {
           setSelectedBarberServices(selectedBarber.services);
@@ -280,15 +273,15 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     return () => {
       isMounted = false;
     };
-  }, [barbershop.slug, selectedBarber]);
+  }, [barbershop.slug, selectedBarber, selectedServiceId]);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadOccupiedTimes() {
-      if (!selectedDate || !selectedBarberId) {
+    async function loadAvailability() {
+      if (!selectedDate || !selectedBarberId || !selectedService) {
         if (isMounted) {
-          setOccupiedTimes([]);
+          setAvailabilitySlots([]);
           setIsLoadingTimes(false);
         }
         return;
@@ -297,10 +290,13 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       setIsLoadingTimes(true);
 
       try {
-        const { data, error } = await listOccupiedAppointmentTimes({
+        const { data, error } = await getBarberDayAvailability({
           barbershopSlug: barbershop.slug,
           barberId: selectedBarberId,
           appointmentDate: selectedDate,
+          appointmentDurationMinutes: selectedService.durationMinutes,
+          barbershopIntervalMinutes: barbershop.workingHours.intervalMinutes,
+          workingHours: barbershop.workingHours,
         });
 
         if (!isMounted) {
@@ -308,20 +304,23 @@ export function BookingForm({ barbershop }: BookingFormProps) {
         }
 
         if (error) {
-          setOccupiedTimes([]);
+          setAvailabilitySlots([]);
           setFormError("No pudimos actualizar la disponibilidad de horarios.");
           return;
         }
 
-        setOccupiedTimes(data);
+        setAvailabilitySlots(data);
 
-        if (selectedTime && data.includes(selectedTime)) {
+        if (
+          selectedTime &&
+          data.some((slot) => slot.time === selectedTime && !slot.isAvailable)
+        ) {
           setSelectedTime("");
-          setFormError("Ese horario acaba de ocuparse. Elegi otro.");
+          setFormError("Ese horario acaba de ocuparse. Elegí otro.");
         }
       } catch {
         if (isMounted) {
-          setOccupiedTimes([]);
+          setAvailabilitySlots([]);
           setFormError("No pudimos actualizar la disponibilidad de horarios.");
         }
       } finally {
@@ -331,12 +330,19 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       }
     }
 
-    loadOccupiedTimes();
+    loadAvailability();
 
     return () => {
       isMounted = false;
     };
-  }, [barbershop.slug, selectedBarberId, selectedDate, selectedTime]);
+  }, [
+    barbershop.slug,
+    barbershop.workingHours,
+    selectedBarberId,
+    selectedDate,
+    selectedService,
+    selectedTime,
+  ]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -350,7 +356,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       !clientPhone.trim()
     ) {
       setFormError(
-        "Completa barbero, servicio, fecha, horario, nombre y telefono.",
+        "Completá barbero, servicio, fecha, horario, nombre y teléfono.",
       );
       return;
     }
@@ -364,23 +370,26 @@ export function BookingForm({ barbershop }: BookingFormProps) {
         barberId: selectedBarber.id,
         appointmentDate: selectedDate,
         appointmentTime: selectedTime,
+        appointmentDurationMinutes: selectedService.durationMinutes,
+        barbershopIntervalMinutes: barbershop.workingHours.intervalMinutes,
+        workingHours: barbershop.workingHours,
       });
 
       if (error) {
-        setFormError(
-          "No pudimos validar la disponibilidad. Intentá nuevamente.",
-        );
+        setFormError("No pudimos validar la disponibilidad. Intentá nuevamente.");
         return;
       }
 
       if (!isAvailable) {
-        setOccupiedTimes((currentTimes) =>
-          currentTimes.includes(selectedTime)
-            ? currentTimes
-            : [...currentTimes, selectedTime],
+        setAvailabilitySlots((currentSlots) =>
+          currentSlots.map((slot) =>
+            slot.time === selectedTime
+              ? { ...slot, isAvailable: false, reason: "occupied" }
+              : slot,
+          ),
         );
         setSelectedTime("");
-        setFormError("Ese horario ya fue reservado. Elegi otro horario.");
+        setFormError("Ese horario ya fue reservado. Elegí otro.");
         return;
       }
     } catch {
@@ -439,46 +448,55 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     window.open(whatsappLink, "_blank", "noopener,noreferrer");
   }
 
+  const summaryRows: Array<{ label: string; value: string }> = [
+    { label: "Barbero", value: selectedBarberName || "—" },
+    { label: "Servicio", value: selectedService?.name ?? "—" },
+    {
+      label: "Duración",
+      value: selectedService ? `${selectedService.durationMinutes} min` : "—",
+    },
+    {
+      label: "Fecha",
+      value: selectedDate ? formatDateForDisplay(selectedDate) : "—",
+    },
+    { label: "Horario", value: selectedTime || "—" },
+    { label: "Cliente", value: clientName || "—" },
+    { label: "Teléfono", value: clientPhone || "—" },
+  ];
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="grid gap-5 pb-24 lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:gap-8 lg:pb-0"
+      className="grid gap-10 pb-32 sm:gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-start lg:gap-20 lg:pb-0"
     >
-      <section className="space-y-4 sm:space-y-6">
-        <div>
-          <p className="text-sm font-semibold uppercase text-amber-300">
+      <section className="space-y-8 sm:space-y-10">
+        <div className="animate-fade-up">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
             Reserva online
           </p>
-          <h1 className="mt-2 text-3xl font-black text-balance text-stone-50 sm:mt-3 sm:text-6xl">
+          <h1 className="mt-4 text-[2rem] font-black uppercase leading-[0.95] tracking-tight text-balance break-words sm:mt-6 sm:text-5xl lg:text-6xl">
             {barbershop.name}
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-300 sm:mt-4 sm:text-lg sm:leading-8">
-            Elegi el servicio, la fecha y el horario. Guardamos tu reserva y
-            despues abrimos WhatsApp con el mensaje listo.
+          <p className="mt-5 max-w-xl text-sm leading-7 text-[color:var(--text-secondary)] sm:mt-6 sm:text-base">
+            Elegí el servicio, la fecha y el horario. Guardamos tu reserva y
+            abrimos WhatsApp con el mensaje listo.
           </p>
         </div>
 
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-7">
           {isLoadingBarbers ? (
-            <div className="rounded-md border border-stone-800 bg-stone-900/60 px-3 py-2 text-sm font-semibold text-stone-300">
-              Cargando barberos disponibles...
-            </div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-muted)]">
+              Cargando barberos…
+            </p>
           ) : null}
 
           {activeBarbers.length > 1 ? (
-            <div>
-              <label
-                htmlFor="barber"
-                className="text-sm font-bold uppercase text-stone-300"
-              >
-                Barbero
-              </label>
-              <select
+            <Field label="Barbero" htmlFor="barber" required>
+              <Select
                 id="barber"
                 value={selectedBarberId}
                 disabled={isSaving}
                 onChange={(event) => handleBarberChange(event.target.value)}
-                className="mt-1.5 min-h-10 w-full rounded-md border border-stone-700 bg-stone-900 px-3 text-base text-stone-50 outline-none transition focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20 sm:mt-2 sm:min-h-12 sm:px-4"
                 required
               >
                 {activeBarbers.map((barber) => (
@@ -486,32 +504,34 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                     {getBarberDisplayName(barber)}
                   </option>
                 ))}
-              </select>
-            </div>
+              </Select>
+            </Field>
           ) : selectedBarber ? (
-            <div className="rounded-md border border-stone-800 bg-stone-900/60 px-3 py-2">
-              <p className="text-[11px] font-bold uppercase text-stone-500">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
                 Barbero
               </p>
-              <p className="text-sm font-semibold text-stone-100">
+              <p className="mt-2 text-lg font-bold text-white">
                 {selectedBarberName}
               </p>
             </div>
           ) : null}
 
-          <div>
-            <label
-              htmlFor="service"
-              className="text-sm font-bold uppercase text-stone-300"
-            >
-              Servicio
-            </label>
-            {isLoadingServices ? (
-              <p className="mt-1.5 text-xs text-stone-400 sm:mt-2 sm:text-sm">
-                Actualizando servicios del barbero...
-              </p>
-            ) : null}
-            <select
+          <Field
+            label="Servicio"
+            htmlFor="service"
+            required
+            hint={isLoadingServices ? "Actualizando servicios…" : undefined}
+            error={
+              !isLoadingServices &&
+              !isLoadingBarbers &&
+              selectedBarber &&
+              availableServices.length === 0
+                ? "Este barbero no tiene servicios activos."
+                : undefined
+            }
+          >
+            <Select
               id="service"
               value={selectedService?.id ?? ""}
               disabled={
@@ -522,7 +542,6 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 availableServices.length === 0
               }
               onChange={(event) => handleServiceChange(event.target.value)}
-              className="mt-1.5 min-h-10 w-full rounded-md border border-stone-700 bg-stone-900 px-3 text-base text-stone-50 outline-none transition focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20 sm:mt-2 sm:min-h-12 sm:px-4"
               required
             >
               {availableServices.length === 0 ? (
@@ -530,88 +549,86 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               ) : null}
               {availableServices.map((service) => (
                 <option key={service.id} value={service.id}>
-                  {service.name} - {formatPrice(service.price)}
+                  {service.name} — {formatPrice(service.price)}
                 </option>
               ))}
-            </select>
-            {!isLoadingServices &&
-            !isLoadingBarbers &&
-            selectedBarber &&
-            availableServices.length === 0 ? (
-              <p className="mt-2 text-xs font-semibold text-red-200">
-                Este barbero no tiene servicios activos configurados.
+            </Select>
+          </Field>
+
+          <Field label="Fecha" htmlFor="date" required>
+            <Input
+              id="date"
+              type="date"
+              value={selectedDate}
+              disabled={isSaving}
+              onChange={(event) => {
+                setSelectedDate(event.target.value);
+                setSelectedTime("");
+                setFormError("");
+              }}
+              required
+            />
+          </Field>
+
+          {/* Horarios como grid de pills clickeables */}
+          <div>
+            <div className="flex items-baseline justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+                Horario <span className="text-[color:var(--brand-gold)]">*</span>
               </p>
-            ) : null}
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-            <div>
-              <label
-                htmlFor="date"
-                className="text-sm font-bold uppercase text-stone-300"
-              >
-                Fecha
-              </label>
-              <input
-                id="date"
-                type="date"
-                value={selectedDate}
-                disabled={isSaving}
-                onChange={(event) => {
-                  setSelectedDate(event.target.value);
-                  setFormError("");
-                }}
-                className="mt-1.5 min-h-10 w-full rounded-md border border-stone-700 bg-stone-900 px-3 text-base text-stone-50 outline-none transition focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20 sm:mt-2 sm:min-h-12 sm:px-4"
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="time"
-                className="text-sm font-bold uppercase text-stone-300"
-              >
-                Horario
-              </label>
               {isLoadingTimes ? (
-                <p className="mt-1.5 text-xs text-stone-400 sm:mt-2 sm:text-sm">
-                  Actualizando horarios disponibles...
-                </p>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
+                  Actualizando…
+                </span>
               ) : null}
-              <select
-                id="time"
-                value={selectedTime}
-                disabled={isSaving || isLoadingTimes || isLoadingServices}
-                onChange={(event) => {
-                  setSelectedTime(event.target.value);
-                  setFormError("");
-                }}
-                className="mt-1.5 min-h-10 w-full rounded-md border border-stone-700 bg-stone-900 px-3 text-base text-stone-50 outline-none transition focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20 sm:mt-2 sm:min-h-12 sm:px-4"
-                required
-              >
-                <option value="">Seleccioná un horario</option>
-                {timeSlots.map((slot) => (
-                  <option
-                    disabled={occupiedTimeSet.has(slot)}
-                    key={slot}
-                    value={slot}
-                  >
-                    {occupiedTimeSet.has(slot) ? `${slot} - Ocupado` : slot}
-                  </option>
-                ))}
-              </select>
             </div>
+
+            {!selectedService ? (
+              <p className="mt-4 text-xs text-[color:var(--text-muted)]">
+                Elegí un servicio para ver los horarios disponibles.
+              </p>
+            ) : availabilitySlots.length === 0 && !isLoadingTimes ? (
+              <p className="mt-4 text-xs text-[color:var(--text-muted)]">
+                No hay horarios disponibles para esta fecha.
+              </p>
+            ) : (
+              <div
+                role="radiogroup"
+                aria-label="Horarios disponibles"
+                className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5"
+              >
+                {availabilitySlots.map((slot) => {
+                  const isSelected = slot.time === selectedTime;
+                  const title = SLOT_REASON_TITLE[slot.reason] || undefined;
+                  return (
+                    <button
+                      key={slot.time}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      disabled={!slot.isAvailable || isSaving}
+                      onClick={() => handleSlotSelect(slot)}
+                      title={title}
+                      className={cn(
+                        "min-h-11 rounded-[var(--radius-sm)] border font-mono text-xs font-bold tabular-nums transition-colors duration-[var(--duration-fast)]",
+                        isSelected
+                          ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                          : slot.isAvailable
+                            ? "border-[color:var(--border-default)] text-white hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+                            : "cursor-not-allowed border-[color:var(--border-subtle)] text-[color:var(--text-subtle)] line-through",
+                      )}
+                    >
+                      {slot.time}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:gap-4">
-            <div>
-              <label
-                htmlFor="clientName"
-                className="text-[11px] font-bold uppercase text-stone-400 sm:text-sm sm:text-stone-300"
-              >
-                Nombre
-              </label>
-              <input
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Nombre" htmlFor="clientName" required>
+              <Input
                 id="clientName"
                 type="text"
                 value={clientName}
@@ -620,20 +637,14 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                   setClientName(event.target.value);
                   setFormError("");
                 }}
-                placeholder="Nombre"
-                className="mt-1 min-h-9 w-full rounded-md border border-stone-700 bg-stone-900 px-2.5 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20 sm:mt-2 sm:min-h-12 sm:px-4 sm:text-base"
+                placeholder="Tu nombre"
+                autoComplete="name"
                 required
               />
-            </div>
+            </Field>
 
-            <div>
-              <label
-                htmlFor="clientPhone"
-                className="text-[11px] font-bold uppercase text-stone-400 sm:text-sm sm:text-stone-300"
-              >
-                Tel
-              </label>
-              <input
+            <Field label="Teléfono" htmlFor="clientPhone" required>
+              <Input
                 id="clientPhone"
                 type="tel"
                 value={clientPhone}
@@ -642,21 +653,16 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                   setClientPhone(event.target.value);
                   setFormError("");
                 }}
-                placeholder="Teléfono"
-                className="mt-1 min-h-9 w-full rounded-md border border-stone-700 bg-stone-900 px-2.5 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20 sm:mt-2 sm:min-h-12 sm:px-4 sm:text-base"
+                placeholder="11 5555-5555"
+                autoComplete="tel"
+                inputMode="tel"
                 required
               />
-            </div>
+            </Field>
           </div>
 
-          <div>
-            <label
-              htmlFor="comment"
-              className="text-[11px] font-bold uppercase text-stone-400 sm:text-sm sm:text-stone-300"
-            >
-              Comentario opcional
-            </label>
-            <textarea
+          <Field label="Comentario" htmlFor="comment" optional>
+            <Textarea
               id="comment"
               value={comment}
               onChange={(event) => {
@@ -666,117 +672,103 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               disabled={isSaving}
               placeholder="Preferencia o detalle"
               rows={2}
-              className="mt-1 w-full rounded-md border border-stone-700 bg-stone-900 px-2.5 py-2 text-sm text-stone-50 outline-none transition placeholder:text-stone-500 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/20 sm:mt-2 sm:px-4 sm:py-3 sm:text-base"
             />
-          </div>
+          </Field>
         </div>
       </section>
 
-      <aside className="border border-stone-800 bg-stone-900/70 p-4 shadow-2xl shadow-black/30 sm:p-6">
-        <p className="text-xs font-bold uppercase text-amber-300">Resumen</p>
-        <h2 className="mt-1 text-xl font-black text-stone-100 sm:mt-2 sm:text-2xl">
-          Tu turno seleccionado
-        </h2>
-
-        <dl className="mt-4 space-y-2 text-sm sm:mt-6 sm:space-y-4">
-          <div className="flex items-start justify-between gap-4 border-b border-stone-800 pb-2 sm:pb-4">
-            <dt className="text-stone-400">Barbero</dt>
-            <dd className="text-right font-semibold text-stone-100">
-              {selectedBarberName || "Sin seleccionar"}
-            </dd>
-          </div>
-          <div className="flex items-start justify-between gap-4 border-b border-stone-800 pb-2 sm:pb-4">
-            <dt className="text-stone-400">Servicio</dt>
-            <dd className="text-right font-semibold text-stone-100">
-              {selectedService?.name ?? "Sin seleccionar"}
-            </dd>
-          </div>
-          <div className="flex items-start justify-between gap-4 border-b border-stone-800 pb-2 sm:pb-4">
-            <dt className="text-stone-400">Precio</dt>
-            <dd className="font-mono font-bold text-amber-300">
-              {selectedService ? formatPrice(selectedService.price) : "-"}
-            </dd>
-          </div>
-          <div className="flex items-start justify-between gap-4 border-b border-stone-800 pb-2 sm:pb-4">
-            <dt className="text-stone-400">Duración</dt>
-            <dd className="font-semibold text-stone-100">
-              {selectedService
-                ? `${selectedService.durationMinutes} minutos`
-                : "-"}
-            </dd>
-          </div>
-          <div className="flex items-start justify-between gap-4 border-b border-stone-800 pb-2 sm:pb-4">
-            <dt className="text-stone-400">Fecha</dt>
-            <dd className="font-semibold text-stone-100">
-              {selectedDate || "Sin seleccionar"}
-            </dd>
-          </div>
-          <div className="flex items-start justify-between gap-4 border-b border-stone-800 pb-2 sm:pb-4">
-            <dt className="text-stone-400">Horario</dt>
-            <dd className="font-semibold text-stone-100">
-              {selectedTime || "Sin seleccionar"}
-            </dd>
-          </div>
-          <div className="flex items-start justify-between gap-4 border-b border-stone-800 pb-2 sm:pb-4">
-            <dt className="text-stone-400">Cliente</dt>
-            <dd className="text-right font-semibold text-stone-100">
-              {clientName || "Sin completar"}
-            </dd>
-          </div>
-          <div className="flex items-start justify-between gap-4 border-b border-stone-800 pb-2 sm:pb-4">
-            <dt className="text-stone-400">Teléfono</dt>
-            <dd className="text-right font-semibold text-stone-100">
-              {clientPhone || "Sin completar"}
-            </dd>
-          </div>
-          <div className="flex items-start justify-between gap-4">
-            <dt className="text-stone-400">Comentario</dt>
-            <dd className="max-w-48 text-right font-semibold text-stone-100">
-              {comment || "Sin comentario"}
-            </dd>
-          </div>
-        </dl>
-
-        {formError ? (
-          <p
-            role="alert"
-            className="mt-4 rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200 sm:mt-6 sm:px-4 sm:py-3"
-          >
-            {formError}
-          </p>
-        ) : null}
-
-        <p className="mt-4 text-xs leading-5 text-stone-400 sm:mt-6 sm:text-sm sm:leading-6">
-          Al reservar, se guarda el turno y se abre WhatsApp para confirmar el
-          mensaje.
-        </p>
-
-        <button
-          type="submit"
-          disabled={isSubmitDisabled}
-          className="mt-5 hidden min-h-11 w-full items-center justify-center rounded-md bg-amber-300 px-5 py-2.5 text-sm font-bold uppercase text-stone-950 transition hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:ring-offset-2 focus:ring-offset-stone-950 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-amber-300 lg:inline-flex lg:min-h-12 lg:px-6 lg:py-3"
+      {/* Resumen — columna lateral minimalista */}
+      <aside className="lg:sticky lg:top-12">
+        <div
+          className="animate-fade-up border-t border-[color:var(--border-subtle)] pt-8 sm:border-t-0 sm:border-l sm:pl-6 sm:pt-0 lg:pl-10"
+          style={{ animationDelay: "120ms" }}
         >
-          {isSaving ? "Guardando..." : "Reservar turno"}
-        </button>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
+            Resumen
+          </p>
+
+          {selectedService ? (
+            <div className="mt-6">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+                Total
+              </p>
+              <p className="mt-2 font-mono text-4xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl lg:text-6xl">
+                {formatPrice(selectedService.price)}
+              </p>
+            </div>
+          ) : null}
+
+          <dl className="mt-8 grid gap-4 sm:mt-10 sm:gap-5">
+            {summaryRows.map((row) => (
+              <div
+                key={row.label}
+                className="grid grid-cols-[auto_1fr] items-baseline gap-4"
+              >
+                <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:tracking-[0.2em]">
+                  {row.label}
+                </dt>
+                <dd className="min-w-0 break-words text-right text-sm font-semibold text-white">
+                  {row.value}
+                </dd>
+              </div>
+            ))}
+            {comment ? (
+              <div className="grid gap-2">
+                <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:tracking-[0.2em]">
+                  Comentario
+                </dt>
+                <dd className="break-words text-sm text-[color:var(--text-secondary)]">
+                  {comment}
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+
+          {formError ? (
+            <div
+              role="alert"
+              className="mt-8 border-l-2 border-[color:var(--danger)] pl-4 text-sm font-semibold text-[color:var(--danger)]"
+            >
+              {formError}
+            </div>
+          ) : null}
+
+          <p className="mt-8 text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
+            Al reservar, guardamos el turno y abrimos WhatsApp.
+          </p>
+
+          <Button
+            type="submit"
+            size="lg"
+            fullWidth
+            loading={isSaving}
+            disabled={isSubmitDisabled}
+            className="mt-8 hidden lg:inline-flex"
+          >
+            {isSaving ? "Guardando…" : "Reservar turno"}
+          </Button>
+        </div>
       </aside>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-stone-800 bg-stone-950/95 px-3 py-3 shadow-2xl shadow-black/40 backdrop-blur lg:hidden">
+      {/* Sticky bottom CTA (mobile) */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--border-default)] bg-black/95 px-4 py-3 backdrop-blur-md lg:hidden">
         <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase text-stone-500">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-subtle)]">
               Tu turno
             </p>
-            <p className="truncate text-sm font-semibold text-stone-100">
-              {compactSummary || "Completá los datos para reservar"}
+            <p className="mt-0.5 truncate text-xs font-semibold text-white">
+              {compactSummary || "Completá los datos"}
             </p>
           </div>
-          <button
+          <Button
             type="submit"
+            size="md"
+            loading={isSaving}
             disabled={isSubmitDisabled}
-            className="inline-flex min-h-11 items-center justify-center rounded-md bg-amber-300 px-4 py-2 text-xs font-bold uppercase text-stone-950 transition hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:ring-offset-2 focus:ring-offset-stone-950 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-amber-300"
           >
-            {isSaving ? "Guardando..." : "Reservar turno"}
-          </button>
+            {isSaving ? "…" : "Reservar"}
+          </Button>
         </div>
       </div>
     </form>

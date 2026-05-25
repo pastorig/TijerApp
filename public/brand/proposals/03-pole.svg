@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <rect width="256" height="256" fill="#000000"/>
+  <defs>
+    <clipPath id="poleClip">
+      <rect x="98" y="40" width="60" height="176" rx="30"/>
+    </clipPath>
+  </defs>
+  <rect x="98" y="40" width="60" height="176" rx="30" fill="none" stroke="#c9a23e" stroke-width="3"/>
+  <g clip-path="url(#poleClip)" stroke="#c9a23e" stroke-width="10">
+    <line x1="90" y1="80"  x2="166" y2="56"/>
+    <line x1="90" y1="110" x2="166" y2="86"/>
+    <line x1="90" y1="140" x2="166" y2="116"/>
+    <line x1="90" y1="170" x2="166" y2="146"/>
+    <line x1="90" y1="200" x2="166" y2="176"/>
+  </g>
+</svg>

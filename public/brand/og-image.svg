@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none" shape-rendering="crispEdges">
+  <rect width="1200" height="630" fill="#000000"/>
+
+  <!-- Isotype — grilla 4x4 con diagonal alternada gold/silver -->
+  <g transform="translate(96 215)">
+    <rect x="0"   y="0"   width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
+    <rect x="52"  y="0"   width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
+    <rect x="104" y="0"   width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
+    <rect x="156" y="0"   width="44" height="44" fill="#d8d8d8"/>
+    <rect x="0"   y="52"  width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
+    <rect x="52"  y="52"  width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
+    <rect x="104" y="52"  width="44" height="44" fill="#c9a23e"/>
+    <rect x="156" y="52"  width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
+    <rect x="0"   y="104" width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
+    <rect x="52"  y="104" width="44" height="44" fill="#d8d8d8"/>
+    <rect x="104" y="104" width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
+    <rect x="156" y="104" width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
+    <rect x="0"   y="156" width="44" height="44" fill="#c9a23e"/>
+    <rect x="52"  y="156" width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
+    <rect x="104" y="156" width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
+    <rect x="156" y="156" width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="380" y="332" font-family="Geist, system-ui, sans-serif" font-weight="900" font-size="92" letter-spacing="6">
+    <tspan fill="#c9a23e">BARBER</tspan><tspan fill="#d8d8d8">SYNC</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="380" y="392" font-family="Geist, system-ui, sans-serif" font-weight="400" font-size="22" fill="#8a8a8a" letter-spacing="2">
+    SISTEMA DE TURNOS PARA BARBERÍAS MODERNAS
+  </text>
+
+  <!-- Hairline divider -->
+  <line x1="96" y1="500" x2="1104" y2="500" stroke="#c9a23e" stroke-opacity="0.4" stroke-width="1"/>
+
+  <!-- Footer -->
+  <text x="96" y="555" font-family="Geist Mono, ui-monospace, monospace" font-weight="500" font-size="16" fill="#5a5a5a" letter-spacing="3">
+    BARBERSYNC.APP
+  </text>
+</svg>
