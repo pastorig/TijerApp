@@ -25,7 +25,7 @@ export default function Home() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/sv-barber/admin/login"
+                href="/login"
                 className="inline-flex min-h-12 items-center justify-center rounded-md bg-amber-300 px-6 py-3 text-sm font-bold uppercase text-stone-950 transition hover:bg-amber-200"
               >
                 Iniciar sesion

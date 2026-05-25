@@ -71,6 +71,48 @@ export const demoBarbershops: DemoBarbershop[] = [
       intervalMinutes: 30,
     },
   },
+  {
+    id: "barbershop_gino_barber",
+    slug: "gino-barber",
+    name: "Gino Barber",
+    description: "Turnos online para barberia moderna",
+    instagram: "https://instagram.com/ginobarber",
+    whatsapp: "+54 9 11 1111-1111",
+    barbers: [
+      {
+        id: "gino",
+        name: "Gino",
+        role: "Barbero",
+        displayName: "Gino",
+        isActive: true,
+        services: [
+          {
+            id: "gino_service_haircut",
+            name: "Corte",
+            price: 8000,
+            durationMinutes: 30,
+          },
+          {
+            id: "gino_service_beard",
+            name: "Barba",
+            price: 5000,
+            durationMinutes: 30,
+          },
+          {
+            id: "gino_service_haircut_beard",
+            name: "Corte + barba",
+            price: 11000,
+            durationMinutes: 45,
+          },
+        ],
+      },
+    ],
+    workingHours: {
+      start: "16:00",
+      end: "21:00",
+      intervalMinutes: 30,
+    },
+  },
 ];
 
 export function getDemoBarbershopBySlug(slug: string) {
