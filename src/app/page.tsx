@@ -37,7 +37,7 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <section className="mx-auto w-full max-w-6xl px-4 pb-20 pt-12 sm:px-8 sm:pb-24 sm:pt-24 lg:px-12 lg:pb-32 lg:pt-32">
+      <section className="mx-auto w-full max-w-6xl px-4 pb-20 pt-6 sm:px-8 sm:pb-24 sm:pt-8 lg:px-12 lg:pb-28 lg:pt-12">
         <div className="animate-fade-up">
           <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
             Plataforma SaaS · Argentina

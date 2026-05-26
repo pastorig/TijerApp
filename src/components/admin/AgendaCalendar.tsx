@@ -216,7 +216,9 @@ export function AgendaCalendar({
         onTouchEnd={handleCalendarTouchEnd}
         className="overflow-hidden transition-[max-height] duration-[500ms] ease-[var(--ease-out-soft)]"
         style={{
-          maxHeight: isMonthExpanded ? "330px" : "56px",
+          // Collapsed: alcanza para h-12 (mobile) y h-14 (desktop) de DayCell.
+          // Expanded: 6 rows × h-14 (56px) + 5 gaps × 4px ≈ 356px → 380 con margen.
+          maxHeight: isMonthExpanded ? "380px" : "64px",
         }}
       >
         {isMonthExpanded ? (
@@ -303,7 +305,11 @@ function DayCell({
       type="button"
       onClick={onClick}
       className={cn(
-        "relative flex aspect-square items-center justify-center rounded-[var(--radius-sm)] font-mono text-xs font-bold tabular-nums transition-colors duration-[var(--duration-fast)] sm:text-sm",
+        // Altura fija (no aspect-square) — garantiza centrado consistente entre
+        // vista semanal colapsada y mensual expandida. Antes el aspect-square
+        // en desktop hacía cells de ~80px de alto, recortadas por el maxHeight
+        // del contenedor, dejando el número visualmente en la parte inferior.
+        "relative flex h-12 items-center justify-center rounded-[var(--radius-sm)] font-mono text-xs font-bold tabular-nums transition-colors duration-[var(--duration-fast)] sm:h-14 sm:text-sm",
         isFocused
           ? "bg-[color:var(--brand-gold)] text-black"
           : isToday
@@ -318,7 +324,7 @@ function DayCell({
         <span
           aria-hidden="true"
           className={cn(
-            "absolute bottom-1 size-1 rounded-full",
+            "absolute bottom-1.5 size-1 rounded-full",
             isToday
               ? "bg-[color:var(--brand-gold)]"
               : "bg-[color:var(--brand-silver)]",

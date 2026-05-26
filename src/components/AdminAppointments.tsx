@@ -512,24 +512,59 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
               />
             ) : (
               <ul className="grid gap-3">
-                {filteredAppointments.map((appointment) => (
-                  <AppointmentCard
-                    key={
-                      appointment.id ??
-                      `${appointment.customer_phone}-${appointment.appointment_date}-${appointment.appointment_time}`
+                {filteredAppointments.flatMap((appointment, index, arr) => {
+                  const nodes: React.ReactNode[] = [
+                    <AppointmentCard
+                      key={
+                        appointment.id ??
+                        `${appointment.customer_phone}-${appointment.appointment_date}-${appointment.appointment_time}`
+                      }
+                      appointment={appointment}
+                      onConfirm={handleConfirmAppointment}
+                      onWhatsApp={handleSendWhatsApp}
+                      onCancel={handleCancelAppointment}
+                      onRestore={handleRestoreAppointment}
+                      onDelete={handleDeleteAppointment}
+                      confirmingId={confirmingAppointmentId}
+                      cancellingId={cancellingAppointmentId}
+                      restoringId={restoringAppointmentId}
+                      deletingId={deletingAppointmentId}
+                    />,
+                  ];
+
+                  // Gap marker entre turnos consecutivos activos del mismo día.
+                  // Solo tiene sentido cuando el filtro es "Día" (ver un solo día)
+                  // y ambos turnos están activos (pending/confirmed).
+                  if (activeFilter === "day" && index < arr.length - 1) {
+                    const next = arr[index + 1];
+                    const currentActive =
+                      appointment.status === "pending" ||
+                      appointment.status === "confirmed";
+                    const nextActive =
+                      next.status === "pending" || next.status === "confirmed";
+
+                    if (currentActive && nextActive) {
+                      const currentEnd =
+                        timeValueToMinutes(appointment.appointment_time) +
+                        (appointment.service_duration_minutes ?? 0);
+                      const nextStart = timeValueToMinutes(next.appointment_time);
+                      const gap = nextStart - currentEnd;
+
+                      if (gap > 0) {
+                        nodes.push(
+                          <GapMarker
+                            key={`gap-${appointment.id ?? index}`}
+                            startMinutes={currentEnd}
+                            endMinutes={nextStart}
+                            minutes={gap}
+                          />,
+                        );
+                      }
                     }
-                    appointment={appointment}
-                    onConfirm={handleConfirmAppointment}
-                    onWhatsApp={handleSendWhatsApp}
-                    onCancel={handleCancelAppointment}
-                    onRestore={handleRestoreAppointment}
-                    onDelete={handleDeleteAppointment}
-                    confirmingId={confirmingAppointmentId}
-                    cancellingId={cancellingAppointmentId}
-                    restoringId={restoringAppointmentId}
-                    deletingId={deletingAppointmentId}
-                  />
-                ))}
+                  }
+
+                  return nodes;
+                })}
               </ul>
             )}
           </>
@@ -650,6 +685,52 @@ function EmptyState({
         {description}
       </p>
     </div>
+  );
+}
+
+function formatMinutesToTime(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60)
+    .toString()
+    .padStart(2, "0");
+  const minutes = (totalMinutes % 60).toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function formatGapDuration(minutes: number) {
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (rest === 0) return `${hours} h`;
+  return `${hours}h ${rest}min`;
+}
+
+function GapMarker({
+  startMinutes,
+  endMinutes,
+  minutes,
+}: {
+  startMinutes: number;
+  endMinutes: number;
+  minutes: number;
+}) {
+  return (
+    <li
+      aria-label={`Hueco libre de ${minutes} minutos`}
+      className="flex items-center gap-3 px-2 py-1"
+    >
+      <span className="h-px flex-1 bg-[color:var(--border-subtle)]" aria-hidden="true" />
+      <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-subtle)]">
+        <span className="font-mono tabular-nums">
+          {formatMinutesToTime(startMinutes)}
+          <span className="mx-1 text-[color:var(--text-subtle)]">→</span>
+          {formatMinutesToTime(endMinutes)}
+        </span>
+        <span className="text-[color:var(--brand-gold)]">
+          {formatGapDuration(minutes)} libres
+        </span>
+      </span>
+      <span className="h-px flex-1 bg-[color:var(--border-subtle)]" aria-hidden="true" />
+    </li>
   );
 }
 

@@ -419,6 +419,25 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       const { error } = await createPendingAppointment(appointment);
 
       if (error) {
+        // 23505 = unique_violation de Postgres. El índice parcial
+        // `appointments_unique_active_slot` rechazó porque ya existe un turno
+        // activo (pending/confirmed) en ese slot. Race condition cerrada por
+        // la DB — el cliente recibe un mensaje claro y un slot recargado.
+        if (error.code === "23505") {
+          setAvailabilitySlots((currentSlots) =>
+            currentSlots.map((slot) =>
+              slot.time === selectedTime
+                ? { ...slot, isAvailable: false, reason: "occupied" }
+                : slot,
+            ),
+          );
+          setSelectedTime("");
+          setFormError(
+            "Ese horario acaba de ocuparse. Elegí otro disponible.",
+          );
+          return;
+        }
+
         setFormError(
           "No pudimos guardar la reserva. Revisá los datos e intentá nuevamente.",
         );
