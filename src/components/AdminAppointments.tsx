@@ -252,6 +252,9 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
       serviceName: appointment.service_name,
       date: formatDateForDisplay(appointment.appointment_date),
       time: appointment.appointment_time,
+      // El cliente recibe el mensaje con un link `/r/[token]` para confirmar
+      // o cancelar desde la web sin loguearse.
+      confirmationToken: appointment.confirmation_token,
     });
     window.open(link, "_blank", "noopener,noreferrer");
   }

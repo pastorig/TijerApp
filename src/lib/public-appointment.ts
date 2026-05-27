@@ -1,0 +1,76 @@
+import { getSupabaseClient } from "@/lib/supabase";
+
+/**
+ * Cliente público para el flow de confirmar/cancelar turno via token.
+ * Estos endpoints usan RPCs `security definer` en Supabase, así que NO
+ * dependen de RLS — el token es la única credencial.
+ */
+
+export type PublicAppointmentByToken = {
+  id: string;
+  barbershop_slug: string;
+  barbershop_name: string;
+  barber_name: string;
+  customer_name: string;
+  service_name: string;
+  service_price: number;
+  service_duration_minutes: number;
+  appointment_date: string; // "YYYY-MM-DD"
+  appointment_time: string; // "HH:MM" o "HH:MM:SS"
+  comment: string | null;
+  status: "pending" | "confirmed" | "cancelled" | "deleted";
+};
+
+export async function getPublicAppointmentByToken(token: string) {
+  const { data, error } = await getSupabaseClient().rpc(
+    "get_public_appointment_by_token",
+    { p_token: token },
+  );
+
+  if (error) {
+    return { data: null, error };
+  }
+
+  // El RPC devuelve un array (returns table) — agarramos la primera fila.
+  const row = (data as PublicAppointmentByToken[] | null)?.[0] ?? null;
+
+  return { data: row, error: null };
+}
+
+type ActionResult = {
+  ok: boolean;
+  status: string | null;
+  reason: string;
+};
+
+export async function confirmAppointmentByToken(token: string) {
+  const { data, error } = await getSupabaseClient().rpc(
+    "confirm_appointment_by_token",
+    { p_token: token },
+  );
+
+  if (error) {
+    return { ok: false, status: null, reason: error.message };
+  }
+
+  const row = (data as ActionResult[] | null)?.[0];
+  return (
+    row ?? { ok: false, status: null, reason: "unknown" }
+  );
+}
+
+export async function cancelAppointmentByToken(token: string) {
+  const { data, error } = await getSupabaseClient().rpc(
+    "cancel_appointment_by_token",
+    { p_token: token },
+  );
+
+  if (error) {
+    return { ok: false, status: null, reason: error.message };
+  }
+
+  const row = (data as ActionResult[] | null)?.[0];
+  return (
+    row ?? { ok: false, status: null, reason: "unknown" }
+  );
+}

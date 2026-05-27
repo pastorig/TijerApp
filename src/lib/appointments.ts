@@ -59,7 +59,7 @@ export async function listAppointmentsByBarbershop(barbershopSlug: string) {
   const { data, error } = await getSupabaseClient()
     .from("appointments")
     .select(
-      "id, barbershop_slug, barber_id, barber_name, customer_name, customer_phone, service_name, service_price, service_duration_minutes, appointment_date, appointment_time, comment, status, created_at",
+      "id, barbershop_slug, barber_id, barber_name, customer_name, customer_phone, service_name, service_price, service_duration_minutes, appointment_date, appointment_time, comment, status, created_at, confirmation_token",
     )
     .eq("barbershop_slug", barbershopSlug)
     .order("appointment_date", { ascending: true })

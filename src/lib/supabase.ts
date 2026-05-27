@@ -21,6 +21,7 @@ type AppointmentRow = Omit<AppointmentInsert, "status"> & {
   id?: string;
   created_at?: string;
   status: AppointmentStatus;
+  confirmation_token?: string;
 };
 
 type BarberInsert = {
@@ -220,6 +221,39 @@ type Database = {
           p_barbershop_slug: string;
         };
         Returns: PublicBarberDayAppointmentRow[];
+      };
+      get_public_appointment_by_token: {
+        Args: { p_token: string };
+        Returns: Array<{
+          id: string;
+          barbershop_slug: string;
+          barbershop_name: string;
+          barber_name: string;
+          customer_name: string;
+          service_name: string;
+          service_price: number;
+          service_duration_minutes: number;
+          appointment_date: string;
+          appointment_time: string;
+          comment: string | null;
+          status: AppointmentStatus;
+        }>;
+      };
+      confirm_appointment_by_token: {
+        Args: { p_token: string };
+        Returns: Array<{
+          ok: boolean;
+          status: AppointmentStatus | null;
+          reason: string;
+        }>;
+      };
+      cancel_appointment_by_token: {
+        Args: { p_token: string };
+        Returns: Array<{
+          ok: boolean;
+          status: AppointmentStatus | null;
+          reason: string;
+        }>;
       };
     };
     Enums: Record<string, never>;

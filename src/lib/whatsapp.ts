@@ -17,10 +17,28 @@ type WhatsAppConfirmationLinkInput = {
   serviceName: string;
   date: string;
   time: string;
+  /**
+   * Token único del turno. Si se provee, el mensaje incluye un link
+   * a `/r/[token]` para que el cliente confirme o cancele desde la web.
+   */
+  confirmationToken?: string;
 };
 
 function normalizeWhatsAppPhone(phone: string) {
   return phone.replace(/\D/g, "");
+}
+
+/**
+ * Construye la URL pública del link de confirmación.
+ * Usa NEXT_PUBLIC_SITE_URL (seteada en Vercel). En SSR/server fallback al
+ * mismo default que metadataBase.
+ */
+function getConfirmationUrl(token: string) {
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  // Quitar trailing slash si existe.
+  const base = siteUrl.replace(/\/$/, "");
+  return `${base}/r/${token}`;
 }
 
 export function createWhatsAppBookingLink({
@@ -65,16 +83,29 @@ export function createWhatsAppConfirmationLink({
   serviceName,
   date,
   time,
+  confirmationToken,
 }: WhatsAppConfirmationLinkInput) {
   const normalizedPhone = normalizeWhatsAppPhone(clientPhone);
   const messageLines = [
-    `Hola ${clientName}, te confirmamos tu turno en ${barbershopName}.`,
+    `Hola ${clientName}, te recordamos tu turno en ${barbershopName}.`,
+    "",
     `Servicio: ${serviceName}`,
     `Fecha: ${date}`,
     `Horario: ${time}`,
-    "",
-    "Por favor, avisa con al menos 1 hora de anticipacion si necesitas cancelar.",
   ];
+
+  if (confirmationToken) {
+    messageLines.push(
+      "",
+      "Confirmá o cancelá tu turno con un click:",
+      getConfirmationUrl(confirmationToken),
+    );
+  } else {
+    messageLines.push(
+      "",
+      "Por favor, avisa con al menos 1 hora de anticipacion si necesitas cancelar.",
+    );
+  }
 
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(
     messageLines.join("\n"),
