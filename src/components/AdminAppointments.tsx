@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Search, X } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import {
   cancelAppointment,
@@ -52,6 +53,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const [focusDate, setFocusDate] = useState(getTodayYmd());
   const [activeFilter, setActiveFilter] = useState<AppointmentFilter>("day");
   const [selectedBarberFilter, setSelectedBarberFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [confirmingAppointmentId, setConfirmingAppointmentId] = useState<
     string | null
   >(null);
@@ -99,28 +101,50 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     [visibleAppointments, focusDate],
   );
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const isSearching = normalizedQuery.length > 0;
+
   const filteredAppointments = useMemo(() => {
-    return appointments
-      .filter((a) => {
-        if (!matchesBarber(a)) return false;
-        if (activeFilter === "deleted") return a.status === "deleted";
+    const base = appointments.filter((a) => {
+      if (!matchesBarber(a)) return false;
+
+      // Búsqueda: si hay query, ignoramos filtro de día/estado pero
+      // seguimos respetando barbero y excluimos eliminados.
+      if (isSearching) {
         if (a.status === "deleted") return false;
-        if (activeFilter === "all") return true;
-        if (activeFilter === "day")
-          return normalizeDateValue(a.appointment_date) === focusDate;
-        return a.status === activeFilter;
-      })
-      .sort((a, b) => {
-        const dateCompare = normalizeDateValue(a.appointment_date).localeCompare(
-          normalizeDateValue(b.appointment_date),
-        );
-        if (dateCompare !== 0) return dateCompare;
+        const name = a.customer_name?.toLowerCase() ?? "";
+        const phone = a.customer_phone?.toLowerCase() ?? "";
         return (
-          timeValueToMinutes(a.appointment_time) -
-          timeValueToMinutes(b.appointment_time)
+          name.includes(normalizedQuery) || phone.includes(normalizedQuery)
         );
-      });
-  }, [appointments, activeFilter, focusDate, matchesBarber]);
+      }
+
+      if (activeFilter === "deleted") return a.status === "deleted";
+      if (a.status === "deleted") return false;
+      if (activeFilter === "all") return true;
+      if (activeFilter === "day")
+        return normalizeDateValue(a.appointment_date) === focusDate;
+      return a.status === activeFilter;
+    });
+
+    return base.sort((a, b) => {
+      const dateCompare = normalizeDateValue(a.appointment_date).localeCompare(
+        normalizeDateValue(b.appointment_date),
+      );
+      if (dateCompare !== 0) return dateCompare;
+      return (
+        timeValueToMinutes(a.appointment_time) -
+        timeValueToMinutes(b.appointment_time)
+      );
+    });
+  }, [
+    appointments,
+    activeFilter,
+    focusDate,
+    matchesBarber,
+    isSearching,
+    normalizedQuery,
+  ]);
 
   const filterCounts: Record<AppointmentFilter, number> = useMemo(
     () => ({
@@ -365,18 +389,45 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
               />
             </div>
 
-            {/* Filtros */}
-            <div className="mb-6 space-y-3">
-              {barberFilterOptions.length > 1 ? (
-                <div className="grid gap-2 sm:max-w-xs">
-                  <label
-                    htmlFor="barber-filter"
-                    className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
-                  >
-                    Barbero
-                  </label>
+            {/* Buscador + filtro barbero */}
+            <div className="mb-4 space-y-3">
+              <div
+                className={cn(
+                  "grid gap-2",
+                  barberFilterOptions.length > 1
+                    ? "sm:grid-cols-[1fr_minmax(0,16rem)]"
+                    : "",
+                )}
+              >
+                <div className="relative">
+                  <Search
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[color:var(--text-subtle)]"
+                  />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar cliente por nombre o teléfono…"
+                    aria-label="Buscar cliente"
+                    className="h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] pl-9 pr-9 text-sm text-white placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)] focus:outline-none"
+                  />
+                  {searchQuery ? (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      aria-label="Limpiar búsqueda"
+                      className="absolute right-2 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-[var(--radius-xs)] text-[color:var(--text-subtle)] transition-colors duration-[var(--duration-fast)] hover:text-white"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  ) : null}
+                </div>
+
+                {barberFilterOptions.length > 1 ? (
                   <Select
                     id="barber-filter"
+                    aria-label="Filtrar por barbero"
                     value={selectedBarberFilter}
                     onChange={(e) => setSelectedBarberFilter(e.target.value)}
                   >
@@ -387,39 +438,46 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                       </option>
                     ))}
                   </Select>
-                </div>
-              ) : null}
+                ) : null}
+              </div>
 
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {FILTER_OPTIONS.map((opt) => {
-                  const isActive = activeFilter === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setActiveFilter(opt.value)}
-                      className={cn(
-                        "inline-flex min-h-9 shrink-0 items-center gap-2 rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
-                        isActive
-                          ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
-                          : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
-                      )}
-                    >
-                      {opt.label}
-                      <span
+              {/* Chips de estado: ocultos durante búsqueda */}
+              {!isSearching ? (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {FILTER_OPTIONS.map((opt) => {
+                    const isActive = activeFilter === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setActiveFilter(opt.value)}
                         className={cn(
-                          "rounded-[var(--radius-xs)] px-1 font-mono text-[10px] tabular-nums",
+                          "inline-flex min-h-9 shrink-0 items-center gap-2 rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
                           isActive
-                            ? "bg-black/10 text-black"
-                            : "text-[color:var(--text-subtle)]",
+                            ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                            : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
                         )}
                       >
-                        {filterCounts[opt.value]}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+                        {opt.label}
+                        <span
+                          className={cn(
+                            "rounded-[var(--radius-xs)] px-1 font-mono text-[10px] tabular-nums",
+                            isActive
+                              ? "bg-black/10 text-black"
+                              : "text-[color:var(--text-subtle)]",
+                          )}
+                        >
+                          {filterCounts[opt.value]}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                  Resultados de búsqueda · {filteredAppointments.length}
+                </p>
+              )}
             </div>
 
             {/* Lista de turnos */}
@@ -430,8 +488,12 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
               />
             ) : filteredAppointments.length === 0 ? (
               <EmptyState
-                title="Nada en este filtro"
-                description={`No hay reservas para ${activeFilterLabel}.`}
+                title={isSearching ? "Sin resultados" : "Nada en este filtro"}
+                description={
+                  isSearching
+                    ? `No encontramos turnos para "${searchQuery.trim()}".`
+                    : `No hay reservas para ${activeFilterLabel}.`
+                }
               />
             ) : (
               <ul className="grid gap-3">
@@ -452,13 +514,20 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                       cancellingId={cancellingAppointmentId}
                       restoringId={restoringAppointmentId}
                       deletingId={deletingAppointmentId}
+                      showDate={isSearching || activeFilter === "all"}
                     />,
                   ];
 
                   // Gap marker entre turnos consecutivos activos del mismo día.
                   // Solo tiene sentido cuando el filtro es "Día" (ver un solo día)
                   // y ambos turnos están activos (pending/confirmed).
-                  if (activeFilter === "day" && index < arr.length - 1) {
+                  // Durante búsqueda no aplicamos gap markers (los resultados
+                  // pueden ser de distintos días).
+                  if (
+                    !isSearching &&
+                    activeFilter === "day" &&
+                    index < arr.length - 1
+                  ) {
                     const next = arr[index + 1];
                     const currentActive =
                       appointment.status === "pending" ||

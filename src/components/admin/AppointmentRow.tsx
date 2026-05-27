@@ -1,10 +1,10 @@
 "use client";
 
-import { Check, MessageCircle, Phone, RotateCcw, X } from "lucide-react";
+import { CalendarDays, Check, MessageCircle, Phone, RotateCcw, X } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, normalizeDateValue } from "@/lib/format";
 import type { AppointmentRow as AppointmentData } from "@/lib/supabase";
-import { normalizeTimeShort } from "./date-utils";
+import { formatDayHeading, normalizeTimeShort } from "./date-utils";
 
 type ActionHandlers = {
   onConfirm?: (appointment: AppointmentData) => void;
@@ -24,6 +24,8 @@ type PendingState = {
 type AppointmentRowProps = ActionHandlers &
   PendingState & {
     appointment: AppointmentData;
+    /** Si true, muestra la fecha del turno (útil al listar resultados de búsqueda multi-día). */
+    showDate?: boolean;
   };
 
 type StatusMeta = {
@@ -76,6 +78,7 @@ export function AppointmentRow({
   cancellingId,
   restoringId,
   deletingId,
+  showDate,
 }: AppointmentRowProps) {
   const status = appointment.status ?? "pending";
   const meta = getStatusMeta(status);
@@ -130,6 +133,12 @@ export function AppointmentRow({
             </span>
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-[color:var(--text-muted)] sm:text-xs">
+            {showDate ? (
+              <span className="inline-flex items-center gap-1 truncate text-[color:var(--brand-gold)]">
+                <CalendarDays className="size-3" aria-hidden="true" />
+                {formatDayHeading(normalizeDateValue(appointment.appointment_date))}
+              </span>
+            ) : null}
             <span className="truncate">{appointment.barber_name}</span>
             {appointment.customer_phone ? (
               <span className="inline-flex items-center gap-1 truncate font-mono">
