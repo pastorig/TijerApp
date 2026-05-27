@@ -110,21 +110,33 @@ function mergeBusyIntervals(
   return merged;
 }
 
+function rangesOverlap(
+  firstStart: number,
+  firstEnd: number,
+  secondStart: number,
+  secondEnd: number,
+) {
+  return firstStart < secondEnd && secondStart < firstEnd;
+}
+
 /**
  * Construye los slots disponibles del día para un barbero específico.
  *
- * Algoritmo dinámico (sin huecos):
- *  1. Construye los intervalos OCUPADOS del día (turnos + bloques).
- *  2. Recorre los huecos libres y, dentro de cada uno, emite slots cada
- *     `appointmentDurationMinutes` empezando JUSTO donde arranca el hueco.
- *  3. El próximo slot disponible después de un turno empieza al terminar
- *     ese turno (no se redondea a un grid fijo).
+ * Algoritmo combinado (sin huecos + buen aprovechamiento del horario):
+ *  1. Genera tiempos candidatos cada `barbershopIntervalMinutes` desde
+ *     el inicio del día (grid base — da al cliente horarios "redondos").
+ *  2. Agrega tiempos candidatos que empiezan JUSTO al terminar cada
+ *     turno o bloque (evita huecos cuando los servicios no encajan
+ *     en el grid fijo, ej. cortes de 45 min con grid de 30).
+ *  3. Para cada candidato verifica que no solape con turnos/bloques y
+ *     que su duración entre dentro del horario laboral.
+ *  4. Marca como `past` los que ya pasaron en el día actual.
  *
- * Sólo se emiten slots con razón `available` o `past`. Los slots ocupados
- * o bloqueados no aparecen en la lista — la UI no los muestra.
+ * Sólo se devuelven slots con razón `available` o `past`. Los slots
+ * ocupados o bloqueados no aparecen — la UI muestra una lista limpia.
  *
- * `barbershopIntervalMinutes` se mantiene como fallback defensivo para
- * turnos viejos donde `durationMinutes` quedó en 0 o nulo.
+ * `barbershopIntervalMinutes` se usa como granularidad del grid base y
+ * como fallback defensivo para turnos viejos sin duración cargada.
  */
 export function buildAvailabilitySlots(params: {
   appointmentDate: string;
@@ -177,7 +189,7 @@ export function buildAvailabilitySlots(params: {
   const currentMinutes =
     appointmentDate === today ? now.getHours() * 60 + now.getMinutes() : -1;
 
-  // 1) Construimos los intervalos ocupados (turnos + bloques).
+  // 1) Construimos los intervalos ocupados (turnos + bloques) mergeados.
   const busy: Array<{ start: number; end: number }> = [];
   for (const block of timeBlocks) {
     busy.push({
@@ -195,37 +207,44 @@ export function buildAvailabilitySlots(params: {
   }
   const busyMerged = mergeBusyIntervals(busy);
 
-  // 2) Recorremos los huecos libres dentro del horario laboral.
-  const slots: AvailabilitySlot[] = [];
+  // 2) Generamos el set de tiempos candidatos.
+  const candidateTimes = new Set<number>();
 
-  function emitSlotsInRange(rangeStart: number, rangeEnd: number) {
-    // Clamp al horario laboral.
-    const start = Math.max(rangeStart, dayStart);
-    const end = Math.min(rangeEnd, dayEnd);
-    for (
-      let slotStart = start;
-      slotStart + appointmentDurationMinutes <= end;
-      slotStart += appointmentDurationMinutes
-    ) {
-      const isPast =
-        appointmentDate === today && slotStart < currentMinutes;
-      slots.push({
-        time: formatMinutesToTime(slotStart),
-        isAvailable: !isPast,
-        reason: isPast ? "past" : "available",
-      });
-    }
+  // 2a) Grid base cada `barbershopIntervalMinutes`.
+  const gridStep =
+    barbershopIntervalMinutes > 0 ? barbershopIntervalMinutes : 30;
+  for (let t = dayStart; t + appointmentDurationMinutes <= dayEnd; t += gridStep) {
+    candidateTimes.add(t);
   }
 
-  let cursor = dayStart;
+  // 2b) Tiempos dinámicos: justo al terminar cada turno/bloque, para
+  //     no perder minutos entre turnos consecutivos.
   for (const interval of busyMerged) {
-    if (interval.start > cursor) {
-      emitSlotsInRange(cursor, interval.start);
+    if (
+      interval.end >= dayStart &&
+      interval.end + appointmentDurationMinutes <= dayEnd
+    ) {
+      candidateTimes.add(interval.end);
     }
-    cursor = Math.max(cursor, interval.end);
   }
-  if (cursor < dayEnd) {
-    emitSlotsInRange(cursor, dayEnd);
+
+  // 3) Filtramos candidatos solapados con turnos/bloques.
+  const slots: AvailabilitySlot[] = [];
+  const sortedTimes = [...candidateTimes].sort((a, b) => a - b);
+
+  for (const t of sortedTimes) {
+    const slotEnd = t + appointmentDurationMinutes;
+    const overlapsBusy = busyMerged.some((iv) =>
+      rangesOverlap(t, slotEnd, iv.start, iv.end),
+    );
+    if (overlapsBusy) continue;
+
+    const isPast = appointmentDate === today && t < currentMinutes;
+    slots.push({
+      time: formatMinutesToTime(t),
+      isAvailable: !isPast,
+      reason: isPast ? "past" : "available",
+    });
   }
 
   return slots;
