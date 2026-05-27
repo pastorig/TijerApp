@@ -1,8 +1,11 @@
 import {
   demoBarbershops,
   getDemoBarbershopBySlug,
+  type Barber,
   type DemoBarbershop,
 } from "@/data/demo-barbershops";
+import { listActiveBarbersByBarbershop } from "@/lib/barbers";
+import { listActiveServicesByBarbershop } from "@/lib/barber-services";
 import {
   getSupabaseClient,
   type BarbershopRow,
@@ -20,6 +23,7 @@ const barbershopSelectFields =
 
 function mapBarbershopRowToDemoBarbershop(
   barbershop: BarbershopRow,
+  dbBarbers?: Barber[],
 ): DemoBarbershop {
   const fallbackDemo = getDemoBarbershopBySlug(barbershop.slug);
 
@@ -34,7 +38,10 @@ function mapBarbershopRowToDemoBarbershop(
     instagram: barbershop.instagram?.trim() || fallbackDemo?.instagram || "",
     whatsapp: barbershop.whatsapp?.trim() || fallbackDemo?.whatsapp || "",
     address: barbershop.address?.trim() || undefined,
-    barbers: fallbackDemo?.barbers ?? [],
+    barbers:
+      dbBarbers && dbBarbers.length > 0
+        ? dbBarbers
+        : fallbackDemo?.barbers ?? [],
     isActive: barbershop.is_active,
     workingHours: {
       start:
@@ -59,6 +66,36 @@ const activeDbBarbershopsQuery = () =>
     .select(barbershopSelectFields)
     .eq("is_active", true)
     .order("created_at", { ascending: true });
+
+/**
+ * Trae todos los barberos activos de una barbería junto a sus servicios
+ * activos. Se usa para que la landing pública y el admin vean los datos
+ * reales de la DB (no el fallback hardcoded en demo-barbershops.ts).
+ */
+async function loadBarbersWithServices(slug: string): Promise<Barber[]> {
+  const [barbersResult, servicesResult] = await Promise.all([
+    listActiveBarbersByBarbershop(slug),
+    listActiveServicesByBarbershop(slug),
+  ]);
+  const dbBarbers = barbersResult.data ?? [];
+  const dbServices = servicesResult.data ?? [];
+  return dbBarbers.map((barber) => ({
+    id: barber.id,
+    name: barber.name,
+    displayName: barber.display_name ?? undefined,
+    role: barber.role ?? undefined,
+    whatsapp: barber.whatsapp ?? undefined,
+    isActive: barber.is_active,
+    services: dbServices
+      .filter((service) => service.barber_id === barber.id)
+      .map((service) => ({
+        id: service.id,
+        name: service.name,
+        price: service.price,
+        durationMinutes: service.duration_minutes,
+      })),
+  }));
+}
 
 export async function listKnownBarbershops() {
   const { data, error } = await activeDbBarbershopsQuery();
@@ -92,45 +129,51 @@ export async function listKnownBarbershops() {
 export async function resolveBarbershopBySlug(slug: string) {
   const fallbackDemo = getDemoBarbershopBySlug(slug);
 
-  const { data, error } = await getSupabaseClient()
-    .from("barbershops")
-    .select(barbershopSelectFields)
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .maybeSingle();
+  const [bshopResult, dbBarbers] = await Promise.all([
+    getSupabaseClient()
+      .from("barbershops")
+      .select(barbershopSelectFields)
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .maybeSingle(),
+    loadBarbersWithServices(slug),
+  ]);
 
-  if (data) {
+  if (bshopResult.data) {
     return {
-      data: mapBarbershopRowToDemoBarbershop(data),
+      data: mapBarbershopRowToDemoBarbershop(bshopResult.data, dbBarbers),
       error: null,
     };
   }
 
   return {
     data: fallbackDemo ? { ...fallbackDemo, isActive: true } : null,
-    error,
+    error: bshopResult.error,
   };
 }
 
 export async function resolveManagedBarbershopBySlug(slug: string) {
   const fallbackDemo = getDemoBarbershopBySlug(slug);
 
-  const { data, error } = await getSupabaseClient()
-    .from("barbershops")
-    .select(barbershopSelectFields)
-    .eq("slug", slug)
-    .maybeSingle();
+  const [bshopResult, dbBarbers] = await Promise.all([
+    getSupabaseClient()
+      .from("barbershops")
+      .select(barbershopSelectFields)
+      .eq("slug", slug)
+      .maybeSingle(),
+    loadBarbersWithServices(slug),
+  ]);
 
-  if (data) {
+  if (bshopResult.data) {
     return {
-      data: mapBarbershopRowToDemoBarbershop(data),
+      data: mapBarbershopRowToDemoBarbershop(bshopResult.data, dbBarbers),
       error: null,
     };
   }
 
   return {
     data: fallbackDemo ? { ...fallbackDemo, isActive: true } : null,
-    error,
+    error: bshopResult.error,
   };
 }
 
