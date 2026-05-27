@@ -87,15 +87,45 @@ function formatMinutesToTime(totalMinutes: number) {
   return `${hours}:${minutes}`;
 }
 
-function rangesOverlap(
-  firstStartMinutes: number,
-  firstEndMinutes: number,
-  secondStartMinutes: number,
-  secondEndMinutes: number,
-) {
-  return firstStartMinutes < secondEndMinutes && secondStartMinutes < firstEndMinutes;
+/**
+ * Mergea intervalos solapados en una lista ordenada [start, end].
+ * Devuelve la lista compacta. Por ej.
+ *   [{s:60,e:90}, {s:80,e:120}, {s:200,e:230}]
+ *   → [{s:60,e:120}, {s:200,e:230}]
+ */
+function mergeBusyIntervals(
+  intervals: Array<{ start: number; end: number }>,
+): Array<{ start: number; end: number }> {
+  const sorted = [...intervals].sort((a, b) => a.start - b.start);
+  const merged: Array<{ start: number; end: number }> = [];
+  for (const interval of sorted) {
+    if (interval.end <= interval.start) continue; // ignora intervalos vacíos
+    const last = merged[merged.length - 1];
+    if (!last || interval.start > last.end) {
+      merged.push({ ...interval });
+    } else {
+      last.end = Math.max(last.end, interval.end);
+    }
+  }
+  return merged;
 }
 
+/**
+ * Construye los slots disponibles del día para un barbero específico.
+ *
+ * Algoritmo dinámico (sin huecos):
+ *  1. Construye los intervalos OCUPADOS del día (turnos + bloques).
+ *  2. Recorre los huecos libres y, dentro de cada uno, emite slots cada
+ *     `appointmentDurationMinutes` empezando JUSTO donde arranca el hueco.
+ *  3. El próximo slot disponible después de un turno empieza al terminar
+ *     ese turno (no se redondea a un grid fijo).
+ *
+ * Sólo se emiten slots con razón `available` o `past`. Los slots ocupados
+ * o bloqueados no aparecen en la lista — la UI no los muestra.
+ *
+ * `barbershopIntervalMinutes` se mantiene como fallback defensivo para
+ * turnos viejos donde `durationMinutes` quedó en 0 o nulo.
+ */
 export function buildAvailabilitySlots(params: {
   appointmentDate: string;
   appointmentDurationMinutes: number;
@@ -119,6 +149,11 @@ export function buildAvailabilitySlots(params: {
     appointments,
     now = new Date(),
   } = params;
+
+  if (appointmentDurationMinutes <= 0) {
+    return [] satisfies AvailabilitySlot[];
+  }
+
   const mergedSchedules = mergeWeeklySchedulesWithDefaults(
     weeklySchedules,
     workingHours,
@@ -131,75 +166,66 @@ export function buildAvailabilitySlots(params: {
     return [] satisfies AvailabilitySlot[];
   }
 
-  const startMinutes = timeValueToMinutes(activeSchedule.startTime);
-  const endMinutes = timeValueToMinutes(activeSchedule.endTime);
-  const slots: AvailabilitySlot[] = [];
+  const dayStart = timeValueToMinutes(activeSchedule.startTime);
+  const dayEnd = timeValueToMinutes(activeSchedule.endTime);
+
   const today = normalizeDateValue(
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
       now.getDate(),
     ).padStart(2, "0")}`,
   );
   const currentMinutes =
-    appointmentDate === today
-      ? now.getHours() * 60 + now.getMinutes()
-      : -1;
+    appointmentDate === today ? now.getHours() * 60 + now.getMinutes() : -1;
 
-  for (
-    let slotStartMinutes = startMinutes;
-    slotStartMinutes + appointmentDurationMinutes <= endMinutes;
-    slotStartMinutes += barbershopIntervalMinutes
-  ) {
-    const slotEndMinutes = slotStartMinutes + appointmentDurationMinutes;
-    let reason: AvailabilitySlot["reason"] = "available";
-
-    if (appointmentDate === today && slotStartMinutes < currentMinutes) {
-      reason = "past";
-    }
-
-    if (reason === "available") {
-      const overlapsBlock = timeBlocks.some((block) =>
-        rangesOverlap(
-          slotStartMinutes,
-          slotEndMinutes,
-          timeValueToMinutes(block.start_time),
-          timeValueToMinutes(block.end_time),
-        ),
-      );
-
-      if (overlapsBlock) {
-        reason = "blocked";
-      }
-    }
-
-    if (reason === "available") {
-      const overlapsAppointment = appointments.some((appointment) => {
-        const apptStart = timeValueToMinutes(appointment.startTime);
-        // Defensive: si la duración guardada es 0, NaN o falsy (turnos viejos /
-        // data sucia), tratamos el slot como un bloque del tamaño del intervalo
-        // base de la barbería. Garantiza que un turno confirmado SIEMPRE
-        // bloquee al menos su propio slot, evitando double-booking.
-        const apptDuration =
-          appointment.durationMinutes && appointment.durationMinutes > 0
-            ? appointment.durationMinutes
-            : barbershopIntervalMinutes;
-        return rangesOverlap(
-          slotStartMinutes,
-          slotEndMinutes,
-          apptStart,
-          apptStart + apptDuration,
-        );
-      });
-
-      if (overlapsAppointment) {
-        reason = "occupied";
-      }
-    }
-
-    slots.push({
-      time: formatMinutesToTime(slotStartMinutes),
-      isAvailable: reason === "available",
-      reason,
+  // 1) Construimos los intervalos ocupados (turnos + bloques).
+  const busy: Array<{ start: number; end: number }> = [];
+  for (const block of timeBlocks) {
+    busy.push({
+      start: timeValueToMinutes(block.start_time),
+      end: timeValueToMinutes(block.end_time),
     });
+  }
+  for (const appointment of appointments) {
+    const apptStart = timeValueToMinutes(appointment.startTime);
+    const apptDuration =
+      appointment.durationMinutes && appointment.durationMinutes > 0
+        ? appointment.durationMinutes
+        : barbershopIntervalMinutes;
+    busy.push({ start: apptStart, end: apptStart + apptDuration });
+  }
+  const busyMerged = mergeBusyIntervals(busy);
+
+  // 2) Recorremos los huecos libres dentro del horario laboral.
+  const slots: AvailabilitySlot[] = [];
+
+  function emitSlotsInRange(rangeStart: number, rangeEnd: number) {
+    // Clamp al horario laboral.
+    const start = Math.max(rangeStart, dayStart);
+    const end = Math.min(rangeEnd, dayEnd);
+    for (
+      let slotStart = start;
+      slotStart + appointmentDurationMinutes <= end;
+      slotStart += appointmentDurationMinutes
+    ) {
+      const isPast =
+        appointmentDate === today && slotStart < currentMinutes;
+      slots.push({
+        time: formatMinutesToTime(slotStart),
+        isAvailable: !isPast,
+        reason: isPast ? "past" : "available",
+      });
+    }
+  }
+
+  let cursor = dayStart;
+  for (const interval of busyMerged) {
+    if (interval.start > cursor) {
+      emitSlotsInRange(cursor, interval.start);
+    }
+    cursor = Math.max(cursor, interval.end);
+  }
+  if (cursor < dayEnd) {
+    emitSlotsInRange(cursor, dayEnd);
   }
 
   return slots;

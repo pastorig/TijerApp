@@ -706,7 +706,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 </div>
                 {availabilitySlots.some((slot) => !slot.isAvailable) ? (
                   <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-subtle)]">
-                    Los horarios tachados ya pasaron o no están disponibles
+                    Los horarios tachados ya pasaron
                   </p>
                 ) : null}
               </>
