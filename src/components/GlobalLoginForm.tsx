@@ -7,6 +7,7 @@ import { getDemoBarbershopBySlug } from "@/data/demo-barbershops";
 import { getCurrentUserAdminBarbershops } from "@/lib/barbershop-access";
 import { signInWithEmailAndPassword } from "@/lib/auth";
 import type { BarbershopAdminRow } from "@/lib/supabase";
+import { Logo } from "@/components/ui";
 
 type GlobalLoginFormProps = {
   nextPath?: string;
@@ -95,12 +96,15 @@ export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
 
   return (
     <main className="min-h-screen bg-black text-white">
-      <section className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-10">
+      <header className="sticky top-0 z-10 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 py-3 backdrop-blur-md sm:px-6">
+        <Link href="/" aria-label="Ir al inicio" className="inline-flex">
+          <Logo size="sm" />
+        </Link>
+      </header>
+      <section className="mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-md flex-col justify-center px-6 py-10">
         <div className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-6 shadow-2xl shadow-black/30">
-          <p className="text-sm font-semibold uppercase text-[color:var(--brand-gold)]">
-            BarberSync
-          </p>
-          <h1 className="mt-3 text-4xl font-black text-white">
+          <Logo size="md" />
+          <h1 className="mt-4 text-4xl font-black text-white">
             Iniciar sesion
           </h1>
           <p className="mt-3 text-sm leading-6 text-[color:var(--text-secondary)]">

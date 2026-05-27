@@ -7,6 +7,7 @@ import {
   getOwnerDashboardMetrics,
   type OwnerDashboardMetrics,
 } from "@/lib/owner-metrics";
+import { Logo } from "@/components/ui";
 
 const emptyMetrics: OwnerDashboardMetrics = {
   knownBarbershopsCount: 0,
@@ -316,6 +317,11 @@ export function OwnerDashboard() {
 
   return (
     <main className="min-h-screen bg-black text-white">
+      <header className="sticky top-0 z-10 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 py-3 backdrop-blur-md sm:px-6 lg:px-12">
+        <Link href="/" aria-label="Ir al inicio" className="inline-flex">
+          <Logo size="sm" />
+        </Link>
+      </header>
       <section className="mx-auto w-full max-w-6xl px-3 py-4 sm:px-6 sm:py-8 lg:px-12 lg:py-12">
         <div className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-4 shadow-2xl shadow-black/25 sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

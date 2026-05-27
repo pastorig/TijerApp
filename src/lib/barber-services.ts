@@ -53,6 +53,23 @@ export async function listActiveServicesByBarber({
   return { data, error };
 }
 
+/**
+ * Trae todos los servicios activos de la barbería de una sola vez.
+ * Útil para vistas que necesitan duración por barbero sin hacer N queries
+ * (ej: cálculo de cortes posibles en gap markers del turnero).
+ */
+export async function listActiveServicesByBarbershop(barbershopSlug: string) {
+  const { data, error } = await getSupabaseClient()
+    .from("barber_services")
+    .select(barberServicesSelect)
+    .eq("barbershop_slug", barbershopSlug)
+    .eq("is_active", true)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: true });
+
+  return { data, error };
+}
+
 export async function createBarberService(service: BarberServiceInsert) {
   return getSupabaseClient()
     .from("barber_services")

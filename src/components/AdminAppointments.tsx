@@ -10,6 +10,7 @@ import {
   listAppointmentsByBarbershop,
   restoreDeletedAppointment,
 } from "@/lib/appointments";
+import { listActiveServicesByBarbershop } from "@/lib/barber-services";
 import { listBarbersByBarbershop } from "@/lib/barbers";
 import { cn } from "@/lib/cn";
 import {
@@ -17,7 +18,11 @@ import {
   normalizeDateValue,
   timeValueToMinutes,
 } from "@/lib/format";
-import type { AppointmentRow, BarberRow } from "@/lib/supabase";
+import type {
+  AppointmentRow,
+  BarberRow,
+  BarberServiceRow,
+} from "@/lib/supabase";
 import { createWhatsAppConfirmationLink } from "@/lib/whatsapp";
 import { Select } from "@/components/ui";
 import { AgendaCalendar } from "./admin/AgendaCalendar";
@@ -48,6 +53,7 @@ const FILTER_OPTIONS: Array<{ value: AppointmentFilter; label: string }> = [
 export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [barbers, setBarbers] = useState<BarberRow[]>([]);
+  const [services, setServices] = useState<BarberServiceRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [focusDate, setFocusDate] = useState(getTodayYmd());
@@ -159,6 +165,20 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     }),
     [focusDateAppointments, visibleAppointments, deletedAppointments],
   );
+
+  // Mapa barberId → duración mínima de sus servicios activos.
+  // Usado para calcular cuántos cortes posibles caben en un gap.
+  const minDurationByBarber = useMemo(() => {
+    const map = new Map<string, number>();
+    services.forEach((s) => {
+      const current = map.get(s.barber_id);
+      const minutes = s.duration_minutes ?? 30;
+      if (current === undefined || minutes < current) {
+        map.set(s.barber_id, minutes);
+      }
+    });
+    return map;
+  }, [services]);
 
   const barberFilterOptions = useMemo(() => {
     if (barbers.length > 0) {
@@ -312,9 +332,10 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
       setIsLoading(true);
       setErrorMessage("");
       try {
-        const [appsResult, barbersResult] = await Promise.all([
+        const [appsResult, barbersResult, servicesResult] = await Promise.all([
           listAppointmentsByBarbershop(barbershop.slug),
           listBarbersByBarbershop(barbershop.slug),
+          listActiveServicesByBarbershop(barbershop.slug),
         ]);
         if (!isMounted) return;
         if (appsResult.error) {
@@ -324,11 +345,13 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         }
         setAppointments(appsResult.data ?? []);
         setBarbers(barbersResult.data ?? []);
+        setServices(servicesResult.data ?? []);
       } catch {
         if (isMounted) {
           setErrorMessage("No pudimos cargar las reservas.");
           setAppointments([]);
           setBarbers([]);
+          setServices([]);
         }
       } finally {
         if (isMounted) setIsLoading(false);
@@ -543,12 +566,25 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                       const gap = nextStart - currentEnd;
 
                       if (gap > 0) {
+                        // Si los dos turnos son del mismo barbero, podemos
+                        // estimar cuántos cortes entrarían en el hueco
+                        // usando la duración mínima de sus servicios activos.
+                        const sameBarber =
+                          appointment.barber_id === next.barber_id;
+                        const duration = sameBarber
+                          ? minDurationByBarber.get(appointment.barber_id)
+                          : undefined;
+                        const possibleCuts =
+                          duration && duration > 0
+                            ? Math.floor(gap / duration)
+                            : 0;
                         nodes.push(
                           <GapMarker
                             key={`gap-${appointment.id ?? index}`}
                             startMinutes={currentEnd}
                             endMinutes={nextStart}
                             minutes={gap}
+                            possibleCuts={possibleCuts}
                           />,
                         );
                       }
@@ -603,26 +639,41 @@ function GapMarker({
   startMinutes,
   endMinutes,
   minutes,
+  possibleCuts,
 }: {
   startMinutes: number;
   endMinutes: number;
   minutes: number;
+  /** Cortes que entrarían en el hueco (0 si no aplica, ej: distintos barberos). */
+  possibleCuts: number;
 }) {
   return (
     <li
-      aria-label={`Hueco libre de ${minutes} minutos`}
+      aria-label={
+        possibleCuts > 0
+          ? `Hueco libre de ${minutes} minutos, ${possibleCuts} cortes posibles`
+          : `Hueco libre de ${minutes} minutos`
+      }
       className="flex items-center gap-3 px-2 py-1"
     >
       <span className="h-px flex-1 bg-[color:var(--border-subtle)]" aria-hidden="true" />
-      <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-subtle)]">
+      <span className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-subtle)]">
         <span className="font-mono tabular-nums">
           {formatMinutesToTime(startMinutes)}
           <span className="mx-1 text-[color:var(--text-subtle)]">→</span>
           {formatMinutesToTime(endMinutes)}
         </span>
-        <span className="text-[color:var(--brand-gold)]">
-          {formatGapDuration(minutes)} libres
-        </span>
+        {possibleCuts > 0 ? (
+          <span className="text-[color:var(--brand-gold)]">
+            {possibleCuts} {possibleCuts === 1 ? "corte" : "cortes"} posibles
+            <span className="mx-1 text-[color:var(--text-subtle)]">·</span>
+            {formatGapDuration(minutes)} libres
+          </span>
+        ) : (
+          <span className="text-[color:var(--brand-gold)]">
+            {formatGapDuration(minutes)} libres
+          </span>
+        )}
       </span>
       <span className="h-px flex-1 bg-[color:var(--border-subtle)]" aria-hidden="true" />
     </li>
