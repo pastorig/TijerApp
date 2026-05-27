@@ -40,7 +40,10 @@ export function PublicBarbershopLanding({
 
       <HeroSection barbershop={barbershop} />
 
-      <BarbershopTeamSection barbers={barbershop.barbers} />
+      <BarbershopTeamSection
+        barbershopSlug={barbershop.slug}
+        fallbackBarbers={barbershop.barbers}
+      />
 
       <ServicesSection
         services={getPublicServices(barbershop)}

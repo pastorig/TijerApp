@@ -1,7 +1,12 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { Barber } from "@/data/demo-barbershops";
+import { listActiveBarbersByBarbershop } from "@/lib/barbers";
 
 type BarbershopTeamSectionProps = {
-  barbers: Barber[];
+  barbershopSlug: string;
+  fallbackBarbers: Barber[];
 };
 
 function getInitials(name: string): string {
@@ -13,9 +18,38 @@ function getInitials(name: string): string {
     .join("");
 }
 
-export function BarbershopTeamSection({ barbers }: BarbershopTeamSectionProps) {
-  const activeBarbers = barbers.filter((barber) => barber.isActive);
-  if (activeBarbers.length === 0) return null;
+export function BarbershopTeamSection({
+  barbershopSlug,
+  fallbackBarbers,
+}: BarbershopTeamSectionProps) {
+  const [barbers, setBarbers] = useState<Barber[]>(
+    fallbackBarbers.filter((barber) => barber.isActive),
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadBarbers() {
+      const { data } = await listActiveBarbersByBarbershop(barbershopSlug);
+      if (!isMounted || !data || data.length === 0) return;
+      setBarbers(
+        data.map((dbBarber) => ({
+          id: dbBarber.id,
+          name: dbBarber.name,
+          displayName: dbBarber.display_name ?? undefined,
+          role: dbBarber.role ?? undefined,
+          whatsapp: dbBarber.whatsapp ?? undefined,
+          isActive: dbBarber.is_active,
+          services: [],
+        })),
+      );
+    }
+    loadBarbers();
+    return () => {
+      isMounted = false;
+    };
+  }, [barbershopSlug]);
+
+  if (barbers.length === 0) return null;
 
   return (
     <section className="border-t border-[color:var(--border-subtle)]">
@@ -30,7 +64,7 @@ export function BarbershopTeamSection({ barbers }: BarbershopTeamSectionProps) {
         </header>
 
         <ul className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-          {activeBarbers.map((barber) => {
+          {barbers.map((barber) => {
             const displayName =
               barber.displayName?.trim() || barber.name.trim();
             return (
