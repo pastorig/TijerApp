@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ExternalLink, LogOut, Plus, Users } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import {
   cancelAppointment,
@@ -11,25 +9,19 @@ import {
   listAppointmentsByBarbershop,
   restoreDeletedAppointment,
 } from "@/lib/appointments";
-import { signOut } from "@/lib/auth";
 import { listBarbersByBarbershop } from "@/lib/barbers";
 import { cn } from "@/lib/cn";
 import {
   formatDateForDisplay,
   normalizeDateValue,
-  normalizeTimeValue,
   timeValueToMinutes,
 } from "@/lib/format";
 import type { AppointmentRow, BarberRow } from "@/lib/supabase";
 import { createWhatsAppConfirmationLink } from "@/lib/whatsapp";
-import { Button, Select } from "@/components/ui";
+import { Select } from "@/components/ui";
 import { AgendaCalendar } from "./admin/AgendaCalendar";
 import { AppointmentRow as AppointmentCard } from "./admin/AppointmentRow";
-import {
-  formatDayHeading,
-  getTodayYmd,
-  normalizeTimeShort,
-} from "./admin/date-utils";
+import { getTodayYmd, normalizeTimeShort } from "./admin/date-utils";
 
 type AdminAppointmentsProps = {
   barbershop: DemoBarbershop;
@@ -52,18 +44,7 @@ const FILTER_OPTIONS: Array<{ value: AppointmentFilter; label: string }> = [
   { value: "deleted", label: "Eliminados" },
 ];
 
-function getCurrentTimeValue() {
-  return normalizeTimeValue(
-    new Date().toLocaleTimeString("es-AR", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }),
-  );
-}
-
 export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
-  const router = useRouter();
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [barbers, setBarbers] = useState<BarberRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,14 +64,6 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const [restoringAppointmentId, setRestoringAppointmentId] = useState<
     string | null
   >(null);
-  const [isSigningOut, setIsSigningOut] = useState(false);
-
-  const today = getTodayYmd();
-  const currentTime = getCurrentTimeValue();
-  const currentTimeMinutes = timeValueToMinutes(currentTime);
-  const isFocusToday = focusDate === today;
-  const isFocusFuture = focusDate > today;
-  const canShowUpcoming = isFocusToday || isFocusFuture;
 
   const matchesBarber = useMemo(() => {
     return (a: AppointmentRow) =>
@@ -125,41 +98,6 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
       ),
     [visibleAppointments, focusDate],
   );
-
-  const upcomingAppointment = useMemo(() => {
-    return focusDateAppointments
-      .filter(
-        (a) =>
-          (a.status === "pending" || a.status === "confirmed") &&
-          canShowUpcoming &&
-          (isFocusFuture ||
-            (isFocusToday &&
-              timeValueToMinutes(a.appointment_time) >= currentTimeMinutes)),
-      )
-      .sort(
-        (a, b) =>
-          timeValueToMinutes(a.appointment_time) -
-          timeValueToMinutes(b.appointment_time),
-      )[0];
-  }, [
-    focusDateAppointments,
-    canShowUpcoming,
-    isFocusFuture,
-    isFocusToday,
-    currentTimeMinutes,
-  ]);
-
-  const dayStats = useMemo(() => {
-    return {
-      total: focusDateAppointments.length,
-      pending: focusDateAppointments.filter((a) => a.status === "pending")
-        .length,
-      confirmed: focusDateAppointments.filter((a) => a.status === "confirmed")
-        .length,
-      cancelled: focusDateAppointments.filter((a) => a.status === "cancelled")
-        .length,
-    };
-  }, [focusDateAppointments]);
 
   const filteredAppointments = useMemo(() => {
     return appointments
@@ -344,23 +282,6 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     }
   }
 
-  async function handleSignOut() {
-    setErrorMessage("");
-    setIsSigningOut(true);
-    try {
-      const { error } = await signOut();
-      if (error) {
-        setErrorMessage("No pudimos cerrar sesión.");
-        return;
-      }
-      router.replace("/login");
-    } catch {
-      setErrorMessage("No pudimos cerrar sesión.");
-    } finally {
-      setIsSigningOut(false);
-    }
-  }
-
   useEffect(() => {
     let isMounted = true;
     async function load() {
@@ -400,15 +321,14 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     "este filtro";
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[1fr_320px] lg:gap-12">
-      {/* Columna principal */}
+    <div className="min-w-0">
       <section className="min-w-0">
         <header className="mb-8 animate-fade-up">
           <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
-            Agenda admin
+            Turnero
           </p>
           <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
-            {barbershop.name}
+            Agenda de {barbershop.name}
           </h1>
           <p className="mt-3 max-w-xl text-sm text-[color:var(--text-secondary)] sm:text-base">
             Gestioná las reservas del día. Confirmar y enviar WhatsApp son
@@ -573,103 +493,6 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           </>
         ) : null}
       </section>
-
-      {/* Aside derecho — resumen y acciones */}
-      <aside className="lg:sticky lg:top-12">
-        <div
-          className="animate-fade-up border-t border-[color:var(--border-subtle)] pt-8 sm:border-t-0 sm:border-l sm:pl-6 sm:pt-0 lg:pl-8"
-          style={{ animationDelay: "100ms" }}
-        >
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)]">
-            Resumen del día
-          </p>
-          <p className="mt-3 text-sm text-[color:var(--text-secondary)]">
-            {formatDayHeading(focusDate)}
-          </p>
-
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <StatCell label="Turnos" value={dayStats.total} highlight />
-            <StatCell label="Pendientes" value={dayStats.pending} />
-            <StatCell label="Confirmados" value={dayStats.confirmed} />
-            <StatCell label="Cancelados" value={dayStats.cancelled} />
-          </div>
-
-          {/* Próximo turno */}
-          {upcomingAppointment ? (
-            <div className="mt-6 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
-                Próximo turno
-              </p>
-              <p className="mt-2 font-mono text-3xl font-black tabular-nums leading-none text-[color:var(--brand-gold)]">
-                {normalizeTimeShort(upcomingAppointment.appointment_time)}
-              </p>
-              <p className="mt-3 text-sm font-bold text-white">
-                {upcomingAppointment.customer_name}
-              </p>
-              <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-                {upcomingAppointment.service_name}
-              </p>
-              <p className="mt-0.5 text-xs text-[color:var(--text-muted)]">
-                {upcomingAppointment.barber_name}
-              </p>
-            </div>
-          ) : (
-            <div className="mt-6 rounded-[var(--radius-sm)] border border-dashed border-[color:var(--border-subtle)] p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
-                Próximo turno
-              </p>
-              <p className="mt-2 text-sm text-[color:var(--text-subtle)]">
-                Sin próximos turnos para esta fecha.
-              </p>
-            </div>
-          )}
-
-          {/* Acciones */}
-          <div className="mt-8 grid gap-2">
-            <Button
-              as="link"
-              href={`/${barbershop.slug}/admin/barbers`}
-              variant="secondary"
-              size="md"
-              fullWidth
-              iconLeft={<Users className="size-3.5" />}
-            >
-              Gestionar barberos
-            </Button>
-            <Button
-              as="link"
-              href={`/${barbershop.slug}`}
-              variant="ghost"
-              size="md"
-              fullWidth
-              iconLeft={<ExternalLink className="size-3.5" />}
-            >
-              Página pública
-            </Button>
-            <Button
-              as="link"
-              href={`/${barbershop.slug}/reservar`}
-              variant="ghost"
-              size="md"
-              fullWidth
-              iconLeft={<Plus className="size-3.5" />}
-            >
-              Nuevo turno (público)
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="md"
-              fullWidth
-              loading={isSigningOut}
-              onClick={handleSignOut}
-              iconLeft={<LogOut className="size-3.5" />}
-            >
-              Cerrar sesión
-            </Button>
-          </div>
-        </div>
-      </aside>
     </div>
   );
 }
@@ -734,38 +557,5 @@ function GapMarker({
       </span>
       <span className="h-px flex-1 bg-[color:var(--border-subtle)]" aria-hidden="true" />
     </li>
-  );
-}
-
-function StatCell({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: number;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-[var(--radius-sm)] border p-3 sm:p-4",
-        highlight
-          ? "border-[color:var(--border-default)] bg-[color:var(--surface-1)]"
-          : "border-[color:var(--border-subtle)]",
-      )}
-    >
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
-        {label}
-      </p>
-      <p
-        className={cn(
-          "mt-1 font-mono text-2xl font-black tabular-nums leading-none sm:text-3xl",
-          highlight ? "text-[color:var(--brand-gold)]" : "text-white",
-        )}
-      >
-        {value}
-      </p>
-    </div>
   );
 }

@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
 import { AdminAuthGuard } from "@/components/AdminAuthGuard";
-import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { AdminAppointments } from "@/components/AdminAppointments";
 import { AdminShell } from "@/components/admin/AdminShell";
 import {
   listKnownBarbershops,
   resolveManagedBarbershopBySlug,
 } from "@/lib/barbershops";
 
-type AdminPageProps = {
+type AdminTurneroPageProps = {
   params: Promise<{
     barbershopSlug: string;
   }>;
@@ -20,9 +20,9 @@ export async function generateStaticParams() {
   }));
 }
 
-// /[slug]/admin = Dashboard (home del admin).
-// El turnero (calendar + lista) vive en /[slug]/admin/turnero.
-export default async function AdminPage({ params }: AdminPageProps) {
+export default async function AdminTurneroPage({
+  params,
+}: AdminTurneroPageProps) {
   const { barbershopSlug } = await params;
   const { data: barbershop } =
     await resolveManagedBarbershopBySlug(barbershopSlug);
@@ -37,7 +37,7 @@ export default async function AdminPage({ params }: AdminPageProps) {
         barbershopSlug={barbershop.slug}
         barbershopName={barbershop.name}
       >
-        <AdminDashboard barbershop={barbershop} />
+        <AdminAppointments barbershop={barbershop} />
       </AdminShell>
     </AdminAuthGuard>
   );

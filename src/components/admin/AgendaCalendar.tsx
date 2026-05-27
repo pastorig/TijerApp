@@ -96,8 +96,24 @@ export function AgendaCalendar({
     onFocusDateChange(today);
   }
 
-  // ── Swipe gestures ─────────────────────────────────────────────────
+  // ── Swipe gestures (mobile + desktop drag) ─────────────────────────
   const startRef = useRef({ x: 0, y: 0, t: 0 });
+  const isMouseDraggingRef = useRef(false);
+  const recentlyDraggedRef = useRef(false);
+
+  function navigateByDelta(dx: number, dy: number) {
+    const adx = Math.abs(dx);
+    const ady = Math.abs(dy);
+    if (adx > ady && adx > SWIPE_THRESHOLD) {
+      recentlyDraggedRef.current = true;
+      window.setTimeout(() => {
+        recentlyDraggedRef.current = false;
+      }, 350);
+      const direction: -1 | 1 = dx < 0 ? 1 : -1;
+      if (isMonthExpanded) navigateMonth(direction);
+      else navigateWeek(direction);
+    }
+  }
 
   function handleCalendarTouchStart(event: React.TouchEvent) {
     const t = event.touches[0];
@@ -106,14 +122,35 @@ export function AgendaCalendar({
 
   function handleCalendarTouchEnd(event: React.TouchEvent) {
     const t = event.changedTouches[0];
-    const dx = t.clientX - startRef.current.x;
-    const dy = t.clientY - startRef.current.y;
-    const adx = Math.abs(dx);
-    const ady = Math.abs(dy);
-    if (adx > ady && adx > SWIPE_THRESHOLD) {
-      const direction: -1 | 1 = dx < 0 ? 1 : -1;
-      if (isMonthExpanded) navigateMonth(direction);
-      else navigateWeek(direction);
+    navigateByDelta(
+      t.clientX - startRef.current.x,
+      t.clientY - startRef.current.y,
+    );
+  }
+
+  function handleCalendarMouseDown(event: React.MouseEvent) {
+    if (event.button !== 0) return;
+    startRef.current = { x: event.clientX, y: event.clientY, t: Date.now() };
+    isMouseDraggingRef.current = true;
+  }
+
+  function handleCalendarMouseUp(event: React.MouseEvent) {
+    if (!isMouseDraggingRef.current) return;
+    isMouseDraggingRef.current = false;
+    navigateByDelta(
+      event.clientX - startRef.current.x,
+      event.clientY - startRef.current.y,
+    );
+  }
+
+  function handleCalendarMouseLeave() {
+    isMouseDraggingRef.current = false;
+  }
+
+  function handleCalendarClickCapture(event: React.MouseEvent) {
+    if (recentlyDraggedRef.current) {
+      event.preventDefault();
+      event.stopPropagation();
     }
   }
 
@@ -214,7 +251,11 @@ export function AgendaCalendar({
       <div
         onTouchStart={handleCalendarTouchStart}
         onTouchEnd={handleCalendarTouchEnd}
-        className="overflow-hidden transition-[max-height] duration-[500ms] ease-[var(--ease-out-soft)]"
+        onMouseDown={handleCalendarMouseDown}
+        onMouseUp={handleCalendarMouseUp}
+        onMouseLeave={handleCalendarMouseLeave}
+        onClickCapture={handleCalendarClickCapture}
+        className="select-none overflow-hidden transition-[max-height] duration-[500ms] ease-[var(--ease-out-soft)] lg:cursor-grab lg:active:cursor-grabbing"
         style={{
           // Collapsed: alcanza para h-12 (mobile) y h-14 (desktop) de DayCell.
           // Expanded: 6 rows × h-14 (56px) + 5 gaps × 4px ≈ 356px → 380 con margen.

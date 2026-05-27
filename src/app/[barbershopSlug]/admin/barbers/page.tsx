@@ -37,8 +37,6 @@ export default async function AdminBarbersPage({
       <AdminShell
         barbershopSlug={barbershop.slug}
         barbershopName={barbershop.name}
-        backHref={`/${barbershop.slug}/admin`}
-        backLabel="← Agenda"
       >
         <AdminBarbersManager barbershop={barbershop} />
       </AdminShell>
