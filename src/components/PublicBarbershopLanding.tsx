@@ -4,7 +4,10 @@ import {
   type DemoBarbershop,
 } from "@/data/demo-barbershops";
 import { Logo } from "@/components/ui";
+import { BarbershopInfoSection } from "./BarbershopInfoSection";
+import { BarbershopTeamSection } from "./BarbershopTeamSection";
 import { HeroSection } from "./HeroSection";
+import { PublicBarbershopFooter } from "./PublicBarbershopFooter";
 import { ServicesSection } from "./ServicesSection";
 
 type PublicBarbershopLandingProps = {
@@ -16,25 +19,37 @@ export function PublicBarbershopLanding({
 }: PublicBarbershopLandingProps) {
   return (
     <main className="min-h-screen bg-black text-white">
-      <nav className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-5 sm:px-8 sm:py-6 lg:px-12">
-        <Link
-          href="/"
-          className="truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:tracking-[0.2em]"
-        >
-          ← BarberSync
-        </Link>
-        <Logo variant="mark" size="sm" className="shrink-0" />
+      {/* Nav top */}
+      <nav className="sticky top-0 z-10 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-8 sm:py-4 lg:px-12">
+          <Link
+            href="/"
+            aria-label="Ir al inicio de BarberSync"
+            className="inline-flex"
+          >
+            <Logo size="sm" />
+          </Link>
+          <Link
+            href={`/${barbershop.slug}/reservar`}
+            className="inline-flex min-h-9 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
+          >
+            Reservar
+          </Link>
+        </div>
       </nav>
 
-      <div className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-8 sm:pb-20 lg:px-12 lg:pb-28">
-        <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:gap-20">
-          <HeroSection barbershop={barbershop} />
-          <ServicesSection
-            services={getPublicServices(barbershop)}
-            workingHours={barbershop.workingHours}
-          />
-        </div>
-      </div>
+      <HeroSection barbershop={barbershop} />
+
+      <BarbershopTeamSection barbers={barbershop.barbers} />
+
+      <ServicesSection
+        services={getPublicServices(barbershop)}
+        barbershopSlug={barbershop.slug}
+      />
+
+      <BarbershopInfoSection barbershop={barbershop} />
+
+      <PublicBarbershopFooter barbershopName={barbershop.name} />
     </main>
   );
 }

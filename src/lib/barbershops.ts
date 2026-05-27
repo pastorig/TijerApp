@@ -16,7 +16,7 @@ const defaultWorkingHours = {
 };
 
 const barbershopSelectFields =
-  "id, created_at, slug, name, description, whatsapp, instagram, working_hours_start, working_hours_end, slot_interval_minutes, is_active";
+  "id, created_at, slug, name, description, whatsapp, instagram, address, working_hours_start, working_hours_end, slot_interval_minutes, is_active";
 
 function mapBarbershopRowToDemoBarbershop(
   barbershop: BarbershopRow,
@@ -33,6 +33,7 @@ function mapBarbershopRowToDemoBarbershop(
       "Reserva tu turno online",
     instagram: barbershop.instagram?.trim() || fallbackDemo?.instagram || "",
     whatsapp: barbershop.whatsapp?.trim() || fallbackDemo?.whatsapp || "",
+    address: barbershop.address?.trim() || undefined,
     barbers: fallbackDemo?.barbers ?? [],
     isActive: barbershop.is_active,
     workingHours: {
@@ -140,6 +141,7 @@ type UpdateBarbershopSettingsInput = {
     description: string | null;
     whatsapp: string | null;
     instagram: string | null;
+    address: string | null;
     working_hours_start: string;
     working_hours_end: string;
     slot_interval_minutes: number;
@@ -156,6 +158,7 @@ export async function updateBarbershopSettings({
     description: values.description,
     whatsapp: values.whatsapp,
     instagram: values.instagram,
+    address: values.address,
     working_hours_start: values.working_hours_start,
     working_hours_end: values.working_hours_end,
     slot_interval_minutes: values.slot_interval_minutes,

@@ -81,15 +81,17 @@ type BarbershopRow = {
   description: string | null;
   whatsapp: string | null;
   instagram: string | null;
+  address: string | null;
   working_hours_start: string;
   working_hours_end: string;
   slot_interval_minutes: number;
   is_active: boolean;
 };
 
-type BarbershopInsert = Omit<BarbershopRow, "id" | "created_at"> & {
+type BarbershopInsert = Omit<BarbershopRow, "id" | "created_at" | "address"> & {
   id?: string;
   created_at?: string;
+  address?: string | null;
 };
 
 type BarbershopUpdate = Partial<BarbershopInsert>;

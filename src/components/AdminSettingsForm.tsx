@@ -18,6 +18,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
   const [description, setDescription] = useState(barbershop.description);
   const [whatsapp, setWhatsapp] = useState(barbershop.whatsapp);
   const [instagram, setInstagram] = useState(barbershop.instagram);
+  const [address, setAddress] = useState(barbershop.address ?? "");
   const [startTime, setStartTime] = useState(barbershop.workingHours.start);
   const [endTime, setEndTime] = useState(barbershop.workingHours.end);
   const [slotIntervalMinutes, setSlotIntervalMinutes] = useState(
@@ -73,6 +74,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
           description: description.trim() || null,
           whatsapp: whatsapp.trim() || null,
           instagram: instagram.trim() || null,
+          address: address.trim() || null,
           working_hours_start: startTime,
           working_hours_end: endTime,
           slot_interval_minutes: intervalValue,
@@ -89,6 +91,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
       setDescription(data.description);
       setWhatsapp(data.whatsapp);
       setInstagram(data.instagram);
+      setAddress(data.address ?? "");
       setStartTime(data.workingHours.start);
       setEndTime(data.workingHours.end);
       setSlotIntervalMinutes(String(data.workingHours.intervalMinutes));
@@ -216,6 +219,29 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
                     placeholder="https://instagram.com/..."
                   />
                 </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="settings-address"
+                  className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
+                >
+                  Dirección — opcional
+                </label>
+                <input
+                  id="settings-address"
+                  value={address}
+                  disabled={isSaving}
+                  onChange={(event) => {
+                    setAddress(event.target.value);
+                    setErrorMessage("");
+                  }}
+                  className="mt-1 min-h-11 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
+                  placeholder="Calle 123, Barrio, Ciudad"
+                />
+                <p className="mt-1 text-[10px] text-[color:var(--text-subtle)]">
+                  Se muestra en la landing pública si la cargás.
+                </p>
               </div>
             </div>
           </section>
