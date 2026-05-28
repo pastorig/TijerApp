@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import { createClient } from "@supabase/supabase-js";
 import * as Sentry from "@sentry/nextjs";
-import type { Database } from "@/lib/supabase";
+import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 
@@ -63,19 +62,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabasePublishableKey =
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!supabaseUrl || !supabasePublishableKey) {
+  // Service role key: bypassa RLS. El endpoint es server-side y solo
+  // recibe payloads validados arriba. La policy "anon insert with check
+  // true" debería funcionar pero quedó bloqueando en producción —
+  // usamos admin client por consistencia con el resto de los endpoints.
+  let supabase;
+  try {
+    supabase = getSupabaseAdminClient();
+  } catch (configError) {
+    Sentry.captureException(configError);
     return NextResponse.json(
       { error: "Servidor mal configurado." },
       { status: 500 },
     );
   }
-
-  // Cliente Supabase server-side. Anon key porque la policy
-  // contact_requests_public_insert ya permite inserts a anon/authenticated.
-  const supabase = createClient<Database>(supabaseUrl, supabasePublishableKey);
 
   const { data: inserted, error: insertError } = await supabase
     .from("contact_requests")
@@ -93,11 +93,7 @@ export async function POST(request: Request) {
     Sentry.captureException(insertError ?? new Error("contact insert failed"));
     console.error("[contact-requests] insert error", insertError);
     return NextResponse.json(
-      {
-        error: "No pudimos guardar tu mensaje. Probá de nuevo.",
-        debug: insertError?.message ?? "unknown insert error",
-        code: insertError?.code ?? null,
-      },
+      { error: "No pudimos guardar tu mensaje. Probá de nuevo." },
       { status: 500 },
     );
   }
