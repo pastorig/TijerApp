@@ -15,12 +15,23 @@ export function HomeContact() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!name.trim() || !message.trim()) {
-      setErrorMessage("Necesitamos al menos tu nombre y un mensaje.");
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPhone = phone.trim();
+    const trimmedMessage = message.trim();
+
+    if (!trimmedName) {
+      setErrorMessage("Necesitamos tu nombre.");
       return;
     }
-    if (!email.trim() && !phone.trim()) {
-      setErrorMessage("Dejanos email o teléfono para responderte.");
+    if (!trimmedMessage) {
+      setErrorMessage("Necesitamos un mensaje para responderte.");
+      return;
+    }
+    if (!trimmedEmail && !trimmedPhone) {
+      setErrorMessage(
+        "Dejanos al menos un email o un teléfono para responderte.",
+      );
       return;
     }
 
@@ -28,10 +39,10 @@ export function HomeContact() {
     setIsSubmitting(true);
     try {
       const { error } = await createContactRequest({
-        name: name.trim(),
-        email: email.trim() || null,
-        phone: phone.trim() || null,
-        message: message.trim(),
+        name: trimmedName,
+        email: trimmedEmail || null,
+        phone: trimmedPhone || null,
+        message: trimmedMessage,
         source: "home",
       });
       if (error) {
@@ -135,7 +146,6 @@ export function HomeContact() {
                     setName(event.target.value);
                     setErrorMessage("");
                   }}
-                  required
                   placeholder="Juan — Barbería Las Heras"
                   className="mt-2 min-h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                 />
@@ -199,7 +209,6 @@ export function HomeContact() {
                     setMessage(event.target.value);
                     setErrorMessage("");
                   }}
-                  required
                   rows={4}
                   placeholder="Contanos cuántos barberos sos, dónde está tu local, etc."
                   className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 py-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
