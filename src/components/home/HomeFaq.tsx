@@ -50,6 +50,16 @@ const FAQ_ITEMS: FaqItem[] = [
     answer:
       "Sí. El panel admin incluye reportes con KPIs (turnos del período, confirmados, cancelados, ingresos), producción por barbero, top servicios, horarios pico, día más activo y clientes recurrentes vs nuevos.",
   },
+  {
+    question: "¿El cliente puede cancelar o confirmar su turno desde el celular?",
+    answer:
+      "Sí. Cuando le mandás el WhatsApp con el detalle del turno, va con un link único de confirmación. El cliente entra, ve la información del turno y puede confirmar o cancelar desde ahí sin loguearse.",
+  },
+  {
+    question: "¿Mis datos y los de mis clientes están protegidos?",
+    answer:
+      "Sí. Usamos Supabase con políticas de seguridad por barbería (RLS) — cada admin solo accede a los datos de su local. La sesión está protegida por contraseña personal y los datos viajan cifrados (HTTPS). Nunca compartimos información con terceros.",
+  },
 ];
 
 export function HomeFaq() {

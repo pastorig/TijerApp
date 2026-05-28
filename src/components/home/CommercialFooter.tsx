@@ -62,7 +62,7 @@ export function CommercialFooter() {
               </li>
               <li>
                 <a
-                  href="https://wa.me/5491100000000"
+                  href="https://wa.me/5493571549321"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
