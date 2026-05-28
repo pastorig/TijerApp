@@ -91,8 +91,13 @@ export async function POST(request: Request) {
 
   if (insertError || !inserted) {
     Sentry.captureException(insertError ?? new Error("contact insert failed"));
+    console.error("[contact-requests] insert error", insertError);
     return NextResponse.json(
-      { error: "No pudimos guardar tu mensaje. Probá de nuevo." },
+      {
+        error: "No pudimos guardar tu mensaje. Probá de nuevo.",
+        debug: insertError?.message ?? "unknown insert error",
+        code: insertError?.code ?? null,
+      },
       { status: 500 },
     );
   }
