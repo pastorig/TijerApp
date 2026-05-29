@@ -97,6 +97,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const [hardDeletingAppointmentId, setHardDeletingAppointmentId] = useState<
     string | null
   >(null);
+  const [isBulkHardDeleting, setIsBulkHardDeleting] = useState(false);
   const [restoringAppointmentId, setRestoringAppointmentId] = useState<
     string | null
   >(null);
@@ -656,6 +657,47 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     }
   }
 
+  async function handleHardDeleteAllDeleted() {
+    const deletedAppointments = appointments.filter(
+      (a) => a.status === "deleted",
+    );
+    if (deletedAppointments.length === 0) return;
+    const ok = window.confirm(
+      `Borrar definitivamente los ${deletedAppointments.length} turnos eliminados? Esta acción no se puede deshacer.`,
+    );
+    if (!ok) return;
+    setErrorMessage("");
+    setIsBulkHardDeleting(true);
+    try {
+      const { data: sessionData } = await getCurrentSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        setErrorMessage("Tu sesión expiró, volvé a iniciar sesión.");
+        return;
+      }
+      const response = await fetch("/api/admin/appointments", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          barbershopSlug: barbershop.slug,
+          deleteAllDeleted: true,
+        }),
+      });
+      if (!response.ok) {
+        setErrorMessage("No pudimos borrar los turnos definitivamente.");
+        return;
+      }
+      setAppointments((current) => current.filter((a) => a.status !== "deleted"));
+    } catch {
+      setErrorMessage("No pudimos borrar los turnos definitivamente.");
+    } finally {
+      setIsBulkHardDeleting(false);
+    }
+  }
+
   async function handleRestoreAppointment(appointment: AppointmentRow) {
     if (!appointment.id) {
       setErrorMessage("No pudimos identificar la reserva.");
@@ -1099,6 +1141,22 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                 </p>
               )}
             </div>
+
+            {activeFilter === "deleted" && filteredAppointments.length > 0 ? (
+              <div className="flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={handleHardDeleteAllDeleted}
+                  disabled={isBulkHardDeleting}
+                  className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[color:var(--danger)]/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <X className="size-3.5" aria-hidden="true" />
+                  {isBulkHardDeleting
+                    ? "Borrando..."
+                    : `Borrar todos (${filteredAppointments.length})`}
+                </button>
+              </div>
+            ) : null}
 
             {/* Lista de turnos */}
             {appointments.length === 0 ? (

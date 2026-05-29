@@ -44,11 +44,13 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Body inválido." }, { status: 400 });
   }
 
-  const appointmentId =
-    typeof payload.appointmentId === "string" ? payload.appointmentId : "";
   const barbershopSlug =
     typeof payload.barbershopSlug === "string" ? payload.barbershopSlug : "";
-  if (!appointmentId || !barbershopSlug) {
+  const appointmentId =
+    typeof payload.appointmentId === "string" ? payload.appointmentId : "";
+  const deleteAllDeleted = payload.deleteAllDeleted === true;
+
+  if (!barbershopSlug || (!appointmentId && !deleteAllDeleted)) {
     return NextResponse.json(
       { error: "Faltan parámetros." },
       { status: 400 },
@@ -64,6 +66,26 @@ export async function DELETE(request: Request) {
   }
 
   const supabaseAdmin = getSupabaseAdminClient();
+
+  if (deleteAllDeleted) {
+    const { data: deletedRows, error: deleteError } = await supabaseAdmin
+      .from("appointments")
+      .delete()
+      .eq("barbershop_slug", barbershopSlug)
+      .eq("status", "deleted")
+      .select("id");
+
+    if (deleteError) {
+      Sentry.captureException(deleteError);
+      return NextResponse.json(
+        { error: "No pudimos borrar los turnos." },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ ok: true, deletedCount: deletedRows?.length ?? 0 });
+  }
+
   const { data: existing, error: existingError } = await supabaseAdmin
     .from("appointments")
     .select("id, status, barbershop_slug")
