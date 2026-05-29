@@ -28,7 +28,7 @@ export const dynamic = "force-dynamic";
  * GitHub Actions no falle si no hay nada que mandar.
  */
 
-const TIMEZONE_OFFSET_HOURS = -3; // Argentina
+const ARG_TZ = "America/Argentina/Buenos_Aires";
 
 type AppointmentForReminder = {
   id: string;
@@ -48,16 +48,44 @@ type BarbershopInfo = {
   name: string;
 };
 
-function getArgNow(): Date {
+function getArgParts(): {
+  isoUtc: string;
+  ymdToday: string;
+  ymdTomorrow: string;
+  hour: number;
+} {
   const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset() * 60_000;
-  return new Date(utc + TIMEZONE_OFFSET_HOURS * 3_600_000);
-}
+  // Usamos Intl con timezone explícito así no dependemos del timezone del
+  // server (Vercel functions corren en UTC pero por las dudas).
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: ARG_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+  });
+  const parts = Object.fromEntries(
+    formatter.formatToParts(now).map((p) => [p.type, p.value]),
+  );
+  const ymdToday = `${parts.year}-${parts.month}-${parts.day}`;
+  const hour = Number(parts.hour);
 
-function ymd(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
-    date.getDate(),
-  ).padStart(2, "0")}`;
+  // Mañana en zona Argentina: sumamos 24h al timestamp y volvemos a formatear.
+  const tomorrowFormatter = formatter.formatToParts(
+    new Date(now.getTime() + 24 * 3_600_000),
+  );
+  const tomorrowParts = Object.fromEntries(
+    tomorrowFormatter.map((p) => [p.type, p.value]),
+  );
+  const ymdTomorrow = `${tomorrowParts.year}-${tomorrowParts.month}-${tomorrowParts.day}`;
+
+  return {
+    isoUtc: now.toISOString(),
+    ymdToday,
+    ymdTomorrow,
+    hour,
+  };
 }
 
 function getHourFromTime(time: string): number {
@@ -165,12 +193,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
 
-  const argNow = getArgNow();
-  const currentHour = argNow.getHours();
-  const todayYmd = ymd(argNow);
-  const tomorrow = new Date(argNow);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowYmd = ymd(tomorrow);
+  const argParts = getArgParts();
+  const currentHour = argParts.hour;
+  const todayYmd = argParts.ymdToday;
+  const tomorrowYmd = argParts.ymdTomorrow;
 
   const supabase = getSupabaseAdminClient();
 
@@ -374,8 +400,10 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     ok: true,
-    runAt: argNow.toISOString(),
-    currentHour,
+    runAtUtc: argParts.isoUtc,
+    argentinaHour: currentHour,
+    argentinaToday: todayYmd,
+    argentinaTomorrow: tomorrowYmd,
     scanned: appointments?.length ?? 0,
     decisions,
   });
