@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Bell,
   CalendarDays,
   Contact,
   ExternalLink,
@@ -54,6 +55,11 @@ export function AdminSidebar({
       label: "Turnero",
       href: `/${barbershopSlug}/admin/turnero`,
       icon: CalendarDays,
+    },
+    {
+      label: "Recordatorios",
+      href: `/${barbershopSlug}/admin/recordatorios`,
+      icon: Bell,
     },
     {
       label: "Reportes",

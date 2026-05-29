@@ -30,6 +30,22 @@ type WhatsAppConfirmationLinkInput = {
   confirmationToken?: string;
 };
 
+type WhatsAppReminderInput = {
+  barbershopName: string;
+  clientName: string;
+  clientPhone: string;
+  serviceName: string;
+  barberName?: string;
+  date: string;
+  time: string;
+  /**
+   * Token único del turno para que el cliente pueda confirmar/cancelar
+   * desde un link en el mensaje. Aplica solo al template de "confirmación
+   * urgente" (2 horas antes).
+   */
+  confirmationToken?: string;
+};
+
 function normalizeWhatsAppPhone(phone: string) {
   return phone.replace(/\D/g, "");
 }
@@ -123,6 +139,80 @@ export function createWhatsAppConfirmationLink({
     );
   }
 
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(
+    messageLines.join("\n"),
+  )}`;
+}
+
+/**
+ * Link wa.me con un mensaje de RECORDATORIO de turno para mañana.
+ * Tono casual, sin link de confirmación (es solo informativo).
+ */
+export function createWhatsAppDayBeforeReminderLink({
+  barbershopName,
+  clientName,
+  clientPhone,
+  serviceName,
+  barberName,
+  date,
+  time,
+}: WhatsAppReminderInput) {
+  const normalizedPhone = normalizeWhatsAppPhone(clientPhone);
+  const messageLines = [
+    `Hola ${clientName}! Te recordamos tu turno de manana en ${barbershopName}.`,
+    "",
+    `Fecha: ${date}`,
+    `Hora: ${time}`,
+    `Servicio: ${serviceName}`,
+  ];
+  if (barberName) {
+    messageLines.push(`Barbero: ${barberName}`);
+  }
+  messageLines.push(
+    "",
+    "Si no podes asistir, avisanos cuanto antes asi liberamos el horario.",
+    "Te esperamos!",
+  );
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(
+    messageLines.join("\n"),
+  )}`;
+}
+
+/**
+ * Link wa.me con mensaje de CONFIRMACION URGENTE (turno en las proximas
+ * 2 horas). Incluye link de confirmacion si hay token.
+ */
+export function createWhatsAppFinalConfirmationLink({
+  barbershopName,
+  clientName,
+  clientPhone,
+  serviceName,
+  barberName,
+  time,
+  confirmationToken,
+}: WhatsAppReminderInput) {
+  const normalizedPhone = normalizeWhatsAppPhone(clientPhone);
+  const messageLines = [
+    `Hola ${clientName}! Tu turno en ${barbershopName} es en las proximas horas.`,
+    "",
+    `Hora: ${time}`,
+    `Servicio: ${serviceName}`,
+  ];
+  if (barberName) {
+    messageLines.push(`Barbero: ${barberName}`);
+  }
+  if (confirmationToken) {
+    messageLines.push(
+      "",
+      "Confirma tu asistencia con un click:",
+      getResponderUrl(confirmationToken),
+    );
+  } else {
+    messageLines.push(
+      "",
+      "Por favor, confirmanos que vas a venir.",
+    );
+  }
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(
     messageLines.join("\n"),
   )}`;
