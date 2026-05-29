@@ -263,7 +263,7 @@ export async function GET(request: Request) {
     process.env.OWNER_NOTIFICATION_FROM ||
     "BarberSync <onboarding@resend.dev>";
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://barber-sync-iota.vercel.app";
+    process.env.NEXT_PUBLIC_SITE_URL || "https://barber-sync-iota.vercel.app";
 
   const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
