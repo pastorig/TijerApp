@@ -7,6 +7,7 @@ import {
   MessageCircle,
   Phone,
   RotateCcw,
+  Star,
   TimerReset,
   X,
 } from "lucide-react";
@@ -56,6 +57,11 @@ type AppointmentRowProps = ActionHandlers &
     showDate?: boolean;
     /** Tags del cliente (si están cargados). Se muestran al lado del nombre. */
     clientTags?: string[];
+    /**
+     * Si está presente, se muestra el botón "Pedir reseña" debajo de las
+     * acciones. Solo aplica a turnos confirmed/pending cuya fecha ya pasó.
+     */
+    reviewWhatsAppHref?: string;
   };
 
 type StatusMeta = {
@@ -127,6 +133,7 @@ export function AppointmentRow({
   scheduleProjection,
   showDate,
   clientTags,
+  reviewWhatsAppHref,
 }: AppointmentRowProps) {
   const status = appointment.status ?? "pending";
   const meta = getStatusMeta(status);
@@ -426,6 +433,18 @@ export function AppointmentRow({
         >
           {deletingId === appointment.id ? "Eliminando..." : "Eliminar de la vista"}
         </button>
+      ) : null}
+
+      {reviewWhatsAppHref && !isCancelled && !isDeleted ? (
+        <a
+          href={reviewWhatsAppHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex w-full items-center justify-center gap-1.5 border-t border-[color:var(--border-subtle)] py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]"
+        >
+          <Star className="size-3" aria-hidden="true" />
+          Pedir reseña por WhatsApp
+        </a>
       ) : null}
     </li>
   );

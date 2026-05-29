@@ -178,6 +178,42 @@ export function createWhatsAppDayBeforeReminderLink({
   )}`;
 }
 
+type WhatsAppReviewRequestInput = {
+  barbershopName: string;
+  clientName: string;
+  clientPhone: string;
+  confirmationToken: string;
+};
+
+/**
+ * Link wa.me para pedirle al cliente que deje una reseña post-corte.
+ * Apunta a `/rev/[token]` que es el formulario público de reseña.
+ */
+export function createWhatsAppReviewRequestLink({
+  barbershopName,
+  clientName,
+  clientPhone,
+  confirmationToken,
+}: WhatsAppReviewRequestInput) {
+  const normalizedPhone = normalizeWhatsAppPhone(clientPhone);
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const reviewUrl = `${siteUrl.replace(/\/$/, "")}/rev/${confirmationToken}`;
+  const firstName = clientName.split(/\s+/)[0] ?? clientName;
+  const messageLines = [
+    `Hola ${firstName}! Gracias por venir a ${barbershopName}.`,
+    "",
+    "Si tenes 30 segundos, contanos como te fue dejando una resena rapida:",
+    "",
+    reviewUrl,
+    "",
+    "Tu opinion nos ayuda un monton.",
+  ];
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(
+    messageLines.join("\n"),
+  )}`;
+}
+
 type WhatsAppReactivationInput = {
   barbershopName: string;
   barbershopSlug: string;

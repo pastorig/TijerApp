@@ -26,6 +26,24 @@ type AppointmentRow = Omit<AppointmentInsert, "status"> & {
   status: AppointmentStatus;
 };
 
+type AppointmentReviewRow = {
+  id: string;
+  appointment_id: string;
+  barbershop_slug: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+};
+
+type AppointmentReviewInsert = {
+  id?: string;
+  appointment_id: string;
+  barbershop_slug: string;
+  rating: number;
+  comment?: string | null;
+  created_at?: string;
+};
+
 type BarberInsert = {
   barbershop_slug: string;
   name: string;
@@ -87,6 +105,7 @@ type BarbershopRow = {
   instagram: string | null;
   address: string | null;
   logo_url: string | null;
+  google_reviews_url: string | null;
   working_hours_start: string;
   working_hours_end: string;
   slot_interval_minutes: number;
@@ -95,12 +114,13 @@ type BarbershopRow = {
 
 type BarbershopInsert = Omit<
   BarbershopRow,
-  "id" | "created_at" | "address" | "logo_url"
+  "id" | "created_at" | "address" | "logo_url" | "google_reviews_url"
 > & {
   id?: string;
   created_at?: string;
   address?: string | null;
   logo_url?: string | null;
+  google_reviews_url?: string | null;
 };
 
 type BarbershopUpdate = Partial<BarbershopInsert>;
@@ -337,6 +357,12 @@ type Database = {
         Update: Partial<AppointmentInsert>;
         Relationships: [];
       };
+      appointment_reviews: {
+        Row: AppointmentReviewRow;
+        Insert: AppointmentReviewInsert;
+        Update: Partial<AppointmentReviewInsert>;
+        Relationships: [];
+      };
       barbers: {
         Row: BarberRow;
         Insert: BarberInsert;
@@ -467,6 +493,29 @@ type Database = {
           reason: string;
         };
       };
+      get_appointment_review_context_by_token: {
+        Args: { p_token: string };
+        Returns: Array<{
+          appointment_id: string;
+          barbershop_slug: string;
+          barbershop_name: string | null;
+          google_reviews_url: string | null;
+          customer_name: string;
+          service_name: string;
+          appointment_date: string;
+          appointment_time: string;
+          status: string;
+          already_submitted: boolean;
+          is_in_future: boolean;
+        }>;
+      };
+      submit_appointment_review_by_token: {
+        Args: { p_token: string; p_rating: number; p_comment: string };
+        Returns: Array<{
+          ok: boolean;
+          reason: string | null;
+        }>;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -498,6 +547,8 @@ export function getSupabaseClient() {
 
 export type {
   AppointmentInsert,
+  AppointmentReviewInsert,
+  AppointmentReviewRow,
   AppointmentRow,
   AppointmentStatus,
   ContactRequestInsert,

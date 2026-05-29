@@ -41,7 +41,10 @@ import type {
   BarbershopClientRow,
   BarberWeeklyScheduleRow,
 } from "@/lib/supabase";
-import { createWhatsAppConfirmationLink } from "@/lib/whatsapp";
+import {
+  createWhatsAppConfirmationLink,
+  createWhatsAppReviewRequestLink,
+} from "@/lib/whatsapp";
 import { Select } from "@/components/ui";
 import { AgendaCalendar } from "./admin/AgendaCalendar";
 import { AppointmentRow as AppointmentCard } from "./admin/AppointmentRow";
@@ -1202,6 +1205,22 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                             dayClosingMinutes,
                         )
                       : 0;
+                  // Botón "Pedir reseña" sólo cuando el turno está
+                  // confirmado/pendiente, la fecha ya pasó y tenemos el token.
+                  const todayIso = new Date().toISOString().slice(0, 10);
+                  const reviewWhatsAppHref =
+                    appointment.confirmation_token &&
+                    appointment.customer_phone &&
+                    (appointment.status === "confirmed" ||
+                      appointment.status === "pending") &&
+                    appointmentDate <= todayIso
+                      ? createWhatsAppReviewRequestLink({
+                          barbershopName: barbershop.name,
+                          clientName: appointment.customer_name,
+                          clientPhone: appointment.customer_phone,
+                          confirmationToken: appointment.confirmation_token,
+                        })
+                      : undefined;
                   const nodes: React.ReactNode[] = [
                     <AppointmentCard
                       key={
@@ -1243,6 +1262,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                       }
                       showDate={isSearching || activeFilter === "all"}
                       clientTags={getTagsForAppointment(appointment)}
+                      reviewWhatsAppHref={reviewWhatsAppHref}
                     />,
                   ];
 

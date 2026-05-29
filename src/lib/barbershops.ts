@@ -19,7 +19,7 @@ const defaultWorkingHours = {
 };
 
 const barbershopSelectFields =
-  "id, created_at, slug, name, description, whatsapp, instagram, address, logo_url, working_hours_start, working_hours_end, slot_interval_minutes, is_active";
+  "id, created_at, slug, name, description, whatsapp, instagram, address, logo_url, google_reviews_url, working_hours_start, working_hours_end, slot_interval_minutes, is_active";
 
 function mapBarbershopRowToDemoBarbershop(
   barbershop: BarbershopRow,
@@ -39,6 +39,7 @@ function mapBarbershopRowToDemoBarbershop(
     whatsapp: barbershop.whatsapp?.trim() || fallbackDemo?.whatsapp || "",
     address: barbershop.address?.trim() || undefined,
     logoUrl: barbershop.logo_url?.trim() || undefined,
+    googleReviewsUrl: barbershop.google_reviews_url?.trim() || undefined,
     barbers:
       dbBarbers && dbBarbers.length > 0
         ? dbBarbers
@@ -188,6 +189,7 @@ type UpdateBarbershopSettingsInput = {
     instagram: string | null;
     address: string | null;
     logo_url?: string | null;
+    google_reviews_url?: string | null;
     working_hours_start: string;
     working_hours_end: string;
     slot_interval_minutes: number;
@@ -212,6 +214,9 @@ export async function updateBarbershopSettings({
   };
   if (values.logo_url !== undefined) {
     updateValues.logo_url = values.logo_url;
+  }
+  if (values.google_reviews_url !== undefined) {
+    updateValues.google_reviews_url = values.google_reviews_url;
   }
 
   const { data, error } = await getSupabaseClient()

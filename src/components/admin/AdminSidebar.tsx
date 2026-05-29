@@ -16,6 +16,7 @@ import {
   Menu,
   Plus,
   Settings,
+  Star,
   Users,
   Wallet,
   X,
@@ -87,6 +88,11 @@ export function AdminSidebar({
       label: "Clientes",
       href: `/${barbershopSlug}/admin/clientes`,
       icon: Contact,
+    },
+    {
+      label: "Reseñas",
+      href: `/${barbershopSlug}/admin/resenas`,
+      icon: Star,
     },
     {
       label: "Galería",

@@ -20,6 +20,9 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
   const [whatsapp, setWhatsapp] = useState(barbershop.whatsapp);
   const [instagram, setInstagram] = useState(barbershop.instagram);
   const [address, setAddress] = useState(barbershop.address ?? "");
+  const [googleReviewsUrl, setGoogleReviewsUrl] = useState(
+    barbershop.googleReviewsUrl ?? "",
+  );
   const [startTime, setStartTime] = useState(barbershop.workingHours.start);
   const [endTime, setEndTime] = useState(barbershop.workingHours.end);
   const [slotIntervalMinutes, setSlotIntervalMinutes] = useState(
@@ -94,6 +97,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
           whatsapp: whatsapp.trim() || null,
           instagram: instagram.trim() || null,
           address: address.trim() || null,
+          googleReviewsUrl: googleReviewsUrl.trim() || null,
           workingHoursStart: startTime,
           workingHoursEnd: endTime,
           slotIntervalMinutes: intervalValue,
@@ -118,6 +122,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
           whatsapp: string | null;
           instagram: string | null;
           address: string | null;
+          google_reviews_url: string | null;
           working_hours_start: string;
           working_hours_end: string;
           slot_interval_minutes: number;
@@ -130,6 +135,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
       setWhatsapp(fresh.whatsapp ?? "");
       setInstagram(fresh.instagram ?? "");
       setAddress(fresh.address ?? "");
+      setGoogleReviewsUrl(fresh.google_reviews_url ?? "");
       setStartTime(fresh.working_hours_start);
       setEndTime(fresh.working_hours_end);
       setSlotIntervalMinutes(String(fresh.slot_interval_minutes));
@@ -414,6 +420,30 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
                 />
                 <p className="mt-1 text-[10px] text-[color:var(--text-subtle)]">
                   Se muestra en la landing pública si la cargás.
+                </p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="settings-google-reviews"
+                  className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
+                >
+                  Link a reseñas de Google — opcional
+                </label>
+                <input
+                  id="settings-google-reviews"
+                  value={googleReviewsUrl}
+                  disabled={isSaving}
+                  onChange={(event) => {
+                    setGoogleReviewsUrl(event.target.value);
+                    setErrorMessage("");
+                  }}
+                  className="mt-1 min-h-11 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
+                  placeholder="https://g.page/r/.../review"
+                />
+                <p className="mt-1 text-[10px] text-[color:var(--text-subtle)]">
+                  Si está seteado, después de una reseña de 4-5 estrellas
+                  invitamos al cliente a dejarla también en Google.
                 </p>
               </div>
             </div>
