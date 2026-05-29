@@ -1074,16 +1074,6 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                   const appointmentDate = normalizeDateValue(
                     appointment.appointment_date,
                   );
-                  const hasNextActiveAppointment = arr
-                    .slice(index + 1)
-                    .some(
-                      (nextAppointment) =>
-                        nextAppointment.barber_id === appointment.barber_id &&
-                        normalizeDateValue(nextAppointment.appointment_date) ===
-                          appointmentDate &&
-                        (nextAppointment.status === "pending" ||
-                          nextAppointment.status === "confirmed"),
-                    );
                   const daySchedule = getBarberDaySchedule({
                     barberId: appointment.barber_id,
                     date: appointmentDate,
@@ -1127,7 +1117,6 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                       onAdjustActualDuration={handleAdjustActualDuration}
                       scheduleProjection={scheduleProjection}
                       dayClosingMinutes={dayClosingMinutes}
-                      hasNextActiveAppointment={hasNextActiveAppointment}
                       overtimeAccepted={
                         Boolean(appointment.id) &&
                         acceptedOvertimeByAppointmentId[appointment.id ?? ""] ===
