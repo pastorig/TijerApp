@@ -43,7 +43,6 @@ type AppointmentRowProps = ActionHandlers &
   PendingState & {
     appointment: AppointmentData;
     dayClosingMinutes?: number;
-    hasNextActiveAppointment?: boolean;
     overtimeAccepted?: boolean;
     onAcceptOvertime?: () => void;
     scheduleProjection?: {
@@ -119,7 +118,6 @@ export function AppointmentRow({
   deletingId,
   updatingDurationId,
   dayClosingMinutes,
-  hasNextActiveAppointment,
   overtimeAccepted,
   onAcceptOvertime,
   scheduleProjection,
@@ -152,12 +150,6 @@ export function AppointmentRow({
     dayClosingMinutes !== undefined
       ? Math.max(0, estimatedEndMinutes - dayClosingMinutes)
       : 0;
-  const remainingDayMinutes =
-    dayClosingMinutes !== undefined
-      ? Math.max(0, dayClosingMinutes - estimatedEndMinutes)
-      : 0;
-  const shouldShowRemainingDayMinutes =
-    remainingDayMinutes > 0 && !hasNextActiveAppointment;
   const isOutsideDaySchedule = overtimeMinutes > 0;
   const durationChanged =
     actualDurationMinutes !== null &&
@@ -272,10 +264,6 @@ export function AppointmentRow({
                 {isOutsideDaySchedule ? (
                   <span className="rounded-[var(--radius-xs)] border border-[color:var(--danger)]/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--danger)]">
                     +{overtimeMinutes} min fuera
-                  </span>
-                ) : shouldShowRemainingDayMinutes ? (
-                  <span className="rounded-[var(--radius-xs)] border border-[color:var(--success)]/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--success)]">
-                    sobran {remainingDayMinutes} min
                   </span>
                 ) : delayMinutes > 0 ? (
                   <span className="rounded-[var(--radius-xs)] border border-[color:var(--danger)]/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--danger)]">
