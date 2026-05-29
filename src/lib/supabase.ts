@@ -8,6 +8,7 @@ type AppointmentInsert = {
   barber_name: string;
   customer_name: string;
   customer_phone: string;
+  customer_email?: string | null;
   service_name: string;
   service_price: number;
   service_duration_minutes: number;
@@ -192,6 +193,7 @@ type BarbershopClientRow = {
   phone_normalized: string;
   phone_display: string;
   name: string;
+  email: string | null;
   notes: string | null;
   tags: string[];
   deleted_at: string | null;
@@ -238,6 +240,26 @@ type BarbershopGalleryPhotoUpdate = {
   sort_order?: number;
   deleted_at?: string | null;
 };
+
+type ReminderLogRow = {
+  id: string;
+  appointment_id: string;
+  kind: "reminder_24h" | "confirmation";
+  channel: "email" | "whatsapp";
+  sent_at: string;
+  status: "sent" | "failed";
+  error_message: string | null;
+};
+
+type ReminderLogInsert = {
+  appointment_id: string;
+  kind: "reminder_24h" | "confirmation";
+  channel: "email" | "whatsapp";
+  status?: "sent" | "failed";
+  error_message?: string | null;
+};
+
+type ReminderLogUpdate = Partial<ReminderLogInsert>;
 
 type ContactRequestRow = {
   id: string;
@@ -313,6 +335,12 @@ type Database = {
         Row: ContactRequestRow;
         Insert: ContactRequestInsert;
         Update: ContactRequestUpdate;
+        Relationships: [];
+      };
+      reminder_log: {
+        Row: ReminderLogRow;
+        Insert: ReminderLogInsert;
+        Update: ReminderLogUpdate;
         Relationships: [];
       };
       barber_weekly_schedules: {

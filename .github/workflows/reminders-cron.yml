@@ -1,0 +1,27 @@
+name: Reminders Cron
+
+# Corre cada hora a los :05 (5 minutos pasada la hora). Esto evita la carga
+# pico de los crons en UTC :00 y deja margen para que el deploy de Vercel
+# esté listo si justo acabás de pushear.
+on:
+  schedule:
+    - cron: "5 * * * *"
+  # También permite ejecución manual desde la UI de GitHub Actions.
+  workflow_dispatch:
+
+jobs:
+  trigger-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/reminders
+        run: |
+          response=$(curl -s -o /tmp/cron-body -w "%{http_code}" \
+            -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.CRON_BASE_URL }}/api/cron/reminders")
+          echo "HTTP $response"
+          cat /tmp/cron-body
+          if [ "$response" -ne 200 ]; then
+            echo "Cron failed with status $response"
+            exit 1
+          fi

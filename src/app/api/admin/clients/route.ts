@@ -5,7 +5,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 export const runtime = "nodejs";
 
 const clientSelect =
-  "id, created_at, updated_at, barbershop_slug, phone_normalized, phone_display, name, notes, tags, deleted_at";
+  "id, created_at, updated_at, barbershop_slug, phone_normalized, phone_display, name, email, notes, tags, deleted_at";
 
 async function assertAdminOfBarbershop(
   authHeader: string | null,

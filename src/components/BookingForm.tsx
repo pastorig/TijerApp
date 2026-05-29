@@ -78,6 +78,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
   const [selectedTime, setSelectedTime] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
   const [comment, setComment] = useState("");
   const [formError, setFormError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -427,6 +428,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       barber_name: selectedBarberName,
       customer_name: clientName.trim(),
       customer_phone: clientPhone.trim(),
+      customer_email: clientEmail.trim() || null,
       service_name: selectedService.name,
       service_price: selectedService.price,
       service_duration_minutes: selectedService.durationMinutes,
@@ -747,6 +749,27 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               />
             </Field>
           </div>
+
+          <Field
+            label="Email"
+            htmlFor="clientEmail"
+            optional
+            hint="Si lo dejás, te llegan recordatorios automáticos del turno."
+          >
+            <Input
+              id="clientEmail"
+              type="email"
+              value={clientEmail}
+              disabled={isSaving}
+              onChange={(event) => {
+                setClientEmail(event.target.value);
+                setFormError("");
+              }}
+              placeholder="tu@email.com"
+              autoComplete="email"
+              inputMode="email"
+            />
+          </Field>
 
           <Field label="Comentario" htmlFor="comment" optional>
             <Textarea

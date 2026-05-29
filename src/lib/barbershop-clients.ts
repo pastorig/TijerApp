@@ -4,7 +4,7 @@ import {
 } from "@/lib/supabase";
 
 const clientSelect =
-  "id, created_at, updated_at, barbershop_slug, phone_normalized, phone_display, name, notes, tags, deleted_at";
+  "id, created_at, updated_at, barbershop_slug, phone_normalized, phone_display, name, email, notes, tags, deleted_at";
 
 /** Normaliza un teléfono igual que la función SQL: saca todo lo que no son dígitos. */
 export function normalizePhone(raw: string | null | undefined): string | null {
