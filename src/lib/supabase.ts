@@ -184,6 +184,36 @@ type PublicBarberDayAppointmentRow = {
   service_duration_minutes: number;
 };
 
+type BarbershopClientRow = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  barbershop_slug: string;
+  phone_normalized: string;
+  phone_display: string;
+  name: string;
+  notes: string | null;
+  tags: string[];
+  deleted_at: string | null;
+};
+
+type BarbershopClientInsert = {
+  barbershop_slug: string;
+  phone_normalized: string;
+  phone_display: string;
+  name: string;
+  notes?: string | null;
+  tags?: string[];
+};
+
+type BarbershopClientUpdate = {
+  name?: string;
+  phone_display?: string;
+  notes?: string | null;
+  tags?: string[];
+  deleted_at?: string | null;
+};
+
 type BarbershopGalleryPhotoRow = {
   id: string;
   created_at: string;
@@ -265,6 +295,12 @@ type Database = {
         Row: BarbershopRow;
         Insert: BarbershopInsert;
         Update: BarbershopUpdate;
+        Relationships: [];
+      };
+      barbershop_clients: {
+        Row: BarbershopClientRow;
+        Insert: BarbershopClientInsert;
+        Update: BarbershopClientUpdate;
         Relationships: [];
       };
       barbershop_gallery_photos: {
@@ -414,6 +450,9 @@ export type {
   BarbershopAdminInsert,
   BarbershopAdminRow,
   BarbershopAdminUpdate,
+  BarbershopClientInsert,
+  BarbershopClientRow,
+  BarbershopClientUpdate,
   BarbershopRow,
   BarbershopUpdate,
   PlatformOwnerInsert,
