@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  AlertTriangle,
   ArrowLeft,
   CalendarDays,
   Phone,
@@ -22,6 +23,14 @@ import {
   normalizePhone,
   type BarbershopClient,
 } from "@/lib/barbershop-clients";
+import {
+  computeSegment,
+  daysBetween,
+  SEGMENT_META,
+  segmentTagClasses,
+  type ClientSegment,
+} from "@/lib/client-segments";
+import { createWhatsAppReactivationLink } from "@/lib/whatsapp";
 import { cn } from "@/lib/cn";
 import {
   formatDateForDisplay,
@@ -46,6 +55,9 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
   const [editedTags, setEditedTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [segmentFilter, setSegmentFilter] = useState<ClientSegment | "all">(
+    "all",
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -90,39 +102,81 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
   }, [appointments]);
 
   const clientsWithStats = useMemo(() => {
+    const todayIso = new Date().toISOString().slice(0, 10);
     return clients.map((client) => {
       const appts = appointmentsByClient.get(client.phone_normalized) ?? [];
-      const visits = appts.length;
-      const lastVisit = appts
+      // Visitas "completadas" = no canceladas, no eliminadas, fecha <= hoy.
+      const completedVisits = appts.filter(
+        (a) =>
+          a.status !== "cancelled" &&
+          a.status !== "deleted" &&
+          normalizeDateValue(a.appointment_date) <= todayIso,
+      );
+      const visits = completedVisits.length;
+      const lastVisit = completedVisits
         .map((a) => normalizeDateValue(a.appointment_date))
         .sort()
         .reverse()[0];
+      const daysSinceLastVisit = lastVisit
+        ? daysBetween(lastVisit, todayIso)
+        : null;
       const upcoming = appts
         .filter(
           (a) =>
             (a.status === "pending" || a.status === "confirmed") &&
-            normalizeDateValue(a.appointment_date) >=
-              new Date().toISOString().slice(0, 10),
+            normalizeDateValue(a.appointment_date) >= todayIso,
         )
         .sort((a, b) =>
           normalizeDateValue(a.appointment_date).localeCompare(
             normalizeDateValue(b.appointment_date),
           ),
         )[0];
-      return { client, visits, lastVisit, upcoming };
+      const segment = computeSegment({ visits, daysSinceLastVisit });
+      return {
+        client,
+        visits,
+        lastVisit,
+        daysSinceLastVisit,
+        upcoming,
+        segment,
+        hasUpcoming: Boolean(upcoming),
+      };
     });
   }, [clients, appointmentsByClient]);
 
+  const segmentCounts = useMemo(() => {
+    const counts: Record<ClientSegment | "all", number> = {
+      all: clientsWithStats.length,
+      vip: 0,
+      recurrente: 0,
+      activo: 0,
+      nuevo: 0,
+      "por-reactivar": 0,
+      inactivo: 0,
+      "sin-visitas": 0,
+    };
+    for (const { segment } of clientsWithStats) {
+      counts[segment] = (counts[segment] ?? 0) + 1;
+    }
+    return counts;
+  }, [clientsWithStats]);
+
+  const inactivosCount = segmentCounts.inactivo;
+  const porReactivarCount = segmentCounts["por-reactivar"];
+
   const filteredClients = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return clientsWithStats;
-    return clientsWithStats.filter(({ client }) => {
+    return clientsWithStats.filter((entry) => {
+      if (segmentFilter !== "all" && entry.segment !== segmentFilter) {
+        return false;
+      }
+      if (!query) return true;
       return (
-        client.name.toLowerCase().includes(query) ||
-        client.phone_normalized.includes(query.replace(/\D/g, ""))
+        entry.client.name.toLowerCase().includes(query) ||
+        entry.client.phone_normalized.includes(query.replace(/\D/g, ""))
       );
     });
-  }, [clientsWithStats, searchQuery]);
+  }, [clientsWithStats, searchQuery, segmentFilter]);
 
   const selectedClient = useMemo(() => {
     if (!selectedClientId) return null;
@@ -199,7 +253,22 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
 
   // ─── Detalle ─────────────────────────────────────────────────
   if (selectedClient) {
-    const { client, visits, lastVisit } = selectedClient;
+    const { client, visits, lastVisit, segment, daysSinceLastVisit } =
+      selectedClient;
+    const segmentMeta = SEGMENT_META[segment];
+    const showReactivationCta =
+      (segment === "inactivo" || segment === "por-reactivar") &&
+      Boolean(client.phone_display) &&
+      daysSinceLastVisit !== null;
+    const reactivationLink = showReactivationCta
+      ? createWhatsAppReactivationLink({
+          barbershopName: barbershop.name,
+          barbershopSlug: barbershop.slug,
+          clientName: client.name,
+          clientPhone: client.phone_display,
+          daysSinceLastVisit: daysSinceLastVisit ?? 0,
+        })
+      : null;
     return (
       <div className="space-y-6 sm:space-y-8">
         <button
@@ -218,11 +287,51 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
           <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
             {client.name}
           </h1>
-          <p className="mt-2 inline-flex items-center gap-1 font-mono text-sm text-[color:var(--text-secondary)]">
-            <Phone className="size-3.5" />
-            {client.phone_display}
-          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <p className="inline-flex items-center gap-1 font-mono text-sm text-[color:var(--text-secondary)]">
+              <Phone className="size-3.5" />
+              {client.phone_display}
+            </p>
+            <span
+              className={cn(
+                "inline-flex items-center rounded-[var(--radius-xs)] border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em]",
+                segmentTagClasses(segmentMeta.tone),
+              )}
+              title={segmentMeta.description}
+            >
+              {segmentMeta.label}
+            </span>
+          </div>
         </header>
+
+        {/* CTA reactivación cuando corresponde */}
+        {reactivationLink ? (
+          <div className="flex flex-wrap items-start gap-3 rounded-[var(--radius-md)] border border-amber-400/30 bg-amber-400/5 p-4">
+            <AlertTriangle
+              aria-hidden="true"
+              className="size-5 shrink-0 text-amber-300"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300">
+                {segment === "inactivo"
+                  ? "Cliente inactivo"
+                  : "Cliente por reactivar"}
+              </p>
+              <p className="mt-1 text-xs text-[color:var(--text-secondary)] sm:text-sm">
+                Hace <strong className="text-white">{daysSinceLastVisit}</strong>{" "}
+                días que no viene. Mandale un WhatsApp para invitarlo a volver.
+              </p>
+              <a
+                href={reactivationLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--success)]/15"
+              >
+                Mandar WhatsApp de reactivación
+              </a>
+            </div>
+          </div>
+        ) : null}
 
         {/* KPIs */}
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -436,6 +545,105 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
         />
       </div>
 
+      {/* Alerta de inactivos / por reactivar */}
+      {(inactivosCount > 0 || porReactivarCount > 0) && !isLoading ? (
+        <div className="flex flex-wrap items-start gap-3 rounded-[var(--radius-md)] border border-amber-400/30 bg-amber-400/5 p-4">
+          <AlertTriangle
+            aria-hidden="true"
+            className="size-5 shrink-0 text-amber-300"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300">
+              Clientes que se están perdiendo
+            </p>
+            <p className="mt-1 text-xs text-[color:var(--text-secondary)] sm:text-sm">
+              {inactivosCount > 0 ? (
+                <>
+                  Tenés <strong className="text-white">{inactivosCount}</strong>{" "}
+                  cliente{inactivosCount === 1 ? "" : "s"} sin venir hace más de
+                  60 días.
+                </>
+              ) : null}
+              {inactivosCount > 0 && porReactivarCount > 0 ? " " : null}
+              {porReactivarCount > 0 ? (
+                <>
+                  <strong className="text-white">{porReactivarCount}</strong>{" "}
+                  más entre 30 y 60 días.
+                </>
+              ) : null}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {inactivosCount > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setSegmentFilter("inactivo")}
+                  className="inline-flex items-center rounded-[var(--radius-xs)] border border-[color:var(--danger)]/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)]"
+                >
+                  Ver inactivos ({inactivosCount})
+                </button>
+              ) : null}
+              {porReactivarCount > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setSegmentFilter("por-reactivar")}
+                  className="inline-flex items-center rounded-[var(--radius-xs)] border border-amber-400/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-300 transition-colors duration-[var(--duration-fast)] hover:bg-amber-400/10"
+                >
+                  Ver por reactivar ({porReactivarCount})
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Filtros por segmento */}
+      {!isLoading && clients.length > 0 ? (
+        <div className="-mx-1 flex flex-wrap gap-1.5 overflow-x-auto px-1">
+          {(
+            [
+              "all",
+              "vip",
+              "recurrente",
+              "activo",
+              "nuevo",
+              "por-reactivar",
+              "inactivo",
+            ] as const
+          ).map((value) => {
+            const isActive = segmentFilter === value;
+            const label =
+              value === "all" ? "Todos" : SEGMENT_META[value].shortLabel;
+            const count = segmentCounts[value];
+            if (value !== "all" && count === 0) return null;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setSegmentFilter(value)}
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-xs)] border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
+                  isActive
+                    ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                    : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)]/50 hover:text-[color:var(--brand-gold)]",
+                )}
+              >
+                {label}
+                <span
+                  className={cn(
+                    "rounded-[var(--radius-xs)] px-1 font-mono text-[10px] tabular-nums",
+                    isActive
+                      ? "bg-black/10 text-black"
+                      : "text-[color:var(--text-subtle)]",
+                  )}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
       {errorMessage ? (
         <p
           role="alert"
@@ -468,7 +676,17 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
         </div>
       ) : (
         <ul className="grid gap-2">
-          {filteredClients.map(({ client, visits, lastVisit, upcoming }) => (
+          {filteredClients.map(
+            ({
+              client,
+              visits,
+              lastVisit,
+              upcoming,
+              segment,
+              daysSinceLastVisit,
+            }) => {
+              const segmentMeta = SEGMENT_META[segment];
+              return (
             <li key={client.id}>
               <button
                 type="button"
@@ -490,7 +708,16 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                     <p className="truncate text-sm font-bold text-white sm:text-base">
                       {client.name}
                     </p>
-                    {client.tags?.slice(0, 3).map((tag) => (
+                    <span
+                      className={cn(
+                        "inline-flex shrink-0 items-center rounded-[var(--radius-xs)] border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em]",
+                        segmentTagClasses(segmentMeta.tone),
+                      )}
+                      title={segmentMeta.description}
+                    >
+                      {segmentMeta.shortLabel}
+                    </span>
+                    {client.tags?.slice(0, 2).map((tag) => (
                       <span
                         key={tag}
                         className={cn(
@@ -522,7 +749,20 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                   <p className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
                     {visits === 1 ? "visita" : "visitas"}
                   </p>
-                  {lastVisit ? (
+                  {daysSinceLastVisit !== null ? (
+                    <p
+                      className={cn(
+                        "mt-1 font-mono text-[10px]",
+                        daysSinceLastVisit > 60
+                          ? "text-[color:var(--danger)]"
+                          : daysSinceLastVisit > 30
+                            ? "text-amber-300"
+                            : "text-[color:var(--text-subtle)]",
+                      )}
+                    >
+                      Hace {daysSinceLastVisit}d
+                    </p>
+                  ) : lastVisit ? (
                     <p className="mt-1 font-mono text-[10px] text-[color:var(--text-subtle)]">
                       Últ. {formatDateForDisplay(lastVisit)}
                     </p>
@@ -530,7 +770,9 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 </div>
               </button>
             </li>
-          ))}
+              );
+            },
+          )}
         </ul>
       )}
     </div>

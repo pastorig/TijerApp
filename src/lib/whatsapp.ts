@@ -178,6 +178,44 @@ export function createWhatsAppDayBeforeReminderLink({
   )}`;
 }
 
+type WhatsAppReactivationInput = {
+  barbershopName: string;
+  barbershopSlug: string;
+  clientName: string;
+  clientPhone: string;
+  daysSinceLastVisit: number;
+};
+
+/**
+ * Link wa.me con mensaje para REACTIVAR un cliente que hace tiempo no
+ * viene. Tono casual, incluye link directo al formulario de reserva
+ * público de la barbería.
+ */
+export function createWhatsAppReactivationLink({
+  barbershopName,
+  barbershopSlug,
+  clientName,
+  clientPhone,
+  daysSinceLastVisit,
+}: WhatsAppReactivationInput) {
+  const normalizedPhone = normalizeWhatsAppPhone(clientPhone);
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const bookingUrl = `${siteUrl.replace(/\/$/, "")}/${barbershopSlug}/reservar`;
+  const firstName = clientName.split(/\s+/)[0] ?? clientName;
+  const messageLines = [
+    `Hola ${firstName}! Te extranamos en ${barbershopName}.`,
+    "",
+    `Hace ${daysSinceLastVisit} dias que no pasas por la barberia.`,
+    "Te dejamos el link para reservar cuando quieras volver:",
+    "",
+    bookingUrl,
+  ];
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(
+    messageLines.join("\n"),
+  )}`;
+}
+
 /**
  * Link wa.me con mensaje de CONFIRMACION URGENTE (turno en las proximas
  * 2 horas). Incluye link de confirmacion si hay token.
