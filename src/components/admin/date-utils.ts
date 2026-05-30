@@ -41,6 +41,45 @@ export const WEEKDAY_LABELS_SHORT = [
   "Dom",
 ] as const;
 
+/** Etiquetas en MAYÚSCULAS sin tilde — para "stamps" de fecha tipo calendario. */
+export const WEEKDAY_LABELS_STAMP = [
+  "DOM",
+  "LUN",
+  "MAR",
+  "MIE",
+  "JUE",
+  "VIE",
+  "SAB",
+] as const;
+
+export const MONTH_LABELS_STAMP = [
+  "ENE",
+  "FEB",
+  "MAR",
+  "ABR",
+  "MAY",
+  "JUN",
+  "JUL",
+  "AGO",
+  "SEP",
+  "OCT",
+  "NOV",
+  "DIC",
+] as const;
+
+export function getStampParts(ymd: string): {
+  weekday: string;
+  day: string;
+  month: string;
+} {
+  const date = parseYmd(ymd);
+  return {
+    weekday: WEEKDAY_LABELS_STAMP[date.getDay()],
+    day: String(date.getDate()).padStart(2, "0"),
+    month: MONTH_LABELS_STAMP[date.getMonth()],
+  };
+}
+
 /** "YYYY-MM-DD" → Date at local noon. */
 export function parseYmd(ymd: string): Date {
   const [year, month, day] = ymd.split("-").map(Number);

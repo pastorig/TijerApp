@@ -1365,7 +1365,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                               )
                           : undefined
                       }
-                      showDate={isSearching || activeFilter === "all"}
+                      showDate
                       clientTags={getTagsForAppointment(appointment)}
                       reviewWhatsAppHref={reviewWhatsAppHref}
                       delayWhatsAppHref={delayWhatsAppHref}
