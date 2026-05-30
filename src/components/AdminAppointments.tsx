@@ -43,6 +43,7 @@ import type {
 } from "@/lib/supabase";
 import {
   createWhatsAppConfirmationLink,
+  createWhatsAppDelayLink,
   createWhatsAppReviewRequestLink,
 } from "@/lib/whatsapp";
 import { Select } from "@/components/ui";
@@ -1275,6 +1276,32 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                           confirmationToken: appointment.confirmation_token,
                         })
                       : undefined;
+
+                  // Si hay delay propagado y el turno todavía no ocurrió o
+                  // es de hoy, ofrecemos botón para avisar al cliente.
+                  const delayWhatsAppHref =
+                    scheduleProjection &&
+                    scheduleProjection.delayMinutes > 0 &&
+                    appointment.customer_phone &&
+                    (appointment.status === "confirmed" ||
+                      appointment.status === "pending") &&
+                    appointmentDate >= todayIso
+                      ? createWhatsAppDelayLink({
+                          barbershopName: barbershop.name,
+                          clientName: appointment.customer_name,
+                          clientPhone: appointment.customer_phone,
+                          serviceName: appointment.service_name,
+                          reservedTime: appointment.appointment_time.slice(0, 5),
+                          estimatedTime: `${String(
+                            Math.floor(
+                              scheduleProjection.estimatedStartMinutes / 60,
+                            ),
+                          ).padStart(2, "0")}:${String(
+                            scheduleProjection.estimatedStartMinutes % 60,
+                          ).padStart(2, "0")}`,
+                          delayMinutes: scheduleProjection.delayMinutes,
+                        })
+                      : undefined;
                   const nodes: React.ReactNode[] = [
                     <AppointmentCard
                       key={
@@ -1319,6 +1346,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                       showDate={isSearching || activeFilter === "all"}
                       clientTags={getTagsForAppointment(appointment)}
                       reviewWhatsAppHref={reviewWhatsAppHref}
+                      delayWhatsAppHref={delayWhatsAppHref}
                     />,
                   ];
 

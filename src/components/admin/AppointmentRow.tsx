@@ -72,6 +72,11 @@ type AppointmentRowProps = ActionHandlers &
      * acciones. Solo aplica a turnos confirmed/pending cuya fecha ya pasó.
      */
     reviewWhatsAppHref?: string;
+    /**
+     * Si está presente (turno con delay > 0), se muestra el botón
+     * "Avisar delay por WhatsApp" en rojo.
+     */
+    delayWhatsAppHref?: string;
   };
 
 type StatusMeta = {
@@ -146,6 +151,7 @@ export function AppointmentRow({
   showDate,
   clientTags,
   reviewWhatsAppHref,
+  delayWhatsAppHref,
 }: AppointmentRowProps) {
   const status = appointment.status ?? "pending";
   const meta = getStatusMeta(status);
@@ -453,6 +459,18 @@ export function AppointmentRow({
         >
           {deletingId === appointment.id ? "Eliminando..." : "Eliminar de la vista"}
         </button>
+      ) : null}
+
+      {delayWhatsAppHref && !isCancelled && !isDeleted ? (
+        <a
+          href={delayWhatsAppHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex w-full items-center justify-center gap-1.5 border-t border-[color:var(--border-subtle)] bg-[color:var(--danger-soft)]/40 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)]"
+        >
+          <MessageCircle className="size-3" aria-hidden="true" />
+          Avisar delay por WhatsApp
+        </a>
       ) : null}
 
       {reviewWhatsAppHref && !isCancelled && !isDeleted ? (

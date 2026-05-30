@@ -178,6 +178,47 @@ export function createWhatsAppDayBeforeReminderLink({
   )}`;
 }
 
+type WhatsAppDelayInput = {
+  barbershopName: string;
+  clientName: string;
+  clientPhone: string;
+  serviceName: string;
+  /** Hora original que reservó el cliente, ej "17:30" */
+  reservedTime: string;
+  /** Hora estimada nueva con delay aplicado, ej "17:45" */
+  estimatedTime: string;
+  /** Minutos de delay (positivo, > 0). */
+  delayMinutes: number;
+};
+
+/**
+ * Link wa.me para avisarle al cliente que su turno está demorado.
+ * Se usa cuando un corte previo se extiende y empuja la agenda.
+ */
+export function createWhatsAppDelayLink({
+  barbershopName,
+  clientName,
+  clientPhone,
+  serviceName,
+  reservedTime,
+  estimatedTime,
+  delayMinutes,
+}: WhatsAppDelayInput) {
+  const normalizedPhone = normalizeWhatsAppPhone(clientPhone);
+  const firstName = clientName.split(/\s+/)[0] ?? clientName;
+  const messageLines = [
+    `Hola ${firstName}! Te aviso desde ${barbershopName}.`,
+    "",
+    `Tu turno de ${serviceName} de las ${reservedTime} esta demorado unos ${delayMinutes} minutos.`,
+    `Te esperamos a las ${estimatedTime} en vez de las ${reservedTime}.`,
+    "",
+    "Disculpa la espera!",
+  ];
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(
+    messageLines.join("\n"),
+  )}`;
+}
+
 type WhatsAppReviewRequestInput = {
   barbershopName: string;
   clientName: string;
