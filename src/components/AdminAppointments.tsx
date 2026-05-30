@@ -120,8 +120,6 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const [updatingDayOverrideBarberId, setUpdatingDayOverrideBarberId] =
     useState<string | null>(null);
   const [isOptimizationExpanded, setIsOptimizationExpanded] = useState(true);
-  const [acceptedOvertimeByAppointmentId, setAcceptedOvertimeByAppointmentId] =
-    useState<Record<string, number>>({});
 
   const matchesBarber = useMemo(() => {
     return (a: AppointmentRow) =>
@@ -544,7 +542,16 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           overrideClosingTime: normalizeTimeShort(override.end_time),
         };
       })
-      .filter((summary): summary is NonNullable<typeof summary> => summary !== null);
+      .filter((summary): summary is NonNullable<typeof summary> => summary !== null)
+      // BUG 1: ocultar el aprovechamiento "fantasma" — si el override
+      // termina al mismo horario que el base, NO hay extensión real.
+      // Pasa cuando la duración real vuelve a la normalidad después de
+      // haberse extendido.
+      .filter(
+        (summary) =>
+          timeValueToMinutes(summary.overrideClosingTime) !==
+          timeValueToMinutes(summary.baseClosingTime),
+      );
   }, [
     barbers,
     barbershop.workingHours,
@@ -864,10 +871,12 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   async function handleExtendClosingForDay(
     barberId: string,
     extensionMinutes: number,
+    forDate?: string,
   ) {
     if (extensionMinutes <= 0) {
       return;
     }
+    const targetDate = forDate ?? focusDate;
 
     const weeklySchedules = weeklySchedulesByBarber[barberId] ?? [];
     const dayOverride = dayOverridesByBarber[barberId] ?? null;
@@ -876,7 +885,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
       barbershop.workingHours,
     );
     const weeklySchedule = mergedSchedules.find(
-      (schedule) => schedule.dayOfWeek === getDayOfWeekFromDate(focusDate),
+      (schedule) => schedule.dayOfWeek === getDayOfWeekFromDate(targetDate),
     );
 
     const baseSchedule = dayOverride
@@ -894,11 +903,10 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         : null;
 
     if (!baseSchedule?.isWorking) {
-      setErrorMessage("No pudimos extender el cierre para ese dia.");
+      toast.error("No pudimos extender el cierre para ese día.");
       return;
     }
 
-    setErrorMessage("");
     setUpdatingDayOverrideBarberId(barberId);
 
     try {
@@ -907,14 +915,14 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
       const { data, error } = await upsertDayOverrideForBarber({
         barbershopSlug: barbershop.slug,
         barberId,
-        overrideDate: focusDate,
+        overrideDate: targetDate,
         startTime: baseSchedule.startTime,
         endTime: formatMinutesToTime(nextEndMinutes),
         isWorking: true,
       });
 
       if (error || !data) {
-        setErrorMessage("No pudimos extender el cierre para ese dia.");
+        toast.error("No pudimos extender el cierre.");
         return;
       }
 
@@ -923,8 +931,9 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         [barberId]: data,
       }));
       setIsOptimizationExpanded(false);
+      toast.success(`Cierre extendido +${extensionMinutes} min`);
     } catch {
-      setErrorMessage("No pudimos extender el cierre para ese dia.");
+      toast.error("No pudimos extender el cierre.");
     } finally {
       setUpdatingDayOverrideBarberId(null);
     }
@@ -1380,19 +1389,15 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                       scheduleProjection={scheduleProjection}
                       dayClosingMinutes={dayClosingMinutes}
                       overtimeAccepted={
-                        Boolean(appointment.id) &&
-                        acceptedOvertimeByAppointmentId[appointment.id ?? ""] ===
-                          overtimeMinutes &&
-                        overtimeMinutes > 0
+                        updatingDayOverrideBarberId === appointment.barber_id
                       }
                       onAcceptOvertime={
                         appointment.id && overtimeMinutes > 0
                           ? () =>
-                              setAcceptedOvertimeByAppointmentId(
-                                (currentAcceptedState) => ({
-                                  ...currentAcceptedState,
-                                  [appointment.id ?? ""]: overtimeMinutes,
-                                }),
+                              handleExtendClosingForDay(
+                                appointment.barber_id,
+                                overtimeMinutes,
+                                appointmentDate,
                               )
                           : undefined
                       }

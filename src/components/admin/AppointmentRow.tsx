@@ -513,21 +513,47 @@ export function AppointmentRow({
             </div>
           ) : null}
 
-          {/* Delay */}
-          {!isOutsideDaySchedule && delayMinutes > 0 ? (
+          {/* Delay — INDEPENDIENTE de overtime, pueden coexistir */}
+          {delayMinutes > 0 ? (
             <div
               role="alert"
-              className="mt-4 flex flex-wrap items-start gap-2 rounded-[var(--radius-xs)] border border-[color:var(--danger)]/30 bg-[color:var(--danger-soft)]/40 p-3"
+              className={cn(
+                "flex flex-wrap items-start gap-2 rounded-[var(--radius-xs)] border p-3",
+                delayMinutes >= 15
+                  ? "border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)]/60"
+                  : "border-amber-400/30 bg-amber-400/[0.06]",
+                // Spacing: si ya hay overtime banner arriba, gap-2; sino mt-4
+                isOutsideDaySchedule ? "mt-2" : "mt-4",
+              )}
             >
               <Clock3
-                className="mt-0.5 size-4 shrink-0 text-[color:var(--danger)]"
+                className={cn(
+                  "mt-0.5 size-4 shrink-0",
+                  delayMinutes >= 15
+                    ? "text-[color:var(--danger)]"
+                    : "text-amber-300",
+                )}
                 aria-hidden="true"
               />
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--danger)] sm:text-xs">
-                  Demora de +{delayMinutes} min
+                <p
+                  className={cn(
+                    "text-[11px] font-bold uppercase tracking-[0.14em] sm:text-xs",
+                    delayMinutes >= 15
+                      ? "text-[color:var(--danger)]"
+                      : "text-amber-300",
+                  )}
+                >
+                  Retrasado +{delayMinutes} min
                 </p>
-                <p className="mt-0.5 text-[11px] text-[color:var(--danger)]/80">
+                <p
+                  className={cn(
+                    "mt-0.5 text-[11px]",
+                    delayMinutes >= 15
+                      ? "text-[color:var(--danger)]/80"
+                      : "text-amber-200/80",
+                  )}
+                >
                   Estimado: {estimatedStartShort}–{estimatedEndShort}
                 </p>
               </div>
