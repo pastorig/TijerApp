@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CalendarDays,
   Check,
   Clock3,
   Copy,
   MessageCircle,
+  MoreVertical,
   Pencil,
   Phone,
   RotateCcw,
@@ -236,16 +237,29 @@ export function AppointmentRow({
                 </span>
               ))}
             </div>
-            {isDeleted && onHardDelete ? null : (
-              <span
-                className={cn(
-                  "inline-flex shrink-0 items-center rounded-[var(--radius-xs)] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]",
-                  meta.pillClasses,
-                )}
-              >
-                {meta.label}
-              </span>
-            )}
+            <div className="flex shrink-0 items-center gap-1.5">
+              {isDeleted && onHardDelete ? null : (
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-[var(--radius-xs)] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]",
+                    meta.pillClasses,
+                  )}
+                >
+                  {meta.label}
+                </span>
+              )}
+              {!isDeleted &&
+              !isCancelled &&
+              (delayWhatsAppHref || reviewWhatsAppHref || onDuplicate) ? (
+                <KebabMenu
+                  appointment={appointment}
+                  delayWhatsAppHref={delayWhatsAppHref}
+                  reviewWhatsAppHref={reviewWhatsAppHref}
+                  onDuplicate={onDuplicate}
+                  disabled={isBusy}
+                />
+              ) : null}
+            </div>
           </div>
           <p className="mt-1 truncate text-xs text-[color:var(--text-secondary)] sm:text-sm">
             {appointment.service_name}
@@ -283,124 +297,109 @@ export function AppointmentRow({
             />
           ) : null}
 
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <div className="rounded-[var(--radius-xs)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]/60 px-2.5 py-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-subtle)]">
-                Duracion
-              </p>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[color:var(--text-secondary)]">
-                <span>Base {baseDurationMinutes} min</span>
-                {durationChanged ? (
-                  <span className="rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)]/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand-gold)]">
-                    Real {actualDurationMinutes} min
-                  </span>
-                ) : (
-                  <span className="text-[color:var(--text-subtle)]">
-                    Sin ajuste
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-[var(--radius-xs)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]/60 px-2.5 py-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-subtle)]">
-                Agenda estimada
-              </p>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[color:var(--text-secondary)]">
+          {/* Fila consolidada: Duración + Agenda estimada + Pills de ajuste */}
+          <div className="mt-3 rounded-[var(--radius-xs)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]/60 px-2.5 py-2">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[color:var(--text-secondary)]">
                 <span className="inline-flex items-center gap-1">
-                  <Clock3 className="size-3" />
-                  {formatMinutesToTime(estimatedStartMinutes)}-{formatMinutesToTime(
-                    estimatedEndMinutes,
-                  )}
+                  <Clock3 className="size-3 text-[color:var(--text-subtle)]" aria-hidden="true" />
+                  <span className="font-mono">
+                    {formatMinutesToTime(estimatedStartMinutes)}–{formatMinutesToTime(estimatedEndMinutes)}
+                  </span>
                 </span>
+                <span className="text-[color:var(--text-subtle)]">·</span>
+                <span className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+                  {baseDurationMinutes}min base
+                </span>
+                {durationChanged ? (
+                  <span className="rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)]/30 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand-gold)]">
+                    Real {actualDurationMinutes}
+                  </span>
+                ) : null}
                 {isOutsideDaySchedule ? (
-                  <span className="rounded-[var(--radius-xs)] border border-[color:var(--danger)]/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--danger)]">
-                    +{overtimeMinutes} min fuera
+                  <span className="rounded-[var(--radius-xs)] border border-[color:var(--danger)]/30 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[color:var(--danger)]">
+                    +{overtimeMinutes}min fuera
                   </span>
                 ) : delayMinutes > 0 ? (
-                  <span className="rounded-[var(--radius-xs)] border border-[color:var(--danger)]/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--danger)]">
-                    +{delayMinutes} min
+                  <span className="rounded-[var(--radius-xs)] border border-[color:var(--danger)]/30 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[color:var(--danger)]">
+                    +{delayMinutes}min
                   </span>
                 ) : (
-                  <span className="text-[color:var(--success)]">
-                    En horario
+                  <span className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--success)]">
+                    en horario
                   </span>
                 )}
               </div>
-              {isOutsideDaySchedule ? (
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className="text-[10px] text-[color:var(--text-muted)]">
-                    Termina despues del cierre del dia.
-                  </span>
-                  {onAcceptOvertime ? (
-                    <button
-                      type="button"
-                      onClick={onAcceptOvertime}
-                      disabled={overtimeAccepted}
-                      className={cn(
-                        "inline-flex min-h-7 items-center justify-center rounded-[var(--radius-xs)] border px-2.5 text-[10px] font-bold uppercase tracking-[0.12em] transition-colors duration-[var(--duration-fast)] disabled:cursor-not-allowed disabled:opacity-70",
-                        overtimeAccepted
-                          ? "border-[color:var(--success)]/30 text-[color:var(--success)]"
-                          : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
-                      )}
-                    >
-                      {overtimeAccepted
-                        ? `Aceptado +${overtimeMinutes} min`
-                        : `Aceptar +${overtimeMinutes} min`}
-                    </button>
-                  ) : null}
+
+              {canAdjustDuration ? (
+                <div className="flex shrink-0 items-center gap-1">
+                  <DurationPill
+                    label="-5"
+                    onClick={() =>
+                      onAdjustActualDuration?.(
+                        appointment,
+                        Math.max(5, effectiveDurationMinutes - 5),
+                      )
+                    }
+                    disabled={isBusy}
+                  />
+                  <DurationPill
+                    label="+5"
+                    accent
+                    onClick={() =>
+                      onAdjustActualDuration?.(
+                        appointment,
+                        effectiveDurationMinutes + 5,
+                      )
+                    }
+                    disabled={isBusy}
+                  />
+                  <DurationPill
+                    label="+10"
+                    accent
+                    onClick={() =>
+                      onAdjustActualDuration?.(
+                        appointment,
+                        effectiveDurationMinutes + 10,
+                      )
+                    }
+                    disabled={isBusy}
+                  />
+                  <DurationPill
+                    icon={<TimerReset className="size-3" aria-hidden="true" />}
+                    label="reset"
+                    iconOnly
+                    onClick={() => onAdjustActualDuration?.(appointment, null)}
+                    disabled={isBusy || !durationChanged}
+                  />
                 </div>
               ) : null}
             </div>
+            {isOutsideDaySchedule && onAcceptOvertime ? (
+              <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-[color:var(--border-subtle)] pt-2">
+                <span className="text-[10px] text-[color:var(--text-muted)]">
+                  Termina despues del cierre del dia.
+                </span>
+                <button
+                  type="button"
+                  onClick={onAcceptOvertime}
+                  disabled={overtimeAccepted}
+                  className={cn(
+                    "inline-flex min-h-7 items-center justify-center rounded-[var(--radius-xs)] border px-2.5 text-[10px] font-bold uppercase tracking-[0.12em] transition-colors duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed disabled:opacity-70",
+                    overtimeAccepted
+                      ? "border-[color:var(--success)]/30 text-[color:var(--success)]"
+                      : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
+                  )}
+                >
+                  {overtimeAccepted
+                    ? `Aceptado +${overtimeMinutes} min`
+                    : `Aceptar +${overtimeMinutes} min`}
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
-
-      {canAdjustDuration ? (
-        <div className="grid grid-cols-4 border-t border-[color:var(--border-subtle)] divide-x divide-[color:var(--border-subtle)]">
-          <ActionButton
-            onClick={() =>
-              onAdjustActualDuration?.(
-                appointment,
-                Math.max(5, effectiveDurationMinutes - 5),
-              )
-            }
-            disabled={isBusy}
-            tone="neutral"
-            icon={<Clock3 className="size-3.5" />}
-          >
-            -5 min
-          </ActionButton>
-          <ActionButton
-            onClick={() =>
-              onAdjustActualDuration?.(appointment, effectiveDurationMinutes + 5)
-            }
-            disabled={isBusy}
-            tone="accent"
-            icon={<Clock3 className="size-3.5" />}
-          >
-            +5 min
-          </ActionButton>
-          <ActionButton
-            onClick={() =>
-              onAdjustActualDuration?.(appointment, effectiveDurationMinutes + 10)
-            }
-            disabled={isBusy}
-            tone="accent"
-            icon={<Clock3 className="size-3.5" />}
-          >
-            +10 min
-          </ActionButton>
-          <ActionButton
-            onClick={() => onAdjustActualDuration?.(appointment, null)}
-            disabled={isBusy || !durationChanged}
-            tone="neutral"
-            icon={<TimerReset className="size-3.5" />}
-          >
-            Reset
-          </ActionButton>
-        </div>
-      ) : null}
 
       {isDeleted ? (
         <div className="grid border-t border-[color:var(--border-subtle)]">
@@ -461,42 +460,144 @@ export function AppointmentRow({
         </button>
       ) : null}
 
-      {delayWhatsAppHref && !isCancelled && !isDeleted ? (
-        <a
-          href={delayWhatsAppHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex w-full press-shrink items-center justify-center gap-1.5 border-t border-[color:var(--border-subtle)] bg-[color:var(--danger-soft)]/40 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)]"
-        >
-          <MessageCircle className="size-3" aria-hidden="true" />
-          Avisar delay por WhatsApp
-        </a>
-      ) : null}
-
-      {reviewWhatsAppHref && !isCancelled && !isDeleted ? (
-        <a
-          href={reviewWhatsAppHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex w-full press-shrink items-center justify-center gap-1.5 border-t border-[color:var(--border-subtle)] py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]"
-        >
-          <Star className="size-3" aria-hidden="true" />
-          Pedir reseña por WhatsApp
-        </a>
-      ) : null}
-
-      {onDuplicate && !isDeleted ? (
-        <button
-          type="button"
-          onClick={() => onDuplicate(appointment)}
-          disabled={isBusy}
-          className="flex w-full press-shrink items-center justify-center gap-1.5 border-t border-[color:var(--border-subtle)] py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--surface-0)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <Copy className="size-3" aria-hidden="true" />
-          Duplicar turno
-        </button>
-      ) : null}
     </li>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────── */
+
+function DurationPill({
+  label,
+  icon,
+  iconOnly,
+  accent,
+  onClick,
+  disabled,
+}: {
+  label: string;
+  icon?: React.ReactNode;
+  iconOnly?: boolean;
+  accent?: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={label}
+      aria-label={label}
+      className={cn(
+        "inline-flex h-7 min-w-7 items-center justify-center rounded-[var(--radius-xs)] border font-mono text-[10px] font-bold transition-colors duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed disabled:opacity-40",
+        accent
+          ? "border-[color:var(--brand-gold)]/30 text-[color:var(--brand-gold)] hover:bg-[color:var(--brand-gold-soft)]"
+          : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
+        iconOnly ? "px-1.5" : "px-2",
+      )}
+    >
+      {icon ?? label}
+    </button>
+  );
+}
+
+function KebabMenu({
+  appointment,
+  delayWhatsAppHref,
+  reviewWhatsAppHref,
+  onDuplicate,
+  disabled,
+}: {
+  appointment: AppointmentData;
+  delayWhatsAppHref?: string;
+  reviewWhatsAppHref?: string;
+  onDuplicate?: (appointment: AppointmentData) => void;
+  disabled?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleClick(event: MouseEvent) {
+      if (!wrapperRef.current) return;
+      if (!wrapperRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [isOpen]);
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen((v) => !v)}
+        disabled={disabled}
+        aria-label="Más acciones"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        className="inline-flex size-7 items-center justify-center rounded-[var(--radius-xs)] text-[color:var(--text-subtle)] transition-colors duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--surface-2)] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        <MoreVertical className="size-4" aria-hidden="true" />
+      </button>
+
+      {isOpen ? (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-20 mt-1.5 w-56 origin-top-right animate-scale-in overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] shadow-2xl"
+        >
+          {delayWhatsAppHref ? (
+            <a
+              role="menuitem"
+              href={delayWhatsAppHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setIsOpen(false)}
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)]"
+            >
+              <MessageCircle className="size-3.5 shrink-0" aria-hidden="true" />
+              Avisar delay
+            </a>
+          ) : null}
+          {reviewWhatsAppHref ? (
+            <a
+              role="menuitem"
+              href={reviewWhatsAppHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setIsOpen(false)}
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]"
+            >
+              <Star className="size-3.5 shrink-0" aria-hidden="true" />
+              Pedir reseña
+            </a>
+          ) : null}
+          {onDuplicate ? (
+            <button
+              role="menuitem"
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                onDuplicate(appointment);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--surface-2)] hover:text-white"
+            >
+              <Copy className="size-3.5 shrink-0" aria-hidden="true" />
+              Duplicar turno
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
