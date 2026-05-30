@@ -33,6 +33,7 @@ import {
 } from "@/lib/barbershop-clients";
 import {
   computeSegment,
+  isNoShowReason,
   daysBetween,
   SEGMENT_META,
   segmentTagClasses,
@@ -124,6 +125,12 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
           normalizeDateValue(a.appointment_date) <= todayIso,
       );
       const visits = completedVisits.length;
+      // Cuenta de turnos cancelados marcados como "Cliente no vino" — el
+      // preset del CancelAppointmentDialog. Alimenta el segmento ghost.
+      const noShowCount = appts.filter(
+        (a) =>
+          a.status === "cancelled" && isNoShowReason(a.cancellation_reason),
+      ).length;
       const lastVisit = completedVisits
         .map((a) => normalizeDateValue(a.appointment_date))
         .sort()
@@ -142,10 +149,15 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
             normalizeDateValue(b.appointment_date),
           ),
         )[0];
-      const segment = computeSegment({ visits, daysSinceLastVisit });
+      const segment = computeSegment({
+        visits,
+        daysSinceLastVisit,
+        noShowCount,
+      });
       return {
         client,
         visits,
+        noShowCount,
         lastVisit,
         daysSinceLastVisit,
         upcoming,
@@ -164,6 +176,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
       nuevo: 0,
       "por-reactivar": 0,
       inactivo: 0,
+      ghost: 0,
       "sin-visitas": 0,
     };
     for (const { segment } of clientsWithStats) {
@@ -848,6 +861,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
               "nuevo",
               "por-reactivar",
               "inactivo",
+              "ghost",
             ] as const
           ).map((value) => {
             const isActive = segmentFilter === value;
