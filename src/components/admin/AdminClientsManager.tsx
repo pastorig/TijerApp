@@ -17,6 +17,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { ImportClientsModal } from "@/components/admin/ImportClientsModal";
+import { useToast } from "@/components/ui";
 import {
   ClientTagsEditor,
   getTagTone,
@@ -67,6 +68,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
     "all",
   );
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     let isMounted = true;
@@ -374,7 +376,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
       const { data: sessionData } = await getCurrentSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
-        setErrorMessage("Tu sesión expiró, volvé a iniciar sesión.");
+        toast.error("Tu sesión expiró, volvé a iniciar sesión.");
         return;
       }
       const response = await fetch("/api/admin/clients", {
@@ -395,16 +397,18 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
         const payload = (await response.json().catch(() => ({}))) as {
           error?: string;
         };
-        setErrorMessage(payload.error ?? "No pudimos guardar.");
+        toast.error(payload.error ?? "No pudimos guardar.");
         return;
       }
       const payload = (await response.json()) as { client: BarbershopClient };
       setClients((current) =>
         current.map((c) => (c.id === payload.client.id ? payload.client : c)),
       );
-      setSuccessMessage("Cliente actualizado.");
+      toast.success("Cliente actualizado", {
+        description: editedName.trim() || client.name,
+      });
     } catch {
-      setErrorMessage("No pudimos guardar.");
+      toast.error("No pudimos guardar.");
     } finally {
       setIsSaving(false);
     }

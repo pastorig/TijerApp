@@ -46,7 +46,7 @@ import {
   createWhatsAppDelayLink,
   createWhatsAppReviewRequestLink,
 } from "@/lib/whatsapp";
-import { Select, useConfirm } from "@/components/ui";
+import { Select, useConfirm, useToast } from "@/components/ui";
 import { AgendaCalendar } from "./admin/AgendaCalendar";
 import { AppointmentRow as AppointmentCard } from "./admin/AppointmentRow";
 import { DuplicateAppointmentModal } from "./admin/DuplicateAppointmentModal";
@@ -107,6 +107,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const [duplicatingAppointment, setDuplicatingAppointment] =
     useState<AppointmentRow | null>(null);
   const confirm = useConfirm();
+  const toast = useToast();
   const [calendarQuickBlockDate, setCalendarQuickBlockDate] = useState<
     string | null
   >(null);
@@ -526,15 +527,14 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
 
   async function handleConfirmAppointment(appointment: AppointmentRow) {
     if (!appointment.id) {
-      setErrorMessage("No pudimos identificar la reserva.");
+      toast.error("No pudimos identificar la reserva.");
       return;
     }
-    setErrorMessage("");
     setConfirmingAppointmentId(appointment.id);
     try {
       const { error } = await confirmAppointment(appointment.id);
       if (error) {
-        setErrorMessage("No pudimos confirmar la reserva.");
+        toast.error("No pudimos confirmar la reserva.");
         return;
       }
       setAppointments((current) =>
@@ -542,8 +542,11 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           a.id === appointment.id ? { ...a, status: "confirmed" } : a,
         ),
       );
+      toast.success(`Turno confirmado`, {
+        description: `${appointment.customer_name} · ${normalizeTimeShort(appointment.appointment_time)}`,
+      });
     } catch {
-      setErrorMessage("No pudimos confirmar la reserva.");
+      toast.error("No pudimos confirmar la reserva.");
     } finally {
       setConfirmingAppointmentId(null);
     }
@@ -581,12 +584,11 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
       danger: true,
     });
     if (!ok) return;
-    setErrorMessage("");
     setCancellingAppointmentId(appointment.id);
     try {
       const { error } = await cancelAppointment(appointment.id);
       if (error) {
-        setErrorMessage("No pudimos cancelar la reserva.");
+        toast.error("No pudimos cancelar la reserva.");
         return;
       }
       setAppointments((current) =>
@@ -594,8 +596,11 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           a.id === appointment.id ? { ...a, status: "cancelled" } : a,
         ),
       );
+      toast.success("Turno cancelado", {
+        description: `${appointment.customer_name} liberó el horario.`,
+      });
     } catch {
-      setErrorMessage("No pudimos cancelar la reserva.");
+      toast.error("No pudimos cancelar la reserva.");
     } finally {
       setCancellingAppointmentId(null);
     }
@@ -603,7 +608,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
 
   async function handleDeleteAppointment(appointment: AppointmentRow) {
     if (!appointment.id) {
-      setErrorMessage("No pudimos identificar la reserva.");
+      toast.error("No pudimos identificar la reserva.");
       return;
     }
     const ok = await confirm({
@@ -614,12 +619,11 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
       danger: true,
     });
     if (!ok) return;
-    setErrorMessage("");
     setDeletingAppointmentId(appointment.id);
     try {
       const { error } = await deleteAppointment(appointment.id);
       if (error) {
-        setErrorMessage("No pudimos eliminar visualmente la reserva.");
+        toast.error("No pudimos eliminar la reserva.");
         return;
       }
       setAppointments((current) =>
@@ -627,8 +631,9 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           a.id === appointment.id ? { ...a, status: "deleted" } : a,
         ),
       );
+      toast.success("Movido a Eliminados");
     } catch {
-      setErrorMessage("No pudimos eliminar visualmente la reserva.");
+      toast.error("No pudimos eliminar la reserva.");
     } finally {
       setDeletingAppointmentId(null);
     }
@@ -636,7 +641,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
 
   async function handleHardDeleteAppointment(appointment: AppointmentRow) {
     if (!appointment.id) {
-      setErrorMessage("No pudimos identificar la reserva.");
+      toast.error("No pudimos identificar la reserva.");
       return;
     }
     const ok = await confirm({
@@ -647,13 +652,12 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
       danger: true,
     });
     if (!ok) return;
-    setErrorMessage("");
     setHardDeletingAppointmentId(appointment.id);
     try {
       const { data: sessionData } = await getCurrentSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
-        setErrorMessage("Tu sesión expiró, volvé a iniciar sesión.");
+        toast.error("Tu sesión expiró, volvé a iniciar sesión.");
         return;
       }
       const response = await fetch("/api/admin/appointments", {
@@ -668,14 +672,15 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         }),
       });
       if (!response.ok) {
-        setErrorMessage("No pudimos borrar definitivamente la reserva.");
+        toast.error("No pudimos borrar definitivamente la reserva.");
         return;
       }
       setAppointments((current) =>
         current.filter((a) => a.id !== appointment.id),
       );
+      toast.success("Turno borrado definitivamente");
     } catch {
-      setErrorMessage("No pudimos borrar definitivamente la reserva.");
+      toast.error("No pudimos borrar definitivamente la reserva.");
     } finally {
       setHardDeletingAppointmentId(null);
     }
@@ -732,13 +737,13 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
       danger: true,
     });
     if (!ok) return;
-    setErrorMessage("");
+    const count = deletedAppointments.length;
     setIsBulkHardDeleting(true);
     try {
       const { data: sessionData } = await getCurrentSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
-        setErrorMessage("Tu sesión expiró, volvé a iniciar sesión.");
+        toast.error("Tu sesión expiró, volvé a iniciar sesión.");
         return;
       }
       const response = await fetch("/api/admin/appointments", {
@@ -753,12 +758,13 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         }),
       });
       if (!response.ok) {
-        setErrorMessage("No pudimos borrar los turnos definitivamente.");
+        toast.error("No pudimos borrar los turnos definitivamente.");
         return;
       }
       setAppointments((current) => current.filter((a) => a.status !== "deleted"));
+      toast.success(`${count} turno${count === 1 ? "" : "s"} borrado${count === 1 ? "" : "s"}`);
     } catch {
-      setErrorMessage("No pudimos borrar los turnos definitivamente.");
+      toast.error("No pudimos borrar los turnos definitivamente.");
     } finally {
       setIsBulkHardDeleting(false);
     }
@@ -766,15 +772,14 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
 
   async function handleRestoreAppointment(appointment: AppointmentRow) {
     if (!appointment.id) {
-      setErrorMessage("No pudimos identificar la reserva.");
+      toast.error("No pudimos identificar la reserva.");
       return;
     }
-    setErrorMessage("");
     setRestoringAppointmentId(appointment.id);
     try {
       const { error } = await restoreDeletedAppointment(appointment.id);
       if (error) {
-        setErrorMessage("No pudimos restaurar la reserva.");
+        toast.error("No pudimos restaurar la reserva.");
         return;
       }
       setAppointments((current) =>
@@ -782,8 +787,9 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           a.id === appointment.id ? { ...a, status: "cancelled" } : a,
         ),
       );
+      toast.success("Turno restaurado");
     } catch {
-      setErrorMessage("No pudimos restaurar la reserva.");
+      toast.error("No pudimos restaurar la reserva.");
     } finally {
       setRestoringAppointmentId(null);
     }
@@ -794,11 +800,10 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     nextDurationMinutes: number | null,
   ) {
     if (!appointment.id) {
-      setErrorMessage("No pudimos identificar la reserva.");
+      toast.error("No pudimos identificar la reserva.");
       return;
     }
 
-    setErrorMessage("");
     setUpdatingDurationAppointmentId(appointment.id);
 
     try {
@@ -1467,6 +1472,9 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         appointment={duplicatingAppointment}
         onClose={() => setDuplicatingAppointment(null)}
         onCreated={() => {
+          toast.success("Turno duplicado", {
+            description: "Aparece como pendiente en la nueva fecha.",
+          });
           // Refresca lista para que aparezca el nuevo turno
           void (async () => {
             const { data } = await listAppointmentsByBarbershop(

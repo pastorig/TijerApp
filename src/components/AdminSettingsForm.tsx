@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
-import { useConfirm } from "@/components/ui";
+import { useConfirm, useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 
 type AdminSettingsFormProps = {
@@ -17,6 +17,7 @@ function isValidTimeValue(value: string) {
 
 export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
   const confirm = useConfirm();
+  const toast = useToast();
   const [name, setName] = useState(barbershop.name);
   const [description, setDescription] = useState(barbershop.description);
   const [whatsapp, setWhatsapp] = useState(barbershop.whatsapp);
@@ -143,6 +144,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
       setSlotIntervalMinutes(String(fresh.slot_interval_minutes));
       setIsActive(fresh.is_active ?? true);
       setSuccessMessage("Configuración guardada correctamente.");
+      toast.success("Configuración guardada");
     } catch {
       setErrorMessage("No pudimos guardar la configuración.");
     } finally {
@@ -184,6 +186,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
       const payload = (await response.json()) as { logoUrl: string };
       setLogoUrl(payload.logoUrl);
       setSuccessMessage("Logo actualizado.");
+      toast.success("Logo actualizado");
     } catch {
       setErrorMessage("No pudimos subir el logo.");
     } finally {
@@ -230,6 +233,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
       }
       setLogoUrl(null);
       setSuccessMessage("Logo eliminado.");
+      toast.success("Logo eliminado");
     } catch {
       setErrorMessage("No pudimos quitar el logo.");
     } finally {

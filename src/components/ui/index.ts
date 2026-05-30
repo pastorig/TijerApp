@@ -2,6 +2,8 @@ export { Button } from "./Button";
 export { Card } from "./Card";
 export { ConfirmProvider, useConfirm } from "./ConfirmDialog";
 export type { ConfirmOptions } from "./ConfirmDialog";
+export { ToastProvider, useToast } from "./Toast";
+export type { ToastVariant } from "./Toast";
 export { Input, Select, Textarea } from "./Input";
 export { Field } from "./Field";
 export { Badge } from "./Badge";
