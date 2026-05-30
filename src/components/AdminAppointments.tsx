@@ -1253,7 +1253,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                 }
               />
             ) : (
-              <ul className="grid gap-3">
+              <ul className="grid gap-3 animate-stagger">
                 {filteredAppointments.flatMap((appointment, index, arr) => {
                   const appointmentDate = normalizeDateValue(
                     appointment.appointment_date,

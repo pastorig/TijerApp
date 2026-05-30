@@ -911,7 +911,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
           </p>
         </div>
       ) : (
-        <ul className="grid gap-2">
+        <ul className="grid gap-2 animate-stagger">
           {filteredClients.map(
             ({
               client,

@@ -536,18 +536,36 @@ function KebabMenu({
     };
   }, [isOpen]);
 
+  const hasUrgent = Boolean(delayWhatsAppHref);
+  const itemCount =
+    Number(Boolean(delayWhatsAppHref)) +
+    Number(Boolean(reviewWhatsAppHref)) +
+    Number(Boolean(onDuplicate));
+
   return (
     <div ref={wrapperRef} className="relative">
       <button
         type="button"
         onClick={() => setIsOpen((v) => !v)}
         disabled={disabled}
-        aria-label="Más acciones"
+        aria-label={`Más acciones (${itemCount})`}
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        className="inline-flex size-7 items-center justify-center rounded-[var(--radius-xs)] text-[color:var(--text-subtle)] transition-colors duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--surface-2)] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+        title="Más acciones"
+        className={cn(
+          "inline-flex size-8 items-center justify-center rounded-[var(--radius-sm)] border transition-all duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed disabled:opacity-40",
+          isOpen
+            ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
+            : "border-[color:var(--border-default)] bg-[color:var(--surface-1)] text-[color:var(--brand-gold)]/80 hover:border-[color:var(--brand-gold)] hover:bg-[color:var(--brand-gold-soft)] hover:text-[color:var(--brand-gold)]",
+        )}
       >
         <MoreVertical className="size-4" aria-hidden="true" />
+        {hasUrgent && !isOpen ? (
+          <span
+            aria-hidden="true"
+            className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-[color:var(--danger)] ring-2 ring-[color:var(--surface-1)] animate-pulse-ring"
+          />
+        ) : null}
       </button>
 
       {isOpen ? (

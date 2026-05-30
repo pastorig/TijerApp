@@ -383,28 +383,34 @@ option:hover {
   animation-delay: 320ms;
 }
 
-/* Hover lift sutil para cards interactivas */
+/* Hover lift para cards interactivas — visible pero no payaso. */
 .hover-lift {
   transition:
     transform var(--duration-fast) var(--ease-out-soft),
     border-color var(--duration-fast) var(--ease-out-soft),
-    box-shadow var(--duration-fast) var(--ease-out-soft);
+    box-shadow var(--duration-base) var(--ease-out-soft);
 }
 .hover-lift:hover {
-  transform: translateY(-1px);
-  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  border-color: var(--brand-gold-ring);
+  box-shadow:
+    0 8px 24px -12px rgba(0, 0, 0, 0.7),
+    0 0 0 1px var(--brand-gold-soft) inset;
 }
 .hover-lift:active {
   transform: translateY(0);
-  transition-duration: 60ms;
+  transition-duration: 80ms;
 }
 
-/* Press feedback para botones: scale-down al click */
+/* Press feedback para botones: scale-down al click — visible al ojo. */
 .press-shrink {
-  transition: transform var(--duration-fast) var(--ease-out-soft);
+  transition:
+    transform var(--duration-fast) var(--ease-out-soft),
+    filter var(--duration-fast) var(--ease-out-soft);
 }
 .press-shrink:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: scale(0.94);
+  filter: brightness(0.92);
 }
 
 .skeleton {
