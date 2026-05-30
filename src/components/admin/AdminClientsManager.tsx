@@ -11,10 +11,12 @@ import {
   Scissors,
   Search,
   TrendingUp,
+  Upload,
   UserRound,
   Users,
   Wallet,
 } from "lucide-react";
+import { ImportClientsModal } from "@/components/admin/ImportClientsModal";
 import {
   ClientTagsEditor,
   getTagTone,
@@ -64,6 +66,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
   const [segmentFilter, setSegmentFilter] = useState<ClientSegment | "all">(
     "all",
   );
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -743,8 +746,8 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
         </p>
       </header>
 
-      <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-        <div className="relative">
+      <div className="flex flex-wrap items-stretch gap-2">
+        <div className="relative flex-1 min-w-[14rem]">
           <Search
             aria-hidden="true"
             className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[color:var(--text-subtle)]"
@@ -757,15 +760,25 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
             className="h-11 w-full appearance-none rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] pl-9 pr-3 text-sm text-white placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)] focus:outline-none [&::-webkit-search-cancel-button]:appearance-none"
           />
         </div>
-        <button
-          type="button"
-          onClick={handleExportCsv}
-          disabled={filteredClients.length === 0}
-          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Download className="size-3.5" aria-hidden="true" />
-          Exportar CSV
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setIsImportOpen(true)}
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+          >
+            <Upload className="size-3.5" aria-hidden="true" />
+            Importar CSV
+          </button>
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={filteredClients.length === 0}
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Download className="size-3.5" aria-hidden="true" />
+            Exportar CSV
+          </button>
+        </div>
       </div>
 
       {/* Alerta de inactivos / por reactivar */}
@@ -998,6 +1011,19 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
           )}
         </ul>
       )}
+
+      <ImportClientsModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        barbershopSlug={barbershop.slug}
+        onImported={() => {
+          // Refresca lista de clientes desde DB
+          void (async () => {
+            const { data } = await listClientsByBarbershop(barbershop.slug);
+            if (data) setClients(data);
+          })();
+        }}
+      />
     </div>
   );
 }

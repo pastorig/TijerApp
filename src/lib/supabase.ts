@@ -225,6 +225,7 @@ type BarbershopClientInsert = {
   phone_normalized: string;
   phone_display: string;
   name: string;
+  email?: string | null;
   notes?: string | null;
   tags?: string[];
 };
