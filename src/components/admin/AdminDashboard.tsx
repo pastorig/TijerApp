@@ -6,10 +6,13 @@ import {
   AlertTriangle,
   ArrowUpRight,
   CalendarDays,
+  Check,
   Clock3,
   LineChart,
   MessageCircle,
+  Moon,
   Phone,
+  Play,
   Plus,
   Scissors,
   Settings,
@@ -242,6 +245,53 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
   const upcomingAppointment = upcomingSorted[0];
   const nextFewAppointments = upcomingSorted.slice(0, 6);
 
+  // Detección de delays — recorre los activos de hoy por barbero ordenados
+  // por hora y calcula cuánto se corre el inicio estimado del próximo turno
+  // por extensión del anterior. Igual lógica que AdminAppointments pero
+  // limitado a HOY para que el dashboard se mantenga liviano.
+  const delaysByAppointmentId = useMemo(() => {
+    const delays = new Map<string, number>();
+    const sorted = [...activeAppointments].sort((a, b) => {
+      const byBarber = a.barber_id.localeCompare(b.barber_id);
+      if (byBarber !== 0) return byBarber;
+      return (
+        timeValueToMinutes(a.appointment_time) -
+        timeValueToMinutes(b.appointment_time)
+      );
+    });
+    const lastEndByBarber = new Map<string, number>();
+    for (const a of sorted) {
+      if (!a.id) continue;
+      const reservedStart = timeValueToMinutes(a.appointment_time);
+      const effectiveDuration =
+        a.actual_duration_minutes ?? a.service_duration_minutes ?? 0;
+      const previousEnd = lastEndByBarber.get(a.barber_id) ?? reservedStart;
+      const estStart = Math.max(reservedStart, previousEnd);
+      const estEnd = estStart + effectiveDuration;
+      delays.set(a.id, Math.max(0, estStart - reservedStart));
+      lastEndByBarber.set(a.barber_id, estEnd);
+    }
+    return delays;
+  }, [activeAppointments]);
+
+  // Turno que está en curso AHORA mismo (si lo hay)
+  const inProgressAppointment = useMemo(() => {
+    return activeAppointments.find((a) => {
+      const start = timeValueToMinutes(a.appointment_time);
+      const end = start + (a.service_duration_minutes ?? 0);
+      return currentMinutes >= start && currentMinutes < end;
+    });
+  }, [activeAppointments, currentMinutes]);
+
+  // Mayor delay actual entre todos los turnos del día
+  const maxDelayMinutes = useMemo(() => {
+    let max = 0;
+    for (const value of delaysByAppointmentId.values()) {
+      if (value > max) max = value;
+    }
+    return max;
+  }, [delaysByAppointmentId]);
+
   // Alertas operativas (dinámicas)
   const operationalAlerts = useMemo(() => {
     const alerts: Array<{
@@ -256,6 +306,24 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
         tone: stats.pending >= 3 ? "warning" : "info",
         text: `${stats.pending} turno${stats.pending === 1 ? "" : "s"} sin confirmar`,
       });
+    }
+    if (maxDelayMinutes > 0) {
+      // Encontrar el turno con mayor delay
+      let delayedAppt: AppointmentRow | undefined;
+      let maxFound = 0;
+      for (const [id, delay] of delaysByAppointmentId) {
+        if (delay > maxFound) {
+          maxFound = delay;
+          delayedAppt = activeAppointments.find((a) => a.id === id);
+        }
+      }
+      if (delayedAppt) {
+        alerts.push({
+          key: "delay",
+          tone: maxDelayMinutes >= 15 ? "danger" : "warning",
+          text: `Retraso de +${maxDelayMinutes} min en ${delayedAppt.customer_name}`,
+        });
+      }
     }
     if (stats.hasOvertime) {
       const overMin = stats.effectiveClosingMin - stats.baseClosingMin;
@@ -274,7 +342,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
     }
 
     return alerts;
-  }, [stats]);
+  }, [stats, maxDelayMinutes, delaysByAppointmentId, activeAppointments]);
 
   // Resumen del día — texto inteligente que comunica "cómo va"
   const daySummary = useMemo(() => {
@@ -284,6 +352,99 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
   }, [stats.total]);
 
   const baseClosingStr = formatMinutesToTime(stats.baseClosingMin);
+
+  /**
+   * Estado del día — banner que sintetiza la situación operativa
+   * AHORA mismo en una sola línea. Prioriza según urgencia.
+   * Pensado como el "All systems operational" de Stripe o el "All done"
+   * de Linear: una mirada y entendés cómo viene el día.
+   */
+  const dayStatus = useMemo((): {
+    tone: "info" | "success" | "warning" | "neutral";
+    icon: "play" | "clock" | "check" | "warning" | "moon" | "calendar";
+    label: string;
+    hint?: string;
+  } => {
+    // Prioridad 1: turno en curso AHORA
+    if (inProgressAppointment) {
+      const start = timeValueToMinutes(inProgressAppointment.appointment_time);
+      const end =
+        start + (inProgressAppointment.service_duration_minutes ?? 0);
+      const minutesUntilEnd = end - currentMinutes;
+      return {
+        tone: "info",
+        icon: "play",
+        label: `Turno en curso · ${inProgressAppointment.customer_name}`,
+        hint: `Termina en ${minutesUntilEnd} min`,
+      };
+    }
+    // Prioridad 2: retraso significativo
+    if (maxDelayMinutes >= 10) {
+      return {
+        tone: "warning",
+        icon: "warning",
+        label: `Retraso de +${maxDelayMinutes} min`,
+        hint: "Avisale al cliente",
+      };
+    }
+    // Prioridad 3: próximo cercano
+    if (upcomingAppointment) {
+      const start = timeValueToMinutes(upcomingAppointment.appointment_time);
+      const minutesUntil = start - currentMinutes;
+      if (minutesUntil <= 60) {
+        return {
+          tone: minutesUntil <= 15 ? "warning" : "info",
+          icon: "clock",
+          label: `Próximo turno en ${minutesUntil} min`,
+          hint: `${upcomingAppointment.customer_name} · ${normalizeTimeValue(upcomingAppointment.appointment_time)}`,
+        };
+      }
+      const hours = Math.floor(minutesUntil / 60);
+      return {
+        tone: "info",
+        icon: "clock",
+        label: `Próximo turno en ${hours}h`,
+        hint: `${upcomingAppointment.customer_name} · ${normalizeTimeValue(upcomingAppointment.appointment_time)}`,
+      };
+    }
+    // Prioridad 4: día completado (había turnos y todos terminaron)
+    if (
+      stats.total > 0 &&
+      !upcomingAppointment &&
+      !inProgressAppointment
+    ) {
+      const attended =
+        stats.confirmed + (stats.total - stats.pending - stats.confirmed - stats.cancelled);
+      return {
+        tone: "success",
+        icon: "check",
+        label: "Día completado",
+        hint: `${attended || stats.total} turno${stats.total === 1 ? "" : "s"} atendido${stats.total === 1 ? "" : "s"}${stats.estimatedRevenue > 0 ? ` · ${formatPrice(stats.estimatedRevenue)} estimados` : ""}`,
+      };
+    }
+    // Prioridad 5: sin turnos hoy
+    if (stats.total === 0) {
+      return {
+        tone: "neutral",
+        icon: "moon",
+        label: "Sin turnos para hoy",
+        hint: "Día tranquilo · aprovechá",
+      };
+    }
+    // Default: día normal
+    return {
+      tone: "info",
+      icon: "calendar",
+      label: `${stats.total} turnos programados`,
+      hint: `Cierre estimado ${formatMinutesToTime(stats.effectiveClosingMin)}`,
+    };
+  }, [
+    inProgressAppointment,
+    maxDelayMinutes,
+    upcomingAppointment,
+    currentMinutes,
+    stats,
+  ]);
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -326,6 +487,9 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
 
       {!isLoading && !errorMessage ? (
         <>
+          {/* ─────────────── DAY STATUS BANNER ─────────────── */}
+          <DayStatusBanner status={dayStatus} />
+
           {/* ─────────────── ALERTAS operativas (solo si hay) ─────────────── */}
           {operationalAlerts.length > 0 ? (
             <section className="grid gap-2 sm:grid-cols-2">
@@ -922,4 +1086,102 @@ function formatMinutesToTime(totalMinutes: number): string {
     .padStart(2, "0");
   const minutes = (totalMinutes % 60).toString().padStart(2, "0");
   return `${hours}:${minutes}`;
+}
+
+function DayStatusBanner({
+  status,
+}: {
+  status: {
+    tone: "info" | "success" | "warning" | "neutral";
+    icon: "play" | "clock" | "check" | "warning" | "moon" | "calendar";
+    label: string;
+    hint?: string;
+  };
+}) {
+  const toneClasses: Record<typeof status.tone, string> = {
+    info: "border-sky-400/30 bg-sky-400/[0.06]",
+    success: "border-[color:var(--success)]/30 bg-[color:var(--success-soft)]",
+    warning: "border-amber-400/30 bg-amber-400/[0.06]",
+    neutral: "border-white/[0.04] bg-[color:var(--surface-1)]",
+  };
+  const iconColors: Record<typeof status.tone, string> = {
+    info: "text-sky-300",
+    success: "text-[color:var(--success)]",
+    warning: "text-amber-300",
+    neutral: "text-[color:var(--text-subtle)]",
+  };
+  const labelColors: Record<typeof status.tone, string> = {
+    info: "text-sky-100",
+    success: "text-white",
+    warning: "text-white",
+    neutral: "text-white",
+  };
+  const dotColors: Record<typeof status.tone, string> = {
+    info: "bg-sky-400",
+    success: "bg-[color:var(--success)]",
+    warning: "bg-amber-400",
+    neutral: "bg-[color:var(--text-subtle)]",
+  };
+  const IconComponent =
+    status.icon === "play"
+      ? Play
+      : status.icon === "clock"
+        ? Clock3
+        : status.icon === "check"
+          ? Check
+          : status.icon === "warning"
+            ? AlertTriangle
+            : status.icon === "moon"
+              ? Moon
+              : CalendarDays;
+
+  return (
+    <section
+      className={cn(
+        "flex flex-wrap items-center gap-3 rounded-[var(--radius-sm)] border px-4 py-3",
+        toneClasses[status.tone],
+      )}
+    >
+      {/* Dot + Icon */}
+      <div className="flex shrink-0 items-center gap-2">
+        <span
+          aria-hidden="true"
+          className={cn(
+            "relative inline-flex size-2 rounded-full",
+            dotColors[status.tone],
+          )}
+        >
+          {status.tone === "warning" ? (
+            <span
+              aria-hidden="true"
+              className={cn(
+                "absolute -inset-1 inline-flex animate-ping rounded-full opacity-40",
+                dotColors[status.tone],
+              )}
+            />
+          ) : null}
+        </span>
+        <IconComponent
+          className={cn("size-4", iconColors[status.tone])}
+          aria-hidden="true"
+        />
+      </div>
+      {/* Label + Hint */}
+      <div className="min-w-0 flex-1">
+        <p
+          className={cn(
+            "text-[13px] font-bold tracking-tight sm:text-sm",
+            labelColors[status.tone],
+          )}
+        >
+          {status.label}
+        </p>
+        {status.hint ? (
+          <p className="mt-0.5 text-[11px] text-[color:var(--text-muted)] sm:text-xs">
+            {status.hint}
+          </p>
+        ) : null}
+      </div>
+    </section>
+  );
 }
