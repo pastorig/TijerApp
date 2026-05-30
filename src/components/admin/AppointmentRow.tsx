@@ -351,37 +351,44 @@ export function AppointmentRow({
 
         {/* ───── ZONA B+C+D+E: Contenido principal ───── */}
         <div className="min-w-0 flex-1 px-4 py-4 sm:px-5 sm:py-5">
-          {/* Línea 1: nombre del cliente + kebab a la derecha */}
+          {/* Línea 1: nombre + status (inline desktop) + kebab */}
           <div className="flex items-start justify-between gap-2 sm:gap-3">
             <div className="min-w-0 flex-1">
-              <h3
-                className="truncate text-2xl font-black tracking-tight text-white"
-                title={appointment.customer_name}
-              >
-                {appointment.customer_name}
-              </h3>
-
-              {/* Línea 2: status pill + tiempo relativo + tag — todos AGRUPADOS al cliente */}
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {/* Mobile: name sola, status debajo. Desktop: name + status pill mismo row */}
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+                <h3
+                  className="truncate text-2xl font-black tracking-tight text-white sm:flex-1 sm:text-3xl"
+                  title={appointment.customer_name}
+                >
+                  {appointment.customer_name}
+                </h3>
                 {isDeleted && onHardDelete ? null : (
-                  <StatusPill
-                    key={status}
-                    meta={meta}
-                    aria-label={`Estado: ${meta.label}`}
-                  />
+                  <div className="flex shrink-0 items-center">
+                    <StatusPill
+                      key={status}
+                      meta={meta}
+                      aria-label={`Estado: ${meta.label}`}
+                    />
+                  </div>
                 )}
-                {relTime ? <RelativeTimeChip info={relTime} /> : null}
-                {primaryTag ? (
-                  <span
-                    className={cn(
-                      "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]",
-                      tagClassesFor(getTagTone(primaryTag)),
-                    )}
-                  >
-                    {primaryTag}
-                  </span>
-                ) : null}
               </div>
+
+              {/* Línea 2: tiempo relativo + tag */}
+              {relTime || primaryTag ? (
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  {relTime ? <RelativeTimeChip info={relTime} /> : null}
+                  {primaryTag ? (
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]",
+                        tagClassesFor(getTagTone(primaryTag)),
+                      )}
+                    >
+                      {primaryTag}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
             <div className="flex shrink-0 items-center">
               {!isDeleted &&
@@ -406,7 +413,7 @@ export function AppointmentRow({
           </div>
 
           {/* Línea 3: servicio + duración (juntos) ── precio (derecha) */}
-          <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 sm:mt-5">
             <span className="inline-flex items-center gap-2 text-[15px] font-semibold text-white sm:text-base">
               <Scissors
                 className="size-4 text-[color:var(--text-subtle)]"
@@ -414,11 +421,11 @@ export function AppointmentRow({
               />
               {appointment.service_name}
               <span className="text-[color:var(--text-subtle)]">·</span>
-              <span className="text-[color:var(--text-muted)] font-medium">
+              <span className="font-medium text-[color:var(--text-muted)]">
                 {baseDurationMinutes} min
               </span>
             </span>
-            <span className="font-mono text-lg font-black tabular-nums text-[color:var(--brand-gold)] sm:text-xl">
+            <span className="font-mono text-lg font-black tabular-nums text-[color:var(--brand-gold)] sm:text-2xl">
               {formatPrice(appointment.service_price)}
             </span>
           </div>
@@ -561,7 +568,7 @@ export function AppointmentRow({
 
       {/* ───── ZONA G: Footer de acciones — jerarquizado ───── */}
       {isDeleted ? (
-        <div className="border-t border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]/40 p-3">
+        <div className="border-t border-white/[0.04] bg-[color:var(--surface-0)]/40 p-3">
           <button
             type="button"
             onClick={() => onRestore?.(appointment)}
@@ -588,7 +595,7 @@ export function AppointmentRow({
                 isConfirmed
                   ? "animate-success-pop border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] text-[color:var(--success)]"
                   : isCancelled
-                    ? "border border-[color:var(--border-subtle)] bg-transparent text-[color:var(--text-subtle)] opacity-50"
+                    ? "border border-white/[0.04] bg-transparent text-[color:var(--text-subtle)] opacity-50"
                     : "bg-[color:var(--brand-gold)] text-black shadow-[0_0_0_0_var(--brand-gold-ring)] hover:bg-[color:var(--brand-gold-hi)] hover:shadow-[0_0_0_3px_var(--brand-gold-ring)]",
               )}
             >
@@ -700,22 +707,22 @@ function DateTimeBlock({
       </div>
 
       {/* ─────── DESKTOP: side column vertical 88px ─────── */}
-      <div className="hidden sm:flex sm:w-[88px] sm:shrink-0 sm:flex-col sm:items-stretch sm:border-r sm:border-white/[0.04] sm:bg-[color:var(--surface-0)]/40">
+      <div className="hidden sm:flex sm:w-[96px] sm:shrink-0 sm:flex-col sm:items-stretch sm:border-r sm:border-white/[0.04] sm:bg-[color:var(--surface-0)]/40">
         {stamp ? (
           <div className="flex flex-col items-center justify-center border-b border-white/[0.04] px-2 py-3">
-            <p className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-[color:var(--brand-gold)]">
+            <p className="font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-[color:var(--brand-gold)]">
               {stamp.weekday}
             </p>
-            <p className="mt-0.5 font-mono text-2xl font-black leading-none tabular-nums text-white">
+            <p className="mt-1 font-mono text-xl font-black leading-none tabular-nums text-white">
               {stamp.day}
             </p>
-            <p className="mt-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-[color:var(--text-muted)]">
+            <p className="mt-1 font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-[color:var(--text-muted)]">
               {stamp.month}
             </p>
           </div>
         ) : null}
-        <div className="flex flex-1 flex-col items-center justify-center gap-0.5 px-3 py-3">
-          <p className="font-mono text-base font-black tabular-nums leading-none text-white sm:text-lg">
+        <div className="flex flex-1 flex-col items-center justify-center gap-1 px-3 py-3">
+          <p className="font-mono text-base font-black tabular-nums leading-none text-white">
             {startTime}
           </p>
           <p
@@ -724,7 +731,7 @@ function DateTimeBlock({
           >
             ↓
           </p>
-          <p className="font-mono text-base font-black tabular-nums leading-none text-white sm:text-lg">
+          <p className="font-mono text-base font-black tabular-nums leading-none text-[color:var(--text-secondary)]">
             {endTime}
           </p>
           <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.18em] text-[color:var(--text-subtle)]">
@@ -1038,7 +1045,7 @@ function KebabMenu({
           ) : null}
 
           {canAdjustDuration ? (
-            <div className="border-t border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]/40">
+            <div className="border-t border-white/[0.04] bg-[color:var(--surface-0)]/40">
               <p className="px-3 pt-2 text-[9px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-subtle)]">
                 Ajustar duración real
               </p>
