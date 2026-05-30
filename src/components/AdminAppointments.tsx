@@ -1281,15 +1281,14 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                         })
                       : undefined;
 
-                  // Si hay delay propagado y el turno todavía no ocurrió o
-                  // es de hoy, ofrecemos botón para avisar al cliente.
+                  // Si hay delay propagado, ofrecemos botón para avisar al
+                  // cliente. Sin restricción de fecha — el owner decide.
                   const delayWhatsAppHref =
                     scheduleProjection &&
                     scheduleProjection.delayMinutes > 0 &&
                     appointment.customer_phone &&
                     (appointment.status === "confirmed" ||
-                      appointment.status === "pending") &&
-                    appointmentDate >= todayIso
+                      appointment.status === "pending")
                       ? createWhatsAppDelayLink({
                           barbershopName: barbershop.name,
                           clientName: appointment.customer_name,

@@ -156,19 +156,21 @@ export function AgendaCalendar({
     if (event.button !== 0) return;
     startRef.current = { x: event.clientX, y: event.clientY, t: Date.now() };
     isMouseDraggingRef.current = true;
-  }
 
-  function handleCalendarMouseUp(event: React.MouseEvent) {
-    if (!isMouseDraggingRef.current) return;
-    isMouseDraggingRef.current = false;
-    navigateByDelta(
-      event.clientX - startRef.current.x,
-      event.clientY - startRef.current.y,
-    );
-  }
-
-  function handleCalendarMouseLeave() {
-    isMouseDraggingRef.current = false;
+    // Listeners a nivel document: capturan el release aunque el usuario
+    // suelte el mouse fuera del calendario (frecuente al hacer swipe largo).
+    // Antes el onMouseUp/onMouseLeave de React cancelaba el gesto si el
+    // cursor salía del contenedor, haciendo el swipe casi inusable.
+    function handleDocMouseUp(docEvent: MouseEvent) {
+      document.removeEventListener("mouseup", handleDocMouseUp);
+      if (!isMouseDraggingRef.current) return;
+      isMouseDraggingRef.current = false;
+      navigateByDelta(
+        docEvent.clientX - startRef.current.x,
+        docEvent.clientY - startRef.current.y,
+      );
+    }
+    document.addEventListener("mouseup", handleDocMouseUp);
   }
 
   function handleCalendarClickCapture(event: React.MouseEvent) {
@@ -276,10 +278,8 @@ export function AgendaCalendar({
         onTouchStart={handleCalendarTouchStart}
         onTouchEnd={handleCalendarTouchEnd}
         onMouseDown={handleCalendarMouseDown}
-        onMouseUp={handleCalendarMouseUp}
-        onMouseLeave={handleCalendarMouseLeave}
         onClickCapture={handleCalendarClickCapture}
-        className="select-none overflow-hidden transition-[max-height] duration-[500ms] ease-[var(--ease-out-soft)] lg:cursor-grab lg:active:cursor-grabbing"
+        className="select-none overflow-hidden transition-[max-height] duration-[500ms] ease-[var(--ease-out-soft)] cursor-grab active:cursor-grabbing"
         style={{
           // Collapsed: alcanza para h-12 (mobile) y h-14 (desktop) de DayCell.
           // Expanded: 6 rows × h-14 (56px) + 5 gaps × 4px ≈ 356px → 380 con margen.
