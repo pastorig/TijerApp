@@ -905,6 +905,14 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
       setIsLoading(true);
       setErrorMessage("");
       try {
+        // Debug helper: ?slow=true en la URL agrega 2s de delay artificial
+        // para poder ver los skeleton loaders. Sin efecto en producción real.
+        if (
+          typeof window !== "undefined" &&
+          new URLSearchParams(window.location.search).get("slow") === "true"
+        ) {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
         const [appsResult, barbersResult, servicesResult, clientsResult] =
           await Promise.all([
             listAppointmentsByBarbershop(barbershop.slug),
