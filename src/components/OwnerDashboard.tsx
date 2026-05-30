@@ -2,8 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  Activity,
+  ArrowUpRight,
+  Clock3,
+  Sparkles,
+  TrendingUp,
+} from "lucide-react";
 import { useConfirm } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
+import { cn } from "@/lib/cn";
+import { formatPrice } from "@/lib/format";
 import {
   getOwnerDashboardMetrics,
   type OwnerDashboardMetrics,
@@ -15,6 +24,9 @@ const emptyMetrics: OwnerDashboardMetrics = {
   totalAppointmentsCount: 0,
   todayAppointmentsCount: 0,
   activeServicesCount: 0,
+  todayEstimatedRevenue: 0,
+  nextGlobalAppointment: null,
+  mostActiveBarbershopToday: null,
   barbershops: [],
 };
 
@@ -356,6 +368,11 @@ export function OwnerDashboard() {
         </div>
       </header>
 
+      {/* ─────────────── PLATFORM PULSE — qué está ocurriendo ─────────────── */}
+      {!isLoading && !errorMessage ? (
+        <PlatformPulse metrics={metrics} />
+      ) : null}
+
       <section>
         {/* Bloque legacy del dashboard owner. Se mantiene la lógica interna
             intacta; el shell ahora trae el sidebar y la nav. */}
@@ -584,5 +601,181 @@ export function OwnerDashboard() {
         ) : null}
       </section>
     </div>
+  );
+}
+
+/* ───────────────────────────────────────────────────────── */
+
+function PlatformPulse({ metrics }: { metrics: OwnerDashboardMetrics }) {
+  const activeBarbershops = metrics.barbershops.filter((b) => b.isActive);
+  const activeBarbershopsCount = activeBarbershops.length;
+  const totalToday = metrics.todayAppointmentsCount;
+
+  // Determinar "salud" general de la plataforma — verde si hay actividad,
+  // amber si no hay reservas hoy, gris si no hay barberías activas.
+  const pulseTone: "success" | "warning" | "neutral" =
+    activeBarbershopsCount === 0
+      ? "neutral"
+      : totalToday === 0
+        ? "warning"
+        : "success";
+
+  const pulseLabel =
+    activeBarbershopsCount === 0
+      ? "Sin barberías activas"
+      : totalToday === 0
+        ? "Sin reservas hoy"
+        : "Plataforma activa";
+
+  const pulseHint =
+    activeBarbershopsCount === 0
+      ? "Creá la primera barbería para empezar"
+      : totalToday === 0
+        ? `${activeBarbershopsCount} barbería${activeBarbershopsCount === 1 ? "" : "s"} sin actividad hoy`
+        : `${totalToday} reserva${totalToday === 1 ? "" : "s"} hoy en ${activeBarbershopsCount} barbería${activeBarbershopsCount === 1 ? "" : "s"}`;
+
+  const toneClasses: Record<typeof pulseTone, string> = {
+    success: "border-[color:var(--success)]/30 bg-[color:var(--success-soft)]",
+    warning: "border-amber-400/30 bg-amber-400/[0.06]",
+    neutral: "border-white/[0.04] bg-[color:var(--surface-1)]",
+  };
+  const iconColor: Record<typeof pulseTone, string> = {
+    success: "text-[color:var(--success)]",
+    warning: "text-amber-300",
+    neutral: "text-[color:var(--text-subtle)]",
+  };
+  const dotColor: Record<typeof pulseTone, string> = {
+    success: "bg-[color:var(--success)]",
+    warning: "bg-amber-400",
+    neutral: "bg-[color:var(--text-subtle)]",
+  };
+
+  return (
+    <section className="mt-6 space-y-3 sm:mt-8">
+      {/* Status principal */}
+      <div
+        className={cn(
+          "flex items-start gap-3 rounded-[var(--radius-sm)] border px-4 py-3",
+          toneClasses[pulseTone],
+        )}
+      >
+        <div className="flex shrink-0 items-center gap-2">
+          <span
+            aria-hidden="true"
+            className={cn(
+              "relative inline-flex size-2 rounded-full",
+              dotColor[pulseTone],
+            )}
+          >
+            {pulseTone === "success" ? (
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "absolute -inset-1 inline-flex animate-ping rounded-full opacity-30",
+                  dotColor[pulseTone],
+                )}
+              />
+            ) : null}
+          </span>
+          <Activity
+            className={cn("size-4", iconColor[pulseTone])}
+            aria-hidden="true"
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-bold tracking-tight text-white sm:text-sm">
+            {pulseLabel}
+          </p>
+          <p className="mt-0.5 text-[11px] text-[color:var(--text-secondary)] sm:text-xs">
+            {pulseHint}
+          </p>
+        </div>
+        {metrics.todayEstimatedRevenue > 0 ? (
+          <div className="hidden shrink-0 text-right sm:block">
+            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+              Ingresos est. hoy
+            </p>
+            <p className="mt-0.5 font-mono text-base font-black tabular-nums text-[color:var(--brand-gold)]">
+              {formatPrice(metrics.todayEstimatedRevenue)}
+            </p>
+          </div>
+        ) : null}
+      </div>
+
+      {/* Cards laterales: próximo global + top barbería */}
+      {metrics.nextGlobalAppointment || metrics.mostActiveBarbershopToday ? (
+        <div className="grid gap-2.5 sm:grid-cols-2">
+          {metrics.nextGlobalAppointment ? (
+            <Link
+              href={`/${metrics.nextGlobalAppointment.barbershopSlug}/admin/turnero`}
+              className="group flex items-center gap-3 rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] px-4 py-3 transition-all duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40 hover:bg-[color:var(--brand-gold-soft)]"
+            >
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]">
+                <Clock3 className="size-4" aria-hidden="true" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                  Próxima reserva global
+                </p>
+                <p className="mt-0.5 text-sm font-bold text-white">
+                  <span className="font-mono">
+                    {metrics.nextGlobalAppointment.appointmentTime.slice(0, 5)}
+                  </span>{" "}
+                  · {metrics.nextGlobalAppointment.customerName}
+                </p>
+                <p className="truncate text-[11px] text-[color:var(--text-secondary)]">
+                  en {metrics.nextGlobalAppointment.barbershopName}
+                </p>
+              </div>
+              <ArrowUpRight
+                className="size-4 shrink-0 text-[color:var(--text-subtle)] transition-colors group-hover:text-[color:var(--brand-gold)]"
+                aria-hidden="true"
+              />
+            </Link>
+          ) : null}
+
+          {metrics.mostActiveBarbershopToday ? (
+            <Link
+              href={`/${metrics.mostActiveBarbershopToday.slug}/admin`}
+              className="group flex items-center gap-3 rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] px-4 py-3 transition-all duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40 hover:bg-[color:var(--brand-gold-soft)]"
+            >
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--success)]/30 bg-[color:var(--success-soft)] text-[color:var(--success)]">
+                <TrendingUp className="size-4" aria-hidden="true" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                  Top del día
+                </p>
+                <p className="mt-0.5 truncate text-sm font-bold text-white">
+                  {metrics.mostActiveBarbershopToday.name}
+                </p>
+                <p className="text-[11px] text-[color:var(--text-secondary)]">
+                  {metrics.mostActiveBarbershopToday.count} reserva
+                  {metrics.mostActiveBarbershopToday.count === 1 ? "" : "s"} hoy
+                </p>
+              </div>
+              <ArrowUpRight
+                className="size-4 shrink-0 text-[color:var(--text-subtle)] transition-colors group-hover:text-[color:var(--brand-gold)]"
+                aria-hidden="true"
+              />
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Estado vacío — solo ingresos mobile (cuando no hay próxima ni top) */}
+      {!metrics.nextGlobalAppointment &&
+      !metrics.mostActiveBarbershopToday &&
+      metrics.todayEstimatedRevenue === 0 &&
+      activeBarbershopsCount > 0 ? (
+        <div className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] px-4 py-3 text-[11px] text-[color:var(--text-muted)] sm:text-xs">
+          <Sparkles
+            className="size-4 shrink-0 text-[color:var(--text-subtle)]"
+            aria-hidden="true"
+          />
+          Esperando primera reserva del día
+        </div>
+      ) : null}
+    </section>
   );
 }
