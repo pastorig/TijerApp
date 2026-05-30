@@ -674,6 +674,18 @@ export function AppointmentRow({
             </div>
           </div>
 
+          {/* Motivo de cancelación — solo si cancelado y registrado */}
+          {isCancelled && appointment.cancellation_reason ? (
+            <div className="mt-2 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/20 bg-[color:var(--danger-soft)]/40 px-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--danger)]/90">
+                Motivo
+              </p>
+              <p className="mt-0.5 text-xs leading-snug text-[color:var(--text-secondary)]">
+                {appointment.cancellation_reason}
+              </p>
+            </div>
+          ) : null}
+
           {/* Eliminar de la vista — solo si cancelado */}
           {isCancelled && onDelete ? (
             <button

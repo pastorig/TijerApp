@@ -50,6 +50,10 @@ import { Select, useConfirm, useToast } from "@/components/ui";
 import { AgendaCalendar } from "./admin/AgendaCalendar";
 import { AppointmentRow as AppointmentCard } from "./admin/AppointmentRow";
 import { AppointmentRowSkeletonList } from "./admin/AppointmentRowSkeleton";
+import {
+  CancelAppointmentDialog,
+  type CancellationContext,
+} from "./admin/CancelAppointmentDialog";
 import { DuplicateAppointmentModal } from "./admin/DuplicateAppointmentModal";
 import { QuickBlockTimeButton } from "./admin/QuickBlockTimeButton";
 import { getTodayYmd, normalizeTimeShort } from "./admin/date-utils";
@@ -98,6 +102,10 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const [cancellingAppointmentId, setCancellingAppointmentId] = useState<
     string | null
   >(null);
+  // Pareja: appointment objetivo + context para el modal. Si appointment es
+  // null el modal no se renderiza.
+  const [pendingCancelAppointment, setPendingCancelAppointment] =
+    useState<AppointmentRow | null>(null);
   const [deletingAppointmentId, setDeletingAppointmentId] = useState<
     string | null
   >(null);
@@ -636,36 +644,51 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     window.open(link, "_blank", "noopener,noreferrer");
   }
 
-  async function handleCancelAppointment(appointment: AppointmentRow) {
+  function handleCancelAppointment(appointment: AppointmentRow) {
     if (!appointment.id) {
       setErrorMessage("No pudimos identificar la reserva.");
       return;
     }
-    const ok = await confirm({
-      title: "Cancelar turno",
-      message: `Vas a cancelar el turno de ${appointment.customer_name} del ${formatDateForDisplay(
-        appointment.appointment_date,
-      )} a las ${normalizeTimeShort(appointment.appointment_time)}. El cliente no recibe aviso automático — avisale por WhatsApp después.`,
-      confirmLabel: "Sí, cancelar",
-      cancelLabel: "Volver",
-      danger: true,
-    });
-    if (!ok) return;
+    // Abre el modal — la confirmación + motivo se manejan en
+    // handleConfirmCancellation, llamado por CancelAppointmentDialog.
+    setPendingCancelAppointment(appointment);
+  }
+
+  async function handleConfirmCancellation(
+    cancellationReason: string | null,
+  ) {
+    const appointment = pendingCancelAppointment;
+    if (!appointment?.id) {
+      setPendingCancelAppointment(null);
+      return;
+    }
     setCancellingAppointmentId(appointment.id);
     try {
-      const { error } = await cancelAppointment(appointment.id);
+      const { error } = await cancelAppointment(
+        appointment.id,
+        cancellationReason,
+      );
       if (error) {
         toast.error("No pudimos cancelar la reserva.");
         return;
       }
       setAppointments((current) =>
         current.map((a) =>
-          a.id === appointment.id ? { ...a, status: "cancelled" } : a,
+          a.id === appointment.id
+            ? {
+                ...a,
+                status: "cancelled",
+                cancellation_reason: cancellationReason,
+              }
+            : a,
         ),
       );
       toast.success("Turno cancelado", {
-        description: `${appointment.customer_name} liberó el horario.`,
+        description: cancellationReason
+          ? `${appointment.customer_name} — motivo registrado`
+          : `${appointment.customer_name} liberó el horario.`,
       });
+      setPendingCancelAppointment(null);
     } catch {
       toast.error("No pudimos cancelar la reserva.");
     } finally {
@@ -1531,6 +1554,32 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           </>
         ) : null}
       </section>
+
+      <CancelAppointmentDialog
+        key={pendingCancelAppointment?.id ?? "closed"}
+        context={
+          pendingCancelAppointment
+            ? ({
+                customerName: pendingCancelAppointment.customer_name,
+                appointmentDate: formatDateForDisplay(
+                  pendingCancelAppointment.appointment_date,
+                ),
+                appointmentTime: normalizeTimeShort(
+                  pendingCancelAppointment.appointment_time,
+                ),
+              } satisfies CancellationContext)
+            : null
+        }
+        isSubmitting={
+          cancellingAppointmentId !== null &&
+          cancellingAppointmentId === pendingCancelAppointment?.id
+        }
+        onCancel={() => {
+          if (cancellingAppointmentId) return; // no cerrar mientras envía
+          setPendingCancelAppointment(null);
+        }}
+        onConfirm={handleConfirmCancellation}
+      />
 
       <DuplicateAppointmentModal
         isOpen={duplicatingAppointment !== null}

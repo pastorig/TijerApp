@@ -38,10 +38,19 @@ export async function confirmAppointment(appointmentId: string) {
     .eq("id", appointmentId);
 }
 
-export async function cancelAppointment(appointmentId: string) {
+export async function cancelAppointment(
+  appointmentId: string,
+  cancellationReason?: string | null,
+) {
+  // Normalizamos: trim + null si quedó vacío. Así no guardamos strings
+  // como "   " que después contaminan analytics.
+  const trimmed = cancellationReason?.trim() || null;
   return getSupabaseClient()
     .from("appointments")
-    .update({ status: "cancelled" })
+    .update({
+      status: "cancelled",
+      cancellation_reason: trimmed,
+    })
     .eq("id", appointmentId);
 }
 

@@ -19,6 +19,7 @@ type AppointmentInsert = {
   actual_duration_minutes?: number | null;
   confirmation_token?: string;
   internal_notes?: string | null;
+  cancellation_reason?: string | null;
 };
 
 type AppointmentRow = Omit<AppointmentInsert, "status"> & {
