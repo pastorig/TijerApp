@@ -414,12 +414,14 @@ option:hover {
 }
 
 .skeleton {
-  /* Contraste alto: base oscura + banda de brillo con tinte dorado */
+  /* Plateado pleno — coherente con la mitad "SYNC" del wordmark.
+     White a 12% sobre fondo dark se ve como sheen plateado claro;
+     no compite con el dorado que se reserva para acciones primarias. */
   background: linear-gradient(
     90deg,
     var(--surface-2) 0%,
     var(--surface-2) 30%,
-    rgba(201, 162, 62, 0.18) 50%,
+    rgba(255, 255, 255, 0.12) 50%,
     var(--surface-2) 70%,
     var(--surface-2) 100%
   );
