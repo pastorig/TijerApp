@@ -346,15 +346,16 @@ export function AppointmentRow({
           stamp={stamp}
           startTime={startTimeShort}
           endTime={endTimeShort}
+          durationMinutes={effectiveDurationMinutes}
         />
 
         {/* ───── ZONA B+C+D+E: Contenido principal ───── */}
         <div className="min-w-0 flex-1 px-4 py-4 sm:px-5 sm:py-5">
           {/* Línea 1: nombre del cliente + kebab a la derecha */}
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start justify-between gap-2 sm:gap-3">
             <div className="min-w-0 flex-1">
               <h3
-                className="truncate text-xl font-black tracking-tight text-white sm:text-2xl"
+                className="truncate text-2xl font-black tracking-tight text-white"
                 title={appointment.customer_name}
               >
                 {appointment.customer_name}
@@ -572,7 +573,9 @@ export function AppointmentRow({
           </button>
         </div>
       ) : (
-        <div className="border-t border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]/40 p-3">
+        <div className="border-t border-white/[0.04] bg-[color:var(--surface-0)]/40 p-3">
+          {/* MOBILE: Confirmar full width arriba, WhatsApp + Cancelar 50/50 abajo */}
+          {/* DESKTOP: Confirmar flex-1, WhatsApp + Cancelar inline a la derecha */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             {/* PRIMARY: Confirmar */}
             <button
@@ -581,7 +584,7 @@ export function AppointmentRow({
               onClick={() => onConfirm?.(appointment)}
               disabled={isConfirmed || isCancelled || isBusy}
               className={cn(
-                "inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[var(--radius-sm)] px-4 text-[12px] font-bold uppercase tracking-[0.16em] transition-all duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed",
+                "inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-sm)] px-4 text-[12px] font-bold uppercase tracking-[0.16em] transition-all duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed sm:min-h-11",
                 isConfirmed
                   ? "animate-success-pop border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] text-[color:var(--success)]"
                   : isCancelled
@@ -589,7 +592,7 @@ export function AppointmentRow({
                     : "bg-[color:var(--brand-gold)] text-black shadow-[0_0_0_0_var(--brand-gold-ring)] hover:bg-[color:var(--brand-gold-hi)] hover:shadow-[0_0_0_3px_var(--brand-gold-ring)]",
               )}
             >
-              <Check className="size-4" aria-hidden="true" />
+              <Check className="size-5 sm:size-4" aria-hidden="true" />
               {confirmingId === appointment.id
                 ? "..."
                 : isConfirmed
@@ -597,30 +600,32 @@ export function AppointmentRow({
                   : "Confirmar"}
             </button>
 
-            {/* SECONDARIES */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            {/* SECONDARIES: WhatsApp + Cancelar */}
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3">
+              {/* WhatsApp — filled subtle green, mucho más visible que outline */}
               <button
                 type="button"
                 onClick={() => onWhatsApp?.(appointment)}
                 disabled={isCancelled || isBusy}
-                className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--success)]/30 bg-transparent px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--success-soft)] hover:border-[color:var(--success)]/60 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none"
+                className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-all duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--success)]/60 hover:bg-[color:var(--success)]/20 hover:shadow-[0_0_0_3px_var(--success-soft)] disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-11"
               >
-                <MessageCircle className="size-4" aria-hidden="true" />
+                <MessageCircle className="size-5 sm:size-4" aria-hidden="true" />
                 WhatsApp
               </button>
 
+              {/* Cancelar — filled soft red, claramente clickeable */}
               <button
                 type="button"
                 onClick={() => onCancel?.(appointment)}
                 disabled={isCancelled || isBusy}
                 className={cn(
-                  "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border bg-transparent px-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-all duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed disabled:opacity-40",
+                  "inline-flex min-h-12 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border px-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-all duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-11",
                   isCancelled
                     ? "animate-success-pop border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] text-[color:var(--danger)]"
-                    : "border-[color:var(--danger)]/25 text-[color:var(--danger)]/80 hover:border-[color:var(--danger)]/60 hover:bg-[color:var(--danger-soft)] hover:text-[color:var(--danger)]",
+                    : "border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] text-[color:var(--danger)] hover:border-[color:var(--danger)]/70 hover:bg-[color:var(--danger)]/20 hover:shadow-[0_0_0_3px_var(--danger-soft)]",
                 )}
               >
-                <X className="size-4" aria-hidden="true" />
+                <X className="size-5 sm:size-4" aria-hidden="true" />
                 {cancellingId === appointment.id
                   ? "Cancelando…"
                   : isCancelled
@@ -655,42 +660,79 @@ function DateTimeBlock({
   stamp,
   startTime,
   endTime,
+  durationMinutes,
 }: {
   stamp: { weekday: string; day: string; month: string } | null;
   startTime: string;
   endTime: string;
+  durationMinutes: number;
 }) {
   return (
-    <div className="flex shrink-0 flex-row items-stretch border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]/40 sm:w-[88px] sm:flex-col sm:border-b-0 sm:border-r">
-      {stamp ? (
-        <div className="flex flex-col items-center justify-center border-r border-[color:var(--border-subtle)] px-3 py-3 sm:border-r-0 sm:border-b sm:px-2 sm:py-3">
-          <p className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-[color:var(--brand-gold)]">
-            {stamp.weekday}
+    <>
+      {/* ─────── MOBILE: header strip horizontal con horario HERO ─────── */}
+      <div className="sm:hidden">
+        {stamp ? (
+          <div className="flex items-center justify-between gap-3 border-b border-white/[0.04] px-4 pt-3.5 pb-1">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-[color:var(--brand-gold)]">
+              {stamp.weekday} {stamp.day} {stamp.month}
+            </span>
+          </div>
+        ) : null}
+        <div className="flex items-baseline justify-between gap-3 border-b border-white/[0.04] px-4 pb-4 pt-3">
+          <div className="flex items-baseline gap-2">
+            <span className="font-mono text-3xl font-black tabular-nums leading-none text-white">
+              {startTime}
+            </span>
+            <span
+              aria-hidden="true"
+              className="text-xl leading-none text-[color:var(--text-subtle)]"
+            >
+              →
+            </span>
+            <span className="font-mono text-3xl font-black tabular-nums leading-none text-white">
+              {endTime}
+            </span>
+          </div>
+          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+            {durationMinutes} min
+          </span>
+        </div>
+      </div>
+
+      {/* ─────── DESKTOP: side column vertical 88px ─────── */}
+      <div className="hidden sm:flex sm:w-[88px] sm:shrink-0 sm:flex-col sm:items-stretch sm:border-r sm:border-white/[0.04] sm:bg-[color:var(--surface-0)]/40">
+        {stamp ? (
+          <div className="flex flex-col items-center justify-center border-b border-white/[0.04] px-2 py-3">
+            <p className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-[color:var(--brand-gold)]">
+              {stamp.weekday}
+            </p>
+            <p className="mt-0.5 font-mono text-2xl font-black leading-none tabular-nums text-white">
+              {stamp.day}
+            </p>
+            <p className="mt-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-[color:var(--text-muted)]">
+              {stamp.month}
+            </p>
+          </div>
+        ) : null}
+        <div className="flex flex-1 flex-col items-center justify-center gap-0.5 px-3 py-3">
+          <p className="font-mono text-base font-black tabular-nums leading-none text-white sm:text-lg">
+            {startTime}
           </p>
-          <p className="mt-0.5 font-mono text-xl font-black leading-none tabular-nums text-white sm:text-2xl">
-            {stamp.day}
+          <p
+            aria-hidden="true"
+            className="text-[10px] leading-none text-[color:var(--text-subtle)]"
+          >
+            ↓
           </p>
-          <p className="mt-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-[color:var(--text-muted)]">
-            {stamp.month}
+          <p className="font-mono text-base font-black tabular-nums leading-none text-white sm:text-lg">
+            {endTime}
+          </p>
+          <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.18em] text-[color:var(--text-subtle)]">
+            {durationMinutes} min
           </p>
         </div>
-      ) : null}
-
-      <div className="flex flex-1 flex-col items-center justify-center gap-0.5 px-3 py-3">
-        <p className="font-mono text-base font-black tabular-nums leading-none text-white sm:text-lg">
-          {startTime}
-        </p>
-        <p
-          aria-hidden="true"
-          className="text-[10px] leading-none text-[color:var(--text-subtle)]"
-        >
-          ↓
-        </p>
-        <p className="font-mono text-base font-black tabular-nums leading-none text-white sm:text-lg">
-          {endTime}
-        </p>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -934,13 +976,13 @@ function KebabMenu({
         aria-expanded={isOpen}
         title="Más acciones"
         className={cn(
-          "inline-flex size-8 items-center justify-center rounded-[var(--radius-sm)] border transition-all duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed disabled:opacity-40",
+          "inline-flex size-11 items-center justify-center rounded-[var(--radius-sm)] border transition-all duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed disabled:opacity-40 sm:size-9",
           isOpen
             ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
             : "border-[color:var(--border-default)] bg-[color:var(--surface-1)] text-[color:var(--brand-gold)]/80 hover:border-[color:var(--brand-gold)] hover:bg-[color:var(--brand-gold-soft)] hover:text-[color:var(--brand-gold)]",
         )}
       >
-        <MoreVertical className="size-4" aria-hidden="true" />
+        <MoreVertical className="size-5 sm:size-4" aria-hidden="true" />
         {hasUrgent && !isOpen ? (
           <span
             aria-hidden="true"
