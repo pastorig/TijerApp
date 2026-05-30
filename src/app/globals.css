@@ -206,11 +206,60 @@ option:hover {
   height: 1px;
 }
 
-/* Animaciones suaves */
+/* ─────────────────────────────────────────────────────────────
+   Animaciones reutilizables
+   ─────────────────────────────────────────────────────────────
+   Filosofía: micro-animaciones cortas (150-360ms), curva ease-out
+   suave, ningún rebote teatral. La animación NUNCA debe trabar al
+   usuario — siempre transform/opacity (compositor-only, 60fps).
+   ───────────────────────────────────────────────────────────── */
+
 @keyframes barbersync-fade-in {
   from {
     opacity: 0;
     transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes barbersync-fade-in-soft {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes barbersync-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes barbersync-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes barbersync-slide-up-sheet {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
   }
   to {
     opacity: 1;
@@ -227,8 +276,135 @@ option:hover {
   }
 }
 
+@keyframes barbersync-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(201, 162, 62, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(201, 162, 62, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(201, 162, 62, 0);
+  }
+}
+
+@keyframes barbersync-success-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes barbersync-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+/* Clases utilitarias */
 .animate-fade-up {
   animation: barbersync-fade-in var(--duration-slow) var(--ease-out-soft) both;
+}
+.animate-fade-in {
+  animation: barbersync-fade-in-soft var(--duration-base) var(--ease-out-soft)
+    both;
+}
+.animate-scale-in {
+  animation: barbersync-scale-in var(--duration-base) var(--ease-out-soft) both;
+}
+.animate-slide-right {
+  animation: barbersync-slide-in-right var(--duration-base)
+    var(--ease-out-soft) both;
+}
+.animate-sheet-up {
+  animation: barbersync-slide-up-sheet var(--duration-slow)
+    var(--ease-out-soft) both;
+}
+.animate-success-pop {
+  animation: barbersync-success-pop 380ms var(--ease-out-soft) both;
+}
+.animate-shake {
+  animation: barbersync-shake 320ms ease-in-out;
+}
+.animate-pulse-ring {
+  animation: barbersync-pulse-ring 1.4s ease-out infinite;
+}
+
+/* Entrada secuenciada — para listas. Aplicar `animate-fade-stagger` al
+   contenedor y los hijos heredan delays escalonados de 40ms. */
+.animate-stagger > * {
+  animation: barbersync-fade-in var(--duration-slow) var(--ease-out-soft) both;
+}
+.animate-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.animate-stagger > *:nth-child(2) {
+  animation-delay: 40ms;
+}
+.animate-stagger > *:nth-child(3) {
+  animation-delay: 80ms;
+}
+.animate-stagger > *:nth-child(4) {
+  animation-delay: 120ms;
+}
+.animate-stagger > *:nth-child(5) {
+  animation-delay: 160ms;
+}
+.animate-stagger > *:nth-child(6) {
+  animation-delay: 200ms;
+}
+.animate-stagger > *:nth-child(7) {
+  animation-delay: 240ms;
+}
+.animate-stagger > *:nth-child(8) {
+  animation-delay: 280ms;
+}
+.animate-stagger > *:nth-child(n + 9) {
+  animation-delay: 320ms;
+}
+
+/* Hover lift sutil para cards interactivas */
+.hover-lift {
+  transition:
+    transform var(--duration-fast) var(--ease-out-soft),
+    border-color var(--duration-fast) var(--ease-out-soft),
+    box-shadow var(--duration-fast) var(--ease-out-soft);
+}
+.hover-lift:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+}
+.hover-lift:active {
+  transform: translateY(0);
+  transition-duration: 60ms;
+}
+
+/* Press feedback para botones: scale-down al click */
+.press-shrink {
+  transition: transform var(--duration-fast) var(--ease-out-soft);
+}
+.press-shrink:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .skeleton {

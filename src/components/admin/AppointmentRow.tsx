@@ -190,7 +190,7 @@ export function AppointmentRow({
     Boolean(onAdjustActualDuration);
 
   return (
-    <li className="group relative rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--border-default)]">
+    <li className="group relative rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] hover-lift">
       {isDeleted && onHardDelete ? (
         <button
           type="button"
@@ -466,7 +466,7 @@ export function AppointmentRow({
           href={delayWhatsAppHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex w-full items-center justify-center gap-1.5 border-t border-[color:var(--border-subtle)] bg-[color:var(--danger-soft)]/40 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)]"
+          className="flex w-full press-shrink items-center justify-center gap-1.5 border-t border-[color:var(--border-subtle)] bg-[color:var(--danger-soft)]/40 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)]"
         >
           <MessageCircle className="size-3" aria-hidden="true" />
           Avisar delay por WhatsApp
@@ -478,7 +478,7 @@ export function AppointmentRow({
           href={reviewWhatsAppHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex w-full items-center justify-center gap-1.5 border-t border-[color:var(--border-subtle)] py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]"
+          className="flex w-full press-shrink items-center justify-center gap-1.5 border-t border-[color:var(--border-subtle)] py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]"
         >
           <Star className="size-3" aria-hidden="true" />
           Pedir reseña por WhatsApp
@@ -490,7 +490,7 @@ export function AppointmentRow({
           type="button"
           onClick={() => onDuplicate(appointment)}
           disabled={isBusy}
-          className="flex w-full items-center justify-center gap-1.5 border-t border-[color:var(--border-subtle)] py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--surface-0)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex w-full press-shrink items-center justify-center gap-1.5 border-t border-[color:var(--border-subtle)] py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--surface-0)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Copy className="size-3" aria-hidden="true" />
           Duplicar turno
@@ -530,7 +530,7 @@ function ActionButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "inline-flex min-h-11 items-center justify-center gap-1.5 px-2 text-[10px] font-bold uppercase tracking-[0.12em] transition-colors duration-[var(--duration-fast)] disabled:cursor-not-allowed disabled:hover:bg-transparent",
+        "inline-flex min-h-11 items-center justify-center gap-1.5 px-2 text-[10px] font-bold uppercase tracking-[0.12em] transition-colors duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed disabled:hover:bg-transparent",
         toneClass,
       )}
     >
