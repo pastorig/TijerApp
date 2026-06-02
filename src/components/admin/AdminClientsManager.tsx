@@ -188,6 +188,16 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
   const inactivosCount = segmentCounts.inactivo;
   const porReactivarCount = segmentCounts["por-reactivar"];
 
+  // Turnos huérfanos: appointments cuyo teléfono no pasó normalize_phone
+  // (≥8 dígitos). El trigger de DB los ignora, así que quedan sin cliente
+  // asociado y son invisibles en este listado. Le avisamos al admin para
+  // que sepa que existen — y se evita la sorpresa de "faltan clientes".
+  const orphanAppointmentsCount = useMemo(() => {
+    return appointments.filter(
+      (a) => a.status !== "deleted" && !normalizePhone(a.customer_phone),
+    ).length;
+  }, [appointments]);
+
   const filteredClients = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return clientsWithStats.filter((entry) => {
@@ -797,6 +807,28 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
           </button>
         </div>
       </div>
+
+      {/* Alerta de turnos huérfanos — teléfonos inválidos que no generaron cliente */}
+      {orphanAppointmentsCount > 0 && !isLoading ? (
+        <div className="flex flex-wrap items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--text-subtle)]/30 bg-[color:var(--surface-1)] p-4">
+          <AlertTriangle
+            aria-hidden="true"
+            className="size-5 shrink-0 text-[color:var(--text-muted)]"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+              Turnos sin cliente asociado
+            </p>
+            <p className="mt-1 text-xs text-[color:var(--text-secondary)] sm:text-sm">
+              Hay <strong className="text-white">{orphanAppointmentsCount}</strong>{" "}
+              turno{orphanAppointmentsCount === 1 ? "" : "s"} con teléfono inválido
+              (menos de 8 dígitos). No aparecen acá porque el sistema identifica
+              clientes por número. Las próximas reservas ya validan el teléfono
+              automáticamente.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {/* Alerta de inactivos / por reactivar */}
       {(inactivosCount > 0 || porReactivarCount > 0) && !isLoading ? (

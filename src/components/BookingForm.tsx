@@ -17,6 +17,7 @@ import { getBarberDayAvailability } from "@/lib/barber-availability";
 import type { AvailabilitySlot } from "@/lib/availability";
 import { listActiveServicesByBarber } from "@/lib/barber-services";
 import { listActiveBarbersByBarbershop } from "@/lib/barbers";
+import { normalizePhone } from "@/lib/barbershop-clients";
 import { cn } from "@/lib/cn";
 import {
   formatDateForDisplay,
@@ -426,6 +427,16 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     ) {
       setFormError(
         "Completá barbero, servicio, fecha, horario, nombre y teléfono.",
+      );
+      return;
+    }
+
+    // Validamos que el teléfono tenga al menos 8 dígitos. Si no, el trigger
+    // de DB ignora el cliente en silencio y queda un turno huérfano sin
+    // poder verlo en el panel de Clientes.
+    if (!normalizePhone(clientPhone)) {
+      setFormError(
+        "El teléfono tiene que tener al menos 8 dígitos (sin contar letras ni símbolos).",
       );
       return;
     }
