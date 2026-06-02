@@ -8,7 +8,8 @@ import { HomeContact } from "@/components/home/HomeContact";
 import { ProductFeatures } from "@/components/home/ProductFeatures";
 
 export const metadata: Metadata = {
-  title: "Producto · TijerApp",
+  // El template de layout.tsx agrega "· TijerApp" automáticamente.
+  title: "Producto",
   description:
     "Todo lo que tu barbería necesita: turnero, reservas públicas, multi-barbero, reportes y WhatsApp.",
 };
