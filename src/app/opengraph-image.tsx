@@ -4,7 +4,7 @@ import { ImageResponse } from "next/og";
 // Renderiza un PNG 1200x630 en runtime usando satori (next/og).
 // Esto es lo que WhatsApp / Twitter / Facebook leen al compartir links.
 
-export const alt = "BarberSync — Sistema de turnos para barberías modernas";
+export const alt = "TijerApp — Sistema de turnos para barberías modernas";
 export const size = { width: 1200, height: 630 } as const;
 export const contentType = "image/png";
 
@@ -135,7 +135,7 @@ export default async function OpenGraphImage() {
               letterSpacing: 3,
             }}
           >
-            BARBERSYNC.APP
+            TIJERAPP.COM
           </div>
         </div>
       </div>

@@ -31,7 +31,7 @@ const gapClass: Record<LogoSize, string> = {
 };
 
 /**
- * Isotipo BarberSync — Grilla 4×4 con una diagonal de 4 celdas alternando
+ * Isotipo TijerApp — Grilla 4×4 con una diagonal de 4 celdas alternando
  * gold y silver (los colores del wordmark BARBER/SYNC).
  *
  * Lectura: la grilla es la agenda; la diagonal es la sincronía atravesándola.
@@ -84,7 +84,7 @@ export function Logo({
 
   if (variant === "mark") {
     return (
-      <span className={cn("inline-flex", className)} aria-label="BarberSync">
+      <span className={cn("inline-flex", className)} aria-label="TijerApp">
         {mark}
       </span>
     );
@@ -106,7 +106,7 @@ export function Logo({
     return (
       <span
         className={cn("inline-flex items-center", className)}
-        aria-label="BarberSync"
+        aria-label="TijerApp"
       >
         {wordmark}
       </span>
@@ -116,7 +116,7 @@ export function Logo({
   return (
     <span
       className={cn("inline-flex items-center", gapClass[size], className)}
-      aria-label="BarberSync"
+      aria-label="TijerApp"
     >
       {mark}
       {wordmark}

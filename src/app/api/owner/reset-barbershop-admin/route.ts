@@ -7,7 +7,7 @@ type ResetBarbershopAdminPayload = {
 };
 
 function createTemporaryPassword() {
-  return `BarberSync${Math.random().toString(36).slice(-8)}!9`;
+  return `TijerApp${Math.random().toString(36).slice(-8)}!9`;
 }
 
 export async function POST(request: Request) {
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
 
     if (!ownerAccess) {
       return NextResponse.json(
-        { error: "Solo un owner de BarberSync puede resetear accesos admin." },
+        { error: "Solo un owner de TijerApp puede resetear accesos admin." },
         { status: 403 },
       );
     }

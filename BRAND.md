@@ -1,4 +1,4 @@
-# BarberSync — Brand & Design System
+# TijerApp — Brand & Design System
 
 Identidad visual y tokens de diseño. Estilo: **minimalista, negro, dorado antiguo y plateado.**
 
@@ -6,7 +6,7 @@ Identidad visual y tokens de diseño. Estilo: **minimalista, negro, dorado antig
 
 ## 1. Esencia
 
-**BarberSync** es una plataforma SaaS de turnos online para barberías modernas. Producto operativo de uso diario en mostrador.
+**TijerApp** es una plataforma SaaS de turnos online para barberías modernas. Producto operativo de uso diario en mostrador.
 
 **Adjetivos rectores**
 1. **Minimal** — sin ornamentos, mucho aire, tipografía como protagonista.
@@ -42,7 +42,7 @@ Identidad visual y tokens de diseño. Estilo: **minimalista, negro, dorado antig
 - (Opcional) render premium 3D: dejar en `public/brand/isotype.png`
 
 ### Wordmark
-**`BARBERSYNC`** — Geist Sans Black, all caps, `tracking: 0.08em`, sin espacio entre palabras.
+**`TIJERAPP`** — Geist Sans Black, all caps, `tracking: 0.08em`, sin espacio entre palabras.
 - `BARBER` → color `--brand-gold` (`#c9a23e`)
 - `SYNC` → color `--brand-silver` (`#d8d8d8`)
 

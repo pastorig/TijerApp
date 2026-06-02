@@ -66,7 +66,7 @@ export function OwnerLoginForm({ errorCode = "" }: OwnerLoginFormProps) {
 
         await signOut();
         setErrorMessage(
-          "Ese usuario no tiene acceso owner. Usa un owner real de BarberSync.",
+          "Ese usuario no tiene acceso owner. Usa un owner real de TijerApp.",
         );
         return;
       }
@@ -123,7 +123,7 @@ export function OwnerLoginForm({ errorCode = "" }: OwnerLoginFormProps) {
                   setErrorMessage("");
                 }}
                 className="mt-2 min-h-12 w-full rounded-md border border-[color:var(--border-default)] bg-black px-4 text-base text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
-                placeholder="owner@barbersync.com"
+                placeholder="owner@tijerapp.com"
                 required
               />
             </div>

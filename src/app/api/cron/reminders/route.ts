@@ -261,9 +261,9 @@ export async function GET(request: Request) {
   const fromAddress =
     process.env.REMINDER_EMAIL_FROM ||
     process.env.OWNER_NOTIFICATION_FROM ||
-    "BarberSync <onboarding@resend.dev>";
+    "TijerApp <onboarding@resend.dev>";
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://barber-sync-iota.vercel.app";
+    process.env.NEXT_PUBLIC_SITE_URL || "https://tijerapp-iota.vercel.app";
 
   const resend = resendApiKey ? new Resend(resendApiKey) : null;
 

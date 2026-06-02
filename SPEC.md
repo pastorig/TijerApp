@@ -2,20 +2,20 @@
 
 ## Objetivo general
 
-BarberSync es un SaaS de gestion de turnos para barberias. La plataforma permite que cada barberia publique una pagina publica, reciba reservas online, administre su agenda y trabaje con uno o varios barberos sin duplicar proyectos por cliente.
+TijerApp es un SaaS de gestion de turnos para barberias. La plataforma permite que cada barberia publique una pagina publica, reciba reservas online, administre su agenda y trabaje con uno o varios barberos sin duplicar proyectos por cliente.
 
 El objetivo del producto es ordenar reservas, reducir ausencias y dar a las barberias una herramienta mobile-first, rapida y profesional para operar durante el dia de trabajo.
 
 ## Vision SaaS multi-barberia
 
-BarberSync debe funcionar como una plataforma multi-tenant:
+TijerApp debe funcionar como una plataforma multi-tenant:
 
-- La home `/` pertenece a BarberSync como producto.
+- La home `/` pertenece a TijerApp como producto.
 - Cada barberia tiene una pagina publica por slug, por ejemplo `/sv-barber`.
 - Cada barberia tiene su flujo de reserva por slug, por ejemplo `/sv-barber/reservar`.
 - Cada barberia tiene su panel admin por slug, por ejemplo `/sv-barber/admin`.
 - En esta fase se mantiene un login admin por barberia.
-- En el futuro existira un panel owner para el dueno de la plataforma BarberSync.
+- En el futuro existira un panel owner para el dueno de la plataforma TijerApp.
 
 Cada barberia debe poder tener:
 
@@ -31,7 +31,7 @@ Cada barberia debe poder tener:
 
 ## SV Barber como cliente demo
 
-SV Barber es solo el primer cliente/demo de BarberSync. Sus datos sirven para validar la experiencia publica, el flujo de reserva y el panel admin.
+SV Barber es solo el primer cliente/demo de TijerApp. Sus datos sirven para validar la experiencia publica, el flujo de reserva y el panel admin.
 
 SV Barber no debe tratarse como marca principal del producto ni como caso unico. Cualquier referencia a SV Barber debe vivir como dato de barberia demo o contexto puntual de una ruta por slug.
 
@@ -50,7 +50,7 @@ Datos demo actuales:
 El MVP actual incluye:
 
 - Next.js con App Router, TypeScript, Tailwind CSS y ESLint.
-- Home general de BarberSync.
+- Home general de TijerApp.
 - Landing publica por barberia.
 - Formulario publico de reserva.
 - Integracion con Supabase para guardar reservas.
@@ -82,7 +82,7 @@ El MVP actual incluye:
 5. Si hay varios barberos activos, el cliente selecciona barbero.
 6. Los servicios disponibles dependen del barbero seleccionado.
 7. El cliente elige fecha y horario.
-8. BarberSync consulta Supabase para bloquear horarios ocupados del barbero.
+8. TijerApp consulta Supabase para bloquear horarios ocupados del barbero.
 9. El cliente completa nombre, telefono y comentario opcional.
 10. El sistema valida campos y disponibilidad.
 11. Si la disponibilidad sigue libre, guarda el turno en Supabase.
@@ -93,7 +93,7 @@ El MVP actual incluye:
 
 1. El admin entra a `/[barbershopSlug]/admin`.
 2. Si no tiene sesion, se redirige a `/[barbershopSlug]/admin/login`.
-3. El login muestra BarberSync como marca principal y la barberia como contexto.
+3. El login muestra TijerApp como marca principal y la barberia como contexto.
 4. El panel lista turnos de la barberia.
 5. El admin puede confirmar un turno con el boton `Confirmar turno`.
 6. El admin puede enviar un mensaje con `Enviar WhatsApp`.
@@ -114,7 +114,7 @@ La integracion actual usa links `wa.me`. En el futuro, WhatsApp API debera:
 
 ## Estructura futura de paneles
 
-Home BarberSync:
+Home TijerApp:
 
 - Presentacion general del producto.
 - Acceso a login.
@@ -143,7 +143,7 @@ Panel owner futuro:
 - Altas privadas.
 - Planes y suscripciones.
 - Monitoreo de uso.
-- Configuracion global de BarberSync.
+- Configuracion global de TijerApp.
 
 ## Integraciones futuras
 
@@ -157,7 +157,7 @@ Panel owner futuro:
 
 ## Enfoque escalable
 
-BarberSync debe crecer sin atarse a SV Barber:
+TijerApp debe crecer sin atarse a SV Barber:
 
 - Configuracion por barberia.
 - Slugs como frontera publica y admin.

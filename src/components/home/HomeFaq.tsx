@@ -11,14 +11,14 @@ type FaqItem = {
 
 const FAQ_ITEMS: FaqItem[] = [
   {
-    question: "¿Cuánto cuesta usar BarberSync?",
+    question: "¿Cuánto cuesta usar TijerApp?",
     answer:
       "Por ahora estamos en una etapa cerrada con barberías partner. Si querés sumarte, dejanos tu mensaje en el formulario de abajo y armamos un plan según el tamaño de tu local.",
   },
   {
     question: "¿Necesito instalar algo?",
     answer:
-      "No. BarberSync vive en la web, tanto para vos como para tus clientes. Lo único que necesitás es un navegador en el celular o la computadora.",
+      "No. TijerApp vive en la web, tanto para vos como para tus clientes. Lo único que necesitás es un navegador en el celular o la computadora.",
   },
   {
     question: "¿Mis clientes tienen que crear cuenta para reservar?",

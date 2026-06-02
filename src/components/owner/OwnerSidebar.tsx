@@ -117,7 +117,7 @@ export function OwnerSidebar() {
             Panel
           </p>
           <p className="mt-1 truncate text-sm font-bold text-[color:var(--brand-gold)]">
-            Owner BarberSync
+            Owner TijerApp
           </p>
         </div>
 

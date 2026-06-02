@@ -18,7 +18,7 @@ export function PublicBarbershopFooter({
           href="/"
           className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
         >
-          Powered by BarberSync
+          Powered by TijerApp
         </Link>
       </div>
     </footer>

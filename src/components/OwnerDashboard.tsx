@@ -213,7 +213,7 @@ export function OwnerDashboard() {
   async function handleDeleteBarbershop(slug: string) {
     const shouldDelete = await confirm({
       title: "Desactivar barbería",
-      message: `${slug} deja de estar disponible en BarberSync. Los datos se conservan; podés reactivarla después.`,
+      message: `${slug} deja de estar disponible en TijerApp. Los datos se conservan; podés reactivarla después.`,
       confirmLabel: "Desactivar",
       cancelLabel: "Volver",
       danger: true,
@@ -474,7 +474,7 @@ export function OwnerDashboard() {
     <div className="space-y-6 sm:space-y-8">
       <header className="animate-fade-up">
         <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
-          Owner BarberSync
+          Owner TijerApp
         </p>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>

@@ -186,7 +186,7 @@ export function AdminCierreCajaManager({
     // Header
     doc.setTextColor(201, 162, 62); // gold
     doc.setFontSize(10);
-    doc.text("BARBERSYNC · CIERRE DE CAJA", margin, margin);
+    doc.text("TIJERAPP · CIERRE DE CAJA", margin, margin);
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
@@ -305,7 +305,7 @@ export function AdminCierreCajaManager({
       doc.setFontSize(8);
       doc.setTextColor(140, 140, 140);
       doc.text(
-        `BarberSync · ${barbershop.name} · ${dateLabel}  ·  Página ${i} de ${pageCount}`,
+        `TijerApp · ${barbershop.name} · ${dateLabel}  ·  Página ${i} de ${pageCount}`,
         margin,
         doc.internal.pageSize.getHeight() - 20,
       );

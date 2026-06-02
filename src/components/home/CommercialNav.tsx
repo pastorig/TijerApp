@@ -7,7 +7,7 @@ export function CommercialNav() {
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-8 sm:py-4 lg:px-12">
         <Link
           href="/"
-          aria-label="Ir al inicio de BarberSync"
+          aria-label="Ir al inicio de TijerApp"
           className="inline-flex"
         >
           <Logo variant="mark" size="md" className="sm:hidden" />
