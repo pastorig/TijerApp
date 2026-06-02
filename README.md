@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TijerApp
 
-## Getting Started
+SaaS multi-tenant de turnos para barberías. Cada barbería tiene su slug
+público, sus barberos, sus servicios y su panel admin propio.
 
-First, run the development server:
+- **Home comercial** `/` — landing de TijerApp.
+- **Página pública de barbería** `/[slug]` — landing del cliente final.
+- **Reserva pública** `/[slug]/reservar` — formulario de turno.
+- **Panel admin** `/[slug]/admin` — turnero, clientes, configuración.
+- **Panel owner** `/owner` — métricas y gestión cross-barbería.
+
+## Stack
+
+- Next.js 16 (App Router + Turbopack)
+- React 19, TypeScript, Tailwind CSS v4
+- Supabase (RLS estricto + RPCs security definer)
+- Resend para emails
+- Sentry para error tracking
+- Vercel (deploy + cron)
+
+## Desarrollo
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev     # localhost:3000
+npm run lint
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Supabase
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run supabase:link            # link al proyecto remoto
+npm run supabase:migration:list  # ver estado de migrations
+npm run supabase:db:push         # aplicar migrations pendientes
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Estructura
 
-## Learn More
+```
+src/
+├── app/                  # rutas (App Router)
+├── components/           # UI compartida
+│   ├── admin/            # panel admin por barbería
+│   ├── owner/            # panel owner global
+│   ├── home/             # landing comercial
+│   └── ui/               # primitivas reusables
+├── lib/                  # lógica de negocio + clientes externos
+├── data/                 # configuración demo
+supabase/migrations/      # migrations SQL idempotentes
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Convenciones
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Slugs en kebab-case** (`sv-barber`, `ag-barber`).
+- **Componentes en PascalCase**, archivos `.tsx` mirror del nombre.
+- **Mobile-first** obligatorio, admin compacto para uso durante el trabajo.
+- **No hardcodear** lógica específica de un cliente (SV Barber es solo demo).
+- **Cero secretos en el repo** — todo via env vars en Vercel.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Ver `AGENTS.md` para reglas detalladas del proyecto.
