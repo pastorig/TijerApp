@@ -252,7 +252,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
       <section className="mx-auto w-full max-w-5xl px-3 py-5 sm:px-6 sm:py-8 lg:px-12 lg:py-12">
         <div className="flex flex-col gap-4 border-b border-[color:var(--border-default)] pb-5 sm:pb-8">
           <p className="text-sm font-semibold uppercase text-[color:var(--brand-gold)]">
-            BarberSync admin
+            TijerApp admin
           </p>
           <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
             <div>

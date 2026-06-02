@@ -27,7 +27,7 @@ type CreateBarbershopPayload = {
 };
 
 function createTemporaryPassword() {
-  return `BarberSync${Math.random().toString(36).slice(-8)}!9`;
+  return `TijerApp${Math.random().toString(36).slice(-8)}!9`;
 }
 
 function normalizeSlug(value: string) {
@@ -158,7 +158,7 @@ export async function POST(request: Request) {
 
     if (!ownerAccess) {
       return NextResponse.json(
-        { error: "Solo un owner de BarberSync puede crear barberias." },
+        { error: "Solo un owner de TijerApp puede crear barberias." },
         { status: 403 },
       );
     }

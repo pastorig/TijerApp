@@ -235,7 +235,7 @@ export function OwnerCreateBarbershopForm() {
       <div>
         <header className="animate-fade-up">
           <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
-            Owner BarberSync
+            Owner TijerApp
           </p>
           <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
             Nueva barbería
@@ -250,7 +250,7 @@ export function OwnerCreateBarbershopForm() {
           {/* Datos de la barbería */}
           <FormSection
             eyebrow="Datos de la barbería"
-            description="Identidad pública en BarberSync."
+            description="Identidad pública en TijerApp."
           >
             <Field label="Nombre" htmlFor="barbershop-name" required>
               <Input
@@ -274,7 +274,7 @@ export function OwnerCreateBarbershopForm() {
               <Field
                 label="Slug"
                 htmlFor="barbershop-slug"
-                hint="Aparece en la URL: barbersync.app/[slug]"
+                hint="Aparece en la URL: tijerapp.app/[slug]"
                 required
               >
                 <Input

@@ -350,7 +350,7 @@ export function WaitlistConfirmClient({ token }: WaitlistConfirmClientProps) {
       </div>
 
       <p className="mt-10 text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
-        Powered by BarberSync
+        Powered by TijerApp
       </p>
     </article>
   );

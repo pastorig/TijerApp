@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────
-   BarberSync — minimalist tokens
+   TijerApp — minimalist tokens
    Black / antique gold / silver. Ver BRAND.md.
    ───────────────────────────────────────────────────────────── */
 
@@ -214,7 +214,7 @@ option:hover {
    usuario — siempre transform/opacity (compositor-only, 60fps).
    ───────────────────────────────────────────────────────────── */
 
-@keyframes barbersync-fade-in {
+@keyframes tijerapp-fade-in {
   from {
     opacity: 0;
     transform: translateY(6px);
@@ -225,7 +225,7 @@ option:hover {
   }
 }
 
-@keyframes barbersync-fade-in-soft {
+@keyframes tijerapp-fade-in-soft {
   from {
     opacity: 0;
   }
@@ -234,7 +234,7 @@ option:hover {
   }
 }
 
-@keyframes barbersync-scale-in {
+@keyframes tijerapp-scale-in {
   from {
     opacity: 0;
     transform: scale(0.96);
@@ -245,7 +245,7 @@ option:hover {
   }
 }
 
-@keyframes barbersync-slide-in-right {
+@keyframes tijerapp-slide-in-right {
   from {
     opacity: 0;
     transform: translateX(12px);
@@ -256,7 +256,7 @@ option:hover {
   }
 }
 
-@keyframes barbersync-slide-up-sheet {
+@keyframes tijerapp-slide-up-sheet {
   from {
     opacity: 0;
     transform: translateY(100%);
@@ -267,7 +267,7 @@ option:hover {
   }
 }
 
-@keyframes barbersync-shimmer {
+@keyframes tijerapp-shimmer {
   from {
     background-position: -200% 0;
   }
@@ -276,7 +276,7 @@ option:hover {
   }
 }
 
-@keyframes barbersync-pulse-ring {
+@keyframes tijerapp-pulse-ring {
   0% {
     box-shadow: 0 0 0 0 rgba(201, 162, 62, 0.4);
   }
@@ -288,7 +288,7 @@ option:hover {
   }
 }
 
-@keyframes barbersync-success-pop {
+@keyframes tijerapp-success-pop {
   0% {
     opacity: 0;
     transform: scale(0.6);
@@ -302,7 +302,7 @@ option:hover {
   }
 }
 
-@keyframes barbersync-shake {
+@keyframes tijerapp-shake {
   0%,
   100% {
     transform: translateX(0);
@@ -323,37 +323,37 @@ option:hover {
 
 /* Clases utilitarias */
 .animate-fade-up {
-  animation: barbersync-fade-in var(--duration-slow) var(--ease-out-soft) both;
+  animation: tijerapp-fade-in var(--duration-slow) var(--ease-out-soft) both;
 }
 .animate-fade-in {
-  animation: barbersync-fade-in-soft var(--duration-base) var(--ease-out-soft)
+  animation: tijerapp-fade-in-soft var(--duration-base) var(--ease-out-soft)
     both;
 }
 .animate-scale-in {
-  animation: barbersync-scale-in var(--duration-base) var(--ease-out-soft) both;
+  animation: tijerapp-scale-in var(--duration-base) var(--ease-out-soft) both;
 }
 .animate-slide-right {
-  animation: barbersync-slide-in-right var(--duration-base)
+  animation: tijerapp-slide-in-right var(--duration-base)
     var(--ease-out-soft) both;
 }
 .animate-sheet-up {
-  animation: barbersync-slide-up-sheet var(--duration-slow)
+  animation: tijerapp-slide-up-sheet var(--duration-slow)
     var(--ease-out-soft) both;
 }
 .animate-success-pop {
-  animation: barbersync-success-pop 380ms var(--ease-out-soft) both;
+  animation: tijerapp-success-pop 380ms var(--ease-out-soft) both;
 }
 .animate-shake {
-  animation: barbersync-shake 320ms ease-in-out;
+  animation: tijerapp-shake 320ms ease-in-out;
 }
 .animate-pulse-ring {
-  animation: barbersync-pulse-ring 1.4s ease-out infinite;
+  animation: tijerapp-pulse-ring 1.4s ease-out infinite;
 }
 
 /* Entrada secuenciada — para listas. Aplicar `animate-fade-stagger` al
    contenedor y los hijos heredan delays escalonados de 40ms. */
 .animate-stagger > * {
-  animation: barbersync-fade-in var(--duration-slow) var(--ease-out-soft) both;
+  animation: tijerapp-fade-in var(--duration-slow) var(--ease-out-soft) both;
 }
 .animate-stagger > *:nth-child(1) {
   animation-delay: 0ms;
@@ -426,7 +426,7 @@ option:hover {
     var(--surface-2) 100%
   );
   background-size: 200% 100%;
-  animation: barbersync-shimmer 1.4s linear infinite;
+  animation: tijerapp-shimmer 1.4s linear infinite;
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
 

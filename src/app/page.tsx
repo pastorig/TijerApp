@@ -39,7 +39,7 @@ export default function Home() {
             </h1>
 
             <p className="mt-6 max-w-xl text-base leading-7 text-[color:var(--text-secondary)] sm:mt-8 sm:text-lg sm:leading-8">
-              BarberSync centraliza reservas, barberos, servicios y agenda en
+              TijerApp centraliza reservas, barberos, servicios y agenda en
               una plataforma operativa. Cada barbería con su espacio público
               y su panel admin.
             </p>
@@ -78,7 +78,7 @@ export default function Home() {
                 Conocer todo
               </p>
               <h2 className="mt-3 text-2xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-3xl lg:text-4xl">
-                Mirá en detalle qué incluye BarberSync.
+                Mirá en detalle qué incluye TijerApp.
               </h2>
             </div>
             <Button

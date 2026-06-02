@@ -84,7 +84,7 @@ export function CommercialFooter() {
 
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-[color:var(--border-subtle)] pt-6 sm:flex-row">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-subtle)]">
-            © {year} BarberSync · Todos los derechos reservados
+            © {year} TijerApp · Todos los derechos reservados
           </p>
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-subtle)]">
             Hecho en Argentina 🇦🇷

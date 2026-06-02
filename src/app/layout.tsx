@@ -22,12 +22,12 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "BarberSync — Turnos online para barberías modernas",
-    template: "%s · BarberSync",
+    default: "TijerApp — Turnos online para barberías modernas",
+    template: "%s · TijerApp",
   },
   description:
     "Sistema SaaS de turnos online: reservas, barberos, servicios y agenda para barberías modernas. Pensado para trabajar rápido desde el celular.",
-  applicationName: "BarberSync",
+  applicationName: "TijerApp",
   icons: {
     icon: [
       { url: "/brand/favicon.svg", type: "image/svg+xml" },
@@ -36,17 +36,17 @@ export const metadata: Metadata = {
     apple: [{ url: "/brand/icon.svg", type: "image/svg+xml" }],
   },
   openGraph: {
-    title: "BarberSync — Turnos online para barberías modernas",
+    title: "TijerApp — Turnos online para barberías modernas",
     description:
       "Reservas, barberos, servicios y agenda en una plataforma operativa. Pensado para usar mientras se trabaja.",
     type: "website",
-    siteName: "BarberSync",
+    siteName: "TijerApp",
     // La imagen se genera automáticamente desde src/app/opengraph-image.tsx
     // (Next auto-detecta el archivo y lo expone como /opengraph-image en PNG).
   },
   twitter: {
     card: "summary_large_image",
-    title: "BarberSync",
+    title: "TijerApp",
     description: "Sistema de turnos para barberías modernas.",
   },
 };

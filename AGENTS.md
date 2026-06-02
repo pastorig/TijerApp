@@ -2,7 +2,7 @@
 
 ## Reglas generales del proyecto
 
-Este proyecto se llama BarberSync. Es un SaaS de turnos para barberias. SV Barber es solo el primer cliente/demo y no debe condicionar la arquitectura general.
+Este proyecto se llama TijerApp. Es un SaaS de turnos para barberias. SV Barber es solo el primer cliente/demo y no debe condicionar la arquitectura general.
 
 - Usar TypeScript en todo el codigo.
 - Usar Next.js con App Router.
@@ -17,15 +17,15 @@ Este proyecto se llama BarberSync. Es un SaaS de turnos para barberias. SV Barbe
 - No agregar dependencias innecesarias.
 - No implementar features fuera de fase.
 
-## Arquitectura BarberSync
+## Arquitectura TijerApp
 
-- La home `/` pertenece a BarberSync, no a una barberia cliente.
+- La home `/` pertenece a TijerApp, no a una barberia cliente.
 - Las paginas publicas de barberia viven en `/[barbershopSlug]`.
 - Las reservas publicas viven en `/[barbershopSlug]/reservar`.
 - El admin de barberia vive en `/[barbershopSlug]/admin`.
 - El login admin vive en `/[barbershopSlug]/admin/login`.
 - En esta fase hay un login admin por barberia.
-- En el futuro existira un panel owner para el dueno de BarberSync.
+- En el futuro existira un panel owner para el dueno de TijerApp.
 - SV Barber debe permanecer como demo en datos, no como marca principal.
 
 ## Skills esperadas del agente
@@ -52,7 +52,7 @@ Este proyecto se llama BarberSync. Es un SaaS de turnos para barberias. SV Barbe
 
 - Responsabilidades: proteger la vision multi-tenant y separar plataforma de cliente.
 - Cuando aplicarla: al modificar home, slugs, admin, login, datos demo o futuras funcionalidades owner.
-- Buenas practicas: no crear forks por barberia, usar configuracion por cliente, mantener BarberSync como marca de plataforma y SV Barber como demo.
+- Buenas practicas: no crear forks por barberia, usar configuracion por cliente, mantener TijerApp como marca de plataforma y SV Barber como demo.
 
 ### UI/UX Designer
 
@@ -107,7 +107,7 @@ Este proyecto se llama BarberSync. Es un SaaS de turnos para barberias. SV Barbe
 
 Implementado actualmente:
 
-- Home general de BarberSync.
+- Home general de TijerApp.
 - Landing publica multi-barberia por slug.
 - Formulario de reserva por slug.
 - Guardado de reservas en Supabase.

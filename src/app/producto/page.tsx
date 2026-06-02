@@ -8,7 +8,7 @@ import { HomeContact } from "@/components/home/HomeContact";
 import { ProductFeatures } from "@/components/home/ProductFeatures";
 
 export const metadata: Metadata = {
-  title: "Producto · BarberSync",
+  title: "Producto · TijerApp",
   description:
     "Todo lo que tu barbería necesita: turnero, reservas públicas, multi-barbero, reportes y WhatsApp.",
 };
@@ -75,7 +75,7 @@ export default function ProductPage() {
               Mirá la demo
             </p>
             <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
-              La mejor forma de entender BarberSync es usarlo
+              La mejor forma de entender TijerApp es usarlo
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[color:var(--text-secondary)] sm:text-lg">
               Tenés un demo público funcionando con datos reales. Entrá y

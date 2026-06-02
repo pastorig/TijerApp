@@ -103,12 +103,12 @@ export async function POST(request: Request) {
   const resendApiKey = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
   const fromAddress =
-    process.env.OWNER_NOTIFICATION_FROM || "BarberSync <onboarding@resend.dev>";
+    process.env.OWNER_NOTIFICATION_FROM || "TijerApp <onboarding@resend.dev>";
 
   if (resendApiKey && ownerEmail) {
     try {
       const resend = new Resend(resendApiKey);
-      const subject = `BarberSync · Nuevo mensaje de ${name}`;
+      const subject = `TijerApp · Nuevo mensaje de ${name}`;
       const replyTo = email || undefined;
 
       const html = buildNotificationHtml({
@@ -192,7 +192,7 @@ function buildNotificationHtml(params: {
           <tr>
             <td style="padding:24px 24px 12px;border-bottom:1px solid #1f1f1f;">
               <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#c9a23e;">
-                BarberSync
+                TijerApp
               </p>
               <h1 style="margin:8px 0 0;font-size:22px;font-weight:900;color:#fff;">
                 Nuevo mensaje de contacto
@@ -229,7 +229,7 @@ function buildNotificationHtml(params: {
           <tr>
             <td style="padding:16px 24px 24px;border-top:1px solid #1f1f1f;text-align:center;">
               <p style="margin:0;font-size:11px;color:#666;">
-                Andá a <a href="https://barbersync.app/owner/mensajes" style="color:#c9a23e;text-decoration:none;">/owner/mensajes</a> para marcarlo como atendido.
+                Andá a <a href="https://tijerapp.app/owner/mensajes" style="color:#c9a23e;text-decoration:none;">/owner/mensajes</a> para marcarlo como atendido.
               </p>
             </td>
           </tr>

@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 
     if (!ownerAccess) {
       return NextResponse.json(
-        { error: "Solo un owner de BarberSync puede eliminar barberias." },
+        { error: "Solo un owner de TijerApp puede eliminar barberias." },
         { status: 403 },
       );
     }

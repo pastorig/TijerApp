@@ -26,7 +26,7 @@ export function HomeWhatIsIt() {
         <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start lg:gap-16">
           <header>
             <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
-              Qué es BarberSync
+              Qué es TijerApp
             </p>
             <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
               Una plataforma de turnos hecha para barberías argentinas
@@ -34,7 +34,7 @@ export function HomeWhatIsIt() {
             <p className="mt-5 text-base leading-7 text-[color:var(--text-secondary)] sm:text-lg sm:leading-8">
               Centralizamos reservas, barberos, servicios y agenda en un solo
               lugar. Cada barbería con su espacio público y su panel admin.
-              Vos te ocupás de cortar, BarberSync se ocupa del resto.
+              Vos te ocupás de cortar, TijerApp se ocupa del resto.
             </p>
           </header>
 

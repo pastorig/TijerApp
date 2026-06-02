@@ -300,9 +300,9 @@ async function sendWaitlistOwnerNotification(
   const resendApiKey = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
   const fromAddress =
-    process.env.OWNER_NOTIFICATION_FROM || "BarberSync <onboarding@resend.dev>";
+    process.env.OWNER_NOTIFICATION_FROM || "TijerApp <onboarding@resend.dev>";
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://barber-sync-iota.vercel.app";
+    process.env.NEXT_PUBLIC_SITE_URL || "https://tijerapp-iota.vercel.app";
 
   if (!resendApiKey || !ownerEmail) {
     console.log(

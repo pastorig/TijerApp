@@ -3,7 +3,7 @@
 /**
  * AgendaCalendar
  *
- * Calendario tipo "Google Calendar mobile" para el admin de BarberSync.
+ * Calendario tipo "Google Calendar mobile" para el admin de TijerApp.
  *
  *   ┌───────────────────────────────────┐
  *   │  Miércoles 20 de mayo    [Hoy]    │  ← header (día activo + Hoy / flechas)
@@ -15,7 +15,7 @@
  * Cuando se expande, la grilla pasa a 6 filas (vista mensual completa).
  * Swipe horizontal cambia la semana (colapsado) o el mes (expandido).
  *
- * Estilo: minimalista BarberSync (negro / gold / silver).
+ * Estilo: minimalista TijerApp (negro / gold / silver).
  */
 
 import { useMemo, useRef, useState } from "react";

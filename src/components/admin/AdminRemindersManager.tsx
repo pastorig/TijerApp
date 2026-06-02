@@ -29,7 +29,7 @@ type AdminRemindersManagerProps = {
 
 type ReminderKind = "urgent" | "tomorrow" | "upcoming";
 
-const SENT_STORAGE_KEY = "barbersync:reminders-sent";
+const SENT_STORAGE_KEY = "tijerapp:reminders-sent";
 
 function loadSentMap(): Record<string, string> {
   if (typeof window === "undefined") return {};
