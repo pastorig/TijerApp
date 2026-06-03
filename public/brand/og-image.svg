@@ -1,29 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none" shape-rendering="crispEdges">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
   <rect width="1200" height="630" fill="#000000"/>
 
-  <!-- Isotype — grilla 4x4 con diagonal alternada gold/silver -->
-  <g transform="translate(96 215)">
-    <rect x="0"   y="0"   width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="52"  y="0"   width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="104" y="0"   width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="156" y="0"   width="44" height="44" fill="#d8d8d8"/>
-    <rect x="0"   y="52"  width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="52"  y="52"  width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="104" y="52"  width="44" height="44" fill="#c9a23e"/>
-    <rect x="156" y="52"  width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="0"   y="104" width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="52"  y="104" width="44" height="44" fill="#d8d8d8"/>
-    <rect x="104" y="104" width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="156" y="104" width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="0"   y="156" width="44" height="44" fill="#c9a23e"/>
-    <rect x="52"  y="156" width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="104" y="156" width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="156" y="156" width="44" height="44" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
+  <!-- Isotipo TijerApp — T con alas. Posición (96, 215), tamaño 200×200 -->
+  <g transform="translate(96 215) scale(3.125)">
+    <!-- Ala izquierda -->
+    <path d="M 11 21 L 27 21 L 27 26 L 9 28 Z" fill="#c9a23e"/>
+    <!-- Ala derecha -->
+    <path d="M 37 21 L 53 21 L 55 28 L 37 26 Z" fill="#c9a23e"/>
+    <!-- Stem -->
+    <path d="M 28.5 21 L 35.5 21 L 34 49 L 30 49 Z" fill="#c9a23e"/>
   </g>
 
   <!-- Wordmark -->
   <text x="380" y="332" font-family="Geist, system-ui, sans-serif" font-weight="900" font-size="92" letter-spacing="6">
-    <tspan fill="#c9a23e">BARBER</tspan><tspan fill="#d8d8d8">SYNC</tspan>
+    <tspan fill="#c9a23e">TIJER</tspan><tspan fill="#d8d8d8">APP</tspan>
   </text>
 
   <!-- Tagline -->

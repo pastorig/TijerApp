@@ -31,46 +31,39 @@ const gapClass: Record<LogoSize, string> = {
 };
 
 /**
- * Isotipo TijerApp — Grilla 4×4 con una diagonal de 4 celdas alternando
- * gold y silver (los colores del wordmark BARBER/SYNC).
+ * Isotipo TijerApp — letra T estilizada con dos "alas" arriba de un
+ * stem tapered. Las alas se separan ligeramente del stem y caen hacia
+ * los extremos (gesto de hojas abiertas). Sólido en gold.
  *
- * Lectura: la grilla es la agenda; la diagonal es la sincronía atravesándola.
- * Cliente y barbero confluyendo en un mismo turno.
+ * Lectura: T de Tijer + alas como hojas de tijera abriéndose. Lee
+ * como letra a primera vista, como tijera al segundo análisis.
  *
- * El render premium / press kit se puede colocar en /public/brand/isotype.png
- * y usarse con next/image donde se quiera mayor presencia visual.
+ * Diseño off-Claude (chatgpt prompt). Implementado fielmente al SVG
+ * que se cargó en el chat.
  */
 function IsotypeMark({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 64 64"
       fill="none"
-      shapeRendering="crispEdges"
       className={className}
       aria-hidden="true"
     >
-      <g transform="translate(6 6)">
-        {/* Row 0 */}
-        <rect x="0"  y="0"  width="10" height="10" fill="none" stroke="var(--brand-gold)" strokeWidth="1" strokeOpacity="0.35" />
-        <rect x="14" y="0"  width="10" height="10" fill="none" stroke="var(--brand-gold)" strokeWidth="1" strokeOpacity="0.35" />
-        <rect x="28" y="0"  width="10" height="10" fill="none" stroke="var(--brand-gold)" strokeWidth="1" strokeOpacity="0.35" />
-        <rect x="42" y="0"  width="10" height="10" fill="var(--brand-silver)" />
-        {/* Row 1 */}
-        <rect x="0"  y="14" width="10" height="10" fill="none" stroke="var(--brand-gold)" strokeWidth="1" strokeOpacity="0.35" />
-        <rect x="14" y="14" width="10" height="10" fill="none" stroke="var(--brand-gold)" strokeWidth="1" strokeOpacity="0.35" />
-        <rect x="28" y="14" width="10" height="10" fill="var(--brand-gold)" />
-        <rect x="42" y="14" width="10" height="10" fill="none" stroke="var(--brand-gold)" strokeWidth="1" strokeOpacity="0.35" />
-        {/* Row 2 */}
-        <rect x="0"  y="28" width="10" height="10" fill="none" stroke="var(--brand-gold)" strokeWidth="1" strokeOpacity="0.35" />
-        <rect x="14" y="28" width="10" height="10" fill="var(--brand-silver)" />
-        <rect x="28" y="28" width="10" height="10" fill="none" stroke="var(--brand-gold)" strokeWidth="1" strokeOpacity="0.35" />
-        <rect x="42" y="28" width="10" height="10" fill="none" stroke="var(--brand-gold)" strokeWidth="1" strokeOpacity="0.35" />
-        {/* Row 3 */}
-        <rect x="0"  y="42" width="10" height="10" fill="var(--brand-gold)" />
-        <rect x="14" y="42" width="10" height="10" fill="none" stroke="var(--brand-gold)" strokeWidth="1" strokeOpacity="0.35" />
-        <rect x="28" y="42" width="10" height="10" fill="none" stroke="var(--brand-gold)" strokeWidth="1" strokeOpacity="0.35" />
-        <rect x="42" y="42" width="10" height="10" fill="none" stroke="var(--brand-gold)" strokeWidth="1" strokeOpacity="0.35" />
-      </g>
+      {/* Ala izquierda — paralelogramo tilteado hacia afuera-abajo */}
+      <path
+        d="M 11 21 L 27 21 L 27 26 L 9 28 Z"
+        fill="var(--brand-gold)"
+      />
+      {/* Ala derecha — mirror */}
+      <path
+        d="M 37 21 L 53 21 L 55 28 L 37 26 Z"
+        fill="var(--brand-gold)"
+      />
+      {/* Stem — slight taper, 1.5px gap a cada lado de las alas */}
+      <path
+        d="M 28.5 21 L 35.5 21 L 34 49 L 30 49 Z"
+        fill="var(--brand-gold)"
+      />
     </svg>
   );
 }
@@ -97,8 +90,8 @@ export function Logo({
         wordmarkSizeClass[size],
       )}
     >
-      <span className="text-[color:var(--brand-gold)]">Barber</span>
-      <span className="text-[color:var(--brand-silver)]">Sync</span>
+      <span className="text-[color:var(--brand-gold)]">Tijer</span>
+      <span className="text-[color:var(--brand-silver)]">App</span>
     </span>
   );
 
