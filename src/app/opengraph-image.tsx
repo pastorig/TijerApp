@@ -9,35 +9,10 @@ export const size = { width: 1200, height: 630 } as const;
 export const contentType = "image/png";
 
 const GOLD = "#c9a23e";
-const GOLD_FAINT = "rgba(201,162,62,0.35)";
 const SILVER = "#d8d8d8";
 const BG = "#000000";
 const TEXT_MUTED = "#8a8a8a";
 const TEXT_SUBTLE = "#5a5a5a";
-
-const CELL = 44;
-const GAP = 8;
-
-// Combo-b: anti-diagonal de 4 celdas alternando silver / gold / silver / gold
-// desde top-right hacia bottom-left.
-type CellState = "gold" | "silver" | "empty";
-const ISOTYPE: CellState[][] = [
-  ["empty", "empty", "empty", "silver"],
-  ["empty", "empty", "gold", "empty"],
-  ["empty", "silver", "empty", "empty"],
-  ["gold", "empty", "empty", "empty"],
-];
-
-function cellStyle(state: CellState) {
-  const base = {
-    width: CELL,
-    height: CELL,
-    display: "flex",
-  } as const;
-  if (state === "gold") return { ...base, background: GOLD };
-  if (state === "silver") return { ...base, background: SILVER };
-  return { ...base, border: `2px solid ${GOLD_FAINT}` };
-}
 
 export default async function OpenGraphImage() {
   return new ImageResponse(
@@ -62,22 +37,18 @@ export default async function OpenGraphImage() {
             gap: 64,
           }}
         >
-          {/* Isotipo */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: GAP,
-            }}
+          {/* Isotipo TijerApp — T con alas, render como inline SVG */}
+          <svg
+            width="200"
+            height="200"
+            viewBox="0 0 64 64"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            {ISOTYPE.map((row, ri) => (
-              <div key={ri} style={{ display: "flex", gap: GAP }}>
-                {row.map((state, ci) => (
-                  <div key={ci} style={cellStyle(state)} />
-                ))}
-              </div>
-            ))}
-          </div>
+            <path d="M 11 21 L 27 21 L 27 26 L 9 28 Z" fill={GOLD} />
+            <path d="M 37 21 L 53 21 L 55 28 L 37 26 Z" fill={GOLD} />
+            <path d="M 28.5 21 L 35.5 21 L 34 49 L 30 49 Z" fill={GOLD} />
+          </svg>
 
           {/* Wordmark + tagline */}
           <div
@@ -96,8 +67,8 @@ export default async function OpenGraphImage() {
                 lineHeight: 1,
               }}
             >
-              <span style={{ color: GOLD }}>BARBER</span>
-              <span style={{ color: SILVER }}>SYNC</span>
+              <span style={{ color: GOLD }}>TIJER</span>
+              <span style={{ color: SILVER }}>APP</span>
             </div>
             <div
               style={{

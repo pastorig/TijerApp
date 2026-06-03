@@ -1,21 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none" shape-rendering="crispEdges">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
   <rect width="256" height="256" fill="#000000"/>
-  <g transform="translate(44 44)">
-    <rect x="0"   y="0"   width="36" height="36" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="44"  y="0"   width="36" height="36" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="88"  y="0"   width="36" height="36" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="132" y="0"   width="36" height="36" fill="#d8d8d8"/>
-    <rect x="0"   y="44"  width="36" height="36" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="44"  y="44"  width="36" height="36" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="88"  y="44"  width="36" height="36" fill="#c9a23e"/>
-    <rect x="132" y="44"  width="36" height="36" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="0"   y="88"  width="36" height="36" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="44"  y="88"  width="36" height="36" fill="#d8d8d8"/>
-    <rect x="88"  y="88"  width="36" height="36" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="132" y="88"  width="36" height="36" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="0"   y="132" width="36" height="36" fill="#c9a23e"/>
-    <rect x="44"  y="132" width="36" height="36" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="88"  y="132" width="36" height="36" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-    <rect x="132" y="132" width="36" height="36" fill="none" stroke="#c9a23e" stroke-width="2" stroke-opacity="0.35"/>
-  </g>
+  <!-- Isotipo TijerApp escalado al canvas 256×256 (centro 128,128) -->
+  <!-- Geometry derivada del SVG base 64×64, escala 4x con offset -->
+  <!-- Ala izquierda -->
+  <path d="M 44 84 L 108 84 L 108 104 L 36 112 Z" fill="#c9a23e"/>
+  <!-- Ala derecha -->
+  <path d="M 148 84 L 212 84 L 220 112 L 148 104 Z" fill="#c9a23e"/>
+  <!-- Stem -->
+  <path d="M 114 84 L 142 84 L 136 196 L 120 196 Z" fill="#c9a23e"/>
 </svg>
