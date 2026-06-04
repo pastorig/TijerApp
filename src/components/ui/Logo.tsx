@@ -31,38 +31,46 @@ const gapClass: Record<LogoSize, string> = {
 };
 
 /**
- * Isotipo TijerApp — letra T estilizada con dos "alas" arriba de un
- * stem tapered. Las alas se separan ligeramente del stem y caen hacia
- * los extremos (gesto de hojas abiertas). Sólido en gold.
+ * Isotipo TijerApp — T estilizada con alas + stem tapered. Sólido gold.
  *
- * Lectura: T de Tijer + alas como hojas de tijera abriéndose. Lee
- * como letra a primera vista, como tijera al segundo análisis.
+ * Geometría exacta del SVG generado off-Claude (ChatGPT) — coordinates
+ * fielmente preservadas para mantener el diseño aprobado por el founder.
  *
- * Diseño off-Claude (chatgpt prompt). Implementado fielmente al SVG
- * que se cargó en el chat.
+ * Polish: stroke="currentGold" + stroke-linejoin=round suaviza las
+ * esquinas convexas externas (especialmente las superiores de las alas)
+ * sin alterar la geometría de los paths. Inner corners (concavos) no
+ * se ven afectados, manteniendo la limpieza de la tipografía.
  */
 function IsotypeMark({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 64 64"
       fill="none"
+      strokeLinejoin="round"
+      strokeLinecap="round"
       className={className}
       aria-hidden="true"
     >
-      {/* Ala izquierda — paralelogramo tilteado hacia afuera-abajo */}
+      {/* Ala izquierda */}
       <path
-        d="M 11 21 L 27 21 L 27 26 L 9 28 Z"
+        d="M10 18 L26 18 L27.5 18.2 L28.8 18.8 L29.9 20 L31.2 23.5 L19 23.5 L17.2 23.3 L15.8 22.6 L14.7 21.4 L10 18 Z"
         fill="var(--brand-gold)"
+        stroke="var(--brand-gold)"
+        strokeWidth="2"
       />
       {/* Ala derecha — mirror */}
       <path
-        d="M 37 21 L 53 21 L 55 28 L 37 26 Z"
+        d="M38 18 L54 18 L49.3 21.4 L48.2 22.6 L46.8 23.3 L45 23.5 L32.8 23.5 L34.1 20 L35.2 18.8 L36.5 18.2 L38 18 Z"
         fill="var(--brand-gold)"
+        stroke="var(--brand-gold)"
+        strokeWidth="2"
       />
-      {/* Stem — slight taper, 1.5px gap a cada lado de las alas */}
+      {/* Stem tapered */}
       <path
-        d="M 28.5 21 L 35.5 21 L 34 49 L 30 49 Z"
+        d="M28.7 27.4 L35.3 27.4 L34.1 47 L29.9 47 L28.7 27.4 Z"
         fill="var(--brand-gold)"
+        stroke="var(--brand-gold)"
+        strokeWidth="2"
       />
     </svg>
   );

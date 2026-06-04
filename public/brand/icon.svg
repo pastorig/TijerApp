@@ -1,11 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none" stroke-linejoin="round" stroke-linecap="round">
   <rect width="256" height="256" fill="#000000"/>
-  <!-- Isotipo TijerApp escalado al canvas 256×256 (centro 128,128) -->
-  <!-- Geometry derivada del SVG base 64×64, escala 4x con offset -->
-  <!-- Ala izquierda -->
-  <path d="M 44 84 L 108 84 L 108 104 L 36 112 Z" fill="#c9a23e"/>
-  <!-- Ala derecha -->
-  <path d="M 148 84 L 212 84 L 220 112 L 148 104 Z" fill="#c9a23e"/>
-  <!-- Stem -->
-  <path d="M 114 84 L 142 84 L 136 196 L 120 196 Z" fill="#c9a23e"/>
+  <!-- Isotipo TijerApp escalado 4x (viewBox base 64×64 → 256×256) -->
+  <g>
+    <!-- Ala izquierda -->
+    <path d="M40 72 L104 72 L110 72.8 L115.2 75.2 L119.6 80 L124.8 94 L76 94 L68.8 93.2 L63.2 90.4 L58.8 85.6 L40 72 Z"
+          fill="#c9a23e" stroke="#c9a23e" stroke-width="8"/>
+    <!-- Ala derecha -->
+    <path d="M152 72 L216 72 L197.2 85.6 L192.8 90.4 L187.2 93.2 L180 94 L131.2 94 L136.4 80 L140.8 75.2 L146 72.8 L152 72 Z"
+          fill="#c9a23e" stroke="#c9a23e" stroke-width="8"/>
+    <!-- Stem -->
+    <path d="M114.8 109.6 L141.2 109.6 L136.4 188 L119.6 188 L114.8 109.6 Z"
+          fill="#c9a23e" stroke="#c9a23e" stroke-width="8"/>
+  </g>
 </svg>

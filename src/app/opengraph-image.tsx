@@ -37,7 +37,7 @@ export default async function OpenGraphImage() {
             gap: 64,
           }}
         >
-          {/* Isotipo TijerApp — T con alas, render como inline SVG */}
+          {/* Isotipo TijerApp — geometría exacta + esquinas redondeadas via stroke */}
           <svg
             width="200"
             height="200"
@@ -45,9 +45,30 @@ export default async function OpenGraphImage() {
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <path d="M 11 21 L 27 21 L 27 26 L 9 28 Z" fill={GOLD} />
-            <path d="M 37 21 L 53 21 L 55 28 L 37 26 Z" fill={GOLD} />
-            <path d="M 28.5 21 L 35.5 21 L 34 49 L 30 49 Z" fill={GOLD} />
+            <path
+              d="M10 18 L26 18 L27.5 18.2 L28.8 18.8 L29.9 20 L31.2 23.5 L19 23.5 L17.2 23.3 L15.8 22.6 L14.7 21.4 L10 18 Z"
+              fill={GOLD}
+              stroke={GOLD}
+              strokeWidth="2"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            <path
+              d="M38 18 L54 18 L49.3 21.4 L48.2 22.6 L46.8 23.3 L45 23.5 L32.8 23.5 L34.1 20 L35.2 18.8 L36.5 18.2 L38 18 Z"
+              fill={GOLD}
+              stroke={GOLD}
+              strokeWidth="2"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            <path
+              d="M28.7 27.4 L35.3 27.4 L34.1 47 L29.9 47 L28.7 27.4 Z"
+              fill={GOLD}
+              stroke={GOLD}
+              strokeWidth="2"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
           </svg>
 
           {/* Wordmark + tagline */}
