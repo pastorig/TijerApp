@@ -5,6 +5,7 @@ import {
 } from "@/data/demo-barbershops";
 import type { PublicReview } from "@/lib/appointment-reviews";
 import { Logo } from "@/components/ui";
+import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { LastContextTracker } from "@/components/pwa/LastContextTracker";
 import { BarbershopGallerySection } from "./BarbershopGallerySection";
 import { BarbershopInfoSection } from "./BarbershopInfoSection";
@@ -28,6 +29,10 @@ export function PublicBarbershopLanding({
       {/* PWA: registra que el usuario visitó esta barbería como "public" para
           que al abrir la PWA del home screen lo redirija acá. */}
       <LastContextTracker slug={barbershop.slug} role="public" />
+
+      {/* PWA: banner mobile invitando a instalar TijerApp como app. Se oculta
+          solo si el browser no la soporta o si el usuario lo dismisseó. */}
+      <InstallBanner barbershopName={barbershop.name} />
 
       {/* Nav top */}
       <nav className="sticky top-0 z-10 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md">
