@@ -24,6 +24,7 @@ import {
 import { Logo } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { signOut } from "@/lib/auth";
+import { InstallButton } from "@/components/pwa/InstallButton";
 
 type AdminSidebarProps = {
   barbershopSlug: string;
@@ -244,6 +245,9 @@ export function AdminSidebar({
                 <Plus className="size-3.5 shrink-0" />
                 <span className="truncate">Nuevo turno público</span>
               </Link>
+            </li>
+            <li>
+              <InstallButton variant="sidebar-item" />
             </li>
             <li>
               <button
