@@ -28,6 +28,7 @@ import {
   type OwnerDashboardMetrics,
   type OwnerWeeklyRankingEntry,
 } from "@/lib/owner-metrics";
+import { HardDeleteBarbershopDialog } from "@/components/owner/HardDeleteBarbershopDialog";
 
 /**
  * Salud de una barbería basada en su actividad reciente.
@@ -108,6 +109,12 @@ export function OwnerDashboard() {
   const [errorMessage, setErrorMessage] = useState("");
   const [deletingSlug, setDeletingSlug] = useState<string | null>(null);
   const [hardDeletingSlug, setHardDeletingSlug] = useState<string | null>(null);
+  // Slug actualmente en el modal de hard delete (null = modal cerrado).
+  // Se separa de `hardDeletingSlug` que es el flag de "fetch en vuelo"
+  // para poder mostrar el estado "Eliminando…" sin cerrar el modal.
+  const [pendingHardDeleteSlug, setPendingHardDeleteSlug] = useState<
+    string | null
+  >(null);
   const [reactivatingSlug, setReactivatingSlug] = useState<string | null>(null);
   const [resettingAccessSlug, setResettingAccessSlug] = useState<string | null>(
     null,
@@ -265,38 +272,19 @@ export function OwnerDashboard() {
     }
   }
 
-  async function handleHardDeleteBarbershop(slug: string) {
-    // Doble confirmación: ireversible.
-    const firstConfirm = await confirm({
-      title: "Eliminar DEFINITIVAMENTE",
-      message: `Vas a borrar para siempre la barbería ${slug}: todos los turnos, barberos, servicios y horarios. Esto NO se puede deshacer.`,
-      confirmLabel: "Continuar",
-      cancelLabel: "Volver",
-      danger: true,
-    });
-    if (!firstConfirm) return;
-
-    const secondConfirm = window.prompt(
-      `Para confirmar, escribí exactamente el slug: ${slug}`,
-    );
-    if (secondConfirm !== slug) {
-      setErrorMessage(
-        secondConfirm === null
-          ? ""
-          : "El slug no coincide. Eliminación cancelada.",
-      );
-      return;
-    }
-
-    const removeAdminUser = await confirm({
-      title: "¿Liberar email del admin?",
-      message:
-        "Confirmar = elimina el user de Supabase Auth y libera el email para reuso. Volver = el user queda registrado pero sin barbería asociada.",
-      confirmLabel: "Liberar email",
-      cancelLabel: "No liberar",
-    });
-
+  // Abre el modal de hard delete. Toda la confirmación (slug typing,
+  // checkbox liberar email) vive en el modal — el patrón anterior con
+  // ConfirmDialog → window.prompt → ConfirmDialog era frágil en Brave
+  // (bloqueaba el segundo dialog custom después del prompt nativo).
+  function handleHardDeleteBarbershop(slug: string) {
     setErrorMessage("");
+    setPendingHardDeleteSlug(slug);
+  }
+
+  async function handleConfirmHardDelete(removeAdminUser: boolean) {
+    const slug = pendingHardDeleteSlug;
+    if (!slug) return;
+
     setHardDeletingSlug(slug);
 
     try {
@@ -305,6 +293,7 @@ export function OwnerDashboard() {
 
       if (!accessToken) {
         setErrorMessage("La sesión no es válida. Ingresá nuevamente.");
+        setPendingHardDeleteSlug(null);
         return;
       }
 
@@ -336,6 +325,7 @@ export function OwnerDashboard() {
           (barbershop) => barbershop.slug !== slug,
         ),
       }));
+      setPendingHardDeleteSlug(null);
     } catch {
       setErrorMessage("No pudimos eliminar definitivamente la barbería.");
     } finally {
@@ -929,6 +919,20 @@ export function OwnerDashboard() {
           </>
         ) : null}
       </section>
+
+      <HardDeleteBarbershopDialog
+        key={pendingHardDeleteSlug ?? "closed"}
+        slug={pendingHardDeleteSlug}
+        isSubmitting={
+          hardDeletingSlug !== null &&
+          hardDeletingSlug === pendingHardDeleteSlug
+        }
+        onCancel={() => {
+          if (hardDeletingSlug) return; // no cerrar mientras envía
+          setPendingHardDeleteSlug(null);
+        }}
+        onConfirm={handleConfirmHardDelete}
+      />
     </div>
   );
 }
