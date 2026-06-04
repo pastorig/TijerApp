@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ConfirmProvider, ToastProvider } from "@/components/ui";
 import { PWAInstallProvider } from "@/components/pwa/PWAInstallProvider";
+import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -81,6 +82,7 @@ export default function RootLayout({
             <ConfirmProvider>{children}</ConfirmProvider>
           </ToastProvider>
         </PWAInstallProvider>
+        <ServiceWorkerRegister />
         <Analytics />
         <SpeedInsights />
       </body>

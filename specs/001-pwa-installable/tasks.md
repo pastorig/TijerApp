@@ -28,14 +28,14 @@
 
 Trabajo de inicialización: dependencias, assets, config.
 
-- [ ] T001 Install runtime deps `@serwist/next` y `serwist` via `npm install @serwist/next serwist` (modifica `package.json` + `package-lock.json`)
+- [x] T001 Install runtime deps `@serwist/next` y `serwist` via `npm install @serwist/next serwist` (modifica `package.json` + `package-lock.json`)
   - **Acceptance**: `npm ls @serwist/next serwist` no devuelve errores. `package.json` lista ambas en `dependencies`.
 
-- [ ] T002 [P] Generate PWA icon PNGs desde el SVG existente corriendo `npx pwa-asset-generator public/brand/icon.svg public/brand/icons --background "#0a0a0a" --padding "10%" --maskable false --manifest false --type png`
+- [x] T002 [P] Generate PWA icon PNGs desde el SVG existente corriendo `npx pwa-asset-generator public/brand/icon.svg public/brand/icons --background "#0a0a0a" --padding "10%" --maskable false --manifest false --type png`
   - **Output**: `public/brand/icons/manifest-icon-192.maskable.png`, `manifest-icon-512.maskable.png`, `apple-icon-180.png` (nombres exactos dependen de la versión del tool — commiteamos lo que genere)
   - **Acceptance**: existen los 3 sizes mínimos (192, 512, 180). Visual check de cada uno (el isotipo se ve completo, no recortado).
 
-- [ ] T003 Modificar `next.config.ts` para wrappear el export default con `withSerwist({ swSrc: "app/sw.ts", swDest: "public/sw.js", disable: process.env.NODE_ENV === "development" })`
+- [x] T003 Modificar `next.config.ts` para wrappear el export default con `withSerwist({ swSrc: "app/sw.ts", swDest: "public/sw.js", disable: process.env.NODE_ENV === "development" })`
   - **Acceptance**: `npm run build` no rompe (puede dar warning de SW faltante hasta T013, OK por ahora).
   - **Note**: `disable: true` en dev evita que serwist interfiera con HMR.
 
@@ -45,13 +45,13 @@ Trabajo de inicialización: dependencias, assets, config.
 
 Prerequisitos compartidos por todas las User Stories. **No comenzar US1/US2/US3 hasta completar esta phase.**
 
-- [ ] T004 Crear `app/manifest.ts` exportando default un objeto MetadataRoute.Manifest con: `name="TijerApp"`, `short_name="TijerApp"`, `description="Turnos online para barberías modernas"`, `start_url="/?source=pwa"`, `scope="/"`, `display="standalone"`, `background_color="#0a0a0a"`, `theme_color="#c9a23e"`, `lang="es-AR"`, `icons` apuntando a los PNGs de `/brand/icons/`
+- [x] T004 Crear `app/manifest.ts` exportando default un objeto MetadataRoute.Manifest con: `name="TijerApp"`, `short_name="TijerApp"`, `description="Turnos online para barberías modernas"`, `start_url="/?source=pwa"`, `scope="/"`, `display="standalone"`, `background_color="#0a0a0a"`, `theme_color="#c9a23e"`, `lang="es-AR"`, `icons` apuntando a los PNGs de `/brand/icons/`
   - **Acceptance**: navegar `/manifest.webmanifest` en dev devuelve el JSON válido.
 
-- [ ] T005 [P] Crear `src/lib/pwa/last-context.ts` con helpers: `getLastContext(): { slug: string | null; role: "admin" | "public" | null }`, `setLastContext(slug: string, role: "admin" | "public"): void`, `clearLastContext(): void`. Usa `localStorage` con prefix `tijerapp:`. SSR-safe (verifica `typeof window`).
+- [x] T005 [P] Crear `src/lib/pwa/last-context.ts` con helpers: `getLastContext(): { slug: string | null; role: "admin" | "public" | null }`, `setLastContext(slug: string, role: "admin" | "public"): void`, `clearLastContext(): void`. Usa `localStorage` con prefix `tijerapp:`. SSR-safe (verifica `typeof window`).
   - **Acceptance**: importable desde server components sin crash. Cuando se llama en cliente, lee/escribe localStorage correctamente.
 
-- [ ] T006 [P] Crear `src/lib/pwa/useStandaloneMode.ts` exportando `useStandaloneMode(): boolean` que devuelve true si `display-mode: standalone` matches o si `navigator.standalone === true` (iOS legacy)
+- [x] T006 [P] Crear `src/lib/pwa/useStandaloneMode.ts` exportando `useStandaloneMode(): boolean` que devuelve true si `display-mode: standalone` matches o si `navigator.standalone === true` (iOS legacy)
   - **Acceptance**: en dev browser tab devuelve false. Cuando se instala como PWA, devuelve true.
 
 ---
@@ -62,34 +62,34 @@ Prerequisitos compartidos por todas las User Stories. **No comenzar US1/US2/US3 
 
 **Independent test**: Manual — navegar `/sv-barber/admin` → cerrar tab → instalar PWA → tap icon → debe abrir directo en `/sv-barber/admin` (no en `/`).
 
-- [ ] T007 [P] [US1] Crear `src/lib/pwa/PWAInstallProvider.tsx` — Context Provider client component que captura `beforeinstallprompt`, expone `{ isInstallable: boolean; isInstalled: boolean; promptInstall(): Promise<"accepted"|"dismissed"> }`. Escucha también `appinstalled` event para marcar `isInstalled=true`.
+- [x] T007 [P] [US1] Crear `src/lib/pwa/PWAInstallProvider.tsx` — Context Provider client component que captura `beforeinstallprompt`, expone `{ isInstallable: boolean; isInstalled: boolean; promptInstall(): Promise<"accepted"|"dismissed"> }`. Escucha también `appinstalled` event para marcar `isInstalled=true`.
   - **Acceptance**: En Chrome desktop con la app deployada cumpliendo PWA criteria, `isInstallable` flips a true después de ~30s en página.
 
-- [ ] T008 [P] [US1] Modificar `src/app/layout.tsx` para:
+- [x] T008 [P] [US1] Modificar `src/app/layout.tsx` para:
   1. Wrap children con `<PWAInstallProvider>` (cliente).
   2. Agregar en `<head>` (via metadata Next 16): `themeColor: "#c9a23e"`, `appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "TijerApp" }`.
   3. Agregar `<link rel="apple-touch-icon" href="/brand/icons/apple-icon-180.png" />` (vía metadata.icons.apple).
   - **Acceptance**: en DevTools → Elements → `<head>` muestra los meta apple + theme-color. Provider rodea el render.
 
-- [ ] T009 [P] [US1] Crear `src/hooks/useLastContextTracker.ts` — hook client-only que recibe `(slug: string, role: "admin" | "public")` y llama `setLastContext(slug, role)` cada vez que `slug` cambia. Usa `useEffect` con `[slug, role]` como deps.
+- [x] T009 [P] [US1] Crear `src/hooks/useLastContextTracker.ts` — hook client-only que recibe `(slug: string, role: "admin" | "public")` y llama `setLastContext(slug, role)` cada vez que `slug` cambia. Usa `useEffect` con `[slug, role]` como deps.
   - **Acceptance**: navegando entre barberías, localStorage refleja el último slug visitado.
 
-- [ ] T010 [US1] Modificar `src/components/PublicBarbershopLanding.tsx` para llamar `useLastContextTracker(barbershop.slug, "public")` al top del componente
+- [x] T010 [US1] Modificar `src/components/PublicBarbershopLanding.tsx` para llamar `useLastContextTracker(barbershop.slug, "public")` al top del componente
   - **Acceptance**: visitar `/sv-barber` setea `tijerapp:last_slug=sv-barber`, `last_role=public` en localStorage.
   - **Depends on**: T009
 
-- [ ] T011 [US1] Modificar `src/components/admin/AdminShell.tsx` (o el componente equivalente que envuelve el admin layout) para llamar `useLastContextTracker(barbershopSlug, "admin")`. Si no existe AdminShell, crearlo o agregar en `src/components/AdminAppointments.tsx` o donde mejor encaje el ciclo de vida.
+- [x] T011 [US1] Modificar `src/components/admin/AdminShell.tsx` (o el componente equivalente que envuelve el admin layout) para llamar `useLastContextTracker(barbershopSlug, "admin")`. Si no existe AdminShell, crearlo o agregar en `src/components/AdminAppointments.tsx` o donde mejor encaje el ciclo de vida.
   - **Acceptance**: visitar `/sv-barber/admin` setea `last_role=admin`.
   - **Depends on**: T009
   - **Note**: explorar primero la estructura del admin para decidir el mejor lugar — speckit-implement evaluará si conviene crear AdminShell o instrumentar el existente.
 
-- [ ] T012 [US1] Modificar `src/app/page.tsx` para que sea Client Component que, on mount, lea `getLastContext()` y si `slug != null` haga `router.replace(role === "admin" ? "/${slug}/admin" : "/${slug}")`. Solo redirigir si `searchParams.source === "pwa"` o `useStandaloneMode() === true` (no redirigir cuando el usuario viene del browser a la landing comercial).
+- [x] T012 [US1] Modificar `src/app/page.tsx` para que sea Client Component que, on mount, lea `getLastContext()` y si `slug != null` haga `router.replace(role === "admin" ? "/${slug}/admin" : "/${slug}")`. Solo redirigir si `searchParams.source === "pwa"` o `useStandaloneMode() === true` (no redirigir cuando el usuario viene del browser a la landing comercial).
   - **Acceptance**:
     - Navegar `/` desde browser → ve la landing comercial (no redirige).
     - Abrir PWA → `/?source=pwa` → si hay last_context, redirige.
   - **Depends on**: T005, T006
 
-- [ ] T013 [US1] Crear `app/sw.ts` con configuración base de serwist: import `defaultCache` de `serwist/next/worker`, exportar service worker que precachea `self.__SW_MANIFEST` y registra `defaultCache` runtime caching.
+- [x] T013 [US1] Crear `app/sw.ts` con configuración base de serwist: import `defaultCache` de `serwist/next/worker`, exportar service worker que precachea `self.__SW_MANIFEST` y registra `defaultCache` runtime caching.
   - **Acceptance**: `npm run build` genera `public/sw.js`. Al levantar `npm start`, DevTools → Application → Service Workers muestra el SW activo.
 
 **Checkpoint US1**: con T007-T013 completos, la PWA es instalable y al tap del icon respeta el último contexto. Validar con el independent test antes de pasar a US2.
@@ -102,7 +102,7 @@ Prerequisitos compartidos por todas las User Stories. **No comenzar US1/US2/US3 
 
 **Independent test**: DevTools → Network → Offline → recargar cualquier ruta → debe mostrar la página offline con isotipo + botón Reintentar.
 
-- [ ] T014 [US2] Crear `app/offline/page.tsx` — server component estático con:
+- [x] T014 [US2] Crear `app/offline/page.tsx` — server component estático con:
   - Isotipo TijerApp grande (reusa `<Logo variant="mark" size="xl" />`)
   - Heading "Sin conexión" font-black uppercase
   - Texto "Volvé a intentar cuando tengas señal de internet"
@@ -110,7 +110,7 @@ Prerequisitos compartidos por todas las User Stories. **No comenzar US1/US2/US3 
   - Layout fullscreen oscuro, mobile-first centered
   - **Acceptance**: navegar `/offline` directamente muestra la página. Lighthouse no falla.
 
-- [ ] T015 [US2] Extender `app/sw.ts` (T013) para configurar offline fallback: agregar handler que en navigate requests fallidas devuelva `caches.match("/offline")`. Asegurar que `/offline` esté en el precache list (via `self.__SW_MANIFEST` que serwist arma de las rutas estáticas).
+- [x] T015 [US2] Extender `app/sw.ts` (T013) para configurar offline fallback: agregar handler que en navigate requests fallidas devuelva `caches.match("/offline")`. Asegurar que `/offline` esté en el precache list (via `self.__SW_MANIFEST` que serwist arma de las rutas estáticas).
   - **Acceptance**: con SW activo + offline en DevTools, cualquier navegación devuelve `/offline`.
   - **Depends on**: T013, T014
 
@@ -153,10 +153,10 @@ Prerequisitos compartidos por todas las User Stories. **No comenzar US1/US2/US3 
 
 Verificación final antes del merge.
 
-- [ ] T022 [P] Run `npm run lint` — 0 errors, 0 warnings.
+- [x] T022 [P] Run `npm run lint` — 0 errors, 0 warnings.
   - **Acceptance**: exit 0.
 
-- [ ] T023 [P] Run `npm run build` — clean.
+- [x] T023 [P] Run `npm run build` — clean.
   - **Acceptance**: exit 0, sin warnings de PWA.
 
 - [ ] T024 Manual smoke test seguir [`quickstart.md`](quickstart.md) sección 1-7 (manifest válido, SW registra, install desktop/Android/iOS, offline fallback, last-context routing)

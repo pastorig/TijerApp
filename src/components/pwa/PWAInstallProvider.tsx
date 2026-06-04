@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useStandaloneMode } from "@/lib/pwa/useStandaloneMode";
 
 /**
  * PWAInstallProvider — captura el `beforeinstallprompt` event globalmente
@@ -16,6 +17,10 @@ import {
  * Por qué un Context: el `beforeinstallprompt` event SOLO se dispara una
  * vez por sesión. Si lo capturamos en un solo lugar (este Provider en el
  * layout), cualquier componente puede leer el state via `usePWAInstall`.
+ *
+ * `isInstalled` se deriva de 2 sources:
+ * - `useStandaloneMode()` — refleja display-mode: standalone en tiempo real
+ * - state interno `appInstalledFired` — flag de evento appinstalled
  *
  * Compat: Chromium-based browsers (Chrome, Edge, Brave, Opera) y Firefox
  * recientes. Safari/iOS no implementa `beforeinstallprompt` — el flag
@@ -57,31 +62,24 @@ export function usePWAInstall(): PWAInstallContextValue {
 export function PWAInstallProvider({ children }: { children: ReactNode }) {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [appInstalledFired, setAppInstalledFired] = useState(false);
+  const isStandalone = useStandaloneMode();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // 1. Detectar si ya está instalada al cargar
-    const mqlStandalone = window.matchMedia("(display-mode: standalone)");
-    const navWithStandalone = window.navigator as Navigator & {
-      standalone?: boolean;
-    };
-    if (mqlStandalone.matches || navWithStandalone.standalone === true) {
-      setIsInstalled(true);
-    }
-
-    // 2. Capturar el prompt cuando el browser lo dispare
+    // Capturar el prompt cuando el browser lo dispare. Prevent default
+    // para mostrar nuestro UI custom y disparar el prompt cuando el user
+    // clickea, en lugar del banner default del browser.
     const handleBeforeInstall = (event: Event) => {
-      // El default es mostrar el mini-banner — lo prevenimos para mostrar
-      // nuestro UI custom y disparar el prompt cuando el user clickea
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEvent);
     };
 
-    // 3. Detectar instalación exitosa (Chromium dispara este event)
+    // Detectar instalación exitosa (Chromium dispara este event después
+    // de que el user acepta el prompt e instala efectivamente)
     const handleAppInstalled = () => {
-      setIsInstalled(true);
+      setAppInstalledFired(true);
       setDeferredPrompt(null);
     };
 
@@ -108,7 +106,7 @@ export function PWAInstallProvider({ children }: { children: ReactNode }) {
     <PWAInstallContext.Provider
       value={{
         isInstallable: deferredPrompt !== null,
-        isInstalled,
+        isInstalled: isStandalone || appInstalledFired,
         promptInstall,
       }}
     >
