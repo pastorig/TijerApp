@@ -21,3 +21,9 @@ export default withSentryConfig(nextConfig, {
   disableLogger: true,
   automaticVercelMonitors: true,
 });
+
+// Nota PWA: el service worker (public/sw.js) está escrito manualmente y se
+// registra desde src/components/pwa/ServiceWorkerRegister.tsx. No usamos
+// @serwist/next ni next-pwa porque ambos requieren webpack y este proyecto
+// usa Turbopack para builds rápidos. Para un MVP de PWA con cache básico +
+// offline fallback, un SW manual es más simple y sin compromisos.

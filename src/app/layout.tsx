@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ConfirmProvider, ToastProvider } from "@/components/ui";
+import { PWAInstallProvider } from "@/components/pwa/PWAInstallProvider";
+import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,7 +35,15 @@ export const metadata: Metadata = {
       { url: "/brand/favicon.svg", type: "image/svg+xml" },
       { url: "/favicon.ico", sizes: "any" },
     ],
-    apple: [{ url: "/brand/icon.svg", type: "image/svg+xml" }],
+    apple: [
+      // PNG raster para iOS Safari (no soporta SVG en apple-touch-icon)
+      { url: "/brand/icons/apple-icon-180.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "TijerApp",
+    statusBarStyle: "black-translucent",
   },
   openGraph: {
     title: "TijerApp — Turnos online para barberías modernas",
@@ -67,9 +77,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <ToastProvider>
-          <ConfirmProvider>{children}</ConfirmProvider>
-        </ToastProvider>
+        <PWAInstallProvider>
+          <ToastProvider>
+            <ConfirmProvider>{children}</ConfirmProvider>
+          </ToastProvider>
+        </PWAInstallProvider>
+        <ServiceWorkerRegister />
         <Analytics />
         <SpeedInsights />
       </body>
