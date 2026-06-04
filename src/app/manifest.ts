@@ -16,6 +16,10 @@ export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    // ID explícito: identidad estable de la app independiente del start_url.
+    // Si en el futuro cambiamos el start_url, los browsers siguen reconociendo
+    // la instalación existente en vez de ofrecer instalarla de nuevo.
+    id: "/",
     name: "TijerApp",
     short_name: "TijerApp",
     description:
