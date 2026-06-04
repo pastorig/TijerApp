@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { RefreshCw } from "lucide-react";
 import { Logo } from "@/components/ui";
-import { OfflineRetryButton } from "./OfflineRetryButton";
 
 export const metadata: Metadata = {
   title: "Sin conexión",
@@ -12,11 +13,14 @@ export const metadata: Metadata = {
  * Página de fallback offline para PWA.
  *
  * Se sirve desde el cache del service worker cuando una navigation request
- * falla por falta de red. Es server component estático (sin fetch ni deps
- * dinámicas) para garantizar que esté pre-cacheada y disponible offline.
+ * falla por falta de red. Es server component PURO (sin client components
+ * anidados) para garantizar que funcione 100% sin JavaScript — porque
+ * cuando el usuario llega acá offline, los chunks de Next.js no se pueden
+ * descargar y no hay hydration.
  *
- * El botón Reintentar es client component pequeño porque necesita ejecutar
- * window.location.reload() en click.
+ * El botón "Reintentar" es un <Link href="/"> en lugar de un <button>
+ * con onClick — navega al home, que el SW serve igual desde cache o desde
+ * red según corresponda. Sin JS, sin React, funciona.
  */
 export default function OfflinePage() {
   return (
@@ -40,7 +44,14 @@ export default function OfflinePage() {
         </p>
 
         <div className="mt-10 w-full">
-          <OfflineRetryButton />
+          <Link
+            href="/"
+            prefetch={false}
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-black no-underline transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
+          >
+            <RefreshCw className="size-4" aria-hidden="true" />
+            Reintentar
+          </Link>
         </div>
       </div>
     </main>
