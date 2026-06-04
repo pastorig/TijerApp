@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { LastContextTracker } from "@/components/pwa/LastContextTracker";
 import { AdminSidebar } from "./AdminSidebar";
 
 type AdminShellProps = {
@@ -21,6 +22,10 @@ export function AdminShell({
 }: AdminShellProps) {
   return (
     <div className="min-h-screen bg-black text-white lg:flex">
+      {/* PWA: registra que el usuario está en el admin de esta barbería
+          para que al abrir la PWA del home screen lo traiga acá. */}
+      <LastContextTracker slug={barbershopSlug} role="admin" />
+
       <AdminSidebar
         barbershopSlug={barbershopSlug}
         barbershopName={barbershopName}

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui";
@@ -7,10 +8,17 @@ import { HomeContact } from "@/components/home/HomeContact";
 import { HomeFaq } from "@/components/home/HomeFaq";
 import { HomeHowItWorks } from "@/components/home/HomeHowItWorks";
 import { HomeWhatIsIt } from "@/components/home/HomeWhatIsIt";
+import { PWARedirector } from "@/components/pwa/PWARedirector";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-black text-white">
+      {/* PWA: si abrió desde el icon del home screen + tenía last_context,
+          redirige a esa barbería. Si vino desde el browser, no hace nada. */}
+      <Suspense fallback={null}>
+        <PWARedirector />
+      </Suspense>
+
       <CommercialNav />
 
       {/* Hero */}

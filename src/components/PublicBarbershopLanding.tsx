@@ -5,6 +5,7 @@ import {
 } from "@/data/demo-barbershops";
 import type { PublicReview } from "@/lib/appointment-reviews";
 import { Logo } from "@/components/ui";
+import { LastContextTracker } from "@/components/pwa/LastContextTracker";
 import { BarbershopGallerySection } from "./BarbershopGallerySection";
 import { BarbershopInfoSection } from "./BarbershopInfoSection";
 import { BarbershopReviewsSection } from "./BarbershopReviewsSection";
@@ -24,6 +25,10 @@ export function PublicBarbershopLanding({
 }: PublicBarbershopLandingProps) {
   return (
     <main className="min-h-screen bg-black text-white">
+      {/* PWA: registra que el usuario visitó esta barbería como "public" para
+          que al abrir la PWA del home screen lo redirija acá. */}
+      <LastContextTracker slug={barbershop.slug} role="public" />
+
       {/* Nav top */}
       <nav className="sticky top-0 z-10 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-8 sm:py-4 lg:px-12">

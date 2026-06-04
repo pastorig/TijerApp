@@ -6,9 +6,13 @@
 set -euo pipefail
 
 JSON_OUTPUT=false
+REQUIRE_TASKS=false
+INCLUDE_TASKS=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --json) JSON_OUTPUT=true; shift ;;
+    --require-tasks) REQUIRE_TASKS=true; shift ;;
+    --include-tasks) INCLUDE_TASKS=true; shift ;;
     *) shift ;;
   esac
 done
