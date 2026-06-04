@@ -90,14 +90,27 @@ export const VIP_MIN_VISITS = 10;
 export const GHOST_MIN_NO_SHOWS = 2;
 
 /**
+ * Label exacto del preset "no-show" que el admin elige en CancelAppointmentDialog.
+ * Cuando se guarda en `cancellation_reason`, el texto resultante empieza con
+ * este label (puede tener una nota adicional concatenada).
+ *
+ * IMPORTANTE: este label es la single source of truth — `CancelAppointmentDialog`
+ * importa esta constante para etiquetar el preset, y `isNoShowReason` la usa
+ * para detectar matches. Si lo cambiás, ambos se actualizan automáticamente.
+ */
+export const NO_SHOW_PRESET_LABEL = "Cliente no vino";
+
+/**
  * Detecta si una `cancellation_reason` corresponde a un no-show registrado
- * desde el CancelAppointmentDialog. Se asume que el preset "Cliente no vino"
+ * desde el CancelAppointmentDialog. Se asume que el preset NO_SHOW_PRESET_LABEL
  * fue elegido (con o sin nota adicional) — el motivo guardado comienza con
  * ese label exacto.
  */
 export function isNoShowReason(reason: string | null | undefined): boolean {
   if (!reason) return false;
-  return reason.toLowerCase().startsWith("cliente no vino");
+  return reason
+    .toLowerCase()
+    .startsWith(NO_SHOW_PRESET_LABEL.toLowerCase());
 }
 
 /**

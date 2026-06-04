@@ -10,6 +10,7 @@ import {
 import { createPortal } from "react-dom";
 import { AlertTriangle, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { NO_SHOW_PRESET_LABEL } from "@/lib/client-segments";
 
 /**
  * Modal de cancelación con motivo.
@@ -33,9 +34,12 @@ export type CancellationContext = {
   appointmentTime: string; // ya formateada para display
 };
 
-/** Presets visibles en el modal — orden por frecuencia esperada. */
+/** Presets visibles en el modal — orden por frecuencia esperada.
+ * El label de "no_show" viene de `NO_SHOW_PRESET_LABEL` (lib/client-segments)
+ * para mantener single source of truth con `isNoShowReason()` que detecta
+ * ghosts a partir de este label exacto. */
 const REASON_PRESETS = [
-  { key: "no_show", label: "Cliente no vino", isDanger: true },
+  { key: "no_show", label: NO_SHOW_PRESET_LABEL, isDanger: true },
   { key: "client_cancelled", label: "Cliente avisó", isDanger: false },
   { key: "rescheduled", label: "Reprogramado", isDanger: false },
   { key: "load_error", label: "Error al cargar", isDanger: false },
