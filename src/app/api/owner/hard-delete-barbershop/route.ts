@@ -84,7 +84,7 @@ export async function POST(request: Request) {
 
     const { data: existingBarbershop } = await supabaseAdmin
       .from("barbershops")
-      .select("slug")
+      .select("slug, logo_url")
       .eq("slug", slug)
       .maybeSingle();
 
@@ -94,6 +94,16 @@ export async function POST(request: Request) {
         { status: 404 },
       );
     }
+
+    // Capturamos los storage_paths de fotos de galería ANTES del cascade
+    // para poder borrarlos del bucket después (post DB delete).
+    const { data: galleryPhotos } = await supabaseAdmin
+      .from("barbershop_gallery_photos")
+      .select("storage_path")
+      .eq("barbershop_slug", slug);
+    const galleryStoragePaths = (galleryPhotos ?? [])
+      .map((p) => p.storage_path as string | null)
+      .filter((p): p is string => Boolean(p));
 
     // Capturar el admin user ID ANTES de borrar barbershop_admins (lo usamos
     // después si removeAdminUser=true).
@@ -118,6 +128,9 @@ export async function POST(request: Request) {
     }
 
     // Borrado en cascada manual (en orden seguro para no violar FKs).
+    // Las tablas barbershop_clients y barbershop_gallery_photos NO tienen FK
+    // formal pero usan barbershop_slug como referencia lógica — sin este
+    // cleanup, quedan rows huérfanos que un slug reciclado heredaría.
     const deleteOps = [
       supabaseAdmin
         .from("appointments")
@@ -138,6 +151,15 @@ export async function POST(request: Request) {
       supabaseAdmin.from("barbers").delete().eq("barbershop_slug", slug),
       supabaseAdmin
         .from("barbershop_admins")
+        .delete()
+        .eq("barbershop_slug", slug),
+      // Cleanup huérfanos (sin FK formal pero asociadas por slug)
+      supabaseAdmin
+        .from("barbershop_clients")
+        .delete()
+        .eq("barbershop_slug", slug),
+      supabaseAdmin
+        .from("barbershop_gallery_photos")
         .delete()
         .eq("barbershop_slug", slug),
     ];
@@ -164,6 +186,45 @@ export async function POST(request: Request) {
       );
     }
 
+    // Storage cleanup: borrar logo + fotos de galería del bucket de Supabase
+    // Storage. No bloqueante — la barbería ya está borrada de DB, los
+    // archivos huérfanos solo ocupan espacio. Logueamos warnings si fallan.
+    let storageDeletedCount = 0;
+    if (galleryStoragePaths.length > 0) {
+      const { error: galleryRmError } = await supabaseAdmin.storage
+        .from("barbershop-gallery")
+        .remove(galleryStoragePaths);
+      if (galleryRmError) {
+        console.warn(
+          `[hard-delete-barbershop] No se pudieron borrar ${galleryStoragePaths.length} fotos de gallery:`,
+          galleryRmError.message,
+        );
+      } else {
+        storageDeletedCount += galleryStoragePaths.length;
+      }
+    }
+
+    // Extraer storage_path del logo desde su URL pública.
+    // Formato esperado: https://<project>.supabase.co/storage/v1/object/public/barbershop-logos/<path>
+    const logoUrl = existingBarbershop.logo_url as string | null;
+    if (logoUrl) {
+      const match = logoUrl.match(/\/public\/barbershop-logos\/(.+)$/);
+      if (match) {
+        const logoPath = decodeURIComponent(match[1]);
+        const { error: logoRmError } = await supabaseAdmin.storage
+          .from("barbershop-logos")
+          .remove([logoPath]);
+        if (logoRmError) {
+          console.warn(
+            `[hard-delete-barbershop] No se pudo borrar logo ${logoPath}:`,
+            logoRmError.message,
+          );
+        } else {
+          storageDeletedCount += 1;
+        }
+      }
+    }
+
     // Opcional: borrar el user admin de Auth (libera el email para reuso).
     if (adminUserIdToRemove) {
       const { error: deleteUserError } =
@@ -181,6 +242,7 @@ export async function POST(request: Request) {
       message: "Barberia eliminada definitivamente.",
       slug,
       removedAdminUser: Boolean(adminUserIdToRemove),
+      storageFilesDeleted: storageDeletedCount,
     });
   } catch (error) {
     return NextResponse.json(
