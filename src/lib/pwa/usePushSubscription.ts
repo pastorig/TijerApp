@@ -201,6 +201,21 @@ export function usePushSubscription(
     if (autoReSubscribeAttemptedRef.current) return;
     autoReSubscribeAttemptedRef.current = true;
 
+    // Razonamiento del approach simplificado:
+    //
+    // Si permission==='granted' Y getSubscription()===null:
+    //   * El user concedió permiso en algún momento (sino sería 'default')
+    //   * Pero NO tenemos sub en este device → la perdimos
+    //   * Re-suscribir es siempre la acción correcta
+    //
+    // No checkeamos /api/push/my-status antes porque agrega un punto de
+    // falla extra y no aporta info útil: aunque ese endpoint devuelva
+    // hadActiveSubscription=false (porque la sub anterior fue marcada
+    // como expirada por el autocleanup), igual queremos re-suscribir.
+    //
+    // El POST /api/push/subscribe es idempotente (UPSERT) — si por algún
+    // motivo era primer uso, simplemente crea la primera row.
+
     (async () => {
       console.info("[push] auto re-subscribe START", {
         state: snapshot.state,
@@ -214,37 +229,7 @@ export function usePushSubscription(
           return;
         }
 
-        // Check server: ¿este user tenía sub activa antes?
-        const statusRes = await fetch(
-          `/api/push/my-status?barbershopSlug=${encodeURIComponent(barbershopSlug)}`,
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          },
-        );
-        if (!statusRes.ok) {
-          console.warn(
-            "[push] auto re-subscribe SKIP: /my-status status",
-            statusRes.status,
-          );
-          return;
-        }
-        const status = (await statusRes.json()) as {
-          hadActiveSubscription: boolean;
-          activeCount: number;
-        };
-        console.info("[push] auto re-subscribe my-status:", status);
-
-        if (!status.hadActiveSubscription) {
-          console.info(
-            "[push] auto re-subscribe SKIP: primer uso (no había sub activa)",
-          );
-          return;
-        }
-
-        // Tenía sub activa → la perdimos por deploy del SW. Auto re-subscribe.
-        console.info(
-          "[push] auto re-subscribe: tenía sub activa, re-suscribiendo...",
-        );
+        console.info("[push] auto re-subscribe: re-suscribiendo...");
         const reg = await navigator.serviceWorker.ready;
         const pm = await reg.pushManager.subscribe({
           userVisibleOnly: true,
