@@ -109,6 +109,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    // 1. Upsert la subscription nueva (por unique constraint user_id+endpoint)
     const row = await insertSubscription({
       barbershopSlug,
       userId: auth.userId,
@@ -117,6 +118,26 @@ export async function POST(request: Request) {
       auth: subscription.keys.auth,
       userAgent,
     });
+
+    // 2. Autocleanup: marcar como expired las subs viejas del mismo
+    //    user+barbería con endpoints DISTINTOS al actual. Esto evita
+    //    huérfanas tras un deploy que invalida el SW y crea endpoint
+    //    nuevo, sin necesidad de borrar manualmente desde SQL.
+    const supabaseAdmin = getSupabaseAdminClient();
+    const { error: cleanupError } = await supabaseAdmin
+      .from("push_subscriptions")
+      .update({ expired_at: new Date().toISOString() })
+      .eq("user_id", auth.userId)
+      .eq("barbershop_slug", barbershopSlug)
+      .is("expired_at", null)
+      .neq("endpoint", subscription.endpoint);
+
+    if (cleanupError) {
+      // No es fatal: la nueva sub ya está. Solo log para tracking.
+      Sentry.captureException(cleanupError, {
+        tags: { route: "push/subscribe", step: "autocleanup", barbershopSlug },
+      });
+    }
 
     return NextResponse.json({ id: row.id }, { status: 201 });
   } catch (error) {

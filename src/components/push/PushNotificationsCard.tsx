@@ -34,7 +34,8 @@ export function PushNotificationsCard({
   barbershopSlug,
 }: PushNotificationsCardProps) {
   const toast = useToast();
-  const { state, subscribe, unsubscribe, sendTest } = usePushSubscription();
+  const { state, subscribe, unsubscribe, sendTest } =
+    usePushSubscription(barbershopSlug);
   const [isWorking, setIsWorking] = useState(false);
 
   async function handleSubscribe() {

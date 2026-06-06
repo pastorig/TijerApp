@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { getCurrentSession } from "@/lib/auth";
 import { getPublicVapidKey } from "@/lib/push/vapid";
 
@@ -169,12 +169,95 @@ export type UsePushSubscriptionReturn = {
   sendTest: (barbershopSlug: string) => Promise<{ enqueued: number }>;
 };
 
-export function usePushSubscription(): UsePushSubscriptionReturn {
+/**
+ * Hook principal de push subscriptions.
+ *
+ * @param barbershopSlug — usado para el auto-re-subscribe transparente. Si
+ *   detectamos estado "granted-no-subscription" Y el server confirma que
+ *   este user TUVO una sub activa antes, intentamos re-suscribir en
+ *   background sin pedir nada al usuario. Eso resuelve el caso "después
+ *   de un deploy las notifs aparecen desactivadas aunque el browser
+ *   sigue con permission=granted".
+ */
+export function usePushSubscription(
+  barbershopSlug?: string,
+): UsePushSubscriptionReturn {
   const snapshot = useSyncExternalStore(
     subscribeStore,
     getSnapshot,
     getServerSnapshot,
   );
+
+  // Auto re-subscribe transparente cuando detectamos sub perdida pero
+  // permission sigue granted Y el server confirma que había una sub
+  // activa antes (mediante /api/push/my-status). Esto evita que tras
+  // cada deploy el user vea "Activar notificaciones" otra vez aunque
+  // no haya tocado nada.
+  const autoReSubscribeAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    if (!barbershopSlug) return;
+    if (snapshot.state !== "granted-no-subscription") return;
+    if (autoReSubscribeAttemptedRef.current) return;
+    autoReSubscribeAttemptedRef.current = true;
+
+    (async () => {
+      try {
+        const { data: sessionData } = await getCurrentSession();
+        const accessToken = sessionData.session?.access_token;
+        if (!accessToken) return;
+
+        // Check server: ¿este user tenía sub activa antes?
+        const statusRes = await fetch(
+          `/api/push/my-status?barbershopSlug=${encodeURIComponent(barbershopSlug)}`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          },
+        );
+        if (!statusRes.ok) return;
+        const status = (await statusRes.json()) as {
+          hadActiveSubscription: boolean;
+        };
+
+        if (!status.hadActiveSubscription) return; // primer uso real
+
+        // Tenía sub activa → la perdimos por deploy del SW. Auto re-subscribe.
+        const reg = await navigator.serviceWorker.ready;
+        const pm = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToBuffer(getPublicVapidKey()),
+        });
+
+        const res = await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            barbershopSlug,
+            subscription: pm.toJSON(),
+            userAgent:
+              typeof navigator !== "undefined" ? navigator.userAgent : null,
+          }),
+        });
+
+        if (!res.ok) {
+          try {
+            await pm.unsubscribe();
+          } catch {
+            /* noop */
+          }
+          return;
+        }
+
+        await refresh();
+      } catch (err) {
+        console.warn("[push] auto re-subscribe failed:", err);
+        // No throw — el user puede activar manualmente si quiere
+      }
+    })();
+  }, [snapshot.state, barbershopSlug]);
 
   async function subscribe(barbershopSlug: string): Promise<void> {
     // 1. Pedir permission si no fue pedido
