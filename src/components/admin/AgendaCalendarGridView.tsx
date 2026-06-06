@@ -27,7 +27,8 @@ import { useMemo, useState } from "react";
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   closestCenter,
   useDraggable,
   useDroppable,
@@ -167,6 +168,11 @@ function DraggableAppointmentCard({
       {...attributes}
       className={cn(
         "group relative rounded-[var(--radius-sm)] border p-2 text-left transition-all",
+        // touch-none evita que el browser de mobile intercepte el touch
+        // event como scroll/zoom mientras se inicia el drag (long-press).
+        // Sin esto, el browser puede comerse el touch antes de que dnd-kit
+        // detecte el long-press de 200ms.
+        !isLocked && "touch-none select-none",
         statusColor,
         isLocked
           ? "cursor-not-allowed opacity-60 [filter:saturate(0.5)]"
@@ -287,10 +293,18 @@ export function AgendaCalendarGridView({
   const [activeAppointment, setActiveAppointment] =
     useState<AppointmentRow | null>(null);
 
+  // Sensors separados para mouse y touch porque tienen UX distinta:
+  // - Mouse: drag inicia después de 6px de movimiento (rápido, sin delay)
+  // - Touch: long-press de 200ms (evita que el touch para scroll de la
+  //   grilla se confunda con drag de un card). Con tolerance 5px el
+  //   usuario puede mover ligeramente el dedo durante el long-press
+  //   sin cancelarlo.
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      // Drag inicia después de mover 6px — evita disparar drag por click accidental
+    useSensor(MouseSensor, {
       activationConstraint: { distance: 6 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
     }),
   );
 
@@ -522,9 +536,15 @@ export function AgendaCalendarGridView({
               Arrastrá los turnos para mover
             </p>
             <p className="mt-0.5 text-[11px] leading-5 text-[color:var(--text-secondary)]">
-              Verticalmente: cambiar de hora. Horizontalmente: cambiar de
-              barbero. Los slots disponibles se marcan en gold mientras
-              arrastrás.
+              <span className="hidden sm:inline">
+                Verticalmente: cambiar de hora. Horizontalmente: cambiar de
+                barbero. Los slots disponibles se marcan en gold mientras
+                arrastrás.
+              </span>
+              <span className="inline sm:hidden">
+                <strong>En mobile</strong>: mantené apretado un turno por
+                1 segundo, después arrastralo al nuevo horario o barbero.
+              </span>
             </p>
           </div>
         </div>
