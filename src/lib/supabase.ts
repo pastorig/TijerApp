@@ -359,6 +359,65 @@ type ContactRequestUpdate = {
   deleted_at?: string | null;
 };
 
+type PushSubscriptionRow = {
+  id: string;
+  created_at: string;
+  last_used_at: string;
+  expired_at: string | null;
+  barbershop_slug: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  user_agent: string | null;
+};
+
+type PushSubscriptionInsert = {
+  id?: string;
+  created_at?: string;
+  last_used_at?: string;
+  expired_at?: string | null;
+  barbershop_slug: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  user_agent?: string | null;
+};
+
+type PushSubscriptionUpdate = Partial<PushSubscriptionInsert>;
+
+type PushNotificationQueueStatus = "pending" | "sent" | "failed" | "invalid";
+
+type PushNotificationQueueRow = {
+  id: string;
+  created_at: string;
+  sent_at: string | null;
+  subscription_id: string;
+  payload: {
+    title: string;
+    body: string;
+    url: string;
+    tag: string;
+  };
+  status: PushNotificationQueueStatus;
+  retry_count: number;
+  last_error: string | null;
+};
+
+type PushNotificationQueueInsert = {
+  id?: string;
+  created_at?: string;
+  sent_at?: string | null;
+  subscription_id: string;
+  payload: PushNotificationQueueRow["payload"];
+  status?: PushNotificationQueueStatus;
+  retry_count?: number;
+  last_error?: string | null;
+};
+
+type PushNotificationQueueUpdate = Partial<PushNotificationQueueInsert>;
+
 type Database = {
   public: {
     Tables: {
@@ -450,6 +509,18 @@ type Database = {
         Row: PlatformOwnerRow;
         Insert: PlatformOwnerInsert;
         Update: PlatformOwnerUpdate;
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: PushSubscriptionRow;
+        Insert: PushSubscriptionInsert;
+        Update: PushSubscriptionUpdate;
+        Relationships: [];
+      };
+      push_notification_queue: {
+        Row: PushNotificationQueueRow;
+        Insert: PushNotificationQueueInsert;
+        Update: PushNotificationQueueUpdate;
         Relationships: [];
       };
     };
