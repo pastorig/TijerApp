@@ -153,7 +153,7 @@ function MockupPublica() {
           Barbero
         </div>
         <div className="mt-0.5 text-[10px] font-bold text-white sm:text-xs">
-          Santi Vargas
+          Jeremias
         </div>
       </div>
 
@@ -209,7 +209,7 @@ function MockupPublica() {
             Tu turno
           </div>
           <div className="truncate text-[8px] font-semibold leading-tight text-white">
-            17:30 · Corte · Santi V.
+            17:30 · Corte · Jeremias
           </div>
         </div>
         <div className="rounded-sm bg-[color:var(--brand-gold)] px-2 py-1.5 text-[8px] font-bold uppercase tracking-wider text-black">
@@ -259,7 +259,7 @@ function MockupReportes() {
       </div>
       <div className="mt-1 space-y-1">
         {[
-          { name: "Santi", pct: 70 },
+          { name: "Jeremias", pct: 70 },
           { name: "Mateo", pct: 55 },
           { name: "Lucas", pct: 40 },
         ].map((b) => (
