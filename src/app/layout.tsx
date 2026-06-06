@@ -77,14 +77,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        {/* Preload del isotipo (LCP element en navbar). Sin esto el browser
-            descubre el PNG después del JS hidratado, retrasando el render. */}
-        <link
-          rel="preload"
-          as="image"
-          href="/brand/isotipo-mark.png"
-          fetchPriority="high"
-        />
+        {/* NOTA: el preload del isotipo lo maneja next/image automáticamente
+            via priority={true} en Logo.tsx. Agregar <link rel="preload"> manual
+            duplicaba el preload con URL distinta a la que next/image usa
+            (transforma a /_next/image?url=...), generando warning del browser
+            "preloaded but not used within a few seconds". */}
+
         {/* DNS prefetch + preconnect a Supabase para acelerar la primera
             request de auth/data en navegaciones que requieren API calls. */}
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (

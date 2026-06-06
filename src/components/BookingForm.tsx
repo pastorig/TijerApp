@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { ArrowUpRight } from "lucide-react";
 import {
   type Barber,
@@ -85,6 +91,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
   const [comment, setComment] = useState("");
   const [formError, setFormError] = useState("");
   const toast = useToast();
+  const lastToastedErrorRef = useRef<string>("");
 
   // Toast como feedback visible sin importar scroll position. NO usamos
   // scrollIntoView porque el div de formError vive dentro del aside del
@@ -92,8 +99,20 @@ export function BookingForm({ barbershop }: BookingFormProps) {
   // scrolleamos ahí, el usuario queda atrapado abajo sin saber cómo
   // volver al input que está mal. El toast aparece en el viewport
   // independientemente de dónde esté el scroll, sin moverlo.
+  //
+  // Usamos un ref para trackear el último error mostrado y evitar
+  // disparar el toast múltiples veces por el mismo error cuando el
+  // componente re-renderiza (cambio de horario seleccionado, recálculo
+  // de slots disponibles, etc.). El effect SOLO dispara cuando el
+  // valor de formError cambia respecto al último toasted, no en cada
+  // render del componente.
   useEffect(() => {
-    if (!formError) return;
+    if (!formError) {
+      lastToastedErrorRef.current = "";
+      return;
+    }
+    if (formError === lastToastedErrorRef.current) return;
+    lastToastedErrorRef.current = formError;
     toast.error("Revisá los datos", { description: formError });
   }, [formError, toast]);
   const [isSaving, setIsSaving] = useState(false);
