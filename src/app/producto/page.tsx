@@ -1,13 +1,31 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui";
 import { CommercialFooter } from "@/components/home/CommercialFooter";
 import { CommercialNav } from "@/components/home/CommercialNav";
-import { HomeContact } from "@/components/home/HomeContact";
-import { PricingTeaser } from "@/components/home/PricingTeaser";
 import { ProductFeatures } from "@/components/home/ProductFeatures";
-import { ProductShowcase } from "@/components/home/ProductShowcase";
+
+// Below-the-fold: lazy loading para reducir el chunk inicial.
+const ProductShowcase = dynamic(
+  () =>
+    import("@/components/home/ProductShowcase").then((m) => ({
+      default: m.ProductShowcase,
+    })),
+);
+const PricingTeaser = dynamic(
+  () =>
+    import("@/components/home/PricingTeaser").then((m) => ({
+      default: m.PricingTeaser,
+    })),
+);
+const HomeContact = dynamic(
+  () =>
+    import("@/components/home/HomeContact").then((m) => ({
+      default: m.HomeContact,
+    })),
+);
 
 export const metadata: Metadata = {
   // El template de layout.tsx agrega "· TijerApp" automáticamente.

@@ -76,6 +76,31 @@ export default function RootLayout({
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {/* Preload del isotipo (LCP element en navbar). Sin esto el browser
+            descubre el PNG después del JS hidratado, retrasando el render. */}
+        <link
+          rel="preload"
+          as="image"
+          href="/brand/isotipo-mark.png"
+          fetchPriority="high"
+        />
+        {/* DNS prefetch + preconnect a Supabase para acelerar la primera
+            request de auth/data en navegaciones que requieren API calls. */}
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <>
+            <link
+              rel="dns-prefetch"
+              href={process.env.NEXT_PUBLIC_SUPABASE_URL}
+            />
+            <link
+              rel="preconnect"
+              href={process.env.NEXT_PUBLIC_SUPABASE_URL}
+              crossOrigin="anonymous"
+            />
+          </>
+        )}
+      </head>
       <body className="min-h-full flex flex-col">
         <PWAInstallProvider>
           <ToastProvider>

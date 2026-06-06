@@ -1,17 +1,44 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui";
 import { CommercialFooter } from "@/components/home/CommercialFooter";
 import { CommercialNav } from "@/components/home/CommercialNav";
-import { HomeContact } from "@/components/home/HomeContact";
-import { PricingCompareTable } from "@/components/home/PricingCompareTable";
-import {
-  FoundersProgram,
-  PricingPlans,
-} from "@/components/home/PricingPlans";
-import { PricingRoiCalculator } from "@/components/home/PricingRoiCalculator";
-import { SocialProofPlaceholder } from "@/components/home/SocialProofPlaceholder";
+// PricingPlans es el bloque arriba del fold después del hero → carga directa.
+import { PricingPlans } from "@/components/home/PricingPlans";
+
+// Below-the-fold: lazy loading para reducir el JS inicial.
+const PricingCompareTable = dynamic(
+  () =>
+    import("@/components/home/PricingCompareTable").then((m) => ({
+      default: m.PricingCompareTable,
+    })),
+);
+const PricingRoiCalculator = dynamic(
+  () =>
+    import("@/components/home/PricingRoiCalculator").then((m) => ({
+      default: m.PricingRoiCalculator,
+    })),
+);
+const FoundersProgram = dynamic(
+  () =>
+    import("@/components/home/PricingPlans").then((m) => ({
+      default: m.FoundersProgram,
+    })),
+);
+const SocialProofPlaceholder = dynamic(
+  () =>
+    import("@/components/home/SocialProofPlaceholder").then((m) => ({
+      default: m.SocialProofPlaceholder,
+    })),
+);
+const HomeContact = dynamic(
+  () =>
+    import("@/components/home/HomeContact").then((m) => ({
+      default: m.HomeContact,
+    })),
+);
 
 export const metadata: Metadata = {
   // El template de layout.tsx agrega "· TijerApp" automáticamente.

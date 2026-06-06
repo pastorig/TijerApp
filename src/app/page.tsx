@@ -1,17 +1,47 @@
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui";
 import { CommercialFooter } from "@/components/home/CommercialFooter";
 import { CommercialNav } from "@/components/home/CommercialNav";
-import { HomeComparison } from "@/components/home/HomeComparison";
-import { HomeContact } from "@/components/home/HomeContact";
-import { HomeFaq } from "@/components/home/HomeFaq";
-import { HomeHowItWorks } from "@/components/home/HomeHowItWorks";
-import { HomePersonas } from "@/components/home/HomePersonas";
+// HomeStats es chico y visible cerca del fold → carga directa (sin lazy)
 import { HomeStats } from "@/components/home/HomeStats";
 import { HomeWhatIsIt } from "@/components/home/HomeWhatIsIt";
 import { PWARedirector } from "@/components/pwa/PWARedirector";
+
+// Below-the-fold: dynamic con ssr:true mantiene SEO y reduce el chunk
+// inicial. Cada uno carga su propio JS bundle al hidratarse.
+const HomePersonas = dynamic(
+  () =>
+    import("@/components/home/HomePersonas").then((m) => ({
+      default: m.HomePersonas,
+    })),
+);
+const HomeHowItWorks = dynamic(
+  () =>
+    import("@/components/home/HomeHowItWorks").then((m) => ({
+      default: m.HomeHowItWorks,
+    })),
+);
+const HomeComparison = dynamic(
+  () =>
+    import("@/components/home/HomeComparison").then((m) => ({
+      default: m.HomeComparison,
+    })),
+);
+const HomeFaq = dynamic(
+  () =>
+    import("@/components/home/HomeFaq").then((m) => ({
+      default: m.HomeFaq,
+    })),
+);
+const HomeContact = dynamic(
+  () =>
+    import("@/components/home/HomeContact").then((m) => ({
+      default: m.HomeContact,
+    })),
+);
 
 export default function Home() {
   return (
