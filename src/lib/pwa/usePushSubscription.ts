@@ -202,10 +202,17 @@ export function usePushSubscription(
     autoReSubscribeAttemptedRef.current = true;
 
     (async () => {
+      console.info("[push] auto re-subscribe START", {
+        state: snapshot.state,
+        barbershopSlug,
+      });
       try {
         const { data: sessionData } = await getCurrentSession();
         const accessToken = sessionData.session?.access_token;
-        if (!accessToken) return;
+        if (!accessToken) {
+          console.info("[push] auto re-subscribe SKIP: no access token");
+          return;
+        }
 
         // Check server: ¿este user tenía sub activa antes?
         const statusRes = await fetch(
@@ -214,14 +221,30 @@ export function usePushSubscription(
             headers: { Authorization: `Bearer ${accessToken}` },
           },
         );
-        if (!statusRes.ok) return;
+        if (!statusRes.ok) {
+          console.warn(
+            "[push] auto re-subscribe SKIP: /my-status status",
+            statusRes.status,
+          );
+          return;
+        }
         const status = (await statusRes.json()) as {
           hadActiveSubscription: boolean;
+          activeCount: number;
         };
+        console.info("[push] auto re-subscribe my-status:", status);
 
-        if (!status.hadActiveSubscription) return; // primer uso real
+        if (!status.hadActiveSubscription) {
+          console.info(
+            "[push] auto re-subscribe SKIP: primer uso (no había sub activa)",
+          );
+          return;
+        }
 
         // Tenía sub activa → la perdimos por deploy del SW. Auto re-subscribe.
+        console.info(
+          "[push] auto re-subscribe: tenía sub activa, re-suscribiendo...",
+        );
         const reg = await navigator.serviceWorker.ready;
         const pm = await reg.pushManager.subscribe({
           userVisibleOnly: true,
@@ -243,6 +266,10 @@ export function usePushSubscription(
         });
 
         if (!res.ok) {
+          console.warn(
+            "[push] auto re-subscribe FAILED on POST /subscribe:",
+            res.status,
+          );
           try {
             await pm.unsubscribe();
           } catch {
@@ -251,9 +278,10 @@ export function usePushSubscription(
           return;
         }
 
+        console.info("[push] auto re-subscribe SUCCESS");
         await refresh();
       } catch (err) {
-        console.warn("[push] auto re-subscribe failed:", err);
+        console.warn("[push] auto re-subscribe ERROR:", err);
         // No throw — el user puede activar manualmente si quiere
       }
     })();

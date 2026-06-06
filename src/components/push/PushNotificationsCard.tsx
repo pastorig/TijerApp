@@ -174,7 +174,7 @@ export function PushNotificationsCard({
           </div>
         )}
 
-        {(state === "default" || state === "granted-no-subscription") && (
+        {state === "default" && (
           <button
             type="button"
             onClick={handleSubscribe}
@@ -184,6 +184,28 @@ export function PushNotificationsCard({
             <BellRing aria-hidden="true" className="size-4" />
             {isWorking ? "Activando…" : "Activar notificaciones"}
           </button>
+        )}
+
+        {state === "granted-no-subscription" && (
+          <div className="space-y-3">
+            <p className="rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/20 bg-[color:var(--brand-gold-soft)] p-3 text-xs leading-5 text-[color:var(--text-secondary)]">
+              Detectamos que ya habías activado las notificaciones, pero este
+              dispositivo perdió la suscripción (suele pasar después de una
+              actualización del navegador o de TijerApp). Tocá el botón para
+              reactivarlas sin volver a pedir permiso.
+            </p>
+            <button
+              type="button"
+              onClick={handleSubscribe}
+              disabled={isWorking}
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            >
+              <BellRing aria-hidden="true" className="size-4" />
+              {isWorking
+                ? "Reactivando…"
+                : "Reactivar en este dispositivo"}
+            </button>
+          </div>
         )}
 
         {state === "subscribed-this-device" && (

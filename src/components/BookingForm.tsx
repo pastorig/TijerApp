@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { ArrowUpRight } from "lucide-react";
 import {
   type Barber,
@@ -32,6 +38,7 @@ import {
   Input,
   Select,
   Textarea,
+  useToast,
 } from "@/components/ui";
 
 type BookingFormProps = {
@@ -83,6 +90,23 @@ export function BookingForm({ barbershop }: BookingFormProps) {
   const [clientEmail, setClientEmail] = useState("");
   const [comment, setComment] = useState("");
   const [formError, setFormError] = useState("");
+  const formErrorRef = useRef<HTMLDivElement | null>(null);
+  const toast = useToast();
+
+  // Auto scroll al mensaje de error cuando aparece. En mobile el bloque
+  // de "Resumen" donde se renderiza el error queda below the fold del
+  // form, asi que sin scroll automatico el usuario no ve por que no se
+  // guarda la reserva. Plus: mostramos un toast como fallback inmediato.
+  useEffect(() => {
+    if (!formError) return;
+    if (formErrorRef.current) {
+      formErrorRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+    toast.error("Revisá los datos", { description: formError });
+  }, [formError, toast]);
   const [isSaving, setIsSaving] = useState(false);
   const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>(
     [],
@@ -1068,6 +1092,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
 
           {formError ? (
             <div
+              ref={formErrorRef}
               role="alert"
               className="mt-8 border-l-2 border-[color:var(--danger)] pl-4 text-sm font-semibold text-[color:var(--danger)]"
             >
