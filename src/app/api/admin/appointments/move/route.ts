@@ -166,6 +166,18 @@ export async function PATCH(request: Request) {
     );
   }
 
+  // No permitir mover turnos de días pasados — no tiene lógica
+  // (no podés cambiar el horario de algo que ya pasó).
+  // El frontend ya bloquea esto visualmente, pero defendemos en server.
+  const today = new Date();
+  const todayYmd = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  if (appointment.appointment_date < todayYmd) {
+    return NextResponse.json(
+      { error: "No se pueden mover turnos de días pasados." },
+      { status: 400 },
+    );
+  }
+
   // 2. Si cambia barber_id: validar que el nuevo barbero pertenece a la
   //    misma barbería y traer su nombre (para denormalizar barber_name)
   const targetBarberId = newBarberId || appointment.barber_id;

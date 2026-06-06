@@ -37,7 +37,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
-import { Clock, GripVertical } from "lucide-react";
+import { CalendarX, Clock, GripVertical, Move } from "lucide-react";
 import { useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
@@ -78,6 +78,16 @@ const SLOT_HEIGHT_PX = 56; // Altura de cada slot en la grilla
 function timeToMinutes(time: string): number {
   const [hh, mm] = time.split(":").map(Number);
   return hh * 60 + mm;
+}
+
+/**
+ * Devuelve hoy en formato "YYYY-MM-DD" en zona horaria local del browser.
+ * Usado para deshabilitar drag en fechas pasadas (no tiene sentido mover
+ * un turno de hace 2 días — no tiene a dónde moverlo lógicamente).
+ */
+function getTodayYmd(): string {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 }
 
 function minutesToTimeLabel(minutes: number): string {
@@ -124,17 +134,23 @@ function parseDroppableId(
 
 /**
  * Card draggable de un appointment. Click + drag = mover.
+ *
+ * Si isLocked=true (turno de fecha pasada), el card se renderiza con
+ * opacity reducida y NO es draggable. Visualmente parece "archivado".
  */
 function DraggableAppointmentCard({
   appointment,
   isOverlay = false,
+  isLocked = false,
 }: {
   appointment: AppointmentRow;
   isOverlay?: boolean;
+  isLocked?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `appt:${appointment.id}`,
     data: { appointment },
+    disabled: isLocked,
   });
 
   const statusColor =
@@ -150,19 +166,31 @@ function DraggableAppointmentCard({
       {...listeners}
       {...attributes}
       className={cn(
-        "group relative cursor-grab rounded-[var(--radius-sm)] border p-2 text-left transition-shadow active:cursor-grabbing",
+        "group relative rounded-[var(--radius-sm)] border p-2 text-left transition-all",
         statusColor,
-        isDragging && !isOverlay && "opacity-30",
-        isOverlay && "shadow-elevated",
+        isLocked
+          ? "cursor-not-allowed opacity-60 [filter:saturate(0.5)]"
+          : "cursor-grab hover:shadow-elevated hover:scale-[1.02] active:cursor-grabbing",
+        isDragging &&
+          !isOverlay &&
+          "opacity-20 scale-95 [filter:blur(0.5px)]",
+        isOverlay &&
+          "shadow-[0_20px_60px_-10px_rgba(0,0,0,0.8),0_0_30px_-5px_color-mix(in_oklab,var(--brand-gold)_40%,transparent)] scale-105 rotate-[-1.5deg] ring-2 ring-[color:var(--brand-gold)]",
       )}
       style={{
         minHeight: SLOT_HEIGHT_PX - 4,
       }}
+      title={isLocked ? "Este turno ya pasó, no se puede mover" : undefined}
     >
       <div className="flex items-start gap-1.5">
         <GripVertical
           aria-hidden="true"
-          className="mt-0.5 size-3 shrink-0 text-[color:var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100"
+          className={cn(
+            "mt-0.5 size-3 shrink-0 text-[color:var(--brand-gold)] transition-opacity",
+            isLocked
+              ? "hidden"
+              : "opacity-0 group-hover:opacity-100",
+          )}
         />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[11px] font-bold leading-tight text-white">
@@ -185,39 +213,57 @@ function DraggableAppointmentCard({
 /**
  * Cell droppable. Si está dentro del horario del barbero y no hay
  * appointment activo en ese slot, acepta drop.
+ *
+ * Visual states:
+ *  - fuera de horario: hatching diagonal (no drop)
+ *  - ocupada: pasa transparente (no drop)
+ *  - vacía + drag activo: pulsa con borde gold (drop target)
+ *  - vacía + over: highlight sólido gold
+ *  - locked (día pasado): solo render, no drop activo
  */
 function DroppableSlot({
   barberId,
   time,
   isInWorkingHours,
   isOccupied,
+  isDayLocked,
+  isDragActive,
   children,
 }: {
   barberId: string;
   time: string;
   isInWorkingHours: boolean;
   isOccupied: boolean;
+  isDayLocked: boolean;
+  isDragActive: boolean;
   children?: React.ReactNode;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: makeDroppableId(barberId, time),
-    disabled: !isInWorkingHours || isOccupied,
+    disabled: !isInWorkingHours || isOccupied || isDayLocked,
   });
+
+  const isAvailableDropTarget =
+    isInWorkingHours && !isOccupied && !isDayLocked;
+  const showDragHint = isAvailableDropTarget && isDragActive;
 
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "relative border-r border-b border-[color:var(--border-subtle)] p-0.5 transition-colors",
+        "relative border-r border-b border-[color:var(--border-subtle)] p-0.5 transition-all duration-150",
         !isInWorkingHours &&
           "bg-[color:var(--surface-0)] [background-image:linear-gradient(135deg,transparent_46%,var(--border-subtle)_46%,var(--border-subtle)_54%,transparent_54%)] [background-size:8px_8px]",
-        isInWorkingHours &&
-          !isOccupied &&
-          isOver &&
-          "bg-[color:var(--brand-gold-soft)] ring-2 ring-[color:var(--brand-gold)] ring-inset",
-        isInWorkingHours &&
-          !isOccupied &&
+        // Drag activo + slot disponible: pulsa con border gold
+        showDragHint &&
           !isOver &&
+          "bg-[color:var(--brand-gold-soft)]/30 ring-1 ring-[color:var(--brand-gold)]/40 ring-inset",
+        // Hover over: highlight sólido
+        isOver &&
+          "bg-[color:var(--brand-gold-soft)] ring-2 ring-[color:var(--brand-gold)] ring-inset scale-[1.02] z-10",
+        // Idle hover (sin drag activo): leve highlight
+        isAvailableDropTarget &&
+          !isDragActive &&
           "hover:bg-[color:var(--surface-2)]/40",
       )}
       style={{ height: SLOT_HEIGHT_PX }}
@@ -247,6 +293,14 @@ export function AgendaCalendarGridView({
       activationConstraint: { distance: 6 },
     }),
   );
+
+  // Si focusDate es anterior a hoy, deshabilitamos todo el drag & drop.
+  // Mover un turno de un día pasado no tiene sentido (no podés cambiarlo
+  // a otra hora de un día que ya terminó). Visualmente se mantiene
+  // visible para que el barbero pueda CONSULTAR la agenda pasada.
+  const isDayLocked = useMemo(() => {
+    return focusDate < getTodayYmd();
+  }, [focusDate]);
 
   // 1. Calcular barberos del día activos (con horario válido)
   const activeBarbersWithSchedule = useMemo(() => {
@@ -442,6 +496,40 @@ export function AgendaCalendarGridView({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
+      {/* Banner contextual: día pasado o instrucciones de drag&drop */}
+      {isDayLocked ? (
+        <div className="mb-3 flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--text-muted)]/30 bg-[color:var(--surface-1)] p-3">
+          <CalendarX
+            aria-hidden="true"
+            className="mt-0.5 size-4 shrink-0 text-[color:var(--text-muted)]"
+          />
+          <div>
+            <p className="text-xs font-bold text-white">Día pasado</p>
+            <p className="mt-0.5 text-[11px] leading-5 text-[color:var(--text-muted)]">
+              Esta es la agenda histórica. No se pueden mover turnos de
+              fechas que ya pasaron.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-3 flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--brand-gold)]/20 bg-[color:var(--brand-gold-soft)]/40 p-3">
+          <Move
+            aria-hidden="true"
+            className="mt-0.5 size-4 shrink-0 text-[color:var(--brand-gold)]"
+          />
+          <div>
+            <p className="text-xs font-bold text-white">
+              Arrastrá los turnos para mover
+            </p>
+            <p className="mt-0.5 text-[11px] leading-5 text-[color:var(--text-secondary)]">
+              Verticalmente: cambiar de hora. Horizontalmente: cambiar de
+              barbero. Los slots disponibles se marcan en gold mientras
+              arrastrás.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)]">
         <div
           className="grid"
@@ -505,9 +593,14 @@ export function AgendaCalendarGridView({
                       time={time}
                       isInWorkingHours={inWorking}
                       isOccupied={Boolean(appointment)}
+                      isDayLocked={isDayLocked}
+                      isDragActive={Boolean(activeAppointment)}
                     >
                       {appointment ? (
-                        <DraggableAppointmentCard appointment={appointment} />
+                        <DraggableAppointmentCard
+                          appointment={appointment}
+                          isLocked={isDayLocked}
+                        />
                       ) : null}
                     </DroppableSlot>
                   );
