@@ -20,6 +20,12 @@ export function CommercialNav() {
           >
             Producto
           </Link>
+          <Link
+            href="/precios"
+            className="hidden min-h-9 items-center justify-center rounded-[var(--radius-sm)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:inline-flex"
+          >
+            Precios
+          </Link>
           <Button as="link" href="/sv-barber" variant="ghost" size="sm">
             Demo
           </Button>

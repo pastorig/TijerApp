@@ -30,6 +30,14 @@ export function CommercialFooter() {
               </li>
               <li>
                 <Link
+                  href="/precios"
+                  className="text-sm text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
+                >
+                  Precios
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/sv-barber"
                   className="text-sm text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
                 >
