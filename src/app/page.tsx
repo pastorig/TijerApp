@@ -28,36 +28,41 @@ export default function Home() {
           className="pointer-events-none absolute inset-0 -z-10"
           style={{
             background:
-              "radial-gradient(70% 50% at 50% 0%, color-mix(in oklab, var(--brand-gold) 12%, transparent) 0%, transparent 70%)",
+              "radial-gradient(70% 50% at 50% 0%, color-mix(in oklab, var(--brand-gold) 14%, transparent) 0%, transparent 70%)",
           }}
         />
-        <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-12 sm:px-8 sm:pb-20 sm:pt-16 lg:px-12 lg:pb-24 lg:pt-20">
+        <div className="mx-auto w-full max-w-6xl px-4 pb-14 pt-10 sm:px-8 sm:pb-20 sm:pt-16 lg:px-12 lg:pb-24 lg:pt-20">
           <div className="animate-fade-up">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
-              Plataforma SaaS · Argentina
-            </p>
-            <h1 className="mt-6 max-w-3xl text-[2.25rem] font-black uppercase leading-[0.95] tracking-tight text-balance sm:mt-8 sm:text-5xl lg:text-6xl xl:text-7xl">
-              Turnos online
-              <br />
+            <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)]/50 px-3 py-1.5">
+              <span className="size-1.5 rounded-full bg-[color:var(--brand-gold)]" />
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--brand-gold)]">
+                Programa Fundadores abierto · Primeros 10
+              </p>
+            </div>
+
+            <h1 className="mt-5 max-w-3xl text-[2.25rem] font-black uppercase leading-[0.95] tracking-tight text-balance sm:mt-8 sm:text-5xl lg:text-6xl xl:text-7xl">
+              Turnos online{" "}
               <span className="text-[color:var(--brand-gold)]">
                 para barberías
+              </span>{" "}
+              <span className="text-[color:var(--brand-silver)]">
+                modernas.
               </span>
-              <br />
-              <span className="text-[color:var(--brand-silver)]">modernas.</span>
             </h1>
 
-            <p className="mt-6 max-w-xl text-base leading-7 text-[color:var(--text-secondary)] sm:mt-8 sm:text-lg sm:leading-8">
-              TijerApp centraliza reservas, barberos, servicios y agenda en
-              una plataforma operativa. Cada barbería con su espacio público
-              y su panel admin.
+            <p className="mt-5 max-w-xl text-base leading-7 text-[color:var(--text-secondary)] sm:mt-7 sm:text-lg sm:leading-8">
+              La plataforma argentina que tu barbería necesita: agenda
+              multi-barbero, reservas online sin app, recordatorios y reportes.
+              Desde{" "}
+              <span className="font-bold text-white">USD 10/mes</span>.
             </p>
 
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row">
               <Link
-                href="#contacto"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
+                href="/precios"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
               >
-                Hablar con nosotros
+                Empezar prueba gratis
                 <ArrowUpRight className="size-4" />
               </Link>
               <Button
@@ -70,6 +75,26 @@ export default function Home() {
                 Ver demo en vivo
               </Button>
             </div>
+
+            {/* Proof points */}
+            <ul className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[color:var(--text-secondary)] sm:mt-8 sm:text-sm">
+              <li className="flex items-center gap-1.5">
+                <span className="text-[color:var(--brand-gold)]">✓</span>
+                7 días gratis
+              </li>
+              <li className="flex items-center gap-1.5">
+                <span className="text-[color:var(--brand-gold)]">✓</span>
+                Sin tarjeta
+              </li>
+              <li className="flex items-center gap-1.5">
+                <span className="text-[color:var(--brand-gold)]">✓</span>
+                Cancelás cuando quieras
+              </li>
+              <li className="flex items-center gap-1.5">
+                <span className="text-[color:var(--brand-gold)]">✓</span>
+                Hecho en Argentina
+              </li>
+            </ul>
           </div>
         </div>
       </section>

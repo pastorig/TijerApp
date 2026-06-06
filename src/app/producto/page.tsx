@@ -5,6 +5,7 @@ import { Button } from "@/components/ui";
 import { CommercialFooter } from "@/components/home/CommercialFooter";
 import { CommercialNav } from "@/components/home/CommercialNav";
 import { HomeContact } from "@/components/home/HomeContact";
+import { PricingTeaser } from "@/components/home/PricingTeaser";
 import { ProductFeatures } from "@/components/home/ProductFeatures";
 
 export const metadata: Metadata = {
@@ -68,9 +69,11 @@ export default function ProductPage() {
 
       <ProductFeatures />
 
-      {/* Placeholder visual: screenshots cuando los carguen */}
-      <section className="border-t border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]">
-        <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
+      <PricingTeaser />
+
+      {/* CTA Demo en vivo */}
+      <section className="border-t border-[color:var(--border-subtle)] bg-black">
+        <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
           <header className="text-center">
             <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
               Mirá la demo

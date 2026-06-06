@@ -75,7 +75,9 @@ export default function PricingPage() {
         <PricingPlans />
       </div>
 
-      <FoundersProgram />
+      <div id="fundadores">
+        <FoundersProgram />
+      </div>
 
       {/* Mini FAQ sobre billing */}
       <section className="border-t border-[color:var(--border-subtle)] bg-black">
