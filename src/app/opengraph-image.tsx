@@ -37,35 +37,35 @@ export default async function OpenGraphImage() {
             gap: 64,
           }}
         >
-          {/* Isotipo TijerApp — geometría exacta + esquinas redondeadas via stroke */}
+          {/* Isotipo TijerApp — geometría medida del PNG master, viewBox 100×100 */}
           <svg
             width="200"
             height="200"
-            viewBox="0 0 64 64"
+            viewBox="0 0 100 100"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
             <path
-              d="M10 18 L26 18 L27.5 18.2 L28.8 18.8 L29.9 20 L31.2 23.5 L19 23.5 L17.2 23.3 L15.8 22.6 L14.7 21.4 L10 18 Z"
+              d="M 22 28 L 48 28 L 48 38 L 28 38 Z"
               fill={GOLD}
               stroke={GOLD}
-              strokeWidth="2"
+              strokeWidth="0.8"
               strokeLinejoin="round"
               strokeLinecap="round"
             />
             <path
-              d="M38 18 L54 18 L49.3 21.4 L48.2 22.6 L46.8 23.3 L45 23.5 L32.8 23.5 L34.1 20 L35.2 18.8 L36.5 18.2 L38 18 Z"
+              d="M 52 28 L 78 28 L 72 38 L 52 38 Z"
               fill={GOLD}
               stroke={GOLD}
-              strokeWidth="2"
+              strokeWidth="0.8"
               strokeLinejoin="round"
               strokeLinecap="round"
             />
             <path
-              d="M28.7 27.4 L35.3 27.4 L34.1 47 L29.9 47 L28.7 27.4 Z"
+              d="M 44 41 L 56 41 L 54 82 L 46 82 Z"
               fill={GOLD}
               stroke={GOLD}
-              strokeWidth="2"
+              strokeWidth="0.8"
               strokeLinejoin="round"
               strokeLinecap="round"
             />

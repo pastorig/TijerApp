@@ -33,16 +33,16 @@ const gapClass: Record<LogoSize, string> = {
 /**
  * Isotipo TijerApp — T estilizada con alas + stem tapered. Sólido gold.
  *
- * Geometría limpia basada en el isotipo de referencia (PNG 1240x1240):
- *   - Alas: trapecios con borde superior horizontal, borde interior
- *     vertical (cerca del centro), borde inferior horizontal corto y
- *     borde exterior INCLINADO (las esquinas inferiores van hacia adentro).
- *   - Stem: trapecio que se afina hacia abajo (top más ancho que bottom).
- *   - Gap central entre alas: ~4 unidades.
+ * Geometría medida directamente del PNG master (public/brand/isotipo-master.png).
+ * viewBox 0 0 100 100 con coordenadas reales del isotipo de marca:
+ *   - Ala izquierda: trapecio con outer-edge inclinado (22,28 → 28,38)
+ *   - Ala derecha: mirror exacto (78,28 → 72,38)
+ *   - Stem: trapecio tapered top 12 → bottom 8 (sutil afinamiento)
+ *   - Gap central entre alas: 4 unidades (48 a 52)
+ *   - Gap vertical entre alas y stem: 3 unidades (38 a 41)
  *
- * Sin puntos intermedios — paths puros con 4 vértices cada uno. Esquinas
- * suavizadas con stroke-linejoin=round + stroke del mismo color (gold),
- * lo cual redondea sutilmente los convex corners sin alterar la geometría.
+ * Stroke gold sutil con linejoin=round redondea esquinas convex sin
+ * alterar la geometría — replica el look del PNG (anti-aliasing natural).
  */
 function IsotypeMark({ className }: { className?: string }) {
   return (
@@ -54,26 +54,26 @@ function IsotypeMark({ className }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      {/* Ala izquierda — trapecio con borde exterior inclinado */}
+      {/* Ala izquierda — trapecio con outer-edge inclinado hacia adentro */}
       <path
-        d="M 26 30.5 L 48 30.5 L 48 38 L 28.5 38 Z"
+        d="M 22 28 L 48 28 L 48 38 L 28 38 Z"
         fill="var(--brand-gold)"
         stroke="var(--brand-gold)"
-        strokeWidth="1.2"
+        strokeWidth="0.8"
       />
       {/* Ala derecha — mirror exacto del ala izquierda */}
       <path
-        d="M 52 30.5 L 74 30.5 L 71.5 38 L 52 38 Z"
+        d="M 52 28 L 78 28 L 72 38 L 52 38 Z"
         fill="var(--brand-gold)"
         stroke="var(--brand-gold)"
-        strokeWidth="1.2"
+        strokeWidth="0.8"
       />
-      {/* Stem — trapecio que se afina hacia abajo (taper) */}
+      {/* Stem — trapecio que se afina hacia abajo (12u top → 8u bottom) */}
       <path
-        d="M 44 42 L 56 42 L 54 82 L 46 82 Z"
+        d="M 44 41 L 56 41 L 54 82 L 46 82 Z"
         fill="var(--brand-gold)"
         stroke="var(--brand-gold)"
-        strokeWidth="1.2"
+        strokeWidth="0.8"
       />
     </svg>
   );

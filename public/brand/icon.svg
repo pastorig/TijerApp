@@ -1,15 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none" stroke-linejoin="round" stroke-linecap="round">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
   <rect width="256" height="256" fill="#000000"/>
-  <!-- Isotipo TijerApp escalado 4x (viewBox base 64×64 → 256×256) -->
-  <g>
+  <!-- Isotipo TijerApp escalado 2.56x (viewBox base 100×100 → 256×256) -->
+  <g transform="scale(2.56)" stroke-linejoin="round" stroke-linecap="round">
     <!-- Ala izquierda -->
-    <path d="M40 72 L104 72 L110 72.8 L115.2 75.2 L119.6 80 L124.8 94 L76 94 L68.8 93.2 L63.2 90.4 L58.8 85.6 L40 72 Z"
-          fill="#c9a23e" stroke="#c9a23e" stroke-width="8"/>
+    <path d="M 22 28 L 48 28 L 48 38 L 28 38 Z"
+          fill="#c9a23e" stroke="#c9a23e" stroke-width="0.8"/>
     <!-- Ala derecha -->
-    <path d="M152 72 L216 72 L197.2 85.6 L192.8 90.4 L187.2 93.2 L180 94 L131.2 94 L136.4 80 L140.8 75.2 L146 72.8 L152 72 Z"
-          fill="#c9a23e" stroke="#c9a23e" stroke-width="8"/>
+    <path d="M 52 28 L 78 28 L 72 38 L 52 38 Z"
+          fill="#c9a23e" stroke="#c9a23e" stroke-width="0.8"/>
     <!-- Stem -->
-    <path d="M114.8 109.6 L141.2 109.6 L136.4 188 L119.6 188 L114.8 109.6 Z"
-          fill="#c9a23e" stroke="#c9a23e" stroke-width="8"/>
+    <path d="M 44 41 L 56 41 L 54 82 L 46 82 Z"
+          fill="#c9a23e" stroke="#c9a23e" stroke-width="0.8"/>
   </g>
 </svg>
