@@ -12,7 +12,7 @@
  * de assets se invalida automáticamente porque los URLs son distintos.
  */
 
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2-push";
 const RUNTIME_CACHE = `tijerapp-runtime-${CACHE_VERSION}`;
 const OFFLINE_CACHE = `tijerapp-offline-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -145,4 +145,106 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Todo lo demás (HTML pages no-navigate, etc.) → default browser network
+});
+
+// ─── Push Notifications ───────────────────────────────────────────────────
+// Handlers para recibir push notifications del backend y manejar el tap.
+//
+// Flujo:
+//   1. Backend (Vercel) envía push via web-push API → push service
+//      (FCM/Mozilla/Apple) → SW recibe el evento `push`
+//   2. SW decodifica el payload JSON con { title, body, url, tag }
+//   3. SW llama showNotification → el OS muestra la notif
+//   4. Al tap, SW abre/foquea la ventana en el URL del payload
+
+/**
+ * Push event — viene un mensaje del push service.
+ *
+ * Payload shape esperado (de src/lib/push/sender.ts):
+ *   { title, body, url, tag }
+ *
+ * Si el payload está corrupto, mostramos un fallback genérico para que
+ * el barbero al menos sepa que algo entró.
+ */
+self.addEventListener("push", (event) => {
+  let payload = {
+    title: "TijerApp",
+    body: "Nueva actividad en tu barbería",
+    url: "/",
+    tag: "tijerapp-fallback",
+  };
+
+  try {
+    if (event.data) {
+      const parsed = event.data.json();
+      payload = {
+        title: typeof parsed.title === "string" ? parsed.title : payload.title,
+        body: typeof parsed.body === "string" ? parsed.body : payload.body,
+        url: typeof parsed.url === "string" ? parsed.url : payload.url,
+        tag: typeof parsed.tag === "string" ? parsed.tag : payload.tag,
+      };
+    }
+  } catch (err) {
+    console.warn("[sw] push payload parse failed:", err);
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: "/brand/icons/manifest-icon-192.png",
+      badge: "/brand/icons/manifest-icon-192.png",
+      tag: payload.tag,
+      // renotify: true hace que el OS vibre/suene incluso si hay otra
+      // notif con el mismo tag (replazado)
+      renotify: true,
+      // data se preserva para el notificationclick handler
+      data: { url: payload.url },
+      // requireInteraction: el barbero ve la notif hasta que la cierre/tape
+      requireInteraction: false,
+    }),
+  );
+});
+
+/**
+ * Notification click — el user tocó la notif.
+ *
+ * Estrategia:
+ *   - Si ya hay una tab del mismo origen abierta, la foqueamos +
+ *     navegamos a `payload.url`
+ *   - Si no hay ninguna, abrimos una ventana nueva en `payload.url`
+ */
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const targetUrl = event.notification.data?.url ?? "/";
+  const targetAbsoluteUrl = new URL(targetUrl, self.location.origin).href;
+
+  event.waitUntil(
+    (async () => {
+      const clientsList = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+
+      // Buscar una tab existente del mismo origen
+      for (const client of clientsList) {
+        const clientUrl = new URL(client.url);
+        if (clientUrl.origin === self.location.origin && "focus" in client) {
+          // Navegar a la URL target si no está ahí, después focus
+          try {
+            await client.navigate(targetAbsoluteUrl);
+          } catch {
+            // Algunos browsers no permiten navigate cross-page; ignoramos
+          }
+          return client.focus();
+        }
+      }
+
+      // No hay tabs abiertas → abrir ventana nueva
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetAbsoluteUrl);
+      }
+      return null;
+    })(),
+  );
 });
