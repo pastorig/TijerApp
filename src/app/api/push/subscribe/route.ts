@@ -109,7 +109,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    // 1. Upsert la subscription nueva (por unique constraint user_id+endpoint)
+    // Upsert la subscription nueva (por unique constraint user_id+endpoint).
+    // Si el mismo device se re-suscribe (mismo endpoint), update lo existente.
+    // Si es un device nuevo, crea row nuevo SIN tocar las subs de otros devices.
     const row = await insertSubscription({
       barbershopSlug,
       userId: auth.userId,
@@ -119,25 +121,20 @@ export async function POST(request: Request) {
       userAgent,
     });
 
-    // 2. Autocleanup: marcar como expired las subs viejas del mismo
-    //    user+barbería con endpoints DISTINTOS al actual. Esto evita
-    //    huérfanas tras un deploy que invalida el SW y crea endpoint
-    //    nuevo, sin necesidad de borrar manualmente desde SQL.
-    const supabaseAdmin = getSupabaseAdminClient();
-    const { error: cleanupError } = await supabaseAdmin
-      .from("push_subscriptions")
-      .update({ expired_at: new Date().toISOString() })
-      .eq("user_id", auth.userId)
-      .eq("barbershop_slug", barbershopSlug)
-      .is("expired_at", null)
-      .neq("endpoint", subscription.endpoint);
-
-    if (cleanupError) {
-      // No es fatal: la nueva sub ya está. Solo log para tracking.
-      Sentry.captureException(cleanupError, {
-        tags: { route: "push/subscribe", step: "autocleanup", barbershopSlug },
-      });
-    }
+    // NOTA: NO hacemos autocleanup destructivo acá. Antes había código que
+    // marcaba como expired TODAS las subs del user+barbería con endpoint
+    // distinto al actual, asumiendo que solo había 1 device por user. Eso
+    // estaba MAL: si el barbero activa notifs desde PC y luego desde su
+    // celular, ambos deben recibir notifs. El autocleanup mataba al primero.
+    //
+    // El cleanup de subs muertas se hace de forma pasiva y segura en 2 lados:
+    //   1. En /lib/push/sender.ts: cuando una notif devuelve HTTP 410 Gone,
+    //      marcamos expired_at=now() para esa sub específica.
+    //   2. En el cron de /api/push/cleanup (hourly via GitHub Actions):
+    //      borra rows con expired_at > 30 días.
+    // De esta forma cada device tiene su sub propia hasta que el push service
+    // confirma que está muerta. Y un user puede tener 1..N devices recibiendo
+    // notifs sin pisarse entre sí.
 
     return NextResponse.json({ id: row.id }, { status: 201 });
   } catch (error) {
