@@ -110,7 +110,7 @@ export function PricingPlans() {
 
   return (
     <section className="border-t border-[color:var(--border-subtle)] bg-black">
-      <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
+      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
         {/* Toggle Mensual / Anual */}
         <div className="flex justify-center">
           <div
@@ -152,17 +152,28 @@ export function PricingPlans() {
           </div>
         </div>
 
+        {/* Strip explicativa sobre el TC — arriba para que sea visible sin scroll */}
+        <div className="mx-auto mt-6 max-w-3xl rounded-[var(--radius-md)] border border-[color:var(--brand-gold)]/20 bg-[color:var(--brand-gold-soft)]/30 p-4 sm:mt-8 sm:p-5">
+          <p className="text-xs leading-6 text-[color:var(--text-secondary)] sm:text-sm">
+            <span className="font-semibold text-white">
+              Pagás en pesos, sin sorpresas.
+            </span>{" "}
+            Precios en USD pero te cobramos en ARS al tipo de cambio MEP del
+            día 1 de cada mes. Ese monto queda fijo todo el mes.
+          </p>
+        </div>
+
         {/* Grilla de planes */}
-        <div className="mt-10 grid gap-5 sm:mt-12 sm:gap-6 lg:grid-cols-3">
+        <div className="mt-8 grid gap-5 sm:mt-12 sm:gap-6 lg:grid-cols-3">
           {PLANS.map((plan) => {
             const { display, perPeriod } = getPrice(plan);
             return (
               <Card
                 key={plan.id}
                 variant={plan.highlight ? "elevated" : "default"}
-                padding="lg"
+                padding="md"
                 className={cn(
-                  "relative flex flex-col",
+                  "relative flex flex-col sm:p-8",
                   plan.highlight &&
                     "border-[color:var(--brand-gold)]/40 ring-1 ring-[color:var(--brand-gold)]/30",
                 )}
@@ -203,7 +214,7 @@ export function PricingPlans() {
                   {plan.description}
                 </p>
 
-                <ul className="mt-6 space-y-2.5">
+                <ul className="mt-5 space-y-2 sm:mt-6 sm:space-y-2.5">
                   {plan.features.map((feature, idx) => {
                     const isHeader = feature.endsWith(", más:");
                     return (
@@ -217,17 +228,17 @@ export function PricingPlans() {
                         {isHeader ? (
                           <Sparkles
                             aria-hidden="true"
-                            className="mt-0.5 size-4 shrink-0 text-[color:var(--brand-gold)]"
+                            className="mt-0.5 size-3.5 shrink-0 text-[color:var(--brand-gold)] sm:size-4"
                           />
                         ) : (
                           <Check
                             aria-hidden="true"
-                            className="mt-0.5 size-4 shrink-0 text-[color:var(--brand-gold)]"
+                            className="mt-0.5 size-3.5 shrink-0 text-[color:var(--brand-gold)] sm:size-4"
                           />
                         )}
                         <span
                           className={cn(
-                            "text-sm leading-6",
+                            "text-[13px] leading-5 sm:text-sm sm:leading-6",
                             isHeader
                               ? "font-semibold text-white"
                               : "text-[color:var(--text-secondary)]",
@@ -260,17 +271,6 @@ export function PricingPlans() {
           })}
         </div>
 
-        {/* Strip explicativa sobre el TC */}
-        <div className="mx-auto mt-10 max-w-3xl rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] p-5 sm:mt-12 sm:p-6">
-          <p className="text-xs leading-6 text-[color:var(--text-secondary)] sm:text-sm">
-            <span className="font-semibold text-white">
-              Pagás en pesos, sin sorpresas.
-            </span>{" "}
-            Los precios están anclados en USD pero te cobramos en ARS al tipo
-            de cambio MEP del primer día del mes. Ese precio queda fijo durante
-            todo el mes — sabés exactamente cuánto vas a pagar.
-          </p>
-        </div>
       </div>
     </section>
   );

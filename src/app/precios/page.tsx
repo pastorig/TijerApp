@@ -32,38 +32,39 @@ export default function PricingPage() {
               "radial-gradient(70% 50% at 50% 0%, color-mix(in oklab, var(--brand-gold) 12%, transparent) 0%, transparent 70%)",
           }}
         />
-        <div className="mx-auto w-full max-w-6xl px-4 pb-14 pt-12 sm:px-8 sm:pb-16 sm:pt-16 lg:px-12 lg:pb-20 lg:pt-20">
+        <div className="mx-auto w-full max-w-6xl px-4 pb-8 pt-8 sm:px-8 sm:pb-16 sm:pt-16 lg:px-12 lg:pb-20 lg:pt-20">
           <div className="animate-fade-up text-center">
             <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
               Precios
             </p>
-            <h1 className="mx-auto mt-6 max-w-3xl text-[2.25rem] font-black uppercase leading-[0.95] tracking-tight text-balance sm:mt-8 sm:text-5xl lg:text-6xl">
+            <h1 className="mx-auto mt-4 max-w-3xl text-[1.75rem] font-black uppercase leading-[1] tracking-tight text-balance sm:mt-8 sm:text-5xl lg:text-6xl">
               Planes claros para barberías que{" "}
               <span className="text-[color:var(--brand-gold)]">crecen</span>.
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-[color:var(--text-secondary)] sm:mt-8 sm:text-lg sm:leading-8">
-              Sin comisiones por reserva. Sin pagos por barbero. Un precio fijo
-              por mes, pensado para la realidad argentina.
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:mt-8 sm:text-lg sm:leading-8">
+              Desde <span className="font-bold text-white">USD 10/mes</span>.
+              Sin comisiones por reserva. Sin pagos por barbero. Precio fijo
+              pensado para la realidad argentina.
             </p>
-            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:mt-9 sm:flex-row">
+              <Link
+                href="#planes"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
+              >
+                Ver planes
+                <ArrowUpRight aria-hidden="true" className="size-4" />
+              </Link>
               <Button
                 as="link"
                 href="/sv-barber"
                 size="lg"
                 variant="secondary"
-                iconRight={<ArrowUpRight className="size-4" />}
                 className="w-full sm:w-auto"
               >
                 Probar la demo
               </Button>
-              <Link
-                href="#planes"
-                className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
-              >
-                Ver planes
-              </Link>
             </div>
-            <p className="mt-7 text-xs text-[color:var(--text-secondary)]">
+            <p className="mt-5 text-xs text-[color:var(--text-secondary)] sm:mt-7">
               7 días gratis · Sin tarjeta · Cancelás cuando quieras
             </p>
           </div>

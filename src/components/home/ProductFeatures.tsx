@@ -100,29 +100,29 @@ export function ProductFeatures() {
           </p>
         </header>
 
-        <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
           {FEATURES.map((feature) => {
             const Icon = feature.icon;
             return (
               <li
                 key={feature.title}
-                className="flex flex-col gap-4 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-6 transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40"
+                className="flex flex-row items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40 sm:flex-col sm:gap-4 sm:p-6"
               >
                 <div
                   aria-hidden="true"
-                  className="flex size-11 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] sm:size-11"
                 >
                   <Icon className="size-5" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">
+                <div className="flex-1">
+                  <h3 className="text-base font-bold text-white sm:text-lg">
                     {feature.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-6 text-[color:var(--text-secondary)]">
+                  <p className="mt-1.5 text-sm leading-5 text-[color:var(--text-secondary)] sm:mt-2 sm:leading-6">
                     {feature.description}
                   </p>
                 </div>
-                <ul className="mt-auto grid gap-1.5 border-t border-[color:var(--border-subtle)] pt-4">
+                <ul className="mt-auto hidden gap-1.5 border-t border-[color:var(--border-subtle)] pt-4 sm:grid">
                   {feature.bullets.map((bullet) => (
                     <li
                       key={bullet}
