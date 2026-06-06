@@ -106,7 +106,7 @@ export function ProductFeatures() {
             return (
               <li
                 key={feature.title}
-                className="flex flex-row items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40 sm:flex-col sm:gap-4 sm:p-6"
+                className="hover-glow flex flex-row items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 sm:flex-col sm:gap-4 sm:p-6"
               >
                 <div
                   aria-hidden="true"

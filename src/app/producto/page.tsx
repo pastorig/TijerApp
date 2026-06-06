@@ -7,6 +7,7 @@ import { CommercialNav } from "@/components/home/CommercialNav";
 import { HomeContact } from "@/components/home/HomeContact";
 import { PricingTeaser } from "@/components/home/PricingTeaser";
 import { ProductFeatures } from "@/components/home/ProductFeatures";
+import { ProductShowcase } from "@/components/home/ProductShowcase";
 
 export const metadata: Metadata = {
   // El template de layout.tsx agrega "· TijerApp" automáticamente.
@@ -68,6 +69,8 @@ export default function ProductPage() {
       </section>
 
       <ProductFeatures />
+
+      <ProductShowcase />
 
       <PricingTeaser />
 

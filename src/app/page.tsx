@@ -4,9 +4,12 @@ import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui";
 import { CommercialFooter } from "@/components/home/CommercialFooter";
 import { CommercialNav } from "@/components/home/CommercialNav";
+import { HomeComparison } from "@/components/home/HomeComparison";
 import { HomeContact } from "@/components/home/HomeContact";
 import { HomeFaq } from "@/components/home/HomeFaq";
 import { HomeHowItWorks } from "@/components/home/HomeHowItWorks";
+import { HomePersonas } from "@/components/home/HomePersonas";
+import { HomeStats } from "@/components/home/HomeStats";
 import { HomeWhatIsIt } from "@/components/home/HomeWhatIsIt";
 import { PWARedirector } from "@/components/pwa/PWARedirector";
 
@@ -33,11 +36,9 @@ export default function Home() {
         />
         <div className="mx-auto w-full max-w-6xl px-4 pb-14 pt-10 sm:px-8 sm:pb-20 sm:pt-16 lg:px-12 lg:pb-24 lg:pt-20">
           <div className="animate-fade-up">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)]/50 px-3 py-1.5">
-              <span className="size-1.5 rounded-full bg-[color:var(--brand-gold)]" />
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--brand-gold)]">
-                Programa Fundadores abierto · Primeros 10
-              </p>
+            <div className="chip-gold">
+              <span className="dot-gold-pulse" />
+              Programa Fundadores abierto · Primeros 10
             </div>
 
             <h1 className="mt-5 max-w-3xl text-[2.25rem] font-black uppercase leading-[0.95] tracking-tight text-balance sm:mt-8 sm:text-5xl lg:text-6xl xl:text-7xl">
@@ -99,8 +100,11 @@ export default function Home() {
         </div>
       </section>
 
+      <HomeStats />
       <HomeWhatIsIt />
+      <HomePersonas />
       <HomeHowItWorks />
+      <HomeComparison />
 
       {/* CTA pasarela a /producto — destacado con gradient gold */}
       <section className="relative isolate overflow-hidden border-t border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]">

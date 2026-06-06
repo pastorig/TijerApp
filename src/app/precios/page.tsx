@@ -5,10 +5,13 @@ import { Button } from "@/components/ui";
 import { CommercialFooter } from "@/components/home/CommercialFooter";
 import { CommercialNav } from "@/components/home/CommercialNav";
 import { HomeContact } from "@/components/home/HomeContact";
+import { PricingCompareTable } from "@/components/home/PricingCompareTable";
 import {
   FoundersProgram,
   PricingPlans,
 } from "@/components/home/PricingPlans";
+import { PricingRoiCalculator } from "@/components/home/PricingRoiCalculator";
+import { SocialProofPlaceholder } from "@/components/home/SocialProofPlaceholder";
 
 export const metadata: Metadata = {
   // El template de layout.tsx agrega "· TijerApp" automáticamente.
@@ -75,9 +78,15 @@ export default function PricingPage() {
         <PricingPlans />
       </div>
 
+      <PricingCompareTable />
+
+      <PricingRoiCalculator />
+
       <div id="fundadores">
         <FoundersProgram />
       </div>
+
+      <SocialProofPlaceholder />
 
       {/* Mini FAQ sobre billing */}
       <section className="border-t border-[color:var(--border-subtle)] bg-black">

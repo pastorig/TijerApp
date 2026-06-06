@@ -173,9 +173,9 @@ export function PricingPlans() {
                 variant={plan.highlight ? "elevated" : "default"}
                 padding="md"
                 className={cn(
-                  "relative flex flex-col sm:p-8",
+                  "hover-glow relative flex flex-col sm:p-8",
                   plan.highlight &&
-                    "border-[color:var(--brand-gold)]/40 ring-1 ring-[color:var(--brand-gold)]/30",
+                    "glow-gold-soft border-[color:var(--brand-gold)]/40 ring-1 ring-[color:var(--brand-gold)]/30",
                 )}
               >
                 {plan.highlight && (
@@ -339,7 +339,7 @@ export function FoundersProgram() {
           ].map((perk) => (
             <li
               key={perk.title}
-              className="rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 sm:p-6"
+              className="hover-glow rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 sm:p-6"
             >
               <div className="flex items-start gap-3">
                 <Check

@@ -82,9 +82,9 @@ export function PricingTeaser() {
             <div
               key={plan.name}
               className={cn(
-                "relative flex flex-col rounded-[var(--radius-md)] border bg-[color:var(--surface-1)] p-5 sm:p-6",
+                "hover-glow relative flex flex-col rounded-[var(--radius-md)] border bg-[color:var(--surface-1)] p-5 sm:p-6",
                 plan.highlight
-                  ? "border-[color:var(--brand-gold)]/40 ring-1 ring-[color:var(--brand-gold)]/30"
+                  ? "glow-gold-soft border-[color:var(--brand-gold)]/40 ring-1 ring-[color:var(--brand-gold)]/30"
                   : "border-[color:var(--border-default)]",
               )}
             >
