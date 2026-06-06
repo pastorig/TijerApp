@@ -52,9 +52,15 @@ import {
   getBarberDaySchedule,
   type BarberDaySchedule,
 } from "./agenda-schedule-helpers";
+import {
+  RescheduleNotifyDialog,
+  type RescheduleNotifyContext,
+} from "./RescheduleNotifyDialog";
 
 type AgendaCalendarGridViewProps = {
   barbershopSlug: string;
+  /** Nombre de la barbería para el subject del email y el WhatsApp. */
+  barbershopName: string;
   focusDate: string;
   barbers: BarberRow[];
   appointments: AppointmentRow[];
@@ -281,6 +287,7 @@ function DroppableSlot({
 
 export function AgendaCalendarGridView({
   barbershopSlug,
+  barbershopName,
   focusDate,
   barbers,
   appointments,
@@ -292,6 +299,8 @@ export function AgendaCalendarGridView({
   const toast = useToast();
   const [activeAppointment, setActiveAppointment] =
     useState<AppointmentRow | null>(null);
+  const [notifyContext, setNotifyContext] =
+    useState<RescheduleNotifyContext | null>(null);
 
   // Sensors separados para mouse y touch porque tienen UX distinta:
   // - Mouse: drag inicia después de 6px de movimiento (rápido, sin delay)
@@ -477,6 +486,22 @@ export function AgendaCalendarGridView({
         description: `${appointment.customer_name} → ${dropTarget.time}`,
       });
       onMoveComplete(result.appointment);
+
+      // Abrir el modal para notificar al cliente del cambio.
+      // El email automático se dispara solo al montar el modal; el botón
+      // de WhatsApp queda disponible para que el admin pueda mandar también.
+      setNotifyContext({
+        appointmentId: appointment.id ?? "",
+        customerName: appointment.customer_name,
+        customerPhone: appointment.customer_phone,
+        customerEmail: appointment.customer_email ?? null,
+        serviceName: appointment.service_name,
+        oldDate: appointment.appointment_date,
+        oldTime: currentTime,
+        newDate: result.appointment.appointment_date,
+        newTime: result.appointment.appointment_time.slice(0, 5),
+        newBarberName: result.appointment.barber_name,
+      });
     } catch (err) {
       console.warn("[agenda] move failed:", err);
       toast.error("Error moviendo el turno", {
@@ -641,6 +666,13 @@ export function AgendaCalendarGridView({
           </div>
         ) : null}
       </DragOverlay>
+
+      <RescheduleNotifyDialog
+        context={notifyContext}
+        barbershopSlug={barbershopSlug}
+        barbershopName={barbershopName}
+        onClose={() => setNotifyContext(null)}
+      />
     </DndContext>
   );
 }

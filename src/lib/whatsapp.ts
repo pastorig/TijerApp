@@ -219,6 +219,67 @@ export function createWhatsAppDelayLink({
   )}`;
 }
 
+type WhatsAppRescheduleInput = {
+  barbershopName: string;
+  clientName: string;
+  clientPhone: string;
+  serviceName: string;
+  oldDate: string; // YYYY-MM-DD
+  oldTime: string; // HH:MM (5 chars)
+  newDate: string; // YYYY-MM-DD
+  newTime: string; // HH:MM
+  newBarberName?: string;
+};
+
+/**
+ * Link wa.me para avisar al cliente que su turno fue MOVIDO desde el admin.
+ *
+ * Mensaje incluye:
+ *  - hora/fecha vieja (referencia para que recuerde cuál turno era)
+ *  - nueva hora/fecha
+ *  - si cambió el barbero, lo mencionamos
+ *  - tono cálido pero claro, primer nombre del cliente
+ */
+export function createWhatsAppRescheduleLink({
+  barbershopName,
+  clientName,
+  clientPhone,
+  serviceName,
+  oldDate,
+  oldTime,
+  newDate,
+  newTime,
+  newBarberName,
+}: WhatsAppRescheduleInput) {
+  const normalizedPhone = normalizeWhatsAppPhone(clientPhone);
+  const firstName = clientName.split(/\s+/)[0] ?? clientName;
+  const dateChanged = oldDate !== newDate;
+
+  // Formato simple "dd/mm" para que sea ágil de leer en el WhatsApp.
+  function formatShortDate(ymd: string): string {
+    const [, mm, dd] = ymd.split("-");
+    return `${dd}/${mm}`;
+  }
+
+  const oldLabel = dateChanged ? `${formatShortDate(oldDate)} ${oldTime}` : oldTime;
+  const newLabel = dateChanged ? `${formatShortDate(newDate)} ${newTime}` : newTime;
+
+  const messageLines = [
+    `Hola ${firstName}! Te aviso desde ${barbershopName}.`,
+    "",
+    `Tuvimos que mover tu turno de ${serviceName}.`,
+    `Antes: ${oldLabel}`,
+    `Ahora: ${newLabel}${newBarberName ? ` (con ${newBarberName})` : ""}.`,
+    "",
+    "Si no te queda bien, escribime y reagendamos.",
+    "Gracias!",
+  ];
+
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(
+    messageLines.join("\n"),
+  )}`;
+}
+
 type WhatsAppReviewRequestInput = {
   barbershopName: string;
   clientName: string;

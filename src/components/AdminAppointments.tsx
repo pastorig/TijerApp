@@ -1435,6 +1435,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
               !isSearching ? (
               <AgendaCalendarGridView
                 barbershopSlug={barbershop.slug}
+                barbershopName={barbershop.name}
                 focusDate={focusDate}
                 barbers={barbers}
                 appointments={filteredAppointments}
