@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { ImageResponse } from "next/og";
 
 // Next App Router OG image convention.
@@ -14,7 +16,21 @@ const BG = "#000000";
 const TEXT_MUTED = "#8a8a8a";
 const TEXT_SUBTLE = "#5a5a5a";
 
+// Inline el isotipo master como base64 — garantiza 100% fidelidad con
+// la identidad visual de marca (mismo PNG que se usa en navbar/favicon/PWA).
+function loadIsotipoBase64(): string {
+  const filepath = path.join(
+    process.cwd(),
+    "public",
+    "brand",
+    "isotipo-mark.png",
+  );
+  const buffer = fs.readFileSync(filepath);
+  return `data:image/png;base64,${buffer.toString("base64")}`;
+}
+
 export default async function OpenGraphImage() {
+  const isotipoSrc = loadIsotipoBase64();
   return new ImageResponse(
     (
       <div
@@ -37,39 +53,15 @@ export default async function OpenGraphImage() {
             gap: 64,
           }}
         >
-          {/* Isotipo TijerApp — geometría medida del PNG master, viewBox 100×100 */}
-          <svg
-            width="200"
-            height="200"
-            viewBox="0 0 100 100"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M 22 28 L 48 28 L 48 38 L 28 38 Z"
-              fill={GOLD}
-              stroke={GOLD}
-              strokeWidth="0.8"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-            <path
-              d="M 52 28 L 78 28 L 72 38 L 52 38 Z"
-              fill={GOLD}
-              stroke={GOLD}
-              strokeWidth="0.8"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-            <path
-              d="M 44 41 L 56 41 L 54 82 L 46 82 Z"
-              fill={GOLD}
-              stroke={GOLD}
-              strokeWidth="0.8"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-          </svg>
+          {/* Isotipo TijerApp — PNG master inline (base64 dataURL) */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={isotipoSrc}
+            alt=""
+            width={200}
+            height={200}
+            style={{ width: 200, height: 200, objectFit: "contain" }}
+          />
 
           {/* Wordmark + tagline */}
           <div

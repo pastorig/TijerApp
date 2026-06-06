@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/cn";
 
 type LogoVariant = "lockup" | "wordmark" | "mark";
@@ -16,6 +17,17 @@ const markSizeClass: Record<LogoSize, string> = {
   xl: "size-14",
 };
 
+// Tamaño nominal en pixels para el atributo width/height de next/image.
+// El CSS de markSizeClass controla el size visible; estos números solo
+// definen el aspect ratio + dan hints al optimizer para servir el tamaño
+// correcto. 64 = 2x del size lg (40px) lo cual cubre retina display.
+const markPxSize: Record<LogoSize, number> = {
+  sm: 48,
+  md: 64,
+  lg: 80,
+  xl: 112,
+};
+
 const wordmarkSizeClass: Record<LogoSize, string> = {
   sm: "text-sm",
   md: "text-base",
@@ -31,51 +43,36 @@ const gapClass: Record<LogoSize, string> = {
 };
 
 /**
- * Isotipo TijerApp — T estilizada con alas + stem tapered. Sólido gold.
+ * Isotipo TijerApp — PNG master con fondo transparente.
  *
- * Geometría medida directamente del PNG master (public/brand/isotipo-master.png).
- * viewBox 0 0 100 100 con coordenadas reales del isotipo de marca:
- *   - Ala izquierda: trapecio con outer-edge inclinado (22,28 → 28,38)
- *   - Ala derecha: mirror exacto (78,28 → 72,38)
- *   - Stem: trapecio tapered top 12 → bottom 8 (sutil afinamiento)
- *   - Gap central entre alas: 4 unidades (48 a 52)
- *   - Gap vertical entre alas y stem: 3 unidades (38 a 41)
+ * Renderiza public/brand/isotipo-mark.png (256×256 transparent PNG derivado
+ * del isotipo-master.png entregado por el founder). Esto garantiza fidelidad
+ * 100% con la identidad visual de marca en todos los sizes y backgrounds.
  *
- * Stroke gold sutil con linejoin=round redondea esquinas convex sin
- * alterar la geometría — replica el look del PNG (anti-aliasing natural).
+ * Por qué PNG en lugar de SVG inline: la geometría del isotipo de marca
+ * tiene sutilezas (anti-aliasing, curvas en esquinas, kerning entre alas
+ * y stem) que son difíciles de reproducir píxel-perfect en paths SVG.
+ * El PNG se usa también en los iconos PWA, así que esta decisión mantiene
+ * coherencia visual exacta entre navbar / favicon / app icon.
  */
-function IsotypeMark({ className }: { className?: string }) {
+function IsotypeMark({
+  size = "md",
+  className,
+}: {
+  size?: LogoSize;
+  className?: string;
+}) {
+  const px = markPxSize[size];
   return (
-    <svg
-      viewBox="0 0 100 100"
-      fill="none"
-      strokeLinejoin="round"
-      strokeLinecap="round"
+    <Image
+      src="/brand/isotipo-mark.png"
+      alt=""
+      width={px}
+      height={px}
+      priority
       className={className}
       aria-hidden="true"
-    >
-      {/* Ala izquierda — trapecio con outer-edge inclinado hacia adentro */}
-      <path
-        d="M 22 28 L 48 28 L 48 38 L 28 38 Z"
-        fill="var(--brand-gold)"
-        stroke="var(--brand-gold)"
-        strokeWidth="0.8"
-      />
-      {/* Ala derecha — mirror exacto del ala izquierda */}
-      <path
-        d="M 52 28 L 78 28 L 72 38 L 52 38 Z"
-        fill="var(--brand-gold)"
-        stroke="var(--brand-gold)"
-        strokeWidth="0.8"
-      />
-      {/* Stem — trapecio que se afina hacia abajo (12u top → 8u bottom) */}
-      <path
-        d="M 44 41 L 56 41 L 54 82 L 46 82 Z"
-        fill="var(--brand-gold)"
-        stroke="var(--brand-gold)"
-        strokeWidth="0.8"
-      />
-    </svg>
+    />
   );
 }
 
@@ -84,7 +81,12 @@ export function Logo({
   size = "md",
   className,
 }: LogoProps) {
-  const mark = <IsotypeMark className={cn(markSizeClass[size], "shrink-0")} />;
+  const mark = (
+    <IsotypeMark
+      size={size}
+      className={cn(markSizeClass[size], "shrink-0")}
+    />
+  );
 
   if (variant === "mark") {
     return (
