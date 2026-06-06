@@ -112,46 +112,109 @@ function MockupTurnero() {
 }
 
 function MockupPublica() {
+  const slots = [
+    { time: "16:00", state: "available" as const },
+    { time: "16:30", state: "available" as const },
+    { time: "17:00", state: "available" as const },
+    { time: "17:30", state: "selected" as const },
+    { time: "18:00", state: "available" as const },
+    { time: "18:30", state: "available" as const },
+    { time: "19:00", state: "available" as const },
+    { time: "19:30", state: "available" as const },
+    { time: "20:00", state: "taken" as const },
+  ];
+
   return (
-    <div className="mockup-frame aspect-[9/12] w-full max-w-[200px] bg-[color:var(--surface-1)] p-2.5 sm:aspect-[9/14] sm:max-w-[300px] sm:p-3">
-      <div className="text-center">
-        <div className="mx-auto size-12 rounded-full border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)]" />
-        <div className="mt-2 text-sm font-black uppercase tracking-tight text-white">
-          SV BARBER
+    <div className="mockup-frame aspect-[9/14] w-full max-w-[200px] bg-[color:var(--surface-1)] p-2 sm:max-w-[300px] sm:p-3">
+      {/* Header con back arrow + isotipo */}
+      <div className="flex items-center justify-between">
+        <span className="text-[7px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)] sm:text-[9px]">
+          ← PRIME BARBER
+        </span>
+        <div className="size-3 rounded-sm bg-[color:var(--brand-gold)] sm:size-4" />
+      </div>
+
+      {/* Title block */}
+      <div className="mt-2 border-b border-[color:var(--border-subtle)] pb-2">
+        <div className="text-[7px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)] sm:text-[8px]">
+          Reserva online
         </div>
-        <div className="text-[9px] text-[color:var(--text-secondary)]">
-          Córdoba · Barbería premium
+        <div className="mt-0.5 text-sm font-black uppercase leading-none tracking-tight text-white sm:text-base">
+          PRIME BARBER
+        </div>
+        <div className="mt-1 hidden text-[8px] leading-tight text-[color:var(--text-secondary)] sm:block sm:text-[9px]">
+          Elegí servicio, fecha y horario.
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-1">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div
-            key={i}
-            className="aspect-square rounded-sm bg-gradient-to-br from-[color:var(--surface-3)] to-[color:var(--surface-2)]"
-          />
-        ))}
-      </div>
-
-      <div className="mt-3 rounded-sm border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold)] py-2 text-center text-[10px] font-bold uppercase tracking-wider text-black">
-        Reservar turno
-      </div>
-
-      <div className="mt-2 space-y-1">
-        <div className="text-[9px] text-[color:var(--text-muted)]">
-          Próximos turnos disponibles
+      {/* Barbero */}
+      <div className="mt-2">
+        <div className="text-[7px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)]">
+          Barbero
         </div>
-        {["Lun 9:30", "Lun 10:00", "Lun 11:00", "Mar 9:00"].map((slot) => (
-          <div
-            key={slot}
-            className="flex items-center justify-between rounded-sm border border-[color:var(--border-subtle)] px-2 py-1"
-          >
-            <span className="text-[10px] text-white">{slot}</span>
-            <span className="text-[9px] text-[color:var(--brand-gold)]">
-              Libre
-            </span>
+        <div className="mt-0.5 text-[10px] font-bold text-white sm:text-xs">
+          Santi Vargas
+        </div>
+      </div>
+
+      {/* Servicio dropdown */}
+      <div className="mt-1.5">
+        <div className="text-[7px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)]">
+          Servicio
+        </div>
+        <div className="mt-0.5 flex items-center justify-between rounded-sm border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-1.5 py-1">
+          <span className="text-[9px] text-white">Corte — $8.500</span>
+          <span className="text-[8px] text-[color:var(--text-muted)]">▾</span>
+        </div>
+      </div>
+
+      {/* Fecha */}
+      <div className="mt-1.5">
+        <div className="text-[7px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)]">
+          Fecha
+        </div>
+        <div className="mt-0.5 flex items-center justify-between rounded-sm border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-1.5 py-1">
+          <span className="text-[9px] text-white">06/06/2026</span>
+          <span className="text-[8px] text-[color:var(--text-muted)]">📅</span>
+        </div>
+      </div>
+
+      {/* Horario grid */}
+      <div className="mt-1.5">
+        <div className="text-[7px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)]">
+          Horario
+        </div>
+        <div className="mt-1 grid grid-cols-3 gap-1">
+          {slots.map((slot) => (
+            <div
+              key={slot.time}
+              className={
+                slot.state === "selected"
+                  ? "rounded-sm border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] py-1 text-center text-[8px] font-bold text-black"
+                  : slot.state === "taken"
+                    ? "rounded-sm border border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] py-1 text-center text-[8px] font-bold text-[color:var(--text-subtle)] line-through"
+                    : "rounded-sm border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] py-1 text-center text-[8px] font-bold text-[color:var(--brand-gold)]"
+              }
+            >
+              {slot.time}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer: turno seleccionado + CTA reservar */}
+      <div className="mt-2 flex items-center gap-1.5 border-t border-[color:var(--border-subtle)] pt-2">
+        <div className="min-w-0 flex-1">
+          <div className="text-[7px] uppercase tracking-wider text-[color:var(--text-muted)]">
+            Tu turno
           </div>
-        ))}
+          <div className="truncate text-[8px] font-semibold leading-tight text-white">
+            17:30 · Corte · Santi V.
+          </div>
+        </div>
+        <div className="rounded-sm bg-[color:var(--brand-gold)] px-2 py-1.5 text-[8px] font-bold uppercase tracking-wider text-black">
+          Reservar
+        </div>
       </div>
     </div>
   );
