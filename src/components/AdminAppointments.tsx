@@ -48,6 +48,7 @@ import {
 } from "@/lib/whatsapp";
 import { Select, useConfirm, useToast } from "@/components/ui";
 import { AgendaCalendar } from "./admin/AgendaCalendar";
+import { AgendaCalendarGridView } from "./admin/AgendaCalendarGridView";
 import { AppointmentRow as AppointmentCard } from "./admin/AppointmentRow";
 import { AppointmentRowSkeletonList } from "./admin/AppointmentRowSkeleton";
 import {
@@ -79,8 +80,50 @@ const FILTER_OPTIONS: Array<{ value: AppointmentFilter; label: string }> = [
   { value: "deleted", label: "Eliminados" },
 ];
 
+type AgendaViewMode = "list" | "calendar";
+const AGENDA_VIEW_MODE_KEY = "tijerapp:agendaViewMode";
+
 export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
+  // Lazy init: leemos localStorage al primer render (sin useEffect) para
+  // evitar el flash de "list" → "calendar". Como AdminAppointments es
+  // "use client" no hay risk de hydration mismatch (no se SSRea).
+  const [agendaViewMode, setAgendaViewMode] = useState<AgendaViewMode>(() => {
+    if (typeof window === "undefined") return "list";
+    const saved = window.localStorage.getItem(AGENDA_VIEW_MODE_KEY);
+    return saved === "list" || saved === "calendar" ? saved : "list";
+  });
+
+  function changeAgendaViewMode(mode: AgendaViewMode) {
+    setAgendaViewMode(mode);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(AGENDA_VIEW_MODE_KEY, mode);
+    }
+  }
+
+  // Optimistic update tras un drag&drop exitoso en la vista Calendario.
+  // Actualizamos solo la row movida en lugar de refrescar todo el array.
+  function handleAppointmentMoved(updated: {
+    id: string;
+    appointment_date: string;
+    appointment_time: string;
+    barber_id: string;
+    barber_name: string;
+  }) {
+    setAppointments((current) =>
+      current.map((a) =>
+        a.id === updated.id
+          ? {
+              ...a,
+              appointment_date: updated.appointment_date,
+              appointment_time: updated.appointment_time,
+              barber_id: updated.barber_id,
+              barber_name: updated.barber_name,
+            }
+          : a,
+      ),
+    );
+  }
   const [barbers, setBarbers] = useState<BarberRow[]>([]);
   const [services, setServices] = useState<BarberServiceRow[]>([]);
   const [clients, setClients] = useState<BarbershopClientRow[]>([]);
@@ -1330,7 +1373,49 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
               </div>
             ) : null}
 
-            {/* Lista de turnos */}
+            {/* Toggle Lista / Calendario — solo se muestra cuando hay turnos
+                y NO estamos en búsqueda. La vista Calendario tiene sentido para
+                el filtro "Día" (1 día concreto con sus barberos) */}
+            {appointments.length > 0 &&
+            !isSearching &&
+            activeFilter === "day" &&
+            activeFilter !== ("deleted" as typeof activeFilter) ? (
+              <div className="flex items-center justify-end">
+                <div
+                  role="tablist"
+                  aria-label="Vista de turnos"
+                  className="inline-flex rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-0.5"
+                >
+                  {(
+                    [
+                      { value: "list", label: "Lista" },
+                      { value: "calendar", label: "Calendario" },
+                    ] as const
+                  ).map((opt) => {
+                    const isActive = agendaViewMode === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        role="tab"
+                        aria-selected={isActive}
+                        onClick={() => changeAgendaViewMode(opt.value)}
+                        className={cn(
+                          "inline-flex min-h-8 items-center justify-center rounded-[var(--radius-xs)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
+                          isActive
+                            ? "bg-[color:var(--brand-gold)] text-black"
+                            : "text-[color:var(--text-secondary)] hover:text-white",
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {/* Renderizado de turnos: vista Lista (actual) o Calendario nuevo */}
             {appointments.length === 0 ? (
               <EmptyState
                 title="Sin reservas todavia"
@@ -1344,6 +1429,19 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                     ? `No encontramos turnos para "${searchQuery.trim()}".`
                     : `No hay reservas para ${activeFilterLabel}.`
                 }
+              />
+            ) : agendaViewMode === "calendar" &&
+              activeFilter === "day" &&
+              !isSearching ? (
+              <AgendaCalendarGridView
+                barbershopSlug={barbershop.slug}
+                focusDate={focusDate}
+                barbers={barbers}
+                appointments={filteredAppointments}
+                weeklySchedulesByBarber={weeklySchedulesByBarber}
+                dayOverridesByBarber={dayOverridesByBarber}
+                workingHours={barbershop.workingHours}
+                onMoveComplete={handleAppointmentMoved}
               />
             ) : (
               <ul className="grid gap-3 animate-stagger">
