@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { useConfirm, useToast } from "@/components/ui";
+import { PushNotificationsCard } from "@/components/push/PushNotificationsCard";
 import { getCurrentSession } from "@/lib/auth";
 
 type AdminSettingsFormProps = {
@@ -617,6 +618,11 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
             </button>
           </section>
         </form>
+
+        {/* Push notifications — independiente del form principal */}
+        <section className="mt-8">
+          <PushNotificationsCard barbershopSlug={barbershop.slug} />
+        </section>
       </section>
     </main>
   );
