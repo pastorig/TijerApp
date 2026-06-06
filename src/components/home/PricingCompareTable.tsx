@@ -65,7 +65,7 @@ function CellValue({ value }: { value: boolean | string }) {
     return (
       <Check
         aria-label="Incluido"
-        className="size-4 text-[color:var(--brand-gold)]"
+        className="size-3.5 text-[color:var(--brand-gold)] sm:size-4"
       />
     );
   }
@@ -73,12 +73,12 @@ function CellValue({ value }: { value: boolean | string }) {
     return (
       <Minus
         aria-label="No incluido"
-        className="size-4 text-[color:var(--text-subtle)]"
+        className="size-3.5 text-[color:var(--text-subtle)] sm:size-4"
       />
     );
   }
   return (
-    <span className="text-xs font-semibold text-white sm:text-sm">
+    <span className="text-center text-[10px] font-semibold leading-tight text-white sm:text-sm sm:leading-normal">
       {value}
     </span>
   );
@@ -102,15 +102,15 @@ export function PricingCompareTable() {
         </header>
 
         <div className="mt-10 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] sm:mt-12">
-          {/* Header row */}
-          <div className="grid grid-cols-[1.5fr_repeat(3,_minmax(0,_1fr))] gap-2 border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-2)] px-3 py-4 sm:gap-4 sm:px-6">
-            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:text-xs">
+          {/* Header row — sticky en mobile para que se vea durante el scroll */}
+          <div className="sticky top-0 z-10 grid grid-cols-[1.4fr_repeat(3,_minmax(0,_1fr))] gap-1.5 border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-2)] px-2.5 py-3 sm:gap-4 sm:px-6 sm:py-4">
+            <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)] sm:text-xs sm:tracking-[0.18em]">
               Feature
             </div>
             {["Solo", "Esencial", "Pro"].map((name) => (
               <div key={name} className="text-center">
                 <div
-                  className={`text-xs font-black uppercase tracking-tight sm:text-sm ${
+                  className={`text-[11px] font-black uppercase tracking-tight sm:text-sm ${
                     name === "Esencial"
                       ? "text-[color:var(--brand-gold)]"
                       : "text-white"
@@ -128,27 +128,27 @@ export function PricingCompareTable() {
           {/* Rows by category */}
           {ROWS.map((row) => (
             <div key={row.category}>
-              <div className="border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] px-3 py-2 sm:px-6 sm:py-2.5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)] sm:text-[11px]">
+              <div className="border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] px-2.5 py-1.5 sm:px-6 sm:py-2.5">
+                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] sm:text-[11px] sm:tracking-[0.18em]">
                   {row.category}
                 </p>
               </div>
               {row.features.map((feature, idx) => (
                 <div
                   key={feature.label}
-                  className={`grid grid-cols-[1.5fr_repeat(3,_minmax(0,_1fr))] items-center gap-2 px-3 py-3 sm:gap-4 sm:px-6 ${
+                  className={`grid grid-cols-[1.4fr_repeat(3,_minmax(0,_1fr))] items-center gap-1.5 px-2.5 py-1.5 sm:gap-4 sm:px-6 sm:py-3 ${
                     idx % 2 === 0
                       ? "bg-[color:var(--surface-1)]"
                       : "bg-transparent"
                   }`}
                 >
-                  <div className="text-xs text-[color:var(--text-secondary)] sm:text-sm">
+                  <div className="text-[11px] leading-tight text-[color:var(--text-secondary)] sm:text-sm sm:leading-normal">
                     {feature.label}
                   </div>
                   <div className="flex justify-center">
                     <CellValue value={feature.solo} />
                   </div>
-                  <div className="flex justify-center bg-[color:var(--brand-gold-soft)]/40 py-1.5 -my-1.5">
+                  <div className="-my-1.5 flex justify-center bg-[color:var(--brand-gold-soft)]/40 py-1.5">
                     <CellValue value={feature.esencial} />
                   </div>
                   <div className="flex justify-center">

@@ -77,12 +77,16 @@ export function PricingTeaser() {
           </p>
         </header>
 
-        <div className="mt-10 grid gap-4 sm:mt-12 sm:grid-cols-3 sm:gap-5">
+        <p className="mt-6 text-center text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:hidden">
+          ← Deslizá para comparar →
+        </p>
+
+        <div className="-mx-4 mt-3 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:mt-12 sm:grid sm:snap-none sm:grid-cols-3 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0">
           {TEASER_PLANS.map((plan) => (
             <div
               key={plan.name}
               className={cn(
-                "hover-glow relative flex flex-col rounded-[var(--radius-md)] border bg-[color:var(--surface-1)] p-5 sm:p-6",
+                "hover-glow relative flex w-[80%] shrink-0 snap-center flex-col rounded-[var(--radius-md)] border bg-[color:var(--surface-1)] p-5 sm:w-auto sm:shrink sm:snap-align-none sm:p-6",
                 plan.highlight
                   ? "glow-gold-soft border-[color:var(--brand-gold)]/40 ring-1 ring-[color:var(--brand-gold)]/30"
                   : "border-[color:var(--border-default)]",

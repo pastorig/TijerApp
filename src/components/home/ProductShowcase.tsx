@@ -53,7 +53,7 @@ const BLOCKS: ShowcaseBlock[] = [
 
 function MockupTurnero() {
   return (
-    <div className="mockup-frame aspect-[9/14] w-full max-w-[280px] bg-[color:var(--surface-1)] p-3 sm:max-w-[300px]">
+    <div className="mockup-frame aspect-[9/12] w-full max-w-[200px] bg-[color:var(--surface-1)] p-2.5 sm:aspect-[9/14] sm:max-w-[300px] sm:p-3">
       <div className="flex items-center justify-between border-b border-[color:var(--border-subtle)] pb-2">
         <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)]">
           Turnero · Hoy
@@ -113,7 +113,7 @@ function MockupTurnero() {
 
 function MockupPublica() {
   return (
-    <div className="mockup-frame aspect-[9/14] w-full max-w-[280px] bg-[color:var(--surface-1)] p-3 sm:max-w-[300px]">
+    <div className="mockup-frame aspect-[9/12] w-full max-w-[200px] bg-[color:var(--surface-1)] p-2.5 sm:aspect-[9/14] sm:max-w-[300px] sm:p-3">
       <div className="text-center">
         <div className="mx-auto size-12 rounded-full border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)]" />
         <div className="mt-2 text-sm font-black uppercase tracking-tight text-white">
@@ -159,7 +159,7 @@ function MockupPublica() {
 
 function MockupReportes() {
   return (
-    <div className="mockup-frame aspect-[9/14] w-full max-w-[280px] bg-[color:var(--surface-1)] p-3 sm:max-w-[300px]">
+    <div className="mockup-frame aspect-[9/12] w-full max-w-[200px] bg-[color:var(--surface-1)] p-2.5 sm:aspect-[9/14] sm:max-w-[300px] sm:p-3">
       <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)]">
         Reportes · Esta semana
       </div>
@@ -249,45 +249,47 @@ export function ProductShowcase() {
           </p>
         </header>
 
-        <div className="mt-12 space-y-16 sm:mt-16 sm:space-y-24">
+        <div className="mt-10 space-y-10 sm:mt-16 sm:space-y-24">
           {BLOCKS.map((block, idx) => {
             const Icon = block.icon;
             const reverse = idx % 2 === 1;
             return (
               <div
                 key={block.title}
-                className={`grid gap-8 sm:gap-10 lg:grid-cols-2 lg:items-center lg:gap-16 ${
+                className={`grid grid-cols-[1fr_auto] items-center gap-4 sm:gap-10 lg:grid-cols-2 lg:items-center lg:gap-16 ${
                   reverse ? "lg:[&>*:first-child]:order-2" : ""
                 }`}
               >
                 {/* Texto */}
-                <div>
+                <div className="min-w-0">
                   <div
                     aria-hidden="true"
-                    className="inline-flex size-11 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
+                    className="inline-flex size-9 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] sm:size-11"
                   >
-                    <Icon className="size-5" />
+                    <Icon className="size-4 sm:size-5" />
                   </div>
-                  <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+                  <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--brand-gold)] sm:mt-4 sm:tracking-[0.32em]">
                     {block.eyebrow}
                   </p>
-                  <h3 className="mt-2 text-2xl font-black uppercase tracking-tight text-balance text-white sm:text-3xl lg:text-4xl">
+                  <h3 className="mt-2 text-lg font-black uppercase tracking-tight text-balance text-white sm:text-3xl lg:text-4xl">
                     {block.title}
                   </h3>
-                  <p className="mt-4 text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base sm:leading-7">
+                  <p className="mt-2 hidden text-sm leading-6 text-[color:var(--text-secondary)] sm:mt-4 sm:block sm:text-base sm:leading-7">
                     {block.description}
                   </p>
-                  <ul className="mt-5 space-y-2">
+                  <ul className="mt-3 space-y-1.5 sm:mt-5 sm:space-y-2">
                     {block.bullets.map((b) => (
                       <li
                         key={b}
-                        className="flex items-start gap-2.5 text-sm text-[color:var(--text-secondary)]"
+                        className="flex items-start gap-2 text-xs text-[color:var(--text-secondary)] sm:gap-2.5 sm:text-sm"
                       >
                         <span
                           aria-hidden="true"
-                          className="mt-1 size-1.5 shrink-0 rounded-full bg-[color:var(--brand-gold)]"
+                          className="mt-1 size-1 shrink-0 rounded-full bg-[color:var(--brand-gold)] sm:size-1.5"
                         />
-                        {b}
+                        <span className="leading-snug sm:leading-normal">
+                          {b}
+                        </span>
                       </li>
                     ))}
                   </ul>

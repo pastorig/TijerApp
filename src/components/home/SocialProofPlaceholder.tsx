@@ -23,7 +23,7 @@ export function SocialProofPlaceholder() {
           </p>
         </header>
 
-        <ul className="mt-10 grid gap-5 sm:mt-12 sm:gap-6 lg:grid-cols-3">
+        <ul className="-mx-4 mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:mt-12 sm:grid sm:snap-none sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
           {[
             {
               label: "Tu historia acá",
@@ -43,7 +43,7 @@ export function SocialProofPlaceholder() {
           ].map((slot, idx) => (
             <li
               key={idx}
-              className="relative flex flex-col gap-4 rounded-[var(--radius-md)] border border-dashed border-[color:var(--brand-gold)]/30 bg-[color:var(--surface-1)] p-5 sm:p-6"
+              className="relative flex w-[85%] shrink-0 snap-center flex-col gap-4 rounded-[var(--radius-md)] border border-dashed border-[color:var(--brand-gold)]/30 bg-[color:var(--surface-1)] p-5 sm:w-auto sm:shrink sm:snap-align-none sm:p-6"
             >
               <Quote
                 aria-hidden="true"

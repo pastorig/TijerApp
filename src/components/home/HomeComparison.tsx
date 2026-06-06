@@ -89,9 +89,13 @@ export function HomeComparison() {
           </p>
         </header>
 
-        <div className="mt-10 grid gap-4 sm:mt-12 sm:gap-5 lg:grid-cols-3">
-          {/* TijerApp card — destacada */}
-          <div className="glow-gold-soft order-first flex flex-col rounded-[var(--radius-md)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--surface-1)] p-5 ring-1 ring-[color:var(--brand-gold)]/30 sm:p-6 lg:order-last">
+        <p className="mt-6 text-center text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:hidden">
+          ← Deslizá para comparar →
+        </p>
+
+        <div className="-mx-4 mt-3 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:mt-12 sm:grid sm:snap-none sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
+          {/* TijerApp card — destacada (orden distinto en mobile vs desktop) */}
+          <div className="glow-gold-soft order-first flex w-[85%] shrink-0 snap-center flex-col rounded-[var(--radius-md)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--surface-1)] p-5 ring-1 ring-[color:var(--brand-gold)]/30 sm:w-auto sm:shrink sm:snap-align-none sm:p-6 lg:order-last">
             <div className="flex items-center gap-3">
               <div
                 aria-hidden="true"
@@ -136,7 +140,7 @@ export function HomeComparison() {
             return (
               <div
                 key={c.name}
-                className="hover-glow flex flex-col rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 opacity-90 sm:p-6"
+                className="hover-glow flex w-[85%] shrink-0 snap-center flex-col rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 opacity-90 sm:w-auto sm:shrink sm:snap-align-none sm:p-6"
               >
                 <div className="flex items-center gap-3">
                   <div

@@ -163,8 +163,13 @@ export function PricingPlans() {
           </p>
         </div>
 
-        {/* Grilla de planes */}
-        <div className="mt-8 grid gap-5 sm:mt-12 sm:gap-6 lg:grid-cols-3">
+        {/* Hint de scroll en mobile */}
+        <p className="mt-6 text-center text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:hidden">
+          ← Deslizá para ver los 3 planes →
+        </p>
+
+        {/* Grilla de planes — scroll horizontal en mobile, grid en sm+ */}
+        <div className="-mx-4 mt-3 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:mt-12 sm:grid sm:snap-none sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
           {PLANS.map((plan) => {
             const { display, perPeriod } = getPrice(plan);
             return (
@@ -173,7 +178,7 @@ export function PricingPlans() {
                 variant={plan.highlight ? "elevated" : "default"}
                 padding="md"
                 className={cn(
-                  "hover-glow relative flex flex-col sm:p-8",
+                  "hover-glow relative flex w-[85%] shrink-0 snap-center flex-col sm:w-auto sm:shrink sm:snap-align-none sm:p-8",
                   plan.highlight &&
                     "glow-gold-soft border-[color:var(--brand-gold)]/40 ring-1 ring-[color:var(--brand-gold)]/30",
                 )}
@@ -304,7 +309,7 @@ export function FoundersProgram() {
           </p>
         </header>
 
-        <ul className="mx-auto mt-10 grid max-w-3xl gap-4 sm:mt-12 sm:grid-cols-2">
+        <ul className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-3 sm:mt-12 sm:gap-4">
           {[
             {
               title: "Precio congelado 12 meses",
@@ -339,18 +344,18 @@ export function FoundersProgram() {
           ].map((perk) => (
             <li
               key={perk.title}
-              className="hover-glow rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 sm:p-6"
+              className="hover-glow rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-3 sm:p-6"
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2 sm:gap-3">
                 <Check
                   aria-hidden="true"
-                  className="mt-0.5 size-5 shrink-0 text-[color:var(--brand-gold)]"
+                  className="mt-0.5 size-4 shrink-0 text-[color:var(--brand-gold)] sm:size-5"
                 />
                 <div>
-                  <h3 className="text-sm font-bold uppercase tracking-wide text-white">
+                  <h3 className="text-[11px] font-bold uppercase leading-tight tracking-wide text-white sm:text-sm">
                     {perk.title}
                   </h3>
-                  <p className="mt-1 text-sm leading-6 text-[color:var(--text-secondary)]">
+                  <p className="mt-1 hidden text-sm leading-6 text-[color:var(--text-secondary)] sm:block">
                     {perk.detail}
                   </p>
                 </div>

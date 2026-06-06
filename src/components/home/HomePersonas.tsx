@@ -79,13 +79,17 @@ export function HomePersonas() {
           </p>
         </header>
 
-        <ul className="mt-10 grid gap-4 sm:mt-12 sm:gap-5 lg:grid-cols-3">
+        <p className="mt-6 text-center text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:hidden">
+          ← Deslizá para ver los 3 perfiles →
+        </p>
+
+        <ul className="-mx-4 mt-3 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:mt-12 sm:grid sm:snap-none sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
           {PERSONAS.map((persona) => {
             const Icon = persona.icon;
             return (
               <li
                 key={persona.name}
-                className="hover-glow flex flex-col gap-4 rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 sm:p-6"
+                className="hover-glow flex w-[85%] shrink-0 snap-center flex-col gap-4 rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 sm:w-auto sm:shrink sm:snap-align-none sm:p-6"
               >
                 <div className="flex items-start gap-3">
                   <div

@@ -100,25 +100,25 @@ export function ProductFeatures() {
           </p>
         </header>
 
-        <ul className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+        <ul className="mt-8 grid grid-cols-2 gap-3 sm:mt-10 sm:gap-4 lg:grid-cols-3">
           {FEATURES.map((feature) => {
             const Icon = feature.icon;
             return (
               <li
                 key={feature.title}
-                className="hover-glow flex flex-row items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 sm:flex-col sm:gap-4 sm:p-6"
+                className="hover-glow flex flex-col items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-3 sm:gap-4 sm:p-6"
               >
                 <div
                   aria-hidden="true"
-                  className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] sm:size-11"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] sm:size-11"
                 >
-                  <Icon className="size-5" />
+                  <Icon className="size-4 sm:size-5" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-base font-bold text-white sm:text-lg">
+                  <h3 className="text-sm font-bold leading-tight text-white sm:text-lg">
                     {feature.title}
                   </h3>
-                  <p className="mt-1.5 text-sm leading-5 text-[color:var(--text-secondary)] sm:mt-2 sm:leading-6">
+                  <p className="mt-1 hidden text-sm leading-5 text-[color:var(--text-secondary)] sm:mt-2 sm:block sm:leading-6">
                     {feature.description}
                   </p>
                 </div>
