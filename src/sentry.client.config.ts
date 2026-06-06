@@ -15,9 +15,13 @@ if (dsn) {
     // bajar si te preocupa el costo cuando crezca el tráfico.
     tracesSampleRate: 0.1,
 
-    // Captura sesiones de usuario solo cuando hay error (más eficiente).
+    // Session Replay DESACTIVADO (pre-launch, sin clientes reales aún).
+    // Los rates en 0 hacen que el SDK no cargue el modulo de replay
+    // (~30 KB JS adicional en el cliente). Cuando tengamos clientes y
+    // necesitemos debug avanzado de sesiones con error, los volvemos a
+    // activar (replaysOnErrorSampleRate: 1.0).
     replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: 1.0,
+    replaysOnErrorSampleRate: 0,
 
     // En dev (`npm run dev`), Sentry NO envía nada — solo logea en consola.
     // En prod (Vercel), envía al server de Sentry.

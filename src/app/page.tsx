@@ -5,13 +5,25 @@ import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui";
 import { CommercialFooter } from "@/components/home/CommercialFooter";
 import { CommercialNav } from "@/components/home/CommercialNav";
-// HomeStats es chico y visible cerca del fold → carga directa (sin lazy)
-import { HomeStats } from "@/components/home/HomeStats";
-import { HomeWhatIsIt } from "@/components/home/HomeWhatIsIt";
 import { PWARedirector } from "@/components/pwa/PWARedirector";
 
 // Below-the-fold: dynamic con ssr:true mantiene SEO y reduce el chunk
-// inicial. Cada uno carga su propio JS bundle al hidratarse.
+// inicial. Cada uno carga su propio JS bundle al hidratarse cuando es
+// visible. Round 2: ahora también HomeStats + HomeWhatIsIt + HomeProductGate
+// son lazy (antes eran directos pero igual están below el hero del primer
+// viewport en mobile).
+const HomeStats = dynamic(
+  () =>
+    import("@/components/home/HomeStats").then((m) => ({
+      default: m.HomeStats,
+    })),
+);
+const HomeWhatIsIt = dynamic(
+  () =>
+    import("@/components/home/HomeWhatIsIt").then((m) => ({
+      default: m.HomeWhatIsIt,
+    })),
+);
 const HomePersonas = dynamic(
   () =>
     import("@/components/home/HomePersonas").then((m) => ({
@@ -28,6 +40,12 @@ const HomeComparison = dynamic(
   () =>
     import("@/components/home/HomeComparison").then((m) => ({
       default: m.HomeComparison,
+    })),
+);
+const HomeProductGate = dynamic(
+  () =>
+    import("@/components/home/HomeProductGate").then((m) => ({
+      default: m.HomeProductGate,
     })),
 );
 const HomeFaq = dynamic(
@@ -135,51 +153,7 @@ export default function Home() {
       <HomePersonas />
       <HomeHowItWorks />
       <HomeComparison />
-
-      {/* CTA pasarela a /producto — destacado con gradient gold */}
-      <section className="relative isolate overflow-hidden border-t border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10"
-          style={{
-            background:
-              "radial-gradient(60% 80% at 50% 50%, color-mix(in oklab, var(--brand-gold) 10%, transparent) 0%, transparent 70%)",
-          }}
-        />
-        <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
-              Conocé el producto completo
-            </p>
-            <h2 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-5 sm:text-4xl lg:text-5xl">
-              Todas las features que tu barbería{" "}
-              <span className="text-[color:var(--brand-gold)]">necesita</span>,
-              explicadas en detalle.
-            </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[color:var(--text-secondary)] sm:text-lg sm:leading-8">
-              Turnero, multi-barbero, reservas públicas, lista de espera,
-              reportes, galería, recordatorios automáticos. Mirá cómo funciona
-              cada parte.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
-                href="/producto"
-                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
-              >
-                Ver producto completo
-                <ArrowUpRight aria-hidden="true" className="size-4" />
-              </Link>
-              <Link
-                href="/precios"
-                className="inline-flex min-h-12 w-full items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] sm:w-auto"
-              >
-                Ver precios
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      <HomeProductGate />
       <HomeFaq />
       <HomeContact />
 
