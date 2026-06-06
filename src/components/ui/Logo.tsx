@@ -33,44 +33,47 @@ const gapClass: Record<LogoSize, string> = {
 /**
  * Isotipo TijerApp — T estilizada con alas + stem tapered. Sólido gold.
  *
- * Geometría exacta del SVG generado off-Claude (ChatGPT) — coordinates
- * fielmente preservadas para mantener el diseño aprobado por el founder.
+ * Geometría limpia basada en el isotipo de referencia (PNG 1240x1240):
+ *   - Alas: trapecios con borde superior horizontal, borde interior
+ *     vertical (cerca del centro), borde inferior horizontal corto y
+ *     borde exterior INCLINADO (las esquinas inferiores van hacia adentro).
+ *   - Stem: trapecio que se afina hacia abajo (top más ancho que bottom).
+ *   - Gap central entre alas: ~4 unidades.
  *
- * Polish: stroke="currentGold" + stroke-linejoin=round suaviza las
- * esquinas convexas externas (especialmente las superiores de las alas)
- * sin alterar la geometría de los paths. Inner corners (concavos) no
- * se ven afectados, manteniendo la limpieza de la tipografía.
+ * Sin puntos intermedios — paths puros con 4 vértices cada uno. Esquinas
+ * suavizadas con stroke-linejoin=round + stroke del mismo color (gold),
+ * lo cual redondea sutilmente los convex corners sin alterar la geometría.
  */
 function IsotypeMark({ className }: { className?: string }) {
   return (
     <svg
-      viewBox="0 0 64 64"
+      viewBox="0 0 100 100"
       fill="none"
       strokeLinejoin="round"
       strokeLinecap="round"
       className={className}
       aria-hidden="true"
     >
-      {/* Ala izquierda */}
+      {/* Ala izquierda — trapecio con borde exterior inclinado */}
       <path
-        d="M10 18 L26 18 L27.5 18.2 L28.8 18.8 L29.9 20 L31.2 23.5 L19 23.5 L17.2 23.3 L15.8 22.6 L14.7 21.4 L10 18 Z"
+        d="M 26 30.5 L 48 30.5 L 48 38 L 28.5 38 Z"
         fill="var(--brand-gold)"
         stroke="var(--brand-gold)"
-        strokeWidth="2"
+        strokeWidth="1.2"
       />
-      {/* Ala derecha — mirror */}
+      {/* Ala derecha — mirror exacto del ala izquierda */}
       <path
-        d="M38 18 L54 18 L49.3 21.4 L48.2 22.6 L46.8 23.3 L45 23.5 L32.8 23.5 L34.1 20 L35.2 18.8 L36.5 18.2 L38 18 Z"
+        d="M 52 30.5 L 74 30.5 L 71.5 38 L 52 38 Z"
         fill="var(--brand-gold)"
         stroke="var(--brand-gold)"
-        strokeWidth="2"
+        strokeWidth="1.2"
       />
-      {/* Stem tapered */}
+      {/* Stem — trapecio que se afina hacia abajo (taper) */}
       <path
-        d="M28.7 27.4 L35.3 27.4 L34.1 47 L29.9 47 L28.7 27.4 Z"
+        d="M 44 42 L 56 42 L 54 82 L 46 82 Z"
         fill="var(--brand-gold)"
         stroke="var(--brand-gold)"
-        strokeWidth="2"
+        strokeWidth="1.2"
       />
     </svg>
   );
