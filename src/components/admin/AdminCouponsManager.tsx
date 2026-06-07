@@ -7,6 +7,7 @@ import { useConfirm, useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import type { CouponRow } from "@/lib/supabase";
+import { OnboardingTip } from "./OnboardingTip";
 
 type Props = { barbershop: DemoBarbershop };
 
@@ -156,7 +157,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
 
   return (
     <main className="mx-auto w-full max-w-5xl space-y-8 px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
-      <header>
+      <header className="relative">
         <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
           Feature Pro
         </p>
@@ -168,6 +169,13 @@ export function AdminCouponsManager({ barbershop }: Props) {
           Soporta descuento porcentual o monto fijo, con vencimiento y límite
           de usos.
         </p>
+        <OnboardingTip
+          id="coupons-first-visit"
+          title="Empezá con un código simple"
+          description="Probá crear un VERANO20 (20% off) sin vencimiento ni límite. Después lo compartís por WhatsApp/Instagram con tus clientes para tracking de campañas."
+          placement="bottom"
+          className="left-0 mt-3"
+        />
       </header>
 
       {/* Formulario crear cupón */}

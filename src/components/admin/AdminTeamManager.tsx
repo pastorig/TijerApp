@@ -6,6 +6,7 @@ import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { useConfirm, useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
+import { OnboardingTip } from "./OnboardingTip";
 
 type Props = { barbershop: DemoBarbershop };
 
@@ -131,7 +132,7 @@ export function AdminTeamManager({ barbershop }: Props) {
 
   return (
     <main className="mx-auto w-full max-w-3xl space-y-8 px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
-      <header>
+      <header className="relative">
         <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
           Feature Pro
         </p>
@@ -143,6 +144,13 @@ export function AdminTeamManager({ barbershop }: Props) {
           al panel. El <span className="font-bold text-[color:var(--brand-gold)]">owner</span>{" "}
           puede invitar y remover; los demás solo administran.
         </p>
+        <OnboardingTip
+          id="team-first-visit"
+          title="El nuevo admin debe registrarse primero"
+          description="Quien vayas a invitar debe haberse registrado antes en TijerApp (login → Registrarme con su email). Después acá lo invitás con ese mismo email."
+          placement="bottom"
+          className="left-0 mt-3"
+        />
       </header>
 
       {/* Invitar nuevo admin */}

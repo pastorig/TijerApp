@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import type { LoyaltyProgramRow } from "@/lib/supabase";
+import { OnboardingTip } from "./OnboardingTip";
 
 // Tipo duplicado de @/lib/loyalty (que es server-only y no podemos importar
 // desde un client component). Cualquier cambio en el shape del API debe
@@ -170,7 +171,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
 
   return (
     <main className="mx-auto w-full max-w-5xl space-y-8 px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
-      <header>
+      <header className="relative">
         <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
           Feature Pro
         </p>
@@ -181,6 +182,13 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
           Premiá a tus clientes recurrentes. Configurá cada cuántas visitas
           obtienen un premio y entregalo cuando lo alcanzan.
         </p>
+        <OnboardingTip
+          id="loyalty-first-visit"
+          title="Configurá el programa primero"
+          description="Activá el toggle, definí cuántas visitas hace falta y qué premio das. Después los sellos se otorgan automáticamente cuando confirmás los turnos."
+          placement="bottom"
+          className="left-0 mt-3"
+        />
       </header>
 
       {/* Stats summary */}
