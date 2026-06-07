@@ -46,6 +46,7 @@ type AppointmentForReminder = {
 type BarbershopInfo = {
   slug: string;
   name: string;
+  logo_url: string | null;
 };
 
 function getArgParts(): {
@@ -105,6 +106,8 @@ function formatDateForEmail(ymdString: string): string {
 
 function buildReminderEmailHtml(params: {
   barbershopName: string;
+  /** URL pública del logo de la barbería (CDN). Si está, se muestra arriba. */
+  barbershopLogoUrl?: string | null;
   customerName: string;
   serviceName: string;
   barberName: string;
@@ -119,6 +122,13 @@ function buildReminderEmailHtml(params: {
     ? `Hola ${params.customerName}, tu turno en ${params.barbershopName} es en pocas horas.`
     : `Hola ${params.customerName}, te recordamos que tenés turno mañana en ${params.barbershopName}.`;
 
+  // Logo del barbero arriba (white-label parcial). Si no hay logo, fallback
+  // al texto del nombre con tracking gold.
+  const headerBranding = params.barbershopLogoUrl
+    ? `<img src="${params.barbershopLogoUrl}" alt="${params.barbershopName}" width="64" height="64" style="display:inline-block;width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #c9a23e;" />
+       <p style="margin:8px 0 0;font-size:13px;font-weight:700;color:#fff;">${params.barbershopName}</p>`
+    : `<p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#c9a23e;">${params.barbershopName}</p>`;
+
   return `<!doctype html>
 <html lang="es">
 <head><meta charset="utf-8"></head>
@@ -127,9 +137,7 @@ function buildReminderEmailHtml(params: {
     <tr><td>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;background:#0f0f0f;border:1px solid #1f1f1f;border-radius:12px;">
         <tr><td style="padding:28px 24px 12px;text-align:center;">
-          <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#c9a23e;">
-            ${params.barbershopName}
-          </p>
+          ${headerBranding}
           <h1 style="margin:12px 0 0;font-size:24px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:-0.01em;">
             ${title}
           </h1>
@@ -246,12 +254,13 @@ export async function GET(request: Request) {
     if (cached) return cached;
     const { data } = await supabase
       .from("barbershops")
-      .select("slug, name")
+      .select("slug, name, logo_url")
       .eq("slug", slug)
       .maybeSingle();
     const info: BarbershopInfo = {
       slug,
       name: data?.name ?? slug,
+      logo_url: (data as { logo_url?: string | null } | null)?.logo_url ?? null,
     };
     barbershopBySlug.set(slug, info);
     return info;
@@ -357,6 +366,7 @@ export async function GET(request: Request) {
         : `Recordatorio: tenés turno mañana en ${barbershop.name}`;
     const html = buildReminderEmailHtml({
       barbershopName: barbershop.name,
+      barbershopLogoUrl: barbershop.logo_url,
       customerName: appointment.customer_name,
       serviceName: appointment.service_name,
       barberName: appointment.barber_name,

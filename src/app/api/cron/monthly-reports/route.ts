@@ -96,7 +96,7 @@ export async function GET(request: Request) {
     // Listar barberías activas
     const { data: barbershops, error: bsError } = await supabase
       .from("barbershops")
-      .select("slug, name");
+      .select("slug, name, logo_url");
 
     if (bsError) {
       Sentry.captureException(bsError, {
@@ -113,6 +113,7 @@ export async function GET(request: Request) {
     for (const bs of (barbershops ?? []) as Array<{
       slug: string;
       name: string;
+      logo_url: string | null;
     }>) {
       // Buscar owner de la barbería
       const { data: ownerRow } = await supabase
@@ -196,8 +197,13 @@ export async function GET(request: Request) {
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#0d0d0d;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:32px;">
         <tr><td style="padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,0.06);">
-          <p style="margin:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#c9a23e;">${bs.name}</p>
-          <h1 style="margin:8px 0 0;font-size:24px;font-weight:900;color:#fff;">Resumen ${period.label}</h1>
+          ${
+            bs.logo_url
+              ? `<img src="${bs.logo_url}" alt="${bs.name}" width="48" height="48" style="display:inline-block;width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #c9a23e;vertical-align:middle;margin-right:12px;" />
+                 <span style="font-size:13px;font-weight:700;color:#fff;vertical-align:middle;">${bs.name}</span>`
+              : `<p style="margin:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#c9a23e;">${bs.name}</p>`
+          }
+          <h1 style="margin:14px 0 0;font-size:24px;font-weight:900;color:#fff;">Resumen ${period.label}</h1>
         </td></tr>
 
         <tr><td style="padding:24px 0;">
