@@ -474,6 +474,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                   PERIOD_OPTIONS.find((p) => p.value === period)?.label ?? "Período"
                 }
                 appointments={currentAppointments}
+                previousAppointments={previousAppointments}
                 barbers={barbers}
               />
             </div>

@@ -28,9 +28,18 @@ type ReportInput = {
     cancelledAppointments: number;
     totalRevenue: number;
     averageTicket: number;
+    // Opcional: comparativa con período anterior
+    previousRevenue?: number;
+    previousCount?: number;
   };
   topServices: Array<{ name: string; count: number; revenue: number }>;
-  topBarbers: Array<{ name: string; count: number; revenue: number }>;
+  topBarbers: Array<{
+    name: string;
+    count: number;
+    revenue: number;
+    averageTicket: number;
+    cancellationRate: number; // 0-100
+  }>;
   byDay?: Array<{ date: string; count: number; revenue: number }>;
 };
 
@@ -130,7 +139,7 @@ export function generateBarbershopReportPDF(input: ReportInput): void {
 
   cursorY += boxHeight + 20;
 
-  // Ticket promedio
+  // Ticket promedio + comparativa
   doc.setTextColor(...MUTED);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
@@ -139,7 +148,43 @@ export function generateBarbershopReportPDF(input: ReportInput): void {
     margin,
     cursorY,
   );
+
+  // Comparativa vs período anterior (si se proveyó)
+  if (typeof input.metrics.previousRevenue === "number") {
+    const change =
+      input.metrics.previousRevenue > 0
+        ? ((input.metrics.totalRevenue - input.metrics.previousRevenue) /
+            input.metrics.previousRevenue) *
+          100
+        : 0;
+    const sign = change >= 0 ? "+" : "";
+    const color: [number, number, number] = change >= 0 ? [34, 139, 34] : [220, 38, 38];
+    doc.setTextColor(...color);
+    doc.setFont("helvetica", "bold");
+    doc.text(
+      `${sign}${change.toFixed(1)}% vs período anterior`,
+      pageWidth - margin,
+      cursorY,
+      { align: "right" },
+    );
+  }
   cursorY += 24;
+
+  // ─── SPARKLINE DE TENDENCIA POR DÍA ───────────────────────────────
+  // Mini-gráfico de líneas mostrando ingresos por día. Util para ver
+  // tendencia rápida sin mirar la tabla completa.
+  if (input.byDay && input.byDay.length > 1) {
+    drawSparkline({
+      doc,
+      x: margin,
+      y: cursorY,
+      width: pageWidth - margin * 2,
+      height: 40,
+      values: input.byDay.map((d) => d.revenue),
+      label: "Ingresos por día",
+    });
+    cursorY += 56;
+  }
 
   // ─── TOP SERVICIOS ────────────────────────────────────────────────
   if (input.topServices.length > 0) {
@@ -167,29 +212,37 @@ export function generateBarbershopReportPDF(input: ReportInput): void {
     cursorY += 20;
   }
 
-  // ─── TOP BARBEROS ─────────────────────────────────────────────────
+  // ─── COMPARATIVA DETALLADA DE BARBEROS ────────────────────────────
   if (input.topBarbers.length > 0) {
-    if (cursorY > 700) {
+    if (cursorY > 680) {
       doc.addPage();
       cursorY = 56;
     }
     doc.setTextColor(...DARK);
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
-    doc.text("TOP BARBEROS", margin, cursorY);
+    doc.text("COMPARATIVA POR BARBERO", margin, cursorY);
     cursorY += 8;
 
     autoTable(doc, {
       startY: cursorY,
-      head: [["Barbero", "Turnos", "Ingresos"]],
+      head: [["Barbero", "Turnos", "Ingresos", "Ticket prom.", "% Cancel."]],
       body: input.topBarbers.map((b) => [
         b.name,
         String(b.count),
         formatARS(b.revenue),
+        formatARS(b.averageTicket),
+        `${b.cancellationRate.toFixed(1)}%`,
       ]),
       theme: "grid",
       headStyles: { fillColor: GOLD, textColor: DARK, fontStyle: "bold" },
       styles: { fontSize: 9, cellPadding: 6 },
+      columnStyles: {
+        1: { halign: "right" },
+        2: { halign: "right" },
+        3: { halign: "right" },
+        4: { halign: "right" },
+      },
       margin: { left: margin, right: margin },
     });
 
@@ -242,4 +295,58 @@ export function generateBarbershopReportPDF(input: ReportInput): void {
   // ─── SAVE ────────────────────────────────────────────────────────
   const filename = `reporte-${input.barbershopName.toLowerCase().replace(/\s+/g, "-")}-${input.periodLabel.toLowerCase().replace(/\s+/g, "-")}.pdf`;
   doc.save(filename);
+}
+
+/**
+ * Dibuja un sparkline (mini-gráfico de líneas) en el PDF.
+ * Útil para visualizar tendencia de una serie temporal sin tablas.
+ */
+function drawSparkline(opts: {
+  doc: jsPDF;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  values: number[];
+  label?: string;
+}): void {
+  const { doc, x, y, width, height, values, label } = opts;
+  if (values.length === 0) return;
+
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const range = max - min || 1;
+
+  // Label arriba
+  if (label) {
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...MUTED);
+    doc.text(label.toUpperCase(), x, y - 2);
+  }
+
+  // Frame sutil
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.3);
+  doc.rect(x, y, width, height);
+
+  // Línea principal
+  doc.setDrawColor(...GOLD);
+  doc.setLineWidth(1.5);
+
+  const stepX = values.length > 1 ? width / (values.length - 1) : 0;
+  for (let i = 1; i < values.length; i++) {
+    const x1 = x + (i - 1) * stepX;
+    const y1 = y + height - ((values[i - 1] - min) / range) * height;
+    const x2 = x + i * stepX;
+    const y2 = y + height - ((values[i] - min) / range) * height;
+    doc.line(x1, y1, x2, y2);
+  }
+
+  // Punto en último valor para destacar
+  const lastIdx = values.length - 1;
+  const lastX = x + lastIdx * stepX;
+  const lastY = y + height - ((values[lastIdx] - min) / range) * height;
+  doc.setFillColor(...GOLD);
+  doc.circle(lastX, lastY, 2, "F");
 }

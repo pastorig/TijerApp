@@ -11,6 +11,8 @@ type Props = {
   periodLabel: string;
   appointments: AppointmentRow[];
   barbers: BarberRow[];
+  /** Opcional: appointments del período anterior para comparativa. */
+  previousAppointments?: AppointmentRow[];
 };
 
 /**
@@ -25,6 +27,7 @@ export function ExportReportPdfButton({
   periodLabel,
   appointments,
   barbers,
+  previousAppointments,
 }: Props) {
   const toast = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -41,12 +44,28 @@ export function ExportReportPdfButton({
       0,
     );
     const avgTicket = confirmed.length > 0 ? totalRevenue / confirmed.length : 0;
+
+    let previousRevenue: number | undefined;
+    let previousCount: number | undefined;
+    if (previousAppointments && previousAppointments.length > 0) {
+      const prevConfirmed = previousAppointments.filter(
+        (a) => a.status === "confirmed" || a.status === "pending",
+      );
+      previousRevenue = prevConfirmed.reduce(
+        (acc, a) => acc + (Number(a.service_price) || 0),
+        0,
+      );
+      previousCount = prevConfirmed.length;
+    }
+
     return {
       totalAppointments: appointments.length,
       confirmedAppointments: confirmed.length,
       cancelledAppointments: cancelled.length,
       totalRevenue,
       averageTicket: avgTicket,
+      previousRevenue,
+      previousCount,
     };
   }
 
@@ -66,20 +85,36 @@ export function ExportReportPdfButton({
   }
 
   function aggregateTopBarbers() {
-    const map = new Map<string, { count: number; revenue: number }>();
+    // Trackeamos count, revenue, y cancellations separados para calcular
+    // ticket promedio y % de cancelaciones en el PDF.
+    const map = new Map<
+      string,
+      { count: number; revenue: number; cancellations: number; total: number }
+    >();
     for (const a of appointments) {
-      if (a.status === "cancelled" || a.status === "deleted") continue;
       const barber = barbers.find((b) => b.id === a.barber_id);
       const name =
         barber?.display_name?.trim() || barber?.name || a.barber_name;
-      const entry = map.get(name) ?? { count: 0, revenue: 0 };
-      entry.count += 1;
-      entry.revenue += Number(a.service_price) || 0;
+      const entry =
+        map.get(name) ?? { count: 0, revenue: 0, cancellations: 0, total: 0 };
+      entry.total += 1;
+      if (a.status === "cancelled" || a.status === "deleted") {
+        entry.cancellations += 1;
+      } else {
+        entry.count += 1;
+        entry.revenue += Number(a.service_price) || 0;
+      }
       map.set(name, entry);
     }
     return Array.from(map.entries())
-      .map(([name, v]) => ({ name, ...v }))
-      .sort((a, b) => b.count - a.count)
+      .map(([name, v]) => ({
+        name,
+        count: v.count,
+        revenue: v.revenue,
+        averageTicket: v.count > 0 ? v.revenue / v.count : 0,
+        cancellationRate: v.total > 0 ? (v.cancellations / v.total) * 100 : 0,
+      }))
+      .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
   }
 
