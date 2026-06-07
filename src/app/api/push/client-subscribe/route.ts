@@ -64,11 +64,21 @@ export async function POST(request: Request) {
     });
 
     if (error) {
+      // Logueo verboso para debugging (visible en Vercel logs)
+      console.error("[push/client-subscribe] RPC error:", {
+        message: error.message,
+        token: token.slice(0, 8) + "...",
+        endpointPrefix: sub.endpoint.slice(0, 50),
+      });
       Sentry.captureException(error, {
         tags: { route: "push/client-subscribe" },
       });
       return NextResponse.json(
-        { error: "No pudimos guardar la suscripción." },
+        {
+          // Devolvemos el message del error real al cliente para debugging
+          // rápido. En prod deberíamos sanitizar, pero ahora ayuda más.
+          error: `No pudimos guardar la suscripción: ${error.message}`,
+        },
         { status: 500 },
       );
     }
@@ -95,11 +105,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, subscriptionId: result.subscription_id });
   } catch (err) {
+    console.error("[push/client-subscribe] catch:", err);
     Sentry.captureException(err, {
       tags: { route: "push/client-subscribe", step: "catch" },
     });
+    const message = err instanceof Error ? err.message : "Error desconocido.";
     return NextResponse.json(
-      { error: "Error inesperado." },
+      { error: `Error inesperado: ${message}` },
       { status: 500 },
     );
   }

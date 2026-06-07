@@ -8,6 +8,7 @@ import {
   CalendarDays,
   Check,
   Clock3,
+  Gift,
   LineChart,
   MessageCircle,
   Moon,
@@ -17,8 +18,10 @@ import {
   Scissors,
   Settings,
   Star,
+  Tag,
   User,
   Users,
+  UserPlus,
 } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { listAppointmentsByBarbershop } from "@/lib/appointments";
@@ -821,6 +824,21 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
                 href={`/${barbershop.slug}/admin/reportes`}
                 icon={<LineChart className="size-5" aria-hidden="true" />}
                 label="Reportes"
+              />
+              <QuickActionIcon
+                href={`/${barbershop.slug}/admin/fidelizacion`}
+                icon={<Gift className="size-5" aria-hidden="true" />}
+                label="Fidelización"
+              />
+              <QuickActionIcon
+                href={`/${barbershop.slug}/admin/cupones`}
+                icon={<Tag className="size-5" aria-hidden="true" />}
+                label="Cupones"
+              />
+              <QuickActionIcon
+                href={`/${barbershop.slug}/admin/equipo`}
+                icon={<UserPlus className="size-5" aria-hidden="true" />}
+                label="Equipo"
               />
               <QuickActionIcon
                 href={`/${barbershop.slug}/admin/settings`}

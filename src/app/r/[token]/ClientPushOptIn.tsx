@@ -96,7 +96,14 @@ export function ClientPushOptIn({ token }: Props) {
 
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string };
-        toast.error("No se pudo activar", { description: err.error });
+        toast.error("No se pudo activar", {
+          description: err.error ?? `HTTP ${res.status}`,
+        });
+        // Logueo para inspeccionar en DevTools si el toast no es claro
+        console.error("[ClientPushOptIn] subscribe failed:", {
+          status: res.status,
+          error: err.error,
+        });
         return;
       }
 
