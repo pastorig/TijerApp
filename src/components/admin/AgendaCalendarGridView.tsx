@@ -149,10 +149,12 @@ function DraggableAppointmentCard({
   appointment,
   isOverlay = false,
   isLocked = false,
+  wasRecentlyDropped = false,
 }: {
   appointment: AppointmentRow;
   isOverlay?: boolean;
   isLocked?: boolean;
+  wasRecentlyDropped?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `appt:${appointment.id}`,
@@ -188,6 +190,9 @@ function DraggableAppointmentCard({
           "opacity-20 scale-95 [filter:blur(0.5px)]",
         isOverlay &&
           "shadow-[0_20px_60px_-10px_rgba(0,0,0,0.8),0_0_30px_-5px_color-mix(in_oklab,var(--brand-gold)_40%,transparent)] scale-105 rotate-[-1.5deg] ring-2 ring-[color:var(--brand-gold)]",
+        // Animación bounce de aterrizaje cuando el card recién fue movido.
+        // El parent (GridView) setea wasRecentlyDropped por 700ms.
+        wasRecentlyDropped && !isOverlay && "animate-drop-land",
       )}
       style={{
         minHeight: SLOT_HEIGHT_PX - 4,
@@ -258,6 +263,8 @@ function DroppableSlot({
   const isAvailableDropTarget =
     isInWorkingHours && !isOccupied && !isDayLocked;
   const showDragHint = isAvailableDropTarget && isDragActive;
+  // Slot ocupado durante drag activo → tooltip "Ocupado" al hover
+  const showBusyTooltip = isOccupied && isDragActive && !isDayLocked;
 
   return (
     <div
@@ -270,13 +277,15 @@ function DroppableSlot({
         showDragHint &&
           !isOver &&
           "bg-[color:var(--brand-gold-soft)]/30 ring-1 ring-[color:var(--brand-gold)]/40 ring-inset",
-        // Hover over: highlight sólido
+        // Hover over: highlight sólido + animación pulse para destacar
         isOver &&
-          "bg-[color:var(--brand-gold-soft)] ring-2 ring-[color:var(--brand-gold)] ring-inset scale-[1.02] z-10",
+          "bg-[color:var(--brand-gold-soft)] ring-2 ring-[color:var(--brand-gold)] ring-inset scale-[1.02] z-10 animate-drop-target-pulse",
         // Idle hover (sin drag activo): leve highlight
         isAvailableDropTarget &&
           !isDragActive &&
           "hover:bg-[color:var(--surface-2)]/40",
+        // Slot ocupado + drag activo: muestra tooltip "Ocupado" al hover
+        showBusyTooltip && "busy-slot-tooltip",
       )}
       style={{ height: SLOT_HEIGHT_PX }}
     >
@@ -301,6 +310,11 @@ export function AgendaCalendarGridView({
     useState<AppointmentRow | null>(null);
   const [notifyContext, setNotifyContext] =
     useState<RescheduleNotifyContext | null>(null);
+  // Trackeamos qué appointment recién se movió para animarlo con el
+  // bounce de "aterrizaje" (animate-drop-land). Se limpia tras 700ms.
+  const [recentlyDroppedId, setRecentlyDroppedId] = useState<string | null>(
+    null,
+  );
 
   // Sensors separados para mouse y touch porque tienen UX distinta:
   // - Mouse: drag inicia después de 6px de movimiento (rápido, sin delay)
@@ -415,6 +429,20 @@ export function AgendaCalendarGridView({
       | undefined;
     if (data?.appointment) {
       setActiveAppointment(data.appointment);
+      // Haptic feedback en mobile: vibración corta de 30ms al activar
+      // el drag. Confirma sin texto que "agarraste" el card. Algunos
+      // browsers/devices no soportan Vibration API → ignoramos silently.
+      if (
+        typeof navigator !== "undefined" &&
+        "vibrate" in navigator &&
+        typeof navigator.vibrate === "function"
+      ) {
+        try {
+          navigator.vibrate(30);
+        } catch {
+          /* noop */
+        }
+      }
     }
   }
 
@@ -486,6 +514,31 @@ export function AgendaCalendarGridView({
         description: `${appointment.customer_name} → ${dropTarget.time}`,
       });
       onMoveComplete(result.appointment);
+
+      // Haptic feedback de éxito: pattern corto-medio para confirmar drop
+      // exitoso (distinto del start). Solo en devices que soporten.
+      if (
+        typeof navigator !== "undefined" &&
+        "vibrate" in navigator &&
+        typeof navigator.vibrate === "function"
+      ) {
+        try {
+          navigator.vibrate([20, 40, 20]);
+        } catch {
+          /* noop */
+        }
+      }
+
+      // Marcar el appointment como "recién movido" para que renderee con
+      // el bounce de aterrizaje. Se limpia tras 700ms (duración animación).
+      if (appointment.id) {
+        setRecentlyDroppedId(appointment.id);
+        setTimeout(() => {
+          setRecentlyDroppedId((current) =>
+            current === appointment.id ? null : current,
+          );
+        }, 700);
+      }
 
       // Abrir el modal para notificar al cliente del cambio.
       // El email automático se dispara solo al montar el modal; el botón
@@ -645,6 +698,9 @@ export function AgendaCalendarGridView({
                         <DraggableAppointmentCard
                           appointment={appointment}
                           isLocked={isDayLocked}
+                          wasRecentlyDropped={
+                            recentlyDroppedId === appointment.id
+                          }
                         />
                       ) : null}
                     </DroppableSlot>

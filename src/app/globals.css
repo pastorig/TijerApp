@@ -326,6 +326,91 @@ option:hover {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   Drag & drop polish
+   ───────────────────────────────────────────────────────────── */
+
+/* Bounce de "aterrizaje" cuando un card recién fue movido a su nueva
+   posición. Subtle pero notable: pequeño rebote con scale + glow gold
+   que desaparece después de ~500ms. */
+@keyframes tijerapp-drop-land {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(201, 162, 62, 0);
+  }
+  20% {
+    transform: scale(1.08);
+    box-shadow:
+      0 0 0 6px rgba(201, 162, 62, 0.35),
+      0 0 20px 4px rgba(201, 162, 62, 0.4);
+  }
+  60% {
+    transform: scale(0.98);
+    box-shadow: 0 0 0 2px rgba(201, 162, 62, 0.2);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(201, 162, 62, 0);
+  }
+}
+
+.animate-drop-land {
+  animation: tijerapp-drop-land 600ms var(--ease-out-soft);
+}
+
+/* Pulse de slot drop target — más intenso que hover normal. Para destacar
+   visualmente que estás "encima" de un slot válido durante drag. */
+@keyframes tijerapp-drop-target-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(201, 162, 62, 0.5) inset;
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(201, 162, 62, 0.9) inset;
+  }
+}
+
+.animate-drop-target-pulse {
+  animation: tijerapp-drop-target-pulse 800ms ease-in-out infinite;
+}
+
+/* Tooltip CSS-only para slots ocupados durante drag. Aparece arriba del
+   slot con flecha hacia abajo. */
+.busy-slot-tooltip {
+  position: relative;
+}
+.busy-slot-tooltip:hover::after {
+  content: "Ocupado";
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface-2);
+  color: var(--danger);
+  border: 1px solid color-mix(in oklab, var(--danger) 40%, transparent);
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 30;
+  animation: tijerapp-fade-in-soft 120ms var(--ease-out-soft) both;
+}
+.busy-slot-tooltip:hover::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 1px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--surface-2);
+  pointer-events: none;
+  z-index: 30;
+}
+
+/* ─────────────────────────────────────────────────────────────
    Animaciones reutilizables
    ─────────────────────────────────────────────────────────────
    Filosofía: micro-animaciones cortas (150-360ms), curva ease-out
