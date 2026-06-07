@@ -466,6 +466,42 @@ type LoyaltyStampInsert = {
 
 type LoyaltyStampUpdate = Partial<LoyaltyStampInsert>;
 
+// ─── Coupons ────────────────────────────────────────────────────────────────
+
+type CouponDiscountType = "percent" | "fixed";
+
+type CouponRow = {
+  id: string;
+  barbershop_slug: string;
+  code: string;
+  description: string | null;
+  discount_type: CouponDiscountType;
+  discount_value: number;
+  valid_from: string | null;
+  valid_until: string | null;
+  usage_limit: number | null;
+  usage_count: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+type CouponInsert = {
+  id?: string;
+  barbershop_slug: string;
+  code: string;
+  description?: string | null;
+  discount_type: CouponDiscountType;
+  discount_value: number;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  usage_limit?: number | null;
+  usage_count?: number;
+  is_active?: boolean;
+};
+
+type CouponUpdate = Partial<CouponInsert> & { updated_at?: string };
+
 type Database = {
   public: {
     Tables: {
@@ -583,6 +619,12 @@ type Database = {
         Update: LoyaltyStampUpdate;
         Relationships: [];
       };
+      coupons: {
+        Row: CouponRow;
+        Insert: CouponInsert;
+        Update: CouponUpdate;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -680,6 +722,22 @@ type Database = {
           is_program_active: boolean;
         }>;
       };
+      validate_coupon_for_booking: {
+        Args: {
+          p_barbershop_slug: string;
+          p_code: string;
+          p_service_price?: number | null;
+        };
+        Returns: Array<{
+          is_valid: boolean;
+          error_code: string | null;
+          coupon_id: string | null;
+          discount_type: CouponDiscountType | null;
+          discount_value: number | null;
+          discount_amount: number | null;
+          final_price: number | null;
+        }>;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -758,4 +816,8 @@ export type {
   LoyaltyStampRow,
   LoyaltyStampInsert,
   LoyaltyStampUpdate,
+  CouponDiscountType,
+  CouponRow,
+  CouponInsert,
+  CouponUpdate,
 };
