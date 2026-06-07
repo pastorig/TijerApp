@@ -1,0 +1,25 @@
+name: Monthly Reports Cron
+
+# Corre el día 1 de cada mes a las 12:30 UTC (~9:30 AM ART).
+# Envía resumen del mes anterior por email a cada owner.
+on:
+  schedule:
+    - cron: "30 12 1 * *"
+  workflow_dispatch:
+
+jobs:
+  trigger-monthly-reports:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/monthly-reports
+        run: |
+          response=$(curl -s -L --post301 --post302 --post303 \
+            -o /tmp/cron-body -w "%{http_code}" \
+            -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.CRON_BASE_URL }}/api/cron/monthly-reports")
+          echo "HTTP $response"
+          cat /tmp/cron-body
+          if [ "$response" -ne 200 ]; then
+            exit 1
+          fi
