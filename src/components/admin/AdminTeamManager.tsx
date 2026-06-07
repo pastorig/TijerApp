@@ -90,7 +90,19 @@ export function AdminTeamManager({ barbershop }: Props) {
         toast.error("No se pudo invitar", { description: err.error });
         return;
       }
-      toast.success("Admin agregado", { description: email });
+      const data = (await res.json()) as {
+        createdNewAccount?: boolean;
+      };
+      toast.success(
+        data.createdNewAccount
+          ? "Cuenta creada e invitación enviada"
+          : "Admin agregado",
+        {
+          description: data.createdNewAccount
+            ? `Le mandamos el password temporal a ${email}`
+            : email,
+        },
+      );
       setEmail("");
       await load();
     } finally {
@@ -145,9 +157,9 @@ export function AdminTeamManager({ barbershop }: Props) {
           puede invitar y remover; los demás solo administran.
         </p>
         <OnboardingTip
-          id="team-first-visit"
-          title="El nuevo admin debe registrarse primero"
-          description="Quien vayas a invitar debe haberse registrado antes en TijerApp (login → Registrarme con su email). Después acá lo invitás con ese mismo email."
+          id="team-first-visit-v2"
+          title="Le creamos la cuenta automáticamente"
+          description="Ingresá el email del nuevo admin. Si no tiene cuenta, se la creamos con password temporal y le mandamos un email con instrucciones para entrar."
           placement="bottom"
           className="left-0 mt-3"
         />
@@ -160,8 +172,8 @@ export function AdminTeamManager({ barbershop }: Props) {
             Invitar admin
           </h2>
           <p className="mt-1 text-xs text-[color:var(--text-muted)]">
-            El usuario debe tener cuenta de TijerApp primero. Que se
-            registre en /login → tab Registrarme, después lo invitás acá.
+            Ingresá el email. Si no tiene cuenta, se la creamos automáticamente
+            y le mandamos por mail su contraseña temporal + link para acceder.
           </p>
           <form onSubmit={handleInvite} className="mt-4 flex flex-col gap-3 sm:flex-row">
             <input
