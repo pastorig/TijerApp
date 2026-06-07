@@ -418,6 +418,54 @@ type PushNotificationQueueInsert = {
 
 type PushNotificationQueueUpdate = Partial<PushNotificationQueueInsert>;
 
+// ─── Loyalty ────────────────────────────────────────────────────────────────
+
+type LoyaltyProgramRow = {
+  id: string;
+  barbershop_slug: string;
+  is_active: boolean;
+  visits_required: number;
+  reward_name: string;
+  reward_description: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type LoyaltyProgramInsert = {
+  id?: string;
+  barbershop_slug: string;
+  is_active?: boolean;
+  visits_required?: number;
+  reward_name?: string;
+  reward_description?: string | null;
+};
+
+type LoyaltyProgramUpdate = Partial<LoyaltyProgramInsert> & {
+  updated_at?: string;
+};
+
+type LoyaltyStampRow = {
+  id: string;
+  barbershop_slug: string;
+  customer_phone: string;
+  appointment_id: string | null;
+  earned_at: string;
+  redeemed_at: string | null;
+  redemption_note: string | null;
+};
+
+type LoyaltyStampInsert = {
+  id?: string;
+  barbershop_slug: string;
+  customer_phone: string;
+  appointment_id?: string | null;
+  earned_at?: string;
+  redeemed_at?: string | null;
+  redemption_note?: string | null;
+};
+
+type LoyaltyStampUpdate = Partial<LoyaltyStampInsert>;
+
 type Database = {
   public: {
     Tables: {
@@ -523,6 +571,18 @@ type Database = {
         Update: PushNotificationQueueUpdate;
         Relationships: [];
       };
+      loyalty_programs: {
+        Row: LoyaltyProgramRow;
+        Insert: LoyaltyProgramInsert;
+        Update: LoyaltyProgramUpdate;
+        Relationships: [];
+      };
+      loyalty_stamps: {
+        Row: LoyaltyStampRow;
+        Insert: LoyaltyStampInsert;
+        Update: LoyaltyStampUpdate;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -610,6 +670,16 @@ type Database = {
           created_at: string;
         }>;
       };
+      get_public_loyalty_status_by_token: {
+        Args: { p_token: string };
+        Returns: Array<{
+          visits_required: number;
+          reward_name: string;
+          reward_description: string | null;
+          active_stamps: number;
+          is_program_active: boolean;
+        }>;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -682,4 +752,10 @@ export type {
   PlatformOwnerInsert,
   PlatformOwnerRow,
   PlatformOwnerUpdate,
+  LoyaltyProgramRow,
+  LoyaltyProgramInsert,
+  LoyaltyProgramUpdate,
+  LoyaltyStampRow,
+  LoyaltyStampInsert,
+  LoyaltyStampUpdate,
 };

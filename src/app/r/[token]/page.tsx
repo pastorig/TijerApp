@@ -4,6 +4,7 @@ import { Logo } from "@/components/ui";
 import { resolveBarbershopBySlug } from "@/lib/barbershops";
 import { getPublicAppointmentByToken } from "@/lib/public-appointment";
 import { AppointmentActionPanel } from "./AppointmentActionPanel";
+import { PublicLoyaltyCard } from "./PublicLoyaltyCard";
 
 type PublicAppointmentPageProps = {
   params: Promise<{
@@ -61,6 +62,7 @@ export default async function PublicAppointmentPage({
           initialAppointment={appointmentWithName}
           showActions={false}
         />
+        <PublicLoyaltyCard token={token} />
       </div>
     </main>
   );

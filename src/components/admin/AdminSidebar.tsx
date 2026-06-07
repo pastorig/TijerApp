@@ -9,6 +9,7 @@ import {
   Clock,
   Contact,
   ExternalLink,
+  Gift,
   Image as ImageIcon,
   LayoutDashboard,
   LineChart,
@@ -17,6 +18,7 @@ import {
   Plus,
   Settings,
   Star,
+  Tag,
   Users,
   Wallet,
   X,
@@ -99,6 +101,16 @@ export function AdminSidebar({
       label: "Galería",
       href: `/${barbershopSlug}/admin/galeria`,
       icon: ImageIcon,
+    },
+    {
+      label: "Fidelización",
+      href: `/${barbershopSlug}/admin/fidelizacion`,
+      icon: Gift,
+    },
+    {
+      label: "Cupones",
+      href: `/${barbershopSlug}/admin/cupones`,
+      icon: Tag,
     },
     {
       label: "Configuración",
