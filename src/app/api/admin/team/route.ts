@@ -28,7 +28,8 @@ function generateTemporaryPassword(): string {
 /**
  * Envía el email de invitación al nuevo admin. Dos templates:
  *  - createdNewAccount=true → incluye email + password temporal + URL de login
- *  - createdNewAccount=false → solo confirma el acceso nuevo
+ *  - createdNewAccount=false → manda magic link de reset por si el user no
+ *    recuerda su password
  * Si Resend no está configurado, no rompe — solo loguea.
  */
 async function sendInvitationEmail(input: {
@@ -36,6 +37,10 @@ async function sendInvitationEmail(input: {
   barbershopSlug: string;
   createdNewAccount: boolean;
   temporaryPassword: string | null;
+  /** Base URL derivado del request actual (más robusto que env var). */
+  siteUrl: string;
+  /** Magic link para reset password (solo si user ya existía). */
+  resetPasswordLink: string | null;
 }): Promise<void> {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
@@ -43,9 +48,7 @@ async function sendInvitationEmail(input: {
     return;
   }
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://tijerapp.vercel.app";
-  const loginUrl = `${siteUrl.replace(/\/$/, "")}/login?next=${encodeURIComponent(`/${input.barbershopSlug}/admin`)}`;
+  const loginUrl = `${input.siteUrl.replace(/\/$/, "")}/login?next=${encodeURIComponent(`/${input.barbershopSlug}/admin`)}`;
   const fromAddress =
     process.env.OWNER_NOTIFICATION_FROM ||
     process.env.REMINDER_EMAIL_FROM ||
@@ -71,7 +74,12 @@ async function sendInvitationEmail(input: {
     </td></tr>`
     : `
     <tr><td style="padding-top:18px;">
-      <p style="margin:0;font-size:13px;color:#c8c8c8;">Ya tenés cuenta en TijerApp. Usá tu email y contraseña existentes para entrar.</p>
+      <p style="margin:0;font-size:13px;line-height:1.6;color:#c8c8c8;">Ya tenés cuenta en TijerApp. Usá tu email y contraseña existentes para entrar.</p>
+      ${
+        input.resetPasswordLink
+          ? `<p style="margin:14px 0 0;font-size:12px;color:#8a8a8a;">¿No la recordás? <a href="${input.resetPasswordLink}" style="color:#c9a23e;text-decoration:underline;">Resetear contraseña</a> (link válido por 1 hora).</p>`
+          : ""
+      }
     </td></tr>`;
 
   const html = `<!DOCTYPE html>
@@ -335,13 +343,42 @@ export async function POST(request: Request) {
     );
   }
 
-  // Mandar email de invitación. Si es cuenta nueva, incluye password temp.
-  // Si es usuario existente, solo notificamos que tiene acceso nuevo.
+  // Derivar el siteUrl desde el host del request (más confiable que env var
+  // que puede estar apuntando al deploy viejo o mal configurado en Vercel).
+  // Fallback al env si por alguna razón no hay host header.
+  const requestUrl = new URL(request.url);
+  const siteUrl =
+    `${requestUrl.protocol}//${requestUrl.host}` ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "https://tijerapp.vercel.app";
+
+  // Si el user YA existía y posiblemente no recuerda su password, le
+  // generamos un magic link de reset password para incluir en el email.
+  // El link expira en 1h (default de Supabase).
+  let resetPasswordLink: string | null = null;
+  if (!createdNewAccount) {
+    try {
+      const { data: linkData } = await supabase.auth.admin.generateLink({
+        type: "recovery",
+        email,
+        options: {
+          redirectTo: `${siteUrl}/login?next=${encodeURIComponent(`/${barbershopSlug}/admin`)}`,
+        },
+      });
+      resetPasswordLink = linkData?.properties?.action_link ?? null;
+    } catch (linkError) {
+      console.warn("[admin/team] Failed to generate reset link:", linkError);
+      // No bloqueamos — el email se manda sin el link
+    }
+  }
+
   await sendInvitationEmail({
     toEmail: email,
     barbershopSlug,
     createdNewAccount,
     temporaryPassword,
+    siteUrl,
+    resetPasswordLink,
   });
 
   return NextResponse.json({

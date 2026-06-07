@@ -95,113 +95,102 @@ export function OwnerInsights() {
   }
 
   return (
-    <section className="space-y-4">
-      <header>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
-          Insights estratégicos
-        </p>
-        <h2 className="mt-1 text-lg font-black uppercase tracking-tight text-white">
-          Health del SaaS
-        </h2>
+    <section className="space-y-3">
+      <header className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+            Insights estratégicos
+          </p>
+          <h2 className="mt-0.5 text-base font-black uppercase tracking-tight text-white sm:text-lg">
+            Health del SaaS
+          </h2>
+        </div>
       </header>
 
-      {/* KPIs financieros */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      {/* KPIs financieros + Health Status — 1 sola fila en desktop, stack en mobile */}
+      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
         <InsightCard
           icon={DollarSign}
-          label="MRR estimado"
+          label="MRR"
           value={`USD ${mrrEstimateUsd.toLocaleString("en-US")}`}
           hint={`${totalActive} barberías × $${ASSUMED_PRO_PRICE_USD}/mes`}
           highlight
         />
         <InsightCard
           icon={TrendingUp}
-          label="ARR proyectado"
+          label="ARR"
           value={`USD ${arr.toLocaleString("en-US")}`}
           hint="MRR × 12"
         />
         <InsightCard
           icon={Users2}
-          label="Barberías totales"
+          label="Barberías"
           value={String(barbershops.length)}
           hint={`${buckets.active.length} activas hoy`}
         />
       </div>
 
-      {/* Distribución de salud */}
-      <div className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 sm:p-5">
-        <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-[color:var(--text-secondary)]">
-          Distribución por health status
-        </h3>
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          <HealthBlock
-            label="Activas"
-            count={buckets.active.length}
-            tone="success"
-          />
-          <HealthBlock
-            label="Quiet"
-            count={buckets.quiet.length}
-            tone="warning"
-          />
-          <HealthBlock
-            label="Inactivas"
-            count={buckets.inactive.length}
-            tone="danger"
-          />
-        </div>
+      {/* Health blocks compactos en 1 fila */}
+      <div className="grid grid-cols-3 gap-2">
+        <HealthBlock
+          label="Activas"
+          count={buckets.active.length}
+          tone="success"
+        />
+        <HealthBlock
+          label="Quiet"
+          count={buckets.quiet.length}
+          tone="warning"
+        />
+        <HealthBlock
+          label="Inactivas"
+          count={buckets.inactive.length}
+          tone="danger"
+        />
       </div>
 
-      {/* Alertas operativas */}
+      {/* Alertas operativas — compactas */}
       {buckets.inactive.length > 0 ? (
-        <div className="rounded-[var(--radius-md)] border border-[color:var(--danger)]/30 bg-[color:var(--danger-soft)]/10 p-4 sm:p-5">
-          <div className="flex items-start gap-3">
+        <div className="rounded-[var(--radius-sm)] border border-[color:var(--danger)]/30 bg-[color:var(--danger-soft)]/10 p-3">
+          <div className="flex items-start gap-2.5">
             <AlertTriangle
               aria-hidden="true"
-              className="mt-0.5 size-5 shrink-0 text-[color:var(--danger)]"
+              className="mt-0.5 size-4 shrink-0 text-[color:var(--danger)]"
             />
             <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-bold text-white">
+              <p className="text-sm font-bold text-white">
                 {buckets.inactive.length} barbería
                 {buckets.inactive.length !== 1 ? "s" : ""} en riesgo de churn
-              </h3>
-              <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-                Sin actividad hace más de 14 días. Considerá contactarlas:
+                <span className="ml-1 font-normal text-[color:var(--text-muted)]">
+                  · 14d+ inactivas
+                </span>
               </p>
-              <ul className="mt-3 space-y-1.5">
-                {buckets.inactive.slice(0, 5).map((bs) => (
-                  <li
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {buckets.inactive.slice(0, 6).map((bs) => (
+                  <span
                     key={bs.slug}
-                    className="flex items-center justify-between gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] px-3 py-2 text-xs"
+                    className="inline-flex items-center rounded-full border border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] px-2.5 py-0.5 text-[11px] text-white"
                   >
-                    <span className="truncate text-white">{bs.name}</span>
-                    <code className="shrink-0 text-[10px] text-[color:var(--text-muted)]">
-                      {bs.slug}
-                    </code>
-                  </li>
+                    {bs.name}
+                  </span>
                 ))}
-                {buckets.inactive.length > 5 ? (
-                  <li className="text-center text-[10px] text-[color:var(--text-muted)]">
-                    + {buckets.inactive.length - 5} más
-                  </li>
+                {buckets.inactive.length > 6 ? (
+                  <span className="text-[10px] text-[color:var(--text-muted)]">
+                    + {buckets.inactive.length - 6} más
+                  </span>
                 ) : null}
-              </ul>
+              </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="rounded-[var(--radius-md)] border border-[color:var(--success)]/30 bg-[color:var(--success-soft)]/10 p-4 sm:p-5">
-          <div className="flex items-center gap-3">
-            <Activity
-              aria-hidden="true"
-              className="size-5 shrink-0 text-[color:var(--success)]"
-            />
-            <p className="text-sm font-bold text-white">
-              🎉 Ninguna barbería en riesgo de churn
-            </p>
-          </div>
-          <p className="mt-1 pl-8 text-xs text-[color:var(--text-secondary)]">
-            Todas las barberías tuvieron actividad en los últimos 14 días.
+        <div className="flex items-center gap-2.5 rounded-[var(--radius-sm)] border border-[color:var(--success)]/30 bg-[color:var(--success-soft)]/10 px-3 py-2">
+          <Activity
+            aria-hidden="true"
+            className="size-4 shrink-0 text-[color:var(--success)]"
+          />
+          <p className="text-xs font-semibold text-white">
+            Ninguna barbería en riesgo de churn (todas activas en los últimos 14 días)
           </p>
         </div>
       )}
@@ -225,32 +214,32 @@ function InsightCard({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-md)] border bg-[color:var(--surface-1)] p-3 sm:p-4",
+        "rounded-[var(--radius-sm)] border bg-[color:var(--surface-1)] px-3 py-2.5",
         highlight
           ? "border-[color:var(--brand-gold)]/40 ring-1 ring-[color:var(--brand-gold)]/20"
           : "border-[color:var(--border-subtle)]",
       )}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-center gap-2.5">
         <Icon
           aria-hidden="true"
           className={cn(
-            "mt-0.5 size-4 shrink-0",
+            "size-3.5 shrink-0",
             highlight
               ? "text-[color:var(--brand-gold)]"
               : "text-[color:var(--text-muted)]",
           )}
         />
-        <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)] sm:text-[11px]">
-            {label}
-          </p>
-          <p className="mt-1 stat-number text-lg font-black tracking-tight text-white sm:text-xl">
-            {value}
-          </p>
-          <p className="mt-0.5 text-[10px] text-[color:var(--text-muted)]">
-            {hint}
-          </p>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+              {label}
+            </p>
+            <p className="stat-number text-base font-black tracking-tight text-white sm:text-lg">
+              {value}
+            </p>
+          </div>
+          <p className="text-[10px] text-[color:var(--text-muted)]">{hint}</p>
         </div>
       </div>
     </div>
@@ -267,15 +256,26 @@ function HealthBlock({
   tone: "success" | "warning" | "danger";
 }) {
   const toneClasses = {
-    success: "border-[color:var(--success)]/30 bg-[color:var(--success-soft)] text-[color:var(--success)]",
+    success:
+      "border-[color:var(--success)]/30 bg-[color:var(--success-soft)] text-[color:var(--success)]",
     warning: "border-amber-400/30 bg-amber-400/10 text-amber-300",
-    danger: "border-[color:var(--danger)]/30 bg-[color:var(--danger-soft)] text-[color:var(--danger)]",
+    danger:
+      "border-[color:var(--danger)]/30 bg-[color:var(--danger-soft)] text-[color:var(--danger)]",
   };
 
   return (
-    <div className={cn("rounded-[var(--radius-sm)] border p-3 text-center", toneClasses[tone])}>
-      <p className="stat-number text-2xl font-black leading-none">{count}</p>
-      <p className="mt-1 text-[10px] uppercase tracking-[0.14em]">{label}</p>
+    <div
+      className={cn(
+        "flex items-center justify-between gap-2 rounded-[var(--radius-sm)] border px-3 py-2",
+        toneClasses[tone],
+      )}
+    >
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em]">
+        {label}
+      </p>
+      <p className="stat-number text-xl font-black leading-none tabular-nums">
+        {count}
+      </p>
     </div>
   );
 }
