@@ -86,7 +86,7 @@ export default function PricingPage() {
               </Link>
               <Button
                 as="link"
-                href="/sv-barber"
+                href="/primebarber"
                 size="lg"
                 variant="secondary"
                 className="w-full sm:w-auto"

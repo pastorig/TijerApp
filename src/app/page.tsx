@@ -116,7 +116,7 @@ export default function Home() {
               </Link>
               <Button
                 as="link"
-                href="/sv-barber"
+                href="/primebarber"
                 variant="secondary"
                 size="lg"
                 className="w-full sm:w-auto"

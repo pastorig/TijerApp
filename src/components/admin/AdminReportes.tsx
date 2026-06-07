@@ -14,6 +14,7 @@ import {
 import type { AppointmentRow, BarberRow } from "@/lib/supabase";
 import { Select } from "@/components/ui";
 import { getTodayYmd, parseYmd, toYmd } from "./date-utils";
+import { ExportReportPdfButton } from "./ExportReportPdfButton";
 
 type AdminReportesProps = {
   barbershop: DemoBarbershop;
@@ -451,20 +452,31 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
               })}
             </div>
 
-            {barberOptions.length > 1 ? (
-              <Select
-                aria-label="Filtrar por barbero"
-                value={selectedBarber}
-                onChange={(e) => setSelectedBarber(e.target.value)}
-              >
-                <option value="all">Todos los barberos</option>
-                {barberOptions.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </Select>
-            ) : null}
+            <div className="flex items-center gap-2">
+              {barberOptions.length > 1 ? (
+                <Select
+                  aria-label="Filtrar por barbero"
+                  value={selectedBarber}
+                  onChange={(e) => setSelectedBarber(e.target.value)}
+                  className="flex-1"
+                >
+                  <option value="all">Todos los barberos</option>
+                  {barberOptions.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </Select>
+              ) : null}
+              <ExportReportPdfButton
+                barbershopName={barbershop.name}
+                periodLabel={
+                  PERIOD_OPTIONS.find((p) => p.value === period)?.label ?? "Período"
+                }
+                appointments={currentAppointments}
+                barbers={barbers}
+              />
+            </div>
           </section>
 
           {/* KPIs · Operación */}

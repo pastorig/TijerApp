@@ -68,7 +68,7 @@ export default function ProductPage() {
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Button
                 as="link"
-                href="/sv-barber"
+                href="/primebarber"
                 size="lg"
                 iconRight={<ArrowUpRight className="size-4" />}
                 className="w-full sm:w-auto"
@@ -109,7 +109,7 @@ export default function ProductPage() {
             <div className="mt-8 flex justify-center">
               <Button
                 as="link"
-                href="/sv-barber"
+                href="/primebarber"
                 size="lg"
                 iconRight={<ArrowUpRight className="size-4" />}
               >

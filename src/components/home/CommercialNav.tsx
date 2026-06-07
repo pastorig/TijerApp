@@ -28,7 +28,7 @@ export function CommercialNav() {
           </Link>
           <Button
             as="link"
-            href="/sv-barber"
+            href="/primebarber"
             variant="ghost"
             size="sm"
             className="hidden sm:inline-flex"

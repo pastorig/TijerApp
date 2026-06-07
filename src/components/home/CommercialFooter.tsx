@@ -38,7 +38,7 @@ export function CommercialFooter() {
               </li>
               <li>
                 <Link
-                  href="/sv-barber"
+                  href="/primebarber"
                   className="text-sm text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
                 >
                   Demo en vivo
