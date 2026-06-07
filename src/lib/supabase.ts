@@ -88,10 +88,23 @@ type BarbershopAdminRow = {
   user_id: string;
   barbershop_slug: string;
   role: string;
+  // Agregados en migration 20260607120000_multi_admin.sql.
+  // Opcionales en el tipo para que SELECT viejos (que no traen estas
+  // columnas) sigan compilando.
+  is_owner?: boolean;
+  invited_by?: string | null;
+  created_at?: string;
 };
 
-type BarbershopAdminInsert = BarbershopAdminRow;
-type BarbershopAdminUpdate = Partial<BarbershopAdminRow>;
+type BarbershopAdminInsert = {
+  user_id: string;
+  barbershop_slug: string;
+  role?: string;
+  is_owner?: boolean;
+  invited_by?: string | null;
+  created_at?: string;
+};
+type BarbershopAdminUpdate = Partial<BarbershopAdminInsert>;
 
 type PublicOccupiedAppointmentTimeRow = {
   appointment_time: string;

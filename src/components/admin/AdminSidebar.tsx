@@ -113,6 +113,11 @@ export function AdminSidebar({
       icon: Tag,
     },
     {
+      label: "Equipo",
+      href: `/${barbershopSlug}/admin/equipo`,
+      icon: Users,
+    },
+    {
       label: "Configuración",
       href: `/${barbershopSlug}/admin/settings`,
       icon: Settings,
