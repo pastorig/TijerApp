@@ -26,10 +26,12 @@ function generateTemporaryPassword(): string {
 }
 
 /**
- * Envía el email de invitación al nuevo admin. Dos templates:
- *  - createdNewAccount=true → incluye email + password temporal + URL de login
- *  - createdNewAccount=false → manda magic link de reset por si el user no
- *    recuerda su password
+ * Envía el email de invitación al nuevo admin.
+ * SIEMPRE incluye email + password temporal (sea cuenta nueva o existente con
+ * password reseteada). Adicionalmente, si tenemos el resetPasswordLink, lo
+ * incluimos como opción para que el user pueda setear su propia password
+ * directo desde el email sin loguearse primero con la temporal.
+ *
  * Si Resend no está configurado, no rompe — solo loguea.
  */
 async function sendInvitationEmail(input: {
@@ -37,9 +39,7 @@ async function sendInvitationEmail(input: {
   barbershopSlug: string;
   createdNewAccount: boolean;
   temporaryPassword: string | null;
-  /** Base URL derivado del request actual (más robusto que env var). */
   siteUrl: string;
-  /** Magic link para reset password (solo si user ya existía). */
   resetPasswordLink: string | null;
 }): Promise<void> {
   const resendKey = process.env.RESEND_API_KEY;
@@ -49,17 +49,23 @@ async function sendInvitationEmail(input: {
   }
 
   const loginUrl = `${input.siteUrl.replace(/\/$/, "")}/login?next=${encodeURIComponent(`/${input.barbershopSlug}/admin`)}`;
-  const fromAddress =
+  // Solo aceptamos from que mencione TijerApp. Si el env var dice otra cosa
+  // (ej. BarberSync del proyecto viejo), fallback al default seguro.
+  const rawFrom =
     process.env.OWNER_NOTIFICATION_FROM ||
     process.env.REMINDER_EMAIL_FROM ||
-    "TijerApp <onboarding@resend.dev>";
+    "";
+  const fromAddress = /tijerapp/i.test(rawFrom)
+    ? rawFrom
+    : "TijerApp <onboarding@resend.dev>";
 
   const subject = input.createdNewAccount
     ? `Te invitaron a administrar una barbería en TijerApp`
-    : `Tenés acceso nuevo a una barbería en TijerApp`;
+    : `Te dieron acceso a una barbería en TijerApp`;
 
-  const credentialsBlock = input.createdNewAccount
-    ? `
+  // Bloque de credenciales — siempre incluido ahora. La password temporal
+  // siempre se setea (creación nueva o reset de usuario existente).
+  const credentialsBlock = `
     <tr><td style="padding-top:18px;">
       <table width="100%" cellpadding="0" cellspacing="0" style="background:#161616;border-radius:6px;padding:18px;border:1px solid rgba(201,162,62,0.2);">
         <tr><td>
@@ -68,19 +74,21 @@ async function sendInvitationEmail(input: {
           <p style="margin:4px 0 12px;font-family:monospace;font-size:14px;color:#fff;">${input.toEmail}</p>
           <p style="margin:0;font-size:11px;color:#8a8a8a;">Contraseña temporal</p>
           <p style="margin:4px 0 8px;font-family:monospace;font-size:14px;color:#fff;background:#0a0a0a;padding:8px 10px;border-radius:4px;letter-spacing:0.5px;">${input.temporaryPassword}</p>
-          <p style="margin:10px 0 0;font-size:11px;color:#c8c8c8;">Cambiala una vez que entres, en Configuración → Seguridad.</p>
+          <p style="margin:10px 0 0;font-size:11px;color:#c8c8c8;">${
+            input.createdNewAccount
+              ? "Cambiala una vez que entres, en Configuración → Seguridad."
+              : "Tu contraseña anterior fue reemplazada. Podés volver a cambiarla en Configuración → Seguridad."
+          }</p>
         </td></tr>
       </table>
-    </td></tr>`
-    : `
-    <tr><td style="padding-top:18px;">
-      <p style="margin:0;font-size:13px;line-height:1.6;color:#c8c8c8;">Ya tenés cuenta en TijerApp. Usá tu email y contraseña existentes para entrar.</p>
-      ${
-        input.resetPasswordLink
-          ? `<p style="margin:14px 0 0;font-size:12px;color:#8a8a8a;">¿No la recordás? <a href="${input.resetPasswordLink}" style="color:#c9a23e;text-decoration:underline;">Resetear contraseña</a> (link válido por 1 hora).</p>`
-          : ""
-      }
-    </td></tr>`;
+    </td></tr>
+    ${
+      input.resetPasswordLink
+        ? `<tr><td style="padding-top:14px;">
+            <p style="margin:0;font-size:11px;color:#8a8a8a;line-height:1.6;">¿Preferís setear tu propia contraseña directo? <a href="${input.resetPasswordLink}" style="color:#c9a23e;text-decoration:underline;">Hacé clic acá</a> (válido 1 hora).</p>
+          </td></tr>`
+        : ""
+    }`;
 
   const html = `<!DOCTYPE html>
 <html lang="es">
@@ -91,7 +99,7 @@ async function sendInvitationEmail(input: {
         <tr><td style="padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,0.06);">
           <p style="margin:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#c9a23e;">TijerApp</p>
           <h1 style="margin:8px 0 0;font-size:22px;font-weight:900;color:#fff;line-height:1.25;">
-            ${input.createdNewAccount ? "Te invitaron a administrar una barbería" : "Tenés acceso nuevo"}
+            ${input.createdNewAccount ? "Te invitaron a administrar una barbería" : "Te dieron acceso a una barbería"}
           </h1>
         </td></tr>
         <tr><td style="padding-top:18px;">
@@ -284,19 +292,18 @@ export async function POST(request: Request) {
   );
 
   let createdNewAccount = false;
-  let temporaryPassword: string | null = null;
+  // SIEMPRE generamos password temporal — sea cuenta nueva o existente.
+  // Si el user ya existía, le RESETEAMOS la password con esta temporal.
+  // El user recibe email + password temp y entra. Después puede cambiarla.
+  const temporaryPassword = generateTemporaryPassword();
 
   if (!targetUser) {
-    // El email no tiene cuenta → la creamos automáticamente con password
-    // temporal random. Esto evita que el invitado tenga que auto-registrarse
-    // (UX más simple + seguridad: cuentas solo se crean si owner aprueba).
-    temporaryPassword = generateTemporaryPassword();
-
+    // El email no tiene cuenta → la creamos automáticamente
     const { data: newUserData, error: createError } =
       await supabase.auth.admin.createUser({
         email,
         password: temporaryPassword,
-        email_confirm: true, // auto-confirmamos el email — no requiere verificación
+        email_confirm: true, // auto-confirmamos el email
         user_metadata: {
           invited_by_user_id: userId,
           invited_to_barbershop: barbershopSlug,
@@ -320,6 +327,22 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Ese usuario ya es admin de esta barbería." },
         { status: 409 },
+      );
+    }
+    // Resetear su password con la temporal nueva. Pisamos lo que tuviera
+    // antes — el user va a usar la temporal del email + puede cambiarla
+    // después. Esto se hace porque el owner-flow asume control total.
+    const { error: resetError } = await supabase.auth.admin.updateUserById(
+      targetUser.id,
+      { password: temporaryPassword },
+    );
+    if (resetError) {
+      Sentry.captureException(resetError, {
+        tags: { route: "admin/team", step: "resetPassword" },
+      });
+      return NextResponse.json(
+        { error: "No pudimos resetear la contraseña del usuario." },
+        { status: 500 },
       );
     }
   }
@@ -352,24 +375,23 @@ export async function POST(request: Request) {
     process.env.NEXT_PUBLIC_SITE_URL ||
     "https://tijerapp.vercel.app";
 
-  // Si el user YA existía y posiblemente no recuerda su password, le
-  // generamos un magic link de reset password para incluir en el email.
-  // El link expira en 1h (default de Supabase).
+  // Magic link de recovery para incluir como opción adicional. El user
+  // siempre recibe password temporal, pero también el link de reset por
+  // si prefiere setear su propia password directo en lugar de cambiarla
+  // después del login. Link válido 1h (default Supabase).
   let resetPasswordLink: string | null = null;
-  if (!createdNewAccount) {
-    try {
-      const { data: linkData } = await supabase.auth.admin.generateLink({
-        type: "recovery",
-        email,
-        options: {
-          redirectTo: `${siteUrl}/login?next=${encodeURIComponent(`/${barbershopSlug}/admin`)}`,
-        },
-      });
-      resetPasswordLink = linkData?.properties?.action_link ?? null;
-    } catch (linkError) {
-      console.warn("[admin/team] Failed to generate reset link:", linkError);
-      // No bloqueamos — el email se manda sin el link
-    }
+  try {
+    const { data: linkData } = await supabase.auth.admin.generateLink({
+      type: "recovery",
+      email,
+      options: {
+        redirectTo: `${siteUrl}/login?next=${encodeURIComponent(`/${barbershopSlug}/admin`)}`,
+      },
+    });
+    resetPasswordLink = linkData?.properties?.action_link ?? null;
+  } catch (linkError) {
+    console.warn("[admin/team] Failed to generate reset link:", linkError);
+    // No bloqueamos — el email se manda sin el link
   }
 
   await sendInvitationEmail({
