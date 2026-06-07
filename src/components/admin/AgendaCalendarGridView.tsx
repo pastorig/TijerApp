@@ -466,10 +466,44 @@ export function AgendaCalendarGridView({
       dropTarget.time === currentTime;
     if (noChange) return;
 
+    // ─── OPTIMISTIC UPDATE ─────────────────────────────────────────────
+    // Movemos el card al lugar nuevo INMEDIATAMENTE en el state local,
+    // mientras el endpoint corre en background. Si falla, revertimos.
+    // Antes esperábamos la respuesta (~200-500ms) y el card se quedaba
+    // en su posición vieja, dando sensación de lag.
+    if (!appointment.id) return;
+    const apptId = appointment.id;
+    const targetBarber = barbers.find((b) => b.id === dropTarget.barberId);
+    const optimisticAppointment = {
+      id: apptId,
+      appointment_date: appointment.appointment_date,
+      appointment_time: `${dropTarget.time}:00`,
+      barber_id: dropTarget.barberId,
+      barber_name:
+        targetBarber?.display_name?.trim() ||
+        targetBarber?.name ||
+        appointment.barber_name,
+    };
+    onMoveComplete(optimisticAppointment);
+
+    // Bounce inmediato en la nueva posición (sin esperar al server)
+    setRecentlyDroppedId(apptId);
+    setTimeout(() => {
+      setRecentlyDroppedId((current) => (current === apptId ? null : current));
+    }, 700);
+
     try {
       const { data: sessionData } = await getCurrentSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
+        // Revertir el optimistic update
+        onMoveComplete({
+          id: apptId,
+          appointment_date: appointment.appointment_date,
+          appointment_time: appointment.appointment_time,
+          barber_id: appointment.barber_id,
+          barber_name: appointment.barber_name,
+        });
         toast.error("Tu sesión expiró, volvé a iniciar sesión.");
         return;
       }
@@ -489,6 +523,14 @@ export function AgendaCalendarGridView({
       });
 
       if (!res.ok) {
+        // Revertir el optimistic update al fallar el server
+        onMoveComplete({
+          id: apptId,
+          appointment_date: appointment.appointment_date,
+          appointment_time: appointment.appointment_time,
+          barber_id: appointment.barber_id,
+          barber_name: appointment.barber_name,
+        });
         const err = (await res.json().catch(() => ({}))) as { error?: string };
         toast.error("No pudimos mover el turno", {
           description: err.error ?? `HTTP ${res.status}`,
@@ -513,6 +555,8 @@ export function AgendaCalendarGridView({
       toast.success("Turno movido", {
         description: `${appointment.customer_name} → ${dropTarget.time}`,
       });
+      // Confirmar con datos del server (puede diff con el optimistic ej.
+      // por updated_at o canonicalización de hora).
       onMoveComplete(result.appointment);
 
       // Haptic feedback de éxito: pattern corto-medio para confirmar drop
@@ -529,16 +573,7 @@ export function AgendaCalendarGridView({
         }
       }
 
-      // Marcar el appointment como "recién movido" para que renderee con
-      // el bounce de aterrizaje. Se limpia tras 700ms (duración animación).
-      if (appointment.id) {
-        setRecentlyDroppedId(appointment.id);
-        setTimeout(() => {
-          setRecentlyDroppedId((current) =>
-            current === appointment.id ? null : current,
-          );
-        }, 700);
-      }
+      // (Bounce ya se disparó al optimistic update, no se repite acá)
 
       // Abrir el modal para notificar al cliente del cambio.
       // El email automático se dispara solo al montar el modal; el botón

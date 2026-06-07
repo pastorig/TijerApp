@@ -18,9 +18,13 @@ export const dynamic = "force-dynamic";
 /**
  * Slugs de barberías reales (con clientes activos) que NO deberían recibir
  * reservas de prueba del público que viene a explorar TijerApp.
- * Mantener sincronizado con NEXT_PUBLIC_SITE_URL/sv-barber, etc.
+ *
+ * VACÍO desde 2026-06-07: ahora la demo pública vive en /primebarber, así
+ * que SV Barber (cliente real) puede volver a recibir reservas reales sin
+ * preocuparnos por el ruido de testers. Si en el futuro hay otra barbería
+ * real que se quiera proteger del ruido público, agregar su slug acá.
  */
-const REAL_BARBERSHOP_SLUGS = new Set<string>(["sv-barber"]);
+const REAL_BARBERSHOP_SLUGS = new Set<string>();
 
 export default async function BookingPage({ params }: BookingPageProps) {
   const { barbershopSlug } = await params;
