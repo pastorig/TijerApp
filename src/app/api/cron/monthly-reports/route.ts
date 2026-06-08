@@ -85,10 +85,13 @@ export async function GET(request: Request) {
 
   const resend = new Resend(resendKey);
   const supabase = getSupabaseAdminClient();
-  const fromAddress =
+  const rawFrom =
     process.env.REMINDER_EMAIL_FROM ||
     process.env.OWNER_NOTIFICATION_FROM ||
-    "TijerApp <onboarding@resend.dev>";
+    "";
+  const fromAddress = /tijerapp/i.test(rawFrom)
+    ? rawFrom
+    : "TijerApp <onboarding@resend.dev>";
 
   const period = getPreviousMonth();
 
@@ -109,6 +112,7 @@ export async function GET(request: Request) {
     }
 
     const sent: Array<{ slug: string; email: string; status: string }> = [];
+    let hadSendError = false;
 
     for (const bs of (barbershops ?? []) as Array<{
       slug: string;
@@ -253,19 +257,50 @@ export async function GET(request: Request) {
 </html>`;
 
       try {
-        await resend.emails.send({
+        const result = await resend.emails.send({
           from: fromAddress,
           to: ownerEmail,
           subject,
           html,
         });
+
+        if (result.error) {
+          hadSendError = true;
+          Sentry.captureException(result.error, {
+            tags: { route: "cron/monthly-reports", step: "send", slug: bs.slug },
+          });
+          sent.push({
+            slug: bs.slug,
+            email: ownerEmail,
+            status: `error: ${result.error.message}`,
+          });
+          continue;
+        }
+
         sent.push({ slug: bs.slug, email: ownerEmail, status: "sent" });
       } catch (err) {
+        hadSendError = true;
         Sentry.captureException(err, {
           tags: { route: "cron/monthly-reports", step: "send", slug: bs.slug },
         });
-        sent.push({ slug: bs.slug, email: ownerEmail, status: "error" });
+        sent.push({
+          slug: bs.slug,
+          email: ownerEmail,
+          status:
+            err instanceof Error ? `error: ${err.message}` : "error: unknown",
+        });
       }
+    }
+
+    if (hadSendError) {
+      return NextResponse.json(
+        {
+          ok: false,
+          period: period.label,
+          sent,
+        },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({
