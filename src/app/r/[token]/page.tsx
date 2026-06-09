@@ -7,6 +7,13 @@ import { AppointmentActionPanel } from "./AppointmentActionPanel";
 import { ClientPushOptIn } from "./ClientPushOptIn";
 import { PublicLoyaltyCard } from "./PublicLoyaltyCard";
 
+// IMPORTANTE: dinámica para que cada request consulte la DB en vivo.
+// Sin esto, Next.js cachea el resultado del RPC en el primer build de
+// cada token. Si el primer build devolvió 404 (RPC roto), el cache
+// sirve ese 404 hasta el siguiente deploy. Con force-dynamic, cada
+// llamada al page ejecuta el RPC fresco.
+export const dynamic = "force-dynamic";
+
 type PublicAppointmentPageProps = {
   params: Promise<{
     token: string;
