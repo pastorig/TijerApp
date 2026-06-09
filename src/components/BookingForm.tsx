@@ -146,6 +146,9 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     customerPhone: string;
     comment: string;
     whatsappLink: string;
+    couponCode?: string | null;
+    couponDiscountAmount?: number | null;
+    finalPrice?: number | null;
   };
   const [bookingResult, setBookingResult] = useState<BookingResult | null>(
     null,
@@ -614,6 +617,10 @@ export function BookingForm({ barbershop }: BookingFormProps) {
         customerPhone: appointment.customer_phone,
         comment,
         whatsappLink,
+        // Si había cupón aplicado, lo pasamos al success screen
+        couponCode: appliedCoupon?.code ?? null,
+        couponDiscountAmount: appliedCoupon?.discountAmount ?? null,
+        finalPrice: appliedCoupon?.finalPrice ?? null,
       });
     }
 
@@ -909,9 +916,20 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               id="date"
               type="date"
               value={selectedDate}
+              // No permitimos fechas pasadas. El input nativo respeta `min`
+              // en browsers modernos. Igual validamos en el submit por si
+              // alguien manipula el DOM.
+              min={getTodayInputValue()}
               disabled={isSaving}
               onChange={(event) => {
-                setSelectedDate(event.target.value);
+                const next = event.target.value;
+                // Doble guard: si el user mete una fecha pasada manualmente,
+                // forzamos hoy.
+                if (next && next < getTodayInputValue()) {
+                  setSelectedDate(getTodayInputValue());
+                } else {
+                  setSelectedDate(next);
+                }
                 setSelectedTime("");
                 setFormError("");
               }}
@@ -951,12 +969,17 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               </div>
             ) : (
               <>
-                <div
-                  role="radiogroup"
-                  aria-label="Horarios disponibles"
-                  className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5"
-                >
-                  {availabilitySlots.map((slot) => {
+                {/* Slots divididos en MAÑANA (< 12:00) y TARDE (>= 12:00).
+                    Solo mostramos la sección que tenga al menos 1 slot. */}
+                {(() => {
+                  const morningSlots = availabilitySlots.filter(
+                    (s) => parseInt(s.time.slice(0, 2), 10) < 12,
+                  );
+                  const afternoonSlots = availabilitySlots.filter(
+                    (s) => parseInt(s.time.slice(0, 2), 10) >= 12,
+                  );
+
+                  function renderSlot(slot: typeof availabilitySlots[number]) {
                     const isSelected = slot.time === selectedTime;
                     const title = SLOT_REASON_TITLE[slot.reason] || undefined;
                     return (
@@ -980,8 +1003,41 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                         {slot.time}
                       </button>
                     );
-                  })}
-                </div>
+                  }
+
+                  return (
+                    <div className="mt-4 space-y-5">
+                      {morningSlots.length > 0 ? (
+                        <div>
+                          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--brand-gold)]">
+                            Mañana
+                          </p>
+                          <div
+                            role="radiogroup"
+                            aria-label="Horarios mañana"
+                            className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5"
+                          >
+                            {morningSlots.map(renderSlot)}
+                          </div>
+                        </div>
+                      ) : null}
+                      {afternoonSlots.length > 0 ? (
+                        <div>
+                          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--brand-gold)]">
+                            Tarde
+                          </p>
+                          <div
+                            role="radiogroup"
+                            aria-label="Horarios tarde"
+                            className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5"
+                          >
+                            {afternoonSlots.map(renderSlot)}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })()}
                 {availabilitySlots.some((slot) => !slot.isAvailable) ? (
                   <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-subtle)]">
                     Los horarios tachados ya pasaron
@@ -1200,6 +1256,11 @@ type BookingSuccessResult = {
   customerPhone: string;
   comment: string;
   whatsappLink: string;
+  // Si hay cupón aplicado, lo mostramos en el detalle. couponCode + finalPrice
+  // se usan para mostrar el precio tachado y el final.
+  couponCode?: string | null;
+  couponDiscountAmount?: number | null;
+  finalPrice?: number | null;
 };
 
 function BookingSuccess({
@@ -1280,9 +1341,24 @@ function BookingSuccess({
           <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
             Detalle del turno
           </p>
-          <p className="mt-2 font-mono text-4xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl">
-            {formatPrice(result.servicePrice)}
-          </p>
+          {result.couponCode && typeof result.finalPrice === "number" ? (
+            <>
+              <p className="mt-1 font-mono text-base font-semibold tabular-nums leading-none text-[color:var(--text-muted)] line-through">
+                {formatPrice(result.servicePrice)}
+              </p>
+              <p className="mt-1 font-mono text-4xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl">
+                {formatPrice(result.finalPrice)}
+              </p>
+              <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
+                Cupón {result.couponCode} aplicado · Ahorrás{" "}
+                {formatPrice(result.couponDiscountAmount ?? 0)}
+              </p>
+            </>
+          ) : (
+            <p className="mt-2 font-mono text-4xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl">
+              {formatPrice(result.servicePrice)}
+            </p>
+          )}
           <dl className="mt-8 grid gap-4">
             {[
               { label: "Servicio", value: result.serviceName },

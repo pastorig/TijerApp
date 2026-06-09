@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { Resend } from "resend";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { resolveEmailFrom } from "@/lib/email/from";
 
 export const runtime = "nodejs";
 
@@ -177,10 +178,7 @@ export async function POST(request: Request) {
   }
 
   const resend = new Resend(resendApiKey);
-  const fromAddress =
-    process.env.REMINDER_EMAIL_FROM ||
-    process.env.OWNER_NOTIFICATION_FROM ||
-    "TijerApp <onboarding@resend.dev>";
+  const fromAddress = resolveEmailFrom();
 
   const newTimeShort = appointment.appointment_time.slice(0, 5);
   const newDateLabel = formatLongDate(appointment.appointment_date);

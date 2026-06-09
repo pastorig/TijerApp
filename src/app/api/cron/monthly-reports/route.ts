@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { Resend } from "resend";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { resolveEmailFrom } from "@/lib/email/from";
 
 export const runtime = "nodejs";
 
@@ -85,13 +86,7 @@ export async function GET(request: Request) {
 
   const resend = new Resend(resendKey);
   const supabase = getSupabaseAdminClient();
-  const rawFrom =
-    process.env.REMINDER_EMAIL_FROM ||
-    process.env.OWNER_NOTIFICATION_FROM ||
-    "";
-  const fromAddress = /tijerapp/i.test(rawFrom)
-    ? rawFrom
-    : "TijerApp <onboarding@resend.dev>";
+  const fromAddress = resolveEmailFrom();
 
   const period = getPreviousMonth();
 

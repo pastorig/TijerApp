@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { sendClientPushForAppointment } from "@/lib/push/sendClientPush";
+import { resolveEmailFrom } from "@/lib/email/from";
 
 export const runtime = "nodejs";
 // Forzamos dynamic para que NUNCA se cachee este endpoint en build/prerender.
@@ -268,10 +269,7 @@ export async function GET(request: Request) {
   }
 
   const resendApiKey = process.env.RESEND_API_KEY;
-  const fromAddress =
-    process.env.REMINDER_EMAIL_FROM ||
-    process.env.OWNER_NOTIFICATION_FROM ||
-    "TijerApp <onboarding@resend.dev>";
+  const fromAddress = resolveEmailFrom();
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://tijerapp-iota.vercel.app";
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { resolveEmailFrom } from "@/lib/email/from";
 
 export const runtime = "nodejs";
 
@@ -299,8 +300,7 @@ async function sendWaitlistOwnerNotification(
 ): Promise<void> {
   const resendApiKey = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
-  const fromAddress =
-    process.env.OWNER_NOTIFICATION_FROM || "TijerApp <onboarding@resend.dev>";
+  const fromAddress = resolveEmailFrom();
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://tijerapp-iota.vercel.app";
 

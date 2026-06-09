@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { resolveEmailFrom } from "@/lib/email/from";
 
 export const runtime = "nodejs";
 
@@ -102,8 +103,7 @@ export async function POST(request: Request) {
   // El mensaje ya quedó persistido en la DB.
   const resendApiKey = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
-  const fromAddress =
-    process.env.OWNER_NOTIFICATION_FROM || "TijerApp <onboarding@resend.dev>";
+  const fromAddress = resolveEmailFrom();
 
   if (resendApiKey && ownerEmail) {
     try {

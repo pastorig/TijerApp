@@ -53,7 +53,7 @@ const PERSONAS: Persona[] = [
     highlights: [
       "Recordatorios automáticos",
       "Detección de ghost clients",
-      "Solo USD 10/mes",
+      "Solo USD 20/mes",
     ],
   },
 ];

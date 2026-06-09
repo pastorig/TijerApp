@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { Resend } from "resend";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { resolveEmailFrom } from "@/lib/email/from";
 
 export const runtime = "nodejs";
 
@@ -49,15 +50,7 @@ async function sendInvitationEmail(input: {
   }
 
   const loginUrl = `${input.siteUrl.replace(/\/$/, "")}/login?next=${encodeURIComponent(`/${input.barbershopSlug}/admin`)}`;
-  // Solo aceptamos from que mencione TijerApp. Si el env var dice otra cosa
-  // (ej. BarberSync del proyecto viejo), fallback al default seguro.
-  const rawFrom =
-    process.env.OWNER_NOTIFICATION_FROM ||
-    process.env.REMINDER_EMAIL_FROM ||
-    "";
-  const fromAddress = /tijerapp/i.test(rawFrom)
-    ? rawFrom
-    : "TijerApp <onboarding@resend.dev>";
+  const fromAddress = resolveEmailFrom();
 
   const subject = input.createdNewAccount
     ? `Te invitaron a administrar una barbería en TijerApp`
