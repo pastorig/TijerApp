@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { sendClientPushForAppointment } from "@/lib/push/sendClientPush";
 
 export const runtime = "nodejs";
 // Forzamos dynamic para que NUNCA se cachee este endpoint en build/prerender.
@@ -399,6 +400,46 @@ export async function GET(request: Request) {
         channel: "email",
         status: "sent",
       });
+
+      // ─── PUSH NOTIFICATION ADICIONAL (FASE M parte 2) ──────────────
+      // Si el cliente opt-in para push en /r/[token], le mandamos
+      // recordatorio en su navegador además del email. Útil cuando el
+      // cliente no abre el mail — el push aparece en lockscreen.
+      // Best-effort: si falla, no rompe el flow del email exitoso.
+      try {
+        const pushTitle =
+          kind === "confirmation"
+            ? `Te esperamos hoy en ${barbershop.name}`
+            : `Recordatorio · ${barbershop.name}`;
+        const pushBody =
+          kind === "confirmation"
+            ? `Hoy a las ${appointment.appointment_time.slice(0, 5)}hs con ${appointment.barber_name}.`
+            : `Mañana a las ${appointment.appointment_time.slice(0, 5)}hs con ${appointment.barber_name}.`;
+        const pushUrl = appointment.confirmation_token
+          ? `/r/${appointment.confirmation_token}`
+          : "/";
+
+        const pushResult = await sendClientPushForAppointment(appointment.id, {
+          title: pushTitle,
+          body: pushBody,
+          url: pushUrl,
+        });
+
+        if (pushResult.sent > 0) {
+          await supabase.from("reminder_log").insert({
+            appointment_id: appointment.id,
+            kind,
+            channel: "push",
+            status: "sent",
+          });
+        }
+      } catch (pushError) {
+        // No bloqueamos — el email ya se envió. Solo logueamos.
+        Sentry.captureException(pushError, {
+          tags: { route: "cron/reminders", step: "clientPush" },
+        });
+      }
+
       return { sent: true };
     } catch (sendError) {
       const message =

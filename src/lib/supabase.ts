@@ -332,7 +332,7 @@ type ReminderLogRow = {
   id: string;
   appointment_id: string;
   kind: "reminder_24h" | "confirmation";
-  channel: "email" | "whatsapp";
+  channel: "email" | "whatsapp" | "push";
   sent_at: string;
   status: "sent" | "failed";
   error_message: string | null;
@@ -341,7 +341,7 @@ type ReminderLogRow = {
 type ReminderLogInsert = {
   appointment_id: string;
   kind: "reminder_24h" | "confirmation";
-  channel: "email" | "whatsapp";
+  channel: "email" | "whatsapp" | "push";
   status?: "sent" | "failed";
   error_message?: string | null;
 };
@@ -621,6 +621,37 @@ type Database = {
         Row: PushNotificationQueueRow;
         Insert: PushNotificationQueueInsert;
         Update: PushNotificationQueueUpdate;
+        Relationships: [];
+      };
+      client_push_subscriptions: {
+        Row: {
+          id: string;
+          appointment_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent: string | null;
+          created_at: string;
+          expired_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          appointment_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent?: string | null;
+          created_at?: string;
+          expired_at?: string | null;
+        };
+        Update: Partial<{
+          appointment_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent: string | null;
+          expired_at: string | null;
+        }>;
         Relationships: [];
       };
       loyalty_programs: {
