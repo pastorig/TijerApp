@@ -14,7 +14,7 @@ const TEASER_PLANS: TeaserPlan[] = [
   {
     name: "Solo",
     tagline: "Barbero independiente",
-    monthlyUsd: 10,
+    monthlyUsd: 20,
     highlight: false,
     features: [
       "1 barbero",
@@ -25,7 +25,7 @@ const TEASER_PLANS: TeaserPlan[] = [
   {
     name: "Esencial",
     tagline: "Barbería con 2+ sillones",
-    monthlyUsd: 20,
+    monthlyUsd: 35,
     highlight: true,
     features: [
       "Multi-barbero ilimitado",
@@ -36,7 +36,7 @@ const TEASER_PLANS: TeaserPlan[] = [
   {
     name: "Pro",
     tagline: "Para crecer en serio",
-    monthlyUsd: 40,
+    monthlyUsd: 50,
     highlight: false,
     features: [
       "Push en tiempo real",

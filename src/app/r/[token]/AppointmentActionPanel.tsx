@@ -153,12 +153,35 @@ export function AppointmentActionPanel({
           value={`${appointment.service_duration_minutes} min`}
         />
         <DetailRow label="Barbero" value={appointment.barber_name} />
-        <DetailRow
-          label="Precio"
-          value={formatPrice(appointment.service_price)}
-          monoValue
-          highlight
-        />
+        {appointment.coupon_code && appointment.discount_amount ? (
+          <>
+            <DetailRow
+              label="Precio original"
+              value={formatPrice(appointment.service_price)}
+              monoValue
+              strikethrough
+            />
+            <DetailRow
+              label={`Cupón ${appointment.coupon_code}`}
+              value={`-${formatPrice(appointment.discount_amount)}`}
+              monoValue
+              accent
+            />
+            <DetailRow
+              label="Total a pagar"
+              value={formatPrice(appointment.final_price)}
+              monoValue
+              highlight
+            />
+          </>
+        ) : (
+          <DetailRow
+            label="Precio"
+            value={formatPrice(appointment.service_price)}
+            monoValue
+            highlight
+          />
+        )}
         {appointment.comment ? (
           <DetailRow label="Comentario" value={appointment.comment} />
         ) : null}
@@ -293,11 +316,19 @@ function DetailRow({
   value,
   highlight,
   monoValue,
+  strikethrough,
+  accent,
 }: {
   label: string;
   value: string;
+  /** Valor en gold (resalta total final). */
   highlight?: boolean;
+  /** Font monospace + tabular-nums (para precios). */
   monoValue?: boolean;
+  /** Tachado + muted (para precio original cuando hay descuento). */
+  strikethrough?: boolean;
+  /** Color gold-soft de acento (para línea del cupón). */
+  accent?: boolean;
 }) {
   return (
     <div className="grid grid-cols-[auto_1fr] items-baseline gap-4">
@@ -309,7 +340,11 @@ function DetailRow({
           "text-right text-sm font-semibold",
           highlight
             ? "text-[color:var(--brand-gold)]"
-            : "text-white",
+            : accent
+              ? "text-[color:var(--brand-gold)]/85"
+              : strikethrough
+                ? "text-[color:var(--text-muted)] line-through"
+                : "text-white",
           monoValue && "font-mono tabular-nums",
         )}
       >

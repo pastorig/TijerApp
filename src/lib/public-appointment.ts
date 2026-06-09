@@ -19,6 +19,11 @@ export type PublicAppointmentByToken = {
   appointment_time: string; // "HH:MM" o "HH:MM:SS"
   comment: string | null;
   status: "pending" | "confirmed" | "cancelled" | "deleted";
+  // Si se aplicó un cupón al reservar, el RPC devuelve el código,
+  // el monto del descuento y el precio final. Si no, son null.
+  coupon_code: string | null;
+  discount_amount: number | null;
+  final_price: number;
 };
 
 export async function getPublicAppointmentByToken(token: string) {
