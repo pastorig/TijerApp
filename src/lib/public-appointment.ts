@@ -27,17 +27,31 @@ export type PublicAppointmentByToken = {
 };
 
 export async function getPublicAppointmentByToken(token: string) {
+  // DEBUG: logueamos el resultado completo del RPC para diagnosticar el
+  // 404 persistente en /r/[token]. Visible en Vercel runtime logs.
+  console.log("[getPublicAppointmentByToken] called with token:", token.slice(0, 8) + "...");
+
   const { data, error } = await getSupabaseClient().rpc(
     "get_public_appointment_by_token",
     { p_token: token },
   );
 
   if (error) {
+    console.error("[getPublicAppointmentByToken] RPC error:", error);
     return { data: null, error };
   }
 
+  console.log(
+    "[getPublicAppointmentByToken] RPC data:",
+    JSON.stringify(data).slice(0, 200),
+  );
+
   // El RPC devuelve un array (returns table) — agarramos la primera fila.
   const row = (data as PublicAppointmentByToken[] | null)?.[0] ?? null;
+
+  if (!row) {
+    console.warn("[getPublicAppointmentByToken] No row in response. Array:", data);
+  }
 
   return { data: row, error: null };
 }
