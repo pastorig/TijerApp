@@ -32,6 +32,10 @@ import {
 } from "@/lib/format";
 import type { BarberRow, BarberServiceRow } from "@/lib/supabase";
 import { createWhatsAppBookingLink } from "@/lib/whatsapp";
+import { CouponInput } from "./booking/CouponInput";
+import type { CouponValidation } from "@/lib/public-coupons";
+
+type AppliedCoupon = Extract<CouponValidation, { valid: true }> & { code: string };
 import {
   Button,
   Field,
@@ -116,6 +120,9 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     toast.error("Revisá los datos", { description: formError });
   }, [formError, toast]);
   const [isSaving, setIsSaving] = useState(false);
+  // Cupón aplicado al booking (FASE C parte 2). Si null, no se aplicó ninguno.
+  // El precio final = service.price - appliedCoupon.discountAmount (si existe).
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>(
     [],
   );
@@ -526,6 +533,11 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       appointment_date: selectedDate,
       appointment_time: selectedTime,
       comment: comment.trim(),
+      // Cupón aplicado: si hay, guardamos el coupon_id + discount_amount.
+      // El trigger appointment_increment_coupon_usage_trg en la DB se
+      // encarga de incrementar usage_count del cupón automáticamente.
+      coupon_id: appliedCoupon?.couponId ?? null,
+      discount_amount: appliedCoupon?.discountAmount ?? null,
     };
 
     let confirmationToken: string | undefined;
@@ -1066,9 +1078,31 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
                 Total
               </p>
-              <p className="mt-2 font-mono text-4xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl lg:text-6xl">
-                {formatPrice(selectedService.price)}
-              </p>
+              {appliedCoupon ? (
+                <>
+                  <p className="mt-1 font-mono text-base font-semibold tabular-nums leading-none text-[color:var(--text-muted)] line-through">
+                    {formatPrice(selectedService.price)}
+                  </p>
+                  <p className="mt-1 font-mono text-4xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl lg:text-6xl">
+                    {formatPrice(appliedCoupon.finalPrice)}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-2 font-mono text-4xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl lg:text-6xl">
+                  {formatPrice(selectedService.price)}
+                </p>
+              )}
+
+              {/* Input de cupón — solo visible si hay servicio elegido */}
+              <div className="mt-5">
+                <CouponInput
+                  barbershopSlug={barbershop.slug}
+                  servicePrice={selectedService.price}
+                  applied={appliedCoupon}
+                  onApply={setAppliedCoupon}
+                  onRemove={() => setAppliedCoupon(null)}
+                />
+              </div>
             </div>
           ) : null}
 

@@ -20,6 +20,9 @@ type AppointmentInsert = {
   confirmation_token?: string;
   internal_notes?: string | null;
   cancellation_reason?: string | null;
+  // Cupón aplicado al crear la reserva (FASE C parte 2)
+  coupon_id?: string | null;
+  discount_amount?: number | null;
 };
 
 type AppointmentRow = Omit<AppointmentInsert, "status"> & {
