@@ -1,0 +1,58 @@
+name: CI
+
+# Corre en cada push a main y en cada PR a main.
+# Si pusheás 2 veces rápido (ej. corregís un typo), el segundo cancela
+# el primero — ahorra minutos de GitHub Actions.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-checks:
+    name: Lint + Typecheck + Build
+    runs-on: ubuntu-latest
+    # Timeout de 10 min — si tarda más es porque algo se colgó
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          # Cache automático de node_modules basado en package-lock.json
+          # Acelera builds posteriores de ~60s a ~10s
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (eslint)
+        run: npm run lint
+
+      - name: Typecheck (tsc --noEmit)
+        # noEmit = solo verificar tipos, no generar JS
+        # Esto detecta los bugs tipo mismatch que tuvimos hoy con el RPC
+        run: npx tsc --noEmit
+
+      - name: Build (next build)
+        # Necesita env vars públicas dummy para no fallar al cargar módulos.
+        # NO se conecta a nada real — los servicios no se llaman en build,
+        # solo se inicializan los clientes con los valores que les pasamos.
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: dummy-anon-key-for-build
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: dummy-vapid-public-key
+          NEXT_PUBLIC_SITE_URL: https://tijerapp.vercel.app
+          # Sentry: skip auth durante CI builds para no requerir token
+          SENTRY_AUTH_TOKEN: ""
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: npm run build
