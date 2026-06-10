@@ -23,6 +23,15 @@ type AppointmentInsert = {
   // Cupón aplicado al crear la reserva (FASE C parte 2)
   coupon_id?: string | null;
   discount_amount?: number | null;
+  // MercadoPago — seña del turno (B1). Opcionales: solo se setean si la
+  // barbería tiene mp_enabled=true.
+  deposit_required?: boolean;
+  deposit_amount?: number | null;
+  deposit_status?: "pending" | "paid" | "expired" | "refunded" | "failed" | null;
+  deposit_paid_at?: string | null;
+  deposit_expires_at?: string | null;
+  mp_payment_id?: string | null;
+  mp_preference_id?: string | null;
 };
 
 type AppointmentRow = Omit<AppointmentInsert, "status"> & {
@@ -129,6 +138,14 @@ type BarbershopRow = {
   slot_interval_minutes: number;
   is_active: boolean;
   auto_confirm_appointments: boolean;
+  // MercadoPago (B1) — toggle de cobro de seña + credentials por barbería
+  mp_enabled: boolean;
+  mp_access_token: string | null;
+  mp_public_key: string | null;
+  mp_user_id: string | null;
+  deposit_percent: number;
+  deposit_min_amount: number | null;
+  deposit_auto_cancel_hours: number;
 };
 
 type BarbershopInsert = Omit<
@@ -139,6 +156,13 @@ type BarbershopInsert = Omit<
   | "logo_url"
   | "google_reviews_url"
   | "auto_confirm_appointments"
+  | "mp_enabled"
+  | "mp_access_token"
+  | "mp_public_key"
+  | "mp_user_id"
+  | "deposit_percent"
+  | "deposit_min_amount"
+  | "deposit_auto_cancel_hours"
 > & {
   id?: string;
   created_at?: string;
@@ -147,6 +171,14 @@ type BarbershopInsert = Omit<
   google_reviews_url?: string | null;
   /** Defaultea a false en DB — opcional al insertar. */
   auto_confirm_appointments?: boolean;
+  // MercadoPago — todos opcionales al insertar (defaults en DB)
+  mp_enabled?: boolean;
+  mp_access_token?: string | null;
+  mp_public_key?: string | null;
+  mp_user_id?: string | null;
+  deposit_percent?: number;
+  deposit_min_amount?: number | null;
+  deposit_auto_cancel_hours?: number;
 };
 
 type BarbershopUpdate = Partial<BarbershopInsert>;

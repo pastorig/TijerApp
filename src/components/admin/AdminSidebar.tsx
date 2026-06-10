@@ -8,6 +8,7 @@ import {
   CalendarDays,
   Clock,
   Contact,
+  CreditCard,
   ExternalLink,
   Gift,
   Image as ImageIcon,
@@ -116,6 +117,11 @@ export function AdminSidebar({
       label: "Equipo",
       href: `/${barbershopSlug}/admin/equipo`,
       icon: Users,
+    },
+    {
+      label: "Cobros online",
+      href: `/${barbershopSlug}/admin/cobros`,
+      icon: CreditCard,
     },
     {
       label: "Configuración",
