@@ -129,6 +129,10 @@ export async function GET(request: Request) {
         start_time: r.start_time,
         end_time: r.end_time,
         is_working: r.is_working,
+        // Pausa al medio opcional — defaults a null si el SELECT no la trajo
+        // (compatibilidad con queries que no incluyen break_start/end).
+        break_start: (r as { break_start?: string | null }).break_start ?? null,
+        break_end: (r as { break_end?: string | null }).break_end ?? null,
       }),
     ),
     timeBlocks: ((blocksResult.data ?? []) as TimeBlockRow[]).map((r) => ({

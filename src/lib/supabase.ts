@@ -204,14 +204,21 @@ type BarberWeeklyScheduleRow = {
   start_time: string;
   end_time: string;
   is_working: boolean;
+  // Pausa al medio (opcional). Si está, los slots dentro del rango
+  // break_start..break_end NO se muestran como disponibles. Por barbero.
+  // Constraint en DB: ambos null O ambos seteados.
+  break_start: string | null;
+  break_end: string | null;
 };
 
 type BarberWeeklyScheduleInsert = Omit<
   BarberWeeklyScheduleRow,
-  "id" | "created_at"
+  "id" | "created_at" | "break_start" | "break_end"
 > & {
   id?: string;
   created_at?: string;
+  break_start?: string | null;
+  break_end?: string | null;
 };
 
 type BarberWeeklyScheduleUpdate = Partial<BarberWeeklyScheduleInsert>;

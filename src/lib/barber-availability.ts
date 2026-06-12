@@ -23,6 +23,10 @@ type UpsertWeeklySchedulesInput = {
     startTime: string;
     endTime: string;
     isWorking: boolean;
+    // Pausa al medio opcional. Si ambos null, no hay pausa. Si ambos
+    // seteados, los slots dentro del rango se excluyen.
+    breakStart: string | null;
+    breakEnd: string | null;
   }>;
 };
 
@@ -59,7 +63,7 @@ type GetBarberDayAvailabilityInput = BarberLookupInput & {
 };
 
 const weeklySchedulesSelect =
-  "id, created_at, barbershop_slug, barber_id, day_of_week, start_time, end_time, is_working";
+  "id, created_at, barbershop_slug, barber_id, day_of_week, start_time, end_time, is_working, break_start, break_end";
 const timeBlocksSelect =
   "id, created_at, barbershop_slug, barber_id, block_date, start_time, end_time, reason, is_active, deleted_at";
 const dayOverridesSelect =
@@ -91,6 +95,8 @@ export async function upsertWeeklySchedulesForBarber({
     start_time: schedule.startTime,
     end_time: schedule.endTime,
     is_working: schedule.isWorking,
+    break_start: schedule.breakStart,
+    break_end: schedule.breakEnd,
   }));
 
   const { data, error } = await getSupabaseClient()

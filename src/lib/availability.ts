@@ -22,6 +22,10 @@ export type WeeklyScheduleDraft = {
   startTime: string;
   endTime: string;
   isWorking: boolean;
+  // Pausa al medio opcional (ambos null o ambos seteados). Si está, los slots
+  // dentro de breakStart..breakEnd NO se muestran como disponibles.
+  breakStart: string | null;
+  breakEnd: string | null;
 };
 
 export const WEEKDAY_LABELS = [
@@ -48,6 +52,8 @@ export function buildDefaultWeeklySchedules(workingHours: {
     startTime: workingHours.start,
     endTime: workingHours.end,
     isWorking: true,
+    breakStart: null,
+    breakEnd: null,
   })) satisfies WeeklyScheduleDraft[];
 }
 
@@ -75,6 +81,12 @@ export function mergeWeeklySchedulesWithDefaults(
       startTime: normalizeTimeValue(matchingSchedule.start_time),
       endTime: normalizeTimeValue(matchingSchedule.end_time),
       isWorking: matchingSchedule.is_working,
+      breakStart: matchingSchedule.break_start
+        ? normalizeTimeValue(matchingSchedule.break_start)
+        : null,
+      breakEnd: matchingSchedule.break_end
+        ? normalizeTimeValue(matchingSchedule.break_end)
+        : null,
     };
   });
 }
@@ -186,12 +198,17 @@ export function buildAvailabilitySlots(params: {
         startTime: normalizeTimeValue(dayOverride.start_time),
         endTime: normalizeTimeValue(dayOverride.end_time),
         isWorking: dayOverride.is_working,
+        // Day overrides puntuales no soportan pausa al medio (caso edge raro).
+        breakStart: null as string | null,
+        breakEnd: null as string | null,
       }
     : weeklySchedule
       ? {
           startTime: weeklySchedule.startTime,
           endTime: weeklySchedule.endTime,
           isWorking: weeklySchedule.isWorking,
+          breakStart: weeklySchedule.breakStart,
+          breakEnd: weeklySchedule.breakEnd,
         }
       : null;
 
@@ -210,7 +227,7 @@ export function buildAvailabilitySlots(params: {
   const currentMinutes =
     appointmentDate === today ? now.getHours() * 60 + now.getMinutes() : -1;
 
-  // 1) Construimos los intervalos ocupados (turnos + bloques) mergeados.
+  // 1) Construimos los intervalos ocupados (turnos + bloques + pausa) mergeados.
   const busy: Array<{ start: number; end: number }> = [];
   for (const block of timeBlocks) {
     busy.push({
@@ -225,6 +242,14 @@ export function buildAvailabilitySlots(params: {
         ? appointment.durationMinutes
         : barbershopIntervalMinutes;
     busy.push({ start: apptStart, end: apptStart + apptDuration });
+  }
+  // Pausa al medio del horario semanal (si la configuró el barbero).
+  // Funciona idéntico a un time block: los slots dentro NO aparecen.
+  if (activeSchedule.breakStart && activeSchedule.breakEnd) {
+    busy.push({
+      start: timeValueToMinutes(activeSchedule.breakStart),
+      end: timeValueToMinutes(activeSchedule.breakEnd),
+    });
   }
   const busyMerged = mergeBusyIntervals(busy);
 
