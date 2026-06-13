@@ -138,9 +138,6 @@ export async function PATCH(request: Request) {
     );
   }
 
-  // DEBUG: log del body recibido para diagnosticar qué llega
-  console.log("[owner/plans PATCH] body received:", JSON.stringify(body));
-
   const update: Record<string, unknown> = {
     assigned_by_owner_id: auth.ownerId,
   };
@@ -150,15 +147,7 @@ export async function PATCH(request: Request) {
     const tier = body.plan_tier as PlanTier;
     if (validTiers.includes(tier)) {
       update.plan_tier = tier;
-      console.log("[owner/plans PATCH] plan_tier accepted:", tier);
-    } else {
-      console.warn("[owner/plans PATCH] plan_tier rejected:", body.plan_tier);
     }
-  } else {
-    console.log(
-      "[owner/plans PATCH] plan_tier missing or not string:",
-      typeof body.plan_tier,
-    );
   }
 
   const validStatuses: SubscriptionStatus[] = [
@@ -222,16 +211,8 @@ export async function PATCH(request: Request) {
     // grace_expires_at si quisiéramos. Por ahora mantenemos histórico.
   }
 
-  console.log(
-    "[owner/plans PATCH] update payload:",
-    JSON.stringify(update),
-    "for slug:",
-    barbershopSlug,
-  );
-
   const supabase = getSupabaseAdminClient();
 
-  // Upsert: si no existe, creamos. Si existe, update.
   const { data: upsertData, error } = await supabase
     .from("barbershop_subscriptions")
     .upsert(
@@ -244,7 +225,6 @@ export async function PATCH(request: Request) {
     .select();
 
   if (error) {
-    console.error("[owner/plans PATCH] upsert error:", error.message);
     Sentry.captureException(error, {
       tags: { route: "owner/plans", step: "upsert" },
     });
@@ -253,13 +233,6 @@ export async function PATCH(request: Request) {
       { status: 500 },
     );
   }
-
-  console.log(
-    "[owner/plans PATCH] upsert OK, rows:",
-    upsertData?.length,
-    "first row:",
-    JSON.stringify(upsertData?.[0]),
-  );
 
   return NextResponse.json({ ok: true, updated: upsertData?.[0] });
 }
