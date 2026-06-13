@@ -1086,7 +1086,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             label="Email"
             htmlFor="clientEmail"
             optional
-            hint="Si lo dejás, te llegan recordatorios automáticos del turno."
+            hint="Solo para que te contactemos si hay que cambiar el turno."
           >
             <Input
               id="clientEmail"
