@@ -322,21 +322,46 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
-    // Resetear su password con la temporal nueva. Pisamos lo que tuviera
-    // antes — el user va a usar la temporal del email + puede cambiarla
-    // después. Esto se hace porque el owner-flow asume control total.
-    const { error: resetError } = await supabase.auth.admin.updateUserById(
-      targetUser.id,
-      { password: temporaryPassword },
-    );
-    if (resetError) {
-      Sentry.captureException(resetError, {
-        tags: { route: "admin/team", step: "resetPassword" },
-      });
+    // BLINDAJE 1: no permitir auto-invitarse (el owner mismo).
+    // Pisarse su propia password = quedar sin acceso al panel.
+    if (targetUser!.id === userId) {
       return NextResponse.json(
-        { error: "No pudimos resetear la contraseña del usuario." },
-        { status: 500 },
+        { error: "No podés invitarte a vos mismo. Ya tenés acceso como owner." },
+        { status: 400 },
       );
+    }
+    // BLINDAJE 2: no resetear la password de un platform_owner.
+    // Si alguien invita a un user que es OWNER del SaaS (vos, founder),
+    // su password queda intacta — lo agregamos a la barbería como admin
+    // pero NO le tocamos las credenciales. Acceso al panel barbershop
+    // queda igual: usa la misma password que tenía.
+    const { data: ownerCheck } = await supabase
+      .from("platform_owners")
+      .select("user_id")
+      .eq("user_id", targetUser!.id)
+      .maybeSingle();
+    const isInvitedUserPlatformOwner = Boolean(ownerCheck);
+
+    if (isInvitedUserPlatformOwner) {
+      // Lo agregamos al team sin tocar password. El email que se manda
+      // después también va a omitir la sección "credenciales temporales"
+      // porque createdNewAccount=false y no hay tempPassword nueva válida
+      // para mostrar. El platform_owner usa su password normal.
+    } else {
+      // Caso normal: resetear su password con la temporal nueva.
+      const { error: resetError } = await supabase.auth.admin.updateUserById(
+        targetUser.id,
+        { password: temporaryPassword },
+      );
+      if (resetError) {
+        Sentry.captureException(resetError, {
+          tags: { route: "admin/team", step: "resetPassword" },
+        });
+        return NextResponse.json(
+          { error: "No pudimos resetear la contraseña del usuario." },
+          { status: 500 },
+        );
+      }
     }
   }
 
