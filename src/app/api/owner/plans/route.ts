@@ -138,16 +138,27 @@ export async function PATCH(request: Request) {
     );
   }
 
+  // DEBUG: log del body recibido para diagnosticar qué llega
+  console.log("[owner/plans PATCH] body received:", JSON.stringify(body));
+
   const update: Record<string, unknown> = {
     assigned_by_owner_id: auth.ownerId,
   };
 
   const validTiers: PlanTier[] = ["solo", "esencial", "pro"];
-  if (
-    typeof body.plan_tier === "string" &&
-    validTiers.includes(body.plan_tier as PlanTier)
-  ) {
-    update.plan_tier = body.plan_tier;
+  if (typeof body.plan_tier === "string") {
+    const tier = body.plan_tier as PlanTier;
+    if (validTiers.includes(tier)) {
+      update.plan_tier = tier;
+      console.log("[owner/plans PATCH] plan_tier accepted:", tier);
+    } else {
+      console.warn("[owner/plans PATCH] plan_tier rejected:", body.plan_tier);
+    }
+  } else {
+    console.log(
+      "[owner/plans PATCH] plan_tier missing or not string:",
+      typeof body.plan_tier,
+    );
   }
 
   const validStatuses: SubscriptionStatus[] = [
@@ -211,18 +222,29 @@ export async function PATCH(request: Request) {
     // grace_expires_at si quisiéramos. Por ahora mantenemos histórico.
   }
 
+  console.log(
+    "[owner/plans PATCH] update payload:",
+    JSON.stringify(update),
+    "for slug:",
+    barbershopSlug,
+  );
+
   const supabase = getSupabaseAdminClient();
 
   // Upsert: si no existe, creamos. Si existe, update.
-  const { error } = await supabase.from("barbershop_subscriptions").upsert(
-    {
-      barbershop_slug: barbershopSlug,
-      ...update,
-    } as never,
-    { onConflict: "barbershop_slug" },
-  );
+  const { data: upsertData, error } = await supabase
+    .from("barbershop_subscriptions")
+    .upsert(
+      {
+        barbershop_slug: barbershopSlug,
+        ...update,
+      } as never,
+      { onConflict: "barbershop_slug" },
+    )
+    .select();
 
   if (error) {
+    console.error("[owner/plans PATCH] upsert error:", error.message);
     Sentry.captureException(error, {
       tags: { route: "owner/plans", step: "upsert" },
     });
@@ -232,5 +254,12 @@ export async function PATCH(request: Request) {
     );
   }
 
-  return NextResponse.json({ ok: true });
+  console.log(
+    "[owner/plans PATCH] upsert OK, rows:",
+    upsertData?.length,
+    "first row:",
+    JSON.stringify(upsertData?.[0]),
+  );
+
+  return NextResponse.json({ ok: true, updated: upsertData?.[0] });
 }
