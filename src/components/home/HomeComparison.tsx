@@ -126,7 +126,7 @@ export function HomeComparison() {
 
             <div className="mt-5 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] p-3">
               <p className="text-[11px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)]">
-                Desde USD 20/mes
+                Desde USD 15/mes
               </p>
               <p className="mt-1 text-sm leading-5 text-[color:var(--text-secondary)]">
                 Cobra en pesos. 7 días gratis. Cancelás cuando quieras.

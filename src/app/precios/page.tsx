@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   // El template de layout.tsx agrega "· TijerApp" automáticamente.
   title: "Precios",
   description:
-    "Planes claros para barberías argentinas. Desde USD 20/mes. 7 días gratis sin tarjeta. Cancelás cuando quieras.",
+    "Planes claros para barberías argentinas. Desde USD 15/mes. 7 días gratis sin tarjeta. Cancelás cuando quieras.",
 };
 
 export default function PricingPage() {
@@ -72,7 +72,7 @@ export default function PricingPage() {
               <span className="text-[color:var(--brand-gold)]">crecen</span>.
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:mt-8 sm:text-lg sm:leading-8">
-              Desde <span className="font-bold text-white">USD 20/mes</span>.
+              Desde <span className="font-bold text-white">USD 15/mes</span>.
               Sin comisiones por reserva. Sin pagos por barbero. Precio fijo
               pensado para la realidad argentina.
             </p>
@@ -151,7 +151,7 @@ export default function PricingPage() {
               },
               {
                 q: "¿Hay descuento por pago anual?",
-                a: "Sí: 15% off pagando 12 meses upfront. Te queda en USD 204/año para Solo, USD 357/año para Esencial y USD 510/año para Pro.",
+                a: "Sí: 15% off pagando 12 meses upfront. Te queda en USD 153/año para Solo, USD 285/año para Esencial y USD 428/año para Pro.",
               },
               {
                 q: "¿Cómo sé si soy uno de los 10 Fundadores?",

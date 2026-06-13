@@ -23,7 +23,7 @@ const PLANS: Plan[] = [
     id: "solo",
     name: "Solo",
     tagline: "Para barberos independientes",
-    monthlyUsd: 20,
+    monthlyUsd: 15,
     highlight: false,
     description:
       "Para el barbero que alquila sillón o trabaja a domicilio. Tu agenda online en menos de 10 minutos.",
@@ -44,7 +44,7 @@ const PLANS: Plan[] = [
     id: "esencial",
     name: "Esencial",
     tagline: "El plan que la mayoría elige",
-    monthlyUsd: 35,
+    monthlyUsd: 28,
     highlight: true,
     description:
       "Para barberías con 2+ sillones. Todo lo que necesitás para operar de forma profesional, sin agregar features que no usás.",
@@ -64,7 +64,7 @@ const PLANS: Plan[] = [
     id: "pro",
     name: "Pro",
     tagline: "Para crecer en serio",
-    monthlyUsd: 50,
+    monthlyUsd: 42,
     highlight: false,
     description:
       "Para barberías con socios, managers o varias ubicaciones. Te damos las herramientas para escalar y fidelizar.",
