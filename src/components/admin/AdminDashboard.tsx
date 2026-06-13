@@ -34,6 +34,8 @@ import {
 } from "@/lib/format";
 import type { AppointmentRow } from "@/lib/supabase";
 import { formatDayHeading, getTodayYmd } from "./date-utils";
+import { useCurrentPlan } from "./PlanContext";
+import { hasFeature } from "@/lib/plans";
 
 type AdminDashboardProps = {
   barbershop: DemoBarbershop;
@@ -116,6 +118,7 @@ function useTickingMinute() {
 
 export function AdminDashboard({ barbershop }: AdminDashboardProps) {
   useTickingMinute();
+  const plan = useCurrentPlan();
 
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -825,21 +828,27 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
                 icon={<LineChart className="size-5" aria-hidden="true" />}
                 label="Reportes"
               />
-              <QuickActionIcon
-                href={`/${barbershop.slug}/admin/fidelizacion`}
-                icon={<Gift className="size-5" aria-hidden="true" />}
-                label="Fidelización"
-              />
-              <QuickActionIcon
-                href={`/${barbershop.slug}/admin/cupones`}
-                icon={<Tag className="size-5" aria-hidden="true" />}
-                label="Cupones"
-              />
-              <QuickActionIcon
-                href={`/${barbershop.slug}/admin/equipo`}
-                icon={<UserPlus className="size-5" aria-hidden="true" />}
-                label="Equipo"
-              />
+              {hasFeature(plan.tier, "fidelizacion") ? (
+                <QuickActionIcon
+                  href={`/${barbershop.slug}/admin/fidelizacion`}
+                  icon={<Gift className="size-5" aria-hidden="true" />}
+                  label="Fidelización"
+                />
+              ) : null}
+              {hasFeature(plan.tier, "cupones") ? (
+                <QuickActionIcon
+                  href={`/${barbershop.slug}/admin/cupones`}
+                  icon={<Tag className="size-5" aria-hidden="true" />}
+                  label="Cupones"
+                />
+              ) : null}
+              {hasFeature(plan.tier, "multi_admin") ? (
+                <QuickActionIcon
+                  href={`/${barbershop.slug}/admin/equipo`}
+                  icon={<UserPlus className="size-5" aria-hidden="true" />}
+                  label="Equipo"
+                />
+              ) : null}
               <QuickActionIcon
                 href={`/${barbershop.slug}/admin/settings`}
                 icon={<Settings className="size-5" aria-hidden="true" />}

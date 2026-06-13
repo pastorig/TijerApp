@@ -28,6 +28,8 @@ import { Logo } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { signOut } from "@/lib/auth";
 import { InstallButton } from "@/components/pwa/InstallButton";
+import { useCurrentPlan } from "./PlanContext";
+import { hasFeature, type Feature } from "@/lib/plans";
 
 type AdminSidebarProps = {
   barbershopSlug: string;
@@ -40,6 +42,8 @@ type NavItem = {
   icon: typeof LayoutDashboard;
   /** Match exacto si true; sino prefix. */
   exact?: boolean;
+  /** Si está, este item solo se muestra si el plan incluye la feature. */
+  requiresFeature?: Feature;
 };
 
 export function AdminSidebar({
@@ -48,10 +52,11 @@ export function AdminSidebar({
 }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const plan = useCurrentPlan();
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const navItems: NavItem[] = [
+  const allItems: NavItem[] = [
     {
       label: "Dashboard",
       href: `/${barbershopSlug}/admin`,
@@ -107,21 +112,25 @@ export function AdminSidebar({
       label: "Fidelización",
       href: `/${barbershopSlug}/admin/fidelizacion`,
       icon: Gift,
+      requiresFeature: "fidelizacion",
     },
     {
       label: "Cupones",
       href: `/${barbershopSlug}/admin/cupones`,
       icon: Tag,
+      requiresFeature: "cupones",
     },
     {
       label: "Equipo",
       href: `/${barbershopSlug}/admin/equipo`,
       icon: Users,
+      requiresFeature: "multi_admin",
     },
     {
       label: "Cobros online",
       href: `/${barbershopSlug}/admin/cobros`,
       icon: CreditCard,
+      requiresFeature: "cobros_online",
     },
     {
       label: "Configuración",
@@ -129,6 +138,13 @@ export function AdminSidebar({
       icon: Settings,
     },
   ];
+
+  // Filtramos según el plan: si un item requiere una feature que el plan no
+  // incluye, no se muestra. Items sin requiresFeature siempre se muestran.
+  const navItems = allItems.filter(
+    (item) =>
+      !item.requiresFeature || hasFeature(plan.tier, item.requiresFeature),
+  );
 
   function isActive(item: NavItem) {
     if (item.exact) return pathname === item.href;

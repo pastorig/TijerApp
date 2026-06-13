@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  CreditCard,
   Inbox,
   LayoutDashboard,
   LogOut,
@@ -28,6 +29,11 @@ const NAV_ITEMS: NavItem[] = [
     href: "/owner",
     icon: LayoutDashboard,
     exact: true,
+  },
+  {
+    label: "Planes",
+    href: "/owner/planes",
+    icon: CreditCard,
   },
   {
     label: "Crear barbería",

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { AdminAuthGuard } from "@/components/AdminAuthGuard";
 import { AdminCouponsManager } from "@/components/admin/AdminCouponsManager";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { RequirePlan } from "@/components/admin/RequirePlan";
 import {
   listKnownBarbershops,
   resolveManagedBarbershopBySlug,
@@ -29,7 +30,9 @@ export default async function AdminCouponsPage({ params }: Props) {
         barbershopSlug={barbershop.slug}
         barbershopName={barbershop.name}
       >
-        <AdminCouponsManager barbershop={barbershop} />
+        <RequirePlan feature="cupones" barbershopSlug={barbershop.slug}>
+          <AdminCouponsManager barbershop={barbershop} />
+        </RequirePlan>
       </AdminShell>
     </AdminAuthGuard>
   );

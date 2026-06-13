@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { AdminAuthGuard } from "@/components/AdminAuthGuard";
 import { AdminLoyaltyManager } from "@/components/admin/AdminLoyaltyManager";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { RequirePlan } from "@/components/admin/RequirePlan";
 import {
   listKnownBarbershops,
   resolveManagedBarbershopBySlug,
@@ -29,7 +30,9 @@ export default async function AdminLoyaltyPage({ params }: Props) {
         barbershopSlug={barbershop.slug}
         barbershopName={barbershop.name}
       >
-        <AdminLoyaltyManager barbershop={barbershop} />
+        <RequirePlan feature="fidelizacion" barbershopSlug={barbershop.slug}>
+          <AdminLoyaltyManager barbershop={barbershop} />
+        </RequirePlan>
       </AdminShell>
     </AdminAuthGuard>
   );

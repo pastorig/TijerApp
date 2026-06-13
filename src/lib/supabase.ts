@@ -650,6 +650,63 @@ type Database = {
         Update: PlatformOwnerUpdate;
         Relationships: [];
       };
+      barbershop_subscriptions: {
+        Row: {
+          id: string;
+          barbershop_slug: string;
+          plan_tier: "solo" | "esencial" | "pro";
+          status:
+            | "trial"
+            | "active"
+            | "grace"
+            | "expired"
+            | "cancelled";
+          trial_started_at: string | null;
+          trial_expires_at: string | null;
+          grace_expires_at: string | null;
+          current_period_started_at: string | null;
+          current_period_ends_at: string | null;
+          assigned_by_owner_id: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          barbershop_slug: string;
+          plan_tier?: "solo" | "esencial" | "pro";
+          status?:
+            | "trial"
+            | "active"
+            | "grace"
+            | "expired"
+            | "cancelled";
+          trial_started_at?: string | null;
+          trial_expires_at?: string | null;
+          grace_expires_at?: string | null;
+          current_period_started_at?: string | null;
+          current_period_ends_at?: string | null;
+          assigned_by_owner_id?: string | null;
+          notes?: string | null;
+        };
+        Update: Partial<{
+          plan_tier: "solo" | "esencial" | "pro";
+          status:
+            | "trial"
+            | "active"
+            | "grace"
+            | "expired"
+            | "cancelled";
+          trial_started_at: string | null;
+          trial_expires_at: string | null;
+          grace_expires_at: string | null;
+          current_period_started_at: string | null;
+          current_period_ends_at: string | null;
+          assigned_by_owner_id: string | null;
+          notes: string | null;
+        }>;
+        Relationships: [];
+      };
       push_subscriptions: {
         Row: PushSubscriptionRow;
         Insert: PushSubscriptionInsert;

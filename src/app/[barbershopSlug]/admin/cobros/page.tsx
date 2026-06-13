@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { AdminAuthGuard } from "@/components/AdminAuthGuard";
 import { AdminMercadoPagoSettings } from "@/components/admin/AdminMercadoPagoSettings";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { RequirePlan } from "@/components/admin/RequirePlan";
 import {
   listKnownBarbershops,
   resolveManagedBarbershopBySlug,
@@ -29,7 +30,9 @@ export default async function AdminCobrosPage({ params }: Props) {
         barbershopSlug={barbershop.slug}
         barbershopName={barbershop.name}
       >
-        <AdminMercadoPagoSettings barbershop={barbershop} />
+        <RequirePlan feature="cobros_online" barbershopSlug={barbershop.slug}>
+          <AdminMercadoPagoSettings barbershop={barbershop} />
+        </RequirePlan>
       </AdminShell>
     </AdminAuthGuard>
   );
