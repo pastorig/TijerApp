@@ -169,9 +169,19 @@ export function OwnerPlansManager() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-[11px] text-[color:var(--text-secondary)]">
-                        {trialDays !== null && trialDays > 0 ? (
+                        {/* Si está pagado (active), no muestra trial countdown.
+                            Si está en trial real con días restantes, sí. */}
+                        {p.status === "active" ? (
+                          <span className="text-[color:var(--text-muted)]">
+                            sin trial
+                          </span>
+                        ) : p.status === "trial" &&
+                          trialDays !== null &&
+                          trialDays > 0 ? (
                           <span>{trialDays}d restantes</span>
-                        ) : graceDays !== null && graceDays > 0 ? (
+                        ) : (p.status === "grace" || p.status === "trial") &&
+                          graceDays !== null &&
+                          graceDays > 0 ? (
                           <span className="text-amber-300">
                             gracia: {graceDays}d
                           </span>
@@ -335,9 +345,39 @@ function EditPlanModal({
             <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
               Status
             </label>
-            <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-5">
+
+            {/* Atajos rápidos para los 2 estados más comunes */}
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setStatus("trial")}
+                className={cn(
+                  "rounded-[var(--radius-sm)] border px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] transition-colors",
+                  status === "trial"
+                    ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                    : "border-[color:var(--border-default)] bg-[color:var(--surface-0)] text-white hover:border-[color:var(--brand-gold)]",
+                )}
+              >
+                🎁 Trial (gratis X días)
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatus("active")}
+                className={cn(
+                  "rounded-[var(--radius-sm)] border px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] transition-colors",
+                  status === "active"
+                    ? "border-[color:var(--success)] bg-[color:var(--success)] text-black"
+                    : "border-[color:var(--border-default)] bg-[color:var(--surface-0)] text-white hover:border-[color:var(--success)]",
+                )}
+              >
+                💵 Pagado (sin trial)
+              </button>
+            </div>
+
+            {/* Estados secundarios (grace/expired/cancelled) en fila chica */}
+            <div className="mt-2 grid grid-cols-3 gap-2">
               {(
-                ["trial", "active", "grace", "expired", "cancelled"] as SubscriptionStatus[]
+                ["grace", "expired", "cancelled"] as SubscriptionStatus[]
               ).map((s) => {
                 const isActive = status === s;
                 return (
@@ -349,7 +389,7 @@ function EditPlanModal({
                       "rounded-[var(--radius-xs)] border px-2 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors",
                       isActive
                         ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
-                        : "border-[color:var(--border-default)] bg-[color:var(--surface-0)] text-white hover:border-[color:var(--brand-gold)]",
+                        : "border-[color:var(--border-default)] bg-[color:var(--surface-0)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)]",
                     )}
                   >
                     {STATUS_LABEL[s].label}
@@ -381,6 +421,11 @@ function EditPlanModal({
                 de gracia.
               </p>
             </div>
+          ) : status === "active" ? (
+            <p className="rounded-[var(--radius-sm)] border border-[color:var(--success)]/30 bg-[color:var(--success-soft)]/40 px-3 py-2 text-[11px] leading-5 text-[color:var(--text-secondary)]">
+              💵 Al guardar, las fechas de trial se borran. El barbero pasa a
+              estado pagado sin countdown.
+            </p>
           ) : null}
 
           <div>

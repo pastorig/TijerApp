@@ -8,6 +8,12 @@ import {
   resolveManagedBarbershopBySlug,
 } from "@/lib/barbershops";
 
+// Dinámica: el plan de la barbería puede cambiar en cualquier momento desde
+// /owner/planes, y el gating de la página depende de ese plan. Sin dynamic,
+// Next.js cachea el plan viejo y el cambio del owner no se refleja hasta
+// el siguiente deploy.
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ barbershopSlug: string }>;
 };

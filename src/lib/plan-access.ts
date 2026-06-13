@@ -1,5 +1,6 @@
 import "server-only";
 
+import { unstable_noStore as noStore } from "next/cache";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import {
   resolvePlanStatus,
@@ -24,6 +25,10 @@ import {
 export async function getBarbershopPlan(
   barbershopSlug: string,
 ): Promise<ResolvedPlan> {
+  // Sin cache: el plan puede cambiar en cualquier momento desde /owner/planes
+  // y cualquier página admin que lo use debe ver el cambio inmediato.
+  noStore();
+
   const supabase = getSupabaseAdminClient();
 
   const { data, error } = await supabase

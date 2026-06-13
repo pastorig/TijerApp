@@ -195,6 +195,22 @@ export async function PATCH(request: Request) {
     if (!update.status) update.status = "trial";
   }
 
+  // INVARIANTE: si status pasa a 'active' (pagado), limpiar trial dates.
+  // Sin esto la UI muestra inconsistencia "Activo (pagado) · 14d restantes".
+  if (update.status === "active") {
+    update.trial_expires_at = null;
+    update.grace_expires_at = null;
+    if (!update.current_period_started_at) {
+      update.current_period_started_at = new Date().toISOString();
+    }
+  }
+  // Si status pasa a 'expired' o 'cancelled', tampoco tiene sentido mostrar
+  // trial activo — el plan está apagado, las fechas son históricas.
+  if (update.status === "expired" || update.status === "cancelled") {
+    // Conservamos trial_expires_at como histórico pero podríamos limpiar
+    // grace_expires_at si quisiéramos. Por ahora mantenemos histórico.
+  }
+
   const supabase = getSupabaseAdminClient();
 
   // Upsert: si no existe, creamos. Si existe, update.
