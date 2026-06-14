@@ -66,28 +66,42 @@ export const PLAN_LIMITS = {
 } as const satisfies Record<PlanTier, { maxBarbers: number; maxAdmins: number }>;
 
 /**
- * Metadata por plan: nombre comercial, precio USD, descripción corta.
+ * Metadata por plan: nombre comercial, precio en pesos argentinos,
+ * descripción corta.
+ *
+ * Precio en ARS por decisión del founder (post research mercado argentino):
+ * el barbero argentino piensa en pesos, no en dólares. Precios fijados al
+ * MEP del día del cambio (~$1.450 ARS/USD) sobre USD 15/28/42 originales,
+ * redondeados a números limpios.
  */
 export const PLAN_META = {
   solo: {
     name: "Solo",
-    priceUsd: 15,
+    priceArs: 22000,
     tagline: "Barbero independiente",
   },
   esencial: {
     name: "Esencial",
-    priceUsd: 28,
+    priceArs: 41000,
     tagline: "Barbería con 2 sillas",
   },
   pro: {
     name: "Pro",
-    priceUsd: 42,
+    priceArs: 61000,
     tagline: "Barbería establecida",
   },
 } as const satisfies Record<
   PlanTier,
-  { name: string; priceUsd: number; tagline: string }
+  { name: string; priceArs: number; tagline: string }
 >;
+
+/**
+ * Formatea un monto en ARS con separadores de miles argentinos
+ * (punto). Ej: 22000 → "$22.000".
+ */
+export function formatArs(value: number): string {
+  return `$${value.toLocaleString("es-AR")}`;
+}
 
 /**
  * Chequea si un plan incluye una feature. Si la feature no existe en la

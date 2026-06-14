@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 type TeaserPlan = {
   name: string;
   tagline: string;
-  monthlyUsd: number;
+  monthlyArs: number;
   highlight: boolean;
   features: string[];
 };
@@ -14,7 +14,7 @@ const TEASER_PLANS: TeaserPlan[] = [
   {
     name: "Solo",
     tagline: "Barbero independiente",
-    monthlyUsd: 15,
+    monthlyArs: 22000,
     highlight: false,
     features: [
       "1 barbero",
@@ -25,7 +25,7 @@ const TEASER_PLANS: TeaserPlan[] = [
   {
     name: "Esencial",
     tagline: "Barbería con 2+ sillones",
-    monthlyUsd: 28,
+    monthlyArs: 41000,
     highlight: true,
     features: [
       "Multi-barbero ilimitado",
@@ -36,7 +36,7 @@ const TEASER_PLANS: TeaserPlan[] = [
   {
     name: "Pro",
     tagline: "Para crecer en serio",
-    monthlyUsd: 42,
+    monthlyArs: 61000,
     highlight: false,
     features: [
       "Push en tiempo real",
@@ -115,7 +115,7 @@ export function PricingTeaser() {
 
               <div className="mt-4 flex items-baseline gap-1.5">
                 <span className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-                  USD {plan.monthlyUsd}
+                  ${plan.monthlyArs.toLocaleString("es-AR")}
                 </span>
                 <span className="text-xs text-[color:var(--text-secondary)]">
                   / mes

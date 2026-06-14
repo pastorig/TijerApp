@@ -172,12 +172,12 @@ TijerApp **no es una app para una sola barbería**.
 
 ## 1.7 Pricing
 
-> ✅ **Definido (2026-06-06)**. Modelo USD-anchored, billing mensual en ARS al TC del primer día del mes (MEP). 3 tiers + trial 7 días + programa fundadores.
+> ✅ **Definido (2026-06-13)**. Pricing fijo en ARS, redondeado a números limpios según el valor de referencia MEP del momento de definición. 3 tiers + trial 7 días + programa fundadores.
 
 ### Estrategia general
 
 - **Modelo**: SaaS por suscripción mensual, flat per-barbería (no por barbero, no por reserva)
-- **Moneda**: Precio en USD, cobro en ARS al TC MEP del día 1 de cada mes (queda fijo todo ese mes)
+- **Moneda**: Precio fijo en ARS
 - **Trial**: 7 días gratis, sin tarjeta requerida, tier Pro activado
 - **Anual**: 15% off pagando 12 meses upfront
 - **Cancelación**: libre en cualquier momento, sin reembolso, acceso continúa hasta fin del mes pagado
@@ -185,7 +185,7 @@ TijerApp **no es una app para una sola barbería**.
 
 ### Tiers
 
-#### 🟢 Solo — USD 10/mes (≈ ARS 15.000)
+#### 🟢 Solo — $22.000/mes
 Barbero independiente, sin barbería física, alquila sillón o trabaja a domicilio.
 
 - 1 barbero (solo el dueño)
@@ -200,7 +200,7 @@ Barbero independiente, sin barbería física, alquila sillón o trabaja a domici
 - 1 user admin
 - Soporte por email (48-72h)
 
-#### 🔵 Esencial — USD 20/mes (≈ ARS 30.000)
+#### 🔵 Esencial — $41.000/mes
 Barbería establecida con 2+ sillones. El **plan default**.
 
 - Todo lo de Solo +
@@ -212,7 +212,7 @@ Barbería establecida con 2+ sillones. El **plan default**.
 - Reportes operativos completos (ingresos, top servicios, horarios pico)
 - Soporte por email (24-48h)
 
-#### 🟡 Pro — USD 40/mes (≈ ARS 60.000)
+#### 🟡 Pro — $61.000/mes
 Barberías que quieren crecer en serio o tienen socios/managers.
 
 - Todo lo de Esencial +
@@ -247,14 +247,14 @@ Beneficios exclusivos para los primeros 10 que paguen el primer mes:
 ### Cómo comunicar pricing en copies
 
 ✅ **Se puede decir**:
-- "Desde USD 10/mes" (entry point Solo)
-- "USD 20/mes para barberías con 2+ barberos" (Esencial)
+- "Desde $22.000/mes" (entry point Solo)
+- "$41.000/mes para barberías con 2+ barberos" (Esencial)
 - "7 días gratis, sin tarjeta"
 - "Cancelás cuando quieras"
 - "Programa Fundadores: precio congelado 12 meses para los primeros 10"
 
 ❌ **NO decir**:
-- Precios en ARS específicos sin aclarar que se ajustan al TC del mes (porque cambian)
+- Precios distintos a los definidos oficialmente en ARS
 - "Gratis para siempre" (no es freemium)
 - "Sin compromiso anual" en absoluto — sí podemos decir "cancelás cuando quieras"
 - Promesas de features Pro como si fueran Esencial
@@ -707,7 +707,7 @@ T estilizada con dos "alas" arriba (pequeñas formas en gold sobre fondo negro).
 - ❌ "Cientos de barberías ya lo usan" → estamos pre-launch
 - ❌ Testimoniales reales con nombres → no tenemos clientes reales aún
 - ❌ "Reportes con IA" → los reportes son SQL/datos reales, no LLM
-- ❌ Promesas de pricing distintas a las definidas en sección 1.7 (Solo USD 10, Esencial USD 20, Pro USD 40)
+- ❌ Promesas de pricing distintas a las definidas en sección 1.7 (Solo $22.000, Esencial $41.000, Pro $61.000)
 
 ---
 
@@ -991,7 +991,7 @@ Similar a Meta pero con interés agregado:
 
 ### "¿Cuánto cuesta?"
 
-> Tenemos 3 planes: **Solo** (USD 10/mes, para barberos independientes), **Esencial** (USD 20/mes, para barberías con 2+ sillones) y **Pro** (USD 40/mes, para las que quieren crecer fuerte). Cobramos en pesos al tipo de cambio MEP del primer día del mes — así sabés exactamente cuánto pagás. Tenés 7 días gratis para probar sin cargar tarjeta.
+> Tenemos 3 planes: **Solo** ($22.000/mes, para barberos independientes), **Esencial** ($41.000/mes, para barberías con 2+ sillones) y **Pro** ($61.000/mes, para las que quieren crecer fuerte). También podés pagar anual con 15% off. Tenés 7 días gratis para probar sin cargar tarjeta.
 
 ### "¿Tiene app?"
 
@@ -1072,7 +1072,7 @@ Estas viven en `data/demo-barbershops.ts` y se usan para testing y como ejemplos
 | 2026-06-04 | US3 PWA completa (botón install + iOS tooltip + banner mobile) |
 | 2026-06-04 | Spec + plan + tasks de push notifications listos para implementar |
 | 2026-06-05 | Este doc reescrito a versión max-quality |
-| 2026-06-06 | **Pricing definido**: 3 tiers (Solo USD 10, Esencial USD 20, Pro USD 40) + trial 7d + programa Fundadores |
+| 2026-06-13 | **Pricing actualizado**: 3 tiers en ARS (Solo $22.000, Esencial $41.000, Pro $61.000) + anual 15% off + trial 7d + programa Fundadores |
 
 ## 5.4 Cómo extender este documento
 
@@ -1115,6 +1115,6 @@ Cualquier IA que trabaje sobre marketing, contenido o comunicación de TijerApp 
 7. El producto está pensado **mobile-first** para uso desde el celular del barbero
 8. Foco inicial **Argentina**, arquitectura LATAM-ready
 9. Canal principal de marketing: **Instagram**
-10. Pricing **definido** (ver 1.7): Solo USD 10 / Esencial USD 20 / Pro USD 40 — no inventar precios distintos
+10. Pricing **definido** (ver 1.7): Solo $22.000 / Esencial $41.000 / Pro $61.000 — no inventar precios distintos
 
 Para detalles técnicos profundos, ver `AGENTS.md` y los specs en `specs/<NNN>-<feature>/`.

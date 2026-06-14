@@ -91,10 +91,12 @@ function FeaturePaywall({
           {featureLabel[feature]}
         </h1>
         <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
-          Tu plan actual ({currentTierMeta.name} · USD {currentTierMeta.priceUsd}
-          /mes) no incluye esta feature. Pasá a{" "}
+          Tu plan actual ({currentTierMeta.name} · $
+          {currentTierMeta.priceArs.toLocaleString("es-AR")}/mes) no incluye
+          esta feature. Pasá a{" "}
           <strong className="text-white">
-            {minTierMeta.name} (USD {minTierMeta.priceUsd}/mes)
+            {minTierMeta.name} (${minTierMeta.priceArs.toLocaleString("es-AR")}
+            /mes)
           </strong>{" "}
           para activarla.
         </p>

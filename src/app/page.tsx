@@ -103,7 +103,7 @@ export default function Home() {
               La plataforma argentina que tu barbería necesita: agenda
               multi-barbero, reservas online sin app, recordatorios y reportes.
               Desde{" "}
-              <span className="font-bold text-white">USD 15/mes</span>.
+              <span className="font-bold text-white">$22.000/mes</span>.
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row">

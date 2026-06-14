@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   // El template de layout.tsx agrega "· TijerApp" automáticamente.
   title: "Precios",
   description:
-    "Planes claros para barberías argentinas. Desde USD 15/mes. 7 días gratis sin tarjeta. Cancelás cuando quieras.",
+    "Planes claros para barberías argentinas. Desde $22.000/mes. 7 días gratis sin tarjeta. Cancelás cuando quieras.",
 };
 
 export default function PricingPage() {
@@ -72,7 +72,7 @@ export default function PricingPage() {
               <span className="text-[color:var(--brand-gold)]">crecen</span>.
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:mt-8 sm:text-lg sm:leading-8">
-              Desde <span className="font-bold text-white">USD 15/mes</span>.
+              Desde <span className="font-bold text-white">$22.000/mes</span>.
               Sin comisiones por reserva. Sin pagos por barbero. Precio fijo
               pensado para la realidad argentina.
             </p>
@@ -134,8 +134,8 @@ export default function PricingPage() {
                 a: "Te activamos el plan Pro durante 7 días, sin pedirte tarjeta. Probás todas las features. Al día 7 te pedimos cargar tu tarjeta de MercadoPago para seguir. Si no la cargás, tu cuenta queda en modo lectura por 30 días y después se archiva.",
               },
               {
-                q: "¿Por qué cobran en USD?",
-                a: "El precio está anclado en dólares para que sea estable y predecible, pero te cobramos en pesos al tipo de cambio MEP del primer día del mes. Ese precio queda fijo todo el mes — no hay sorpresas a mitad de período.",
+                q: "¿Por qué cobran en pesos?",
+                a: "Porque pensamos que el barbero argentino piensa en pesos, no en dólares. Precios fijos en ARS, sin conversión, sin sorpresas. Los actualizamos cada 3 meses según evolución del MEP para mantener el valor real.",
               },
               {
                 q: "¿Puedo cancelar cuando quiera?",
@@ -151,7 +151,7 @@ export default function PricingPage() {
               },
               {
                 q: "¿Hay descuento por pago anual?",
-                a: "Sí: 15% off pagando 12 meses upfront. Te queda en USD 153/año para Solo, USD 285/año para Esencial y USD 428/año para Pro.",
+                a: "Sí: 15% off pagando 12 meses upfront. Te queda en $224.000/año para Solo, $418.000/año para Esencial y $622.000/año para Pro.",
               },
               {
                 q: "¿Cómo sé si soy uno de los 10 Fundadores?",

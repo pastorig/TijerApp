@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Crown, Loader2, X } from "lucide-react";
 import { useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
@@ -56,7 +56,7 @@ export function OwnerPlansManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [editing, setEditing] = useState<PlanRow | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data: sessionData } = await getCurrentSession();
@@ -78,12 +78,14 @@ export function OwnerPlansManager() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [toast]);
 
   useEffect(() => {
+    // Carga inicial del panel owner al montar. Acá sí queremos disparar el
+    // fetch una vez desde el effect aunque internamente setee estado.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
-  }, []);
+  }, [load]);
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
@@ -144,7 +146,7 @@ export function OwnerPlansManager() {
                       <td className="px-4 py-3">
                         {tierMeta ? (
                           <span className="inline-flex items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
-                            {tierMeta.name} · ${tierMeta.priceUsd}
+                            {tierMeta.name} · ${tierMeta.priceArs.toLocaleString("es-AR")}
                           </span>
                         ) : (
                           <span className="text-[10px] text-[color:var(--text-muted)]">
@@ -333,7 +335,7 @@ function EditPlanModal({
                   >
                     <p className="text-xs font-black uppercase">{meta.name}</p>
                     <p className="text-[10px] opacity-80">
-                      USD {meta.priceUsd}/mes
+                      ${meta.priceArs.toLocaleString("es-AR")}/mes
                     </p>
                   </button>
                 );

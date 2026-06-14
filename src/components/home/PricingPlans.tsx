@@ -12,7 +12,8 @@ type Plan = {
   id: "solo" | "esencial" | "pro";
   name: string;
   tagline: string;
-  monthlyUsd: number;
+  monthlyArs: number;
+  annualArs: number;
   highlight: boolean;
   description: string;
   features: string[];
@@ -23,7 +24,8 @@ const PLANS: Plan[] = [
     id: "solo",
     name: "Solo",
     tagline: "Para barberos independientes",
-    monthlyUsd: 15,
+    monthlyArs: 22000,
+    annualArs: 224000,
     highlight: false,
     description:
       "Para el barbero que alquila sillón o trabaja a domicilio. Tu agenda online en menos de 10 minutos.",
@@ -44,7 +46,8 @@ const PLANS: Plan[] = [
     id: "esencial",
     name: "Esencial",
     tagline: "El plan que la mayoría elige",
-    monthlyUsd: 28,
+    monthlyArs: 41000,
+    annualArs: 418000,
     highlight: true,
     description:
       "Para barberías con 2+ sillones. Todo lo que necesitás para operar de forma profesional, sin agregar features que no usás.",
@@ -64,7 +67,8 @@ const PLANS: Plan[] = [
     id: "pro",
     name: "Pro",
     tagline: "Para crecer en serio",
-    monthlyUsd: 42,
+    monthlyArs: 61000,
+    annualArs: 622000,
     highlight: false,
     description:
       "Para barberías con socios, managers o varias ubicaciones. Te damos las herramientas para escalar y fidelizar.",
@@ -84,10 +88,8 @@ const PLANS: Plan[] = [
   },
 ];
 
-const ANNUAL_DISCOUNT = 0.15;
-
-function formatUsd(value: number): string {
-  return value % 1 === 0 ? value.toString() : value.toFixed(2);
+function formatArs(value: number): string {
+  return `$${Math.round(value).toLocaleString("es-AR")}`;
 }
 
 export function PricingPlans() {
@@ -96,15 +98,14 @@ export function PricingPlans() {
   function getPrice(plan: Plan): { display: string; perPeriod: string } {
     if (cycle === "monthly") {
       return {
-        display: `USD ${formatUsd(plan.monthlyUsd)}`,
+        display: formatArs(plan.monthlyArs),
         perPeriod: "/ mes",
       };
     }
-    const annual = plan.monthlyUsd * 12 * (1 - ANNUAL_DISCOUNT);
-    const monthlyEquiv = annual / 12;
+    const monthlyEquiv = plan.annualArs / 12;
     return {
-      display: `USD ${formatUsd(Math.round(monthlyEquiv * 100) / 100)}`,
-      perPeriod: `/ mes · USD ${formatUsd(Math.round(annual))} al año`,
+      display: formatArs(monthlyEquiv),
+      perPeriod: `/ mes · ${formatArs(plan.annualArs)} al año`,
     };
   }
 
@@ -158,8 +159,8 @@ export function PricingPlans() {
             <span className="font-semibold text-white">
               Pagás en pesos, sin sorpresas.
             </span>{" "}
-            Precios en USD pero te cobramos en ARS al tipo de cambio MEP del
-            día 1 de cada mes. Ese monto queda fijo todo el mes.
+            Precios fijados en pesos argentinos. Sin conversión, sin tipo de
+            cambio, sin sorpresas a fin de mes.
           </p>
         </div>
 

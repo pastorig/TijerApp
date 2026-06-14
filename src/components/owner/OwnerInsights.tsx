@@ -22,11 +22,11 @@ import { cn } from "@/lib/cn";
  *
  * Pricing assumptions (paste de /precios):
  *   - Plan Esencial (gratis): $0
- *   - Plan Pro: $40/mes
+ *   - Plan Pro: $61.000 ARS/mes (precio en pesos argentinos)
  *   - Asumimos por ahora que todas las activas están en Pro (no hay aún
  *     billing real). Cuando se implemente subscriptions table, leerlo de ahí.
  */
-const ASSUMED_PRO_PRICE_USD = 40;
+const ASSUMED_PRO_PRICE_ARS = 61000;
 
 type HealthBuckets = {
   active: OwnerBarbershopSummary[];
@@ -68,10 +68,8 @@ export function OwnerInsights() {
       try {
         const { data: metrics } = await getOwnerDashboardMetrics();
         if (!metrics) return;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (!cancelled) setBarbershops(metrics.barbershops);
       } finally {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (!cancelled) setIsLoading(false);
       }
     }
@@ -83,8 +81,8 @@ export function OwnerInsights() {
 
   const buckets = useMemo(() => bucketByHealth(barbershops), [barbershops]);
   const totalActive = buckets.active.length + buckets.quiet.length;
-  const mrrEstimateUsd = totalActive * ASSUMED_PRO_PRICE_USD;
-  const arr = mrrEstimateUsd * 12;
+  const mrrEstimateArs = totalActive * ASSUMED_PRO_PRICE_ARS;
+  const arrArs = mrrEstimateArs * 12;
 
   if (isLoading) {
     return (
@@ -112,14 +110,14 @@ export function OwnerInsights() {
         <InsightCard
           icon={DollarSign}
           label="MRR"
-          value={`USD ${mrrEstimateUsd.toLocaleString("en-US")}`}
-          hint={`${totalActive} barberías × $${ASSUMED_PRO_PRICE_USD}/mes`}
+          value={`$${mrrEstimateArs.toLocaleString("es-AR")}`}
+          hint={`${totalActive} barberías × $${ASSUMED_PRO_PRICE_ARS.toLocaleString("es-AR")}/mes`}
           highlight
         />
         <InsightCard
           icon={TrendingUp}
           label="ARR"
-          value={`USD ${arr.toLocaleString("en-US")}`}
+          value={`$${arrArs.toLocaleString("es-AR")}`}
           hint="MRR × 12"
         />
         <InsightCard

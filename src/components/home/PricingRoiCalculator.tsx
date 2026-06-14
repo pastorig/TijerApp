@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Calculator, TrendingDown, TrendingUp } from "lucide-react";
 
-const TIJERAPP_PRO_ARS = 30000;
+const TIJERAPP_PRO_ARS = 61000;
 
 function formatArs(value: number): string {
   return new Intl.NumberFormat("es-AR", {
