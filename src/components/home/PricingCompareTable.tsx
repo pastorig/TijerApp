@@ -14,40 +14,40 @@ const ROWS: Row[] = [
   {
     category: "Operación",
     features: [
-      { label: "Barberos incluidos", solo: "1", esencial: "Ilimitado", pro: "Ilimitado" },
+      { label: "Barberos incluidos", solo: "1", esencial: "Hasta 2", pro: "Ilimitado" },
       { label: "Reservas online", solo: "Ilimitadas", esencial: "Ilimitadas", pro: "Ilimitadas" },
       { label: "URL pública con marca", solo: true, esencial: true, pro: true },
       { label: "PWA instalable", solo: true, esencial: true, pro: true },
-      { label: "Multi-barbero con horarios propios", solo: false, esencial: true, pro: true },
-      { label: "Lista de espera con tokens", solo: false, esencial: true, pro: true },
-      { label: "Cierre de caja diario", solo: false, esencial: true, pro: true },
+      { label: "Lista de espera", solo: true, esencial: true, pro: true },
+      { label: "Cierre de caja diario", solo: true, esencial: true, pro: true },
+      { label: "Galería pública", solo: true, esencial: true, pro: true },
     ],
   },
   {
     category: "Comunicación",
     features: [
-      { label: "Recordatorios por email", solo: true, esencial: true, pro: true },
+      { label: "Recordatorios automáticos", solo: true, esencial: true, pro: true },
       { label: "Confirmaciones por link", solo: true, esencial: true, pro: true },
       { label: "WhatsApp links integrados", solo: true, esencial: true, pro: true },
-      { label: "Push notifications", solo: false, esencial: false, pro: true },
+      { label: "Notificaciones push", solo: false, esencial: true, pro: true },
       { label: "Logo en emails transaccionales", solo: false, esencial: false, pro: true },
+    ],
+  },
+  {
+    category: "Cobros y promos",
+    features: [
+      { label: "Cobro de seña online (Mercado Pago)", solo: false, esencial: true, pro: true },
+      { label: "Cupones de descuento", solo: false, esencial: true, pro: true },
+      { label: "Sistema de fidelización (sellos)", solo: false, esencial: false, pro: true },
     ],
   },
   {
     category: "Reportes y datos",
     features: [
       { label: "Reportes operativos", solo: "Básicos", esencial: "Completos", pro: "Avanzados" },
-      { label: "Top servicios y horarios pico", solo: false, esencial: true, pro: true },
-      { label: "Comparativas multi-barbero", solo: false, esencial: false, pro: true },
-      { label: "Export PDF + reportes mensuales por email", solo: false, esencial: false, pro: true },
-    ],
-  },
-  {
-    category: "Crecimiento",
-    features: [
-      { label: "Cupones de descuento", solo: false, esencial: false, pro: true },
-      { label: "Sistema de fidelización", solo: false, esencial: false, pro: true },
-      { label: "Acceso anticipado a features nuevas", solo: false, esencial: false, pro: true },
+      { label: "Reportes por barbero", solo: false, esencial: true, pro: true },
+      { label: "Export a PDF", solo: false, esencial: true, pro: true },
+      { label: "Reportes mensuales por email", solo: false, esencial: false, pro: true },
     ],
   },
   {
@@ -56,6 +56,7 @@ const ROWS: Row[] = [
       { label: "Usuarios admin", solo: "1", esencial: "1", pro: "Hasta 5" },
       { label: "Soporte por email", solo: "48-72h", esencial: "24-48h", pro: "<24h" },
       { label: "Soporte prioritario por WhatsApp", solo: false, esencial: false, pro: true },
+      { label: "Acceso anticipado a features nuevas", solo: false, esencial: false, pro: true },
     ],
   },
 ];

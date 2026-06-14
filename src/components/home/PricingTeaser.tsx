@@ -24,13 +24,13 @@ const TEASER_PLANS: TeaserPlan[] = [
   },
   {
     name: "Esencial",
-    tagline: "Barbería con 2+ sillones",
+    tagline: "Barbería con 2 sillones",
     monthlyArs: 41000,
     highlight: true,
     features: [
-      "Multi-barbero ilimitado",
-      "Lista de espera",
-      "Reportes completos + analytics",
+      "Hasta 2 barberos",
+      "Cobro de seña + cupones",
+      "Reportes por barbero + PDF",
     ],
   },
   {
@@ -39,8 +39,8 @@ const TEASER_PLANS: TeaserPlan[] = [
     monthlyArs: 61000,
     highlight: false,
     features: [
-      "Push en tiempo real",
-      "Cupones + fidelización",
+      "Barberos ilimitados",
+      "Fidelización + equipo (5 admins)",
       "Soporte WhatsApp <24h",
     ],
   },
