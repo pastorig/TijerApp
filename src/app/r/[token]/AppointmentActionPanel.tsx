@@ -85,7 +85,9 @@ export function AppointmentActionPanel({
       setErrorMessage(
         result.reason === "not_found"
           ? "No encontramos tu turno. Es posible que el link no sea válido."
-          : "No pudimos cancelar tu turno. Intentá nuevamente.",
+          : result.reason === "too_late"
+            ? "Ya no se puede cancelar online: falta menos de 1 hora para tu turno. Escribile directo a la barbería por WhatsApp."
+            : "No pudimos cancelar tu turno. Intentá nuevamente.",
       );
       setActionState("idle");
       return;
