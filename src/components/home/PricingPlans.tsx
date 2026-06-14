@@ -144,7 +144,16 @@ export function PricingPlans() {
               )}
             >
               Anual
-              <span className="ml-2 rounded-full bg-[color:var(--brand-gold-soft)] px-2 py-0.5 text-[9px] font-bold tracking-wider text-[color:var(--brand-gold)]">
+              <span
+                className={cn(
+                  "ml-2 rounded-full px-2 py-0.5 text-[9px] font-bold tracking-wider transition-colors",
+                  cycle === "annual"
+                    ? // Botón activo (fondo gold): badge oscuro para contraste
+                      "bg-black/85 text-[color:var(--brand-gold)]"
+                    : // Botón inactivo (fondo oscuro): badge gold-soft
+                      "bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]",
+                )}
+              >
                 -15%
               </span>
             </button>
@@ -167,8 +176,10 @@ export function PricingPlans() {
           ← Deslizá para ver los 3 planes →
         </p>
 
-        {/* Grilla de planes — scroll horizontal en mobile, grid en sm+ */}
-        <div className="-mx-4 mt-3 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:mt-12 sm:grid sm:snap-none sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
+        {/* Grilla de planes — scroll horizontal en mobile, grid en sm+.
+            pt-5 en mobile da espacio al badge 'Más elegido' (-top-3) que
+            sino lo recorta el overflow-x-auto del contenedor scrolleable. */}
+        <div className="-mx-4 mt-3 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 pt-5 sm:mx-0 sm:mt-12 sm:grid sm:snap-none sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 lg:grid-cols-3">
           {PLANS.map((plan) => {
             const { display, perPeriod } = getPrice(plan);
             return (
