@@ -92,6 +92,41 @@ export async function POST(request: Request) {
     );
   }
 
+  // ── Ventana mínima de 1 hora (anti-colgada del barbero) ──────────────────
+  // No permitir reagendar un turno que arranca en menos de 1 hora. Misma
+  // lógica que la cancelación: si el cliente mueve el turno 5 min antes, el
+  // barbero queda colgado sin tiempo de reacomodar. El barbero (admin) sí
+  // puede mover cualquier turno desde su panel.
+  //
+  // Timezone: los turnos se guardan en hora local Argentina. Computamos
+  // "ahora en AR" y el inicio del turno actual en el mismo frame para que
+  // la diferencia sea correcta sin importar la tz del server (Vercel = UTC).
+  {
+    const nowArMs = new Date(
+      new Date().toLocaleString("en-US", {
+        timeZone: "America/Argentina/Buenos_Aires",
+      }),
+    ).getTime();
+    const currentTime =
+      appointment.appointment_time.length === 5
+        ? `${appointment.appointment_time}:00`
+        : appointment.appointment_time;
+    const apptStartMs = new Date(
+      `${appointment.appointment_date}T${currentTime}`,
+    ).getTime();
+    const minutesUntil = (apptStartMs - nowArMs) / 60000;
+
+    if (Number.isFinite(minutesUntil) && minutesUntil < 60) {
+      return NextResponse.json(
+        {
+          error:
+            "Ya no se puede reagendar online: falta menos de 1 hora para tu turno. Escribile directo a la barbería por WhatsApp.",
+        },
+        { status: 409 },
+      );
+    }
+  }
+
   // No permitir reagendar al pasado.
   const today = new Date();
   const todayYmd = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
