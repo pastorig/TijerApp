@@ -214,15 +214,17 @@ export async function GET(request: Request) {
 
   const supabase = getSupabaseAdminClient();
 
-  // Trae turnos de hoy y mañana que tienen email.
+  // Trae turnos de hoy y mañana (pending/confirmed). NO filtramos por email:
+  // un cliente puede tener push activado sin haber dejado email, y igual
+  // debe recibir el recordatorio por push. El filtro por canal se hace en
+  // el loop (hasEmail / hasPush).
   const { data: appointments, error: apptError } = await supabase
     .from("appointments")
     .select(
       "id, barbershop_slug, customer_name, customer_email, service_name, barber_name, appointment_date, appointment_time, confirmation_token, status",
     )
     .in("appointment_date", [todayYmd, tomorrowYmd])
-    .in("status", ["pending", "confirmed"])
-    .not("customer_email", "is", null);
+    .in("status", ["pending", "confirmed"]);
 
   if (apptError) {
     Sentry.captureException(apptError);
@@ -234,18 +236,38 @@ export async function GET(request: Request) {
     .map((a) => a.id)
     .filter((id): id is string => Boolean(id));
 
+  // Dedup por (appointment, kind, channel). El Set guarda claves
+  // "{kind}:{channel}" — ej "reminder_24h:email", "confirmation:push".
+  // Así email y push se deduplican independiente: si el email se mandó
+  // pero el push no, el push igual se intenta el próximo run.
   const sentMap = new Map<string, Set<string>>();
   if (appointmentIds.length > 0) {
     const { data: logs } = await supabase
       .from("reminder_log")
-      .select("appointment_id, kind")
-      .eq("channel", "email")
+      .select("appointment_id, kind, channel")
       .eq("status", "sent")
       .in("appointment_id", appointmentIds);
     for (const log of logs ?? []) {
       const set = sentMap.get(log.appointment_id) ?? new Set<string>();
-      set.add(log.kind);
+      set.add(`${log.kind}:${log.channel}`);
       sentMap.set(log.appointment_id, set);
+    }
+  }
+
+  // Pre-fetch: qué appointments tienen al menos una push subscription activa.
+  // Sirve para no entrar a la ventana de push (ni querear el sender) en
+  // turnos donde el cliente nunca activó push. Sin esto, cada run intentaría
+  // push en TODOS los turnos.
+  const pushSubAppointmentIds = new Set<string>();
+  if (appointmentIds.length > 0) {
+    const { data: pushSubs } = await supabase
+      .from("client_push_subscriptions")
+      .select("appointment_id")
+      .is("expired_at", null)
+      .in("appointment_id", appointmentIds);
+    for (const s of pushSubs ?? []) {
+      const row = s as { appointment_id: string };
+      pushSubAppointmentIds.add(row.appointment_id);
     }
   }
 
@@ -284,20 +306,31 @@ export async function GET(request: Request) {
   }> = [];
 
   for (const appointment of (appointments ?? []) as AppointmentForReminder[]) {
-    if (!appointment.id || !appointment.customer_email) continue;
+    // Antes salteábamos si no había email. Ahora procesamos igual: puede
+    // tener push aunque no tenga email. Solo necesitamos el id.
+    if (!appointment.id) continue;
     const apptDate = appointment.appointment_date;
     const apptHour = getHourFromTime(appointment.appointment_time);
     const sentKinds = sentMap.get(appointment.id) ?? new Set<string>();
+    const hasEmail = Boolean(appointment.customer_email);
+    const hasPush = pushSubAppointmentIds.has(appointment.id);
+
+    // Un kind está "pendiente" si algún canal disponible todavía no se
+    // mandó. Email cuenta solo si hay email; push solo si hay subs.
+    function isPending(kind: "reminder_24h" | "confirmation"): boolean {
+      const emailPending = hasEmail && !sentKinds.has(`${kind}:email`);
+      const pushPending = hasPush && !sentKinds.has(`${kind}:push`);
+      return emailPending || pushPending;
+    }
+
+    // Si no hay ningún canal (sin email y sin push), no hay nada que hacer.
+    if (!hasEmail && !hasPush) continue;
 
     // ── Reminder 24h ──────────────────────────────────────────────
     const isTomorrow = apptDate === tomorrowYmd;
     const reminderInWindow =
       forceMode || (currentHour >= 17 && currentHour <= 20);
-    if (
-      isTomorrow &&
-      reminderInWindow &&
-      !sentKinds.has("reminder_24h")
-    ) {
+    if (isTomorrow && reminderInWindow && isPending("reminder_24h")) {
       const ok = await sendOne(appointment, "reminder_24h");
       decisions.push({ appointmentId: appointment.id, kind: "reminder_24h", ...ok });
       continue;
@@ -305,7 +338,7 @@ export async function GET(request: Request) {
 
     // ── Confirmación ──────────────────────────────────────────────
     const isToday = apptDate === todayYmd;
-    if (isToday && !sentKinds.has("confirmation")) {
+    if (isToday && isPending("confirmation")) {
       // Ventana 2-4hs antes del turno, entre 9 y 21 hs.
       const hoursUntil = apptHour - currentHour;
       const confirmationInWindow =
@@ -331,7 +364,7 @@ export async function GET(request: Request) {
       isTomorrow &&
       apptHour < 11 &&
       earlyConfirmInWindow &&
-      !sentKinds.has("confirmation")
+      isPending("confirmation")
     ) {
       const ok = await sendOne(appointment, "confirmation");
       decisions.push({
@@ -347,63 +380,86 @@ export async function GET(request: Request) {
     appointment: AppointmentForReminder,
     kind: "reminder_24h" | "confirmation",
   ): Promise<{ sent: boolean; error?: string; skipped?: string }> {
-    if (!resend) {
-      return { sent: false, skipped: "RESEND_API_KEY missing" };
-    }
-    if (!appointment.customer_email) {
-      return { sent: false, skipped: "no email" };
-    }
-
+    const sent = sentMap.get(appointment.id!) ?? new Set<string>();
     const barbershop = await getBarbershop(appointment.barbershop_slug);
-    const responderUrl = appointment.confirmation_token
-      ? `${siteUrl.replace(/\/$/, "")}/r/${appointment.confirmation_token}/responder`
-      : null;
+    const time = appointment.appointment_time.slice(0, 5);
 
-    const subject =
-      kind === "confirmation"
-        ? `Te esperamos hoy en ${barbershop.name}`
-        : `Recordatorio: tenés turno mañana en ${barbershop.name}`;
-    const html = buildReminderEmailHtml({
-      barbershopName: barbershop.name,
-      barbershopLogoUrl: barbershop.logo_url,
-      customerName: appointment.customer_name,
-      serviceName: appointment.service_name,
-      barberName: appointment.barber_name,
-      date: appointment.appointment_date,
-      time: appointment.appointment_time.slice(0, 5),
-      kind,
-      responderUrl,
-    });
+    let anySent = false;
+    const notes: string[] = [];
 
-    try {
-      const result = await resend.emails.send({
-        from: fromAddress,
-        to: [appointment.customer_email],
-        subject,
-        html,
+    // ─── CANAL EMAIL ──────────────────────────────────────────────
+    // Solo si hay Resend configurado, el cliente tiene email, y no se
+    // mandó ya el email de este kind.
+    if (
+      resend &&
+      appointment.customer_email &&
+      !sent.has(`${kind}:email`)
+    ) {
+      const responderUrl = appointment.confirmation_token
+        ? `${siteUrl.replace(/\/$/, "")}/r/${appointment.confirmation_token}/responder`
+        : null;
+      const subject =
+        kind === "confirmation"
+          ? `Te esperamos hoy en ${barbershop.name}`
+          : `Recordatorio: tenés turno mañana en ${barbershop.name}`;
+      const html = buildReminderEmailHtml({
+        barbershopName: barbershop.name,
+        barbershopLogoUrl: barbershop.logo_url,
+        customerName: appointment.customer_name,
+        serviceName: appointment.service_name,
+        barberName: appointment.barber_name,
+        date: appointment.appointment_date,
+        time,
+        kind,
+        responderUrl,
       });
-      if (result.error) {
+      try {
+        const result = await resend.emails.send({
+          from: fromAddress,
+          to: [appointment.customer_email],
+          subject,
+          html,
+        });
+        if (result.error) {
+          await supabase.from("reminder_log").insert({
+            appointment_id: appointment.id,
+            kind,
+            channel: "email",
+            status: "failed",
+            error_message: result.error.message,
+          });
+          notes.push(`email_failed:${result.error.message}`);
+        } else {
+          await supabase.from("reminder_log").insert({
+            appointment_id: appointment.id,
+            kind,
+            channel: "email",
+            status: "sent",
+          });
+          anySent = true;
+        }
+      } catch (sendError) {
+        const message =
+          sendError instanceof Error ? sendError.message : "unknown error";
+        Sentry.captureException(sendError, {
+          tags: { route: "cron/reminders", step: "email" },
+        });
         await supabase.from("reminder_log").insert({
           appointment_id: appointment.id,
           kind,
           channel: "email",
           status: "failed",
-          error_message: result.error.message,
+          error_message: message,
         });
-        return { sent: false, error: result.error.message };
+        notes.push(`email_error:${message}`);
       }
-      await supabase.from("reminder_log").insert({
-        appointment_id: appointment.id,
-        kind,
-        channel: "email",
-        status: "sent",
-      });
+    }
 
-      // ─── PUSH NOTIFICATION ADICIONAL (FASE M parte 2) ──────────────
-      // Si el cliente opt-in para push en /r/[token], le mandamos
-      // recordatorio en su navegador además del email. Útil cuando el
-      // cliente no abre el mail — el push aparece en lockscreen.
-      // Best-effort: si falla, no rompe el flow del email exitoso.
+    // ─── CANAL PUSH (independiente del email) ─────────────────────
+    // Si el cliente activó push en /r/[token], le mandamos recordatorio
+    // al navegador. Funciona SIN dominio (no usa Resend) — es el único
+    // recordatorio automático que le llega al cliente sin email.
+    if (!sent.has(`${kind}:push`)) {
       try {
         const pushTitle =
           kind === "confirmation"
@@ -411,13 +467,13 @@ export async function GET(request: Request) {
             : `Recordatorio · ${barbershop.name}`;
         const pushBody =
           kind === "confirmation"
-            ? `Hoy a las ${appointment.appointment_time.slice(0, 5)}hs con ${appointment.barber_name}.`
-            : `Mañana a las ${appointment.appointment_time.slice(0, 5)}hs con ${appointment.barber_name}.`;
+            ? `Hoy a las ${time}hs con ${appointment.barber_name}.`
+            : `Mañana a las ${time}hs con ${appointment.barber_name}.`;
         const pushUrl = appointment.confirmation_token
           ? `/r/${appointment.confirmation_token}`
           : "/";
 
-        const pushResult = await sendClientPushForAppointment(appointment.id, {
+        const pushResult = await sendClientPushForAppointment(appointment.id!, {
           title: pushTitle,
           body: pushBody,
           url: pushUrl,
@@ -430,28 +486,24 @@ export async function GET(request: Request) {
             channel: "push",
             status: "sent",
           });
+          anySent = true;
         }
       } catch (pushError) {
-        // No bloqueamos — el email ya se envió. Solo logueamos.
         Sentry.captureException(pushError, {
           tags: { route: "cron/reminders", step: "clientPush" },
         });
+        notes.push("push_error");
       }
-
-      return { sent: true };
-    } catch (sendError) {
-      const message =
-        sendError instanceof Error ? sendError.message : "unknown error";
-      Sentry.captureException(sendError);
-      await supabase.from("reminder_log").insert({
-        appointment_id: appointment.id,
-        kind,
-        channel: "email",
-        status: "failed",
-        error_message: message,
-      });
-      return { sent: false, error: message };
     }
+
+    if (anySent) {
+      return { sent: true };
+    }
+    return {
+      sent: false,
+      error: notes.length > 0 ? notes.join("; ") : undefined,
+      skipped: notes.length === 0 ? "nothing_to_send" : undefined,
+    };
   }
 
   return NextResponse.json({
