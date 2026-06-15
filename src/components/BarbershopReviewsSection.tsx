@@ -43,8 +43,8 @@ export function BarbershopReviewsSection({
       id="resenas"
       className="border-t border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]/40"
     >
-      <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20">
-        <header className="mb-8 sm:mb-10">
+      <div className="mx-auto w-full max-w-6xl px-4 py-7 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+        <header className="mb-6 sm:mb-8">
           <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
             Lo que dicen
           </p>

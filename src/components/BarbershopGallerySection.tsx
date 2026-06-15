@@ -48,7 +48,7 @@ export function BarbershopGallerySection({
       id="galeria"
       className="border-t border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]"
     >
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-8 sm:py-14 lg:px-12 lg:py-16">
+      <div className="mx-auto w-full max-w-6xl px-4 py-7 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
         <header className="text-center sm:text-left">
           <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
             Galería
