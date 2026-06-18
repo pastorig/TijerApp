@@ -27,6 +27,7 @@ import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { listAppointmentsByBarbershop } from "@/lib/appointments";
 import { cn } from "@/lib/cn";
 import {
+  formatDateWithWeekday,
   formatPrice,
   normalizeDateValue,
   normalizeTimeValue,
@@ -544,6 +545,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
               appointment={upcomingAppointment}
               currentMinutes={currentMinutes}
               barbershopSlug={barbershop.slug}
+              barbershopName={barbershop.name}
             />
 
             {/* Resumen del día — Mobile: grid compacto 3x2. Desktop: lista vertical. */}
@@ -868,10 +870,12 @@ function NextAppointmentHero({
   appointment,
   currentMinutes,
   barbershopSlug,
+  barbershopName,
 }: {
   appointment: AppointmentRow | undefined;
   currentMinutes: number;
   barbershopSlug: string;
+  barbershopName: string;
 }) {
   if (!appointment) {
     return (
@@ -900,7 +904,15 @@ function NextAppointmentHero({
   const rel = getRelativeTimeForAppointment(startMin, endMin, currentMinutes);
   const statusMeta = STATUS_META[appointment.status ?? "pending"];
   const phoneDigits = appointment.customer_phone?.replace(/\D+/g, "") ?? "";
-  const phoneWaHref = phoneDigits ? `https://wa.me/${phoneDigits}` : null;
+  // Mensaje pre-cargado para que el barbero no escriba desde cero. Incluye
+  // nombre del cliente, día (jueves 18/06) y hora del turno.
+  const firstName = (appointment.customer_name ?? "").split(" ")[0] || "";
+  const waMessage = encodeURIComponent(
+    `Hola ${firstName}! Te escribo de ${barbershopName} 👋 Es por tu turno del ${formatDateWithWeekday(appointment.appointment_date)} a las ${normalizeTimeValue(appointment.appointment_time)}hs.`,
+  );
+  const phoneWaHref = phoneDigits
+    ? `https://wa.me/${phoneDigits}?text=${waMessage}`
+    : null;
 
   return (
     <div>

@@ -10,7 +10,7 @@ import {
   type PublicAppointmentByToken,
 } from "@/lib/public-appointment";
 import {
-  formatDateForDisplay,
+  formatDateWithWeekday,
   formatPrice,
   normalizeTimeValue,
 } from "@/lib/format";
@@ -142,7 +142,7 @@ export function AppointmentActionPanel({
       <dl className="mt-8 grid gap-4 border-t border-[color:var(--border-subtle)] pt-6">
         <DetailRow
           label="Fecha"
-          value={formatDateForDisplay(appointment.appointment_date)}
+          value={formatDateWithWeekday(appointment.appointment_date)}
         />
         <DetailRow
           label="Hora"

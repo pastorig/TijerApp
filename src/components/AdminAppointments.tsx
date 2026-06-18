@@ -1254,20 +1254,12 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
               </section>
             ) : null}
 
-            {/* Buscador + filtro barbero + bloqueo rápido */}
+            {/* Buscador + filtro barbero.
+                NOTA: el botón "Bloquear hora" standalone se quitó de acá —
+                quedaba duplicado con la "Acción rápida del día" del calendario.
+                Ahora se bloquea solo desde el calendario (date-aware), que
+                abre la instancia controlada de QuickBlockTimeButton al final. */}
             <div className="mb-4 space-y-3">
-              <div className="flex items-center justify-end">
-                <QuickBlockTimeButton
-                  barbershopSlug={barbershop.slug}
-                  barbers={barberFilterOptions}
-                  focusDate={focusDate}
-                  preselectedBarberId={
-                    selectedBarberFilter !== "all"
-                      ? selectedBarberFilter
-                      : undefined
-                  }
-                />
-              </div>
               <div
                 className={cn(
                   "grid gap-2",

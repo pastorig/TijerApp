@@ -27,6 +27,7 @@ import { normalizePhone } from "@/lib/barbershop-clients";
 import { cn } from "@/lib/cn";
 import {
   formatDateForDisplay,
+  formatDateWithWeekday,
   formatPrice,
   getLocalDateInputValue,
 } from "@/lib/format";
@@ -639,7 +640,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     },
     {
       label: "Fecha",
-      value: selectedDate ? formatDateForDisplay(selectedDate) : "—",
+      value: selectedDate ? formatDateWithWeekday(selectedDate) : "—",
     },
     { label: "Horario", value: selectedTime || "—" },
     { label: "Cliente", value: clientName || "—" },
@@ -685,7 +686,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
         <p className="mx-auto mt-4 max-w-md text-sm leading-7 text-[color:var(--text-secondary)] sm:text-base">
           Si se libera un horario para el{" "}
           <span className="font-bold text-white">
-            {formatDateForDisplay(selectedDate)}
+            {formatDateWithWeekday(selectedDate)}
           </span>{" "}
           con{" "}
           <span className="font-bold text-white">{selectedBarberName}</span>,{" "}
@@ -716,7 +717,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               Fecha
             </dt>
             <dd className="font-semibold text-white">
-              {formatDateForDisplay(selectedDate)}
+              {formatDateWithWeekday(selectedDate)}
             </dd>
           </div>
         </dl>
@@ -1366,7 +1367,7 @@ function BookingSuccess({
                 label: "Duración",
                 value: `${result.serviceDurationMinutes} min`,
               },
-              { label: "Fecha", value: formatDateForDisplay(result.date) },
+              { label: "Fecha", value: formatDateWithWeekday(result.date) },
               { label: "Horario", value: result.time },
               { label: "Barbero", value: result.barberName },
               { label: "Tu nombre", value: result.customerName },

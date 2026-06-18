@@ -12,6 +12,37 @@ export function formatDateForDisplay(date: string) {
   return `${day}/${month}/${year}`;
 }
 
+const WEEKDAY_NAMES = [
+  "domingo",
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábado",
+] as const;
+
+/**
+ * Formatea una fecha YYYY-MM-DD a "jueves 18/06" (día de semana + dd/mm).
+ * El cliente entiende mejor qué día cae el turno con el nombre del día.
+ * Construye la Date con componentes locales para evitar el corrimiento de
+ * timezone que tendría `new Date("2026-06-18")` (que parsea en UTC).
+ */
+export function formatDateWithWeekday(date: string) {
+  const [year, month, day] = normalizeDateValue(date).split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return date;
+  }
+
+  const d = new Date(year, month - 1, day);
+  const weekday = WEEKDAY_NAMES[d.getDay()];
+  const dd = String(day).padStart(2, "0");
+  const mm = String(month).padStart(2, "0");
+
+  return `${weekday} ${dd}/${mm}`;
+}
+
 export function getLocalDateInputValue(date = new Date()) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
