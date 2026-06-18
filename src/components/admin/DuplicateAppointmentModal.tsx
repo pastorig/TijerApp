@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Copy, X } from "lucide-react";
+import { CalendarClock, Copy, X } from "lucide-react";
 import { createPendingAppointment } from "@/lib/appointments";
 import { cn } from "@/lib/cn";
+import { formatDateWithWeekday } from "@/lib/format";
 import type { AppointmentRow } from "@/lib/supabase";
 
 type DuplicateAppointmentModalProps = {
@@ -13,10 +14,45 @@ type DuplicateAppointmentModalProps = {
   onCreated: (newAppointmentId: string) => void;
 };
 
+/** Cada cuánto se repite el turno fijo. */
+type Frequency = "once" | "weekly" | "biweekly" | "monthly";
+
+const FREQUENCY_OPTIONS: Array<{ value: Frequency; label: string }> = [
+  { value: "once", label: "Una vez" },
+  { value: "weekly", label: "Cada semana" },
+  { value: "biweekly", label: "Cada 15 días" },
+  { value: "monthly", label: "Cada mes" },
+];
+
 function addDays(dateIso: string, days: number): string {
   const d = new Date(`${dateIso}T12:00:00`);
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
+}
+
+function addMonths(dateIso: string, months: number): string {
+  const d = new Date(`${dateIso}T12:00:00`);
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Genera las fechas de las ocurrencias a partir de la primera, según la
+ * frecuencia y la cantidad. La primera siempre es `firstDate`.
+ */
+function buildOccurrenceDates(
+  firstDate: string,
+  frequency: Frequency,
+  count: number,
+): string[] {
+  if (frequency === "once") return [firstDate];
+  const dates: string[] = [];
+  for (let i = 0; i < count; i++) {
+    if (frequency === "weekly") dates.push(addDays(firstDate, i * 7));
+    else if (frequency === "biweekly") dates.push(addDays(firstDate, i * 14));
+    else dates.push(addMonths(firstDate, i)); // monthly
+  }
+  return dates;
 }
 
 export function DuplicateAppointmentModal({
@@ -27,16 +63,22 @@ export function DuplicateAppointmentModal({
 }: DuplicateAppointmentModalProps) {
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
+  const [frequency, setFrequency] = useState<Frequency>("once");
+  const [count, setCount] = useState(4);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [resultMessage, setResultMessage] = useState("");
 
-  // Pre-fill cuando se abre el modal: misma hora, 14 días después
+  // Pre-fill cuando se abre el modal: misma hora, 1 semana después.
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isOpen && appointment) {
-      setNewDate(addDays(appointment.appointment_date, 14));
+      setNewDate(addDays(appointment.appointment_date, 7));
       setNewTime(appointment.appointment_time);
+      setFrequency("once");
+      setCount(4);
       setErrorMessage("");
+      setResultMessage("");
     }
   }, [isOpen, appointment]);
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -53,6 +95,11 @@ export function DuplicateAppointmentModal({
 
   if (!isOpen || !appointment) return null;
 
+  const isRecurring = frequency !== "once";
+  const occurrencePreview = newDate
+    ? buildOccurrenceDates(newDate, frequency, count)
+    : [];
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!appointment) return;
@@ -61,28 +108,66 @@ export function DuplicateAppointmentModal({
       return;
     }
     setErrorMessage("");
+    setResultMessage("");
     setIsSaving(true);
+
+    const timeNormalized =
+      newTime.length === 5 ? `${newTime}:00` : newTime;
+    const dates = buildOccurrenceDates(newDate, frequency, count);
+
+    let createdCount = 0;
+    let skippedCount = 0;
+    let firstCreatedId: string | null = null;
+
     try {
-      const { data, error } = await createPendingAppointment({
-        barbershop_slug: appointment.barbershop_slug,
-        barber_id: appointment.barber_id,
-        barber_name: appointment.barber_name,
-        customer_name: appointment.customer_name,
-        customer_phone: appointment.customer_phone,
-        customer_email: appointment.customer_email ?? null,
-        service_name: appointment.service_name,
-        service_price: appointment.service_price,
-        service_duration_minutes: appointment.service_duration_minutes,
-        appointment_date: newDate,
-        appointment_time: newTime,
-        comment: appointment.comment ?? "",
-      });
-      if (error || !data?.id) {
-        setErrorMessage("No pudimos crear el turno. ¿Está ocupado ese horario?");
+      // Creamos las ocurrencias una por una. Si un slot está ocupado
+      // (23505 / error), lo salteamos y seguimos con el resto.
+      for (const date of dates) {
+        const { data, error } = await createPendingAppointment({
+          barbershop_slug: appointment.barbershop_slug,
+          barber_id: appointment.barber_id,
+          barber_name: appointment.barber_name,
+          customer_name: appointment.customer_name,
+          customer_phone: appointment.customer_phone,
+          customer_email: appointment.customer_email ?? null,
+          service_name: appointment.service_name,
+          service_price: appointment.service_price,
+          service_duration_minutes: appointment.service_duration_minutes,
+          appointment_date: date,
+          appointment_time: timeNormalized,
+          comment: appointment.comment ?? "",
+        });
+        if (error || !data?.id) {
+          skippedCount += 1;
+        } else {
+          createdCount += 1;
+          if (!firstCreatedId) firstCreatedId = data.id;
+        }
+      }
+
+      if (createdCount === 0) {
+        setErrorMessage(
+          "No se pudo crear ningún turno. ¿Esos horarios ya están ocupados?",
+        );
         return;
       }
-      onCreated(data.id);
-      onClose();
+
+      // Éxito: refrescamos la lista con el primer turno creado.
+      if (firstCreatedId) onCreated(firstCreatedId);
+
+      if (!isRecurring) {
+        onClose();
+        return;
+      }
+
+      // Turno fijo: mostramos resumen (cuántos creó, cuántos saltó) y
+      // cerramos tras un momento para que el barbero lo lea.
+      setResultMessage(
+        skippedCount > 0
+          ? `Listo: creé ${createdCount} turnos. ${skippedCount} se saltearon (horario ocupado).`
+          : `Listo: creé ${createdCount} turnos fijos.`,
+      );
+      setTimeout(() => onClose(), 1800);
     } catch {
       setErrorMessage("No pudimos crear el turno.");
     } finally {
@@ -94,7 +179,7 @@ export function DuplicateAppointmentModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Duplicar turno"
+      aria-label="Repetir turno"
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -104,10 +189,10 @@ export function DuplicateAppointmentModal({
         <div className="flex items-center justify-between border-b border-[color:var(--border-subtle)] px-5 py-4">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
-              Duplicar turno
+              Repetir / turno fijo
             </p>
             <p className="mt-0.5 text-[11px] text-[color:var(--text-muted)]">
-              Crear un turno nuevo con los mismos datos.
+              Repetí este turno una vez o fijalo cada semana, 15 días o mes.
             </p>
           </div>
           <button
@@ -144,7 +229,7 @@ export function DuplicateAppointmentModal({
                   htmlFor="dup-date"
                   className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
                 >
-                  Nueva fecha
+                  {isRecurring ? "Primer turno" : "Nueva fecha"}
                 </label>
                 <input
                   id="dup-date"
@@ -175,10 +260,73 @@ export function DuplicateAppointmentModal({
               </div>
             </div>
 
-            <p className="text-[10px] text-[color:var(--text-subtle)]">
-              Por defecto el turno se crea para 2 semanas después, mismo
-              horario. Ajustalo si querés.
-            </p>
+            {/* Selector de frecuencia */}
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                ¿Cada cuánto?
+              </label>
+              <div className="mt-1.5 grid grid-cols-2 gap-2">
+                {FREQUENCY_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setFrequency(opt.value)}
+                    disabled={isSaving}
+                    className={cn(
+                      "min-h-10 rounded-[var(--radius-sm)] border px-2 text-[11px] font-bold uppercase tracking-[0.1em] transition-colors",
+                      frequency === opt.value
+                        ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                        : "border-[color:var(--border-default)] bg-black text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)]",
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Cantidad de repeticiones (solo si es fijo) */}
+            {isRecurring ? (
+              <div>
+                <label
+                  htmlFor="dup-count"
+                  className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
+                >
+                  ¿Cuántas veces? ({count})
+                </label>
+                <input
+                  id="dup-count"
+                  type="range"
+                  min={2}
+                  max={12}
+                  step={1}
+                  value={count}
+                  onChange={(e) => setCount(Number(e.target.value))}
+                  disabled={isSaving}
+                  className="mt-2 w-full accent-[color:var(--brand-gold)]"
+                />
+                {occurrencePreview.length > 0 ? (
+                  <p className="mt-1.5 text-[10px] leading-4 text-[color:var(--text-subtle)]">
+                    Del{" "}
+                    <span className="text-[color:var(--text-secondary)]">
+                      {formatDateWithWeekday(occurrencePreview[0])}
+                    </span>{" "}
+                    al{" "}
+                    <span className="text-[color:var(--text-secondary)]">
+                      {formatDateWithWeekday(
+                        occurrencePreview[occurrencePreview.length - 1],
+                      )}
+                    </span>
+                    .
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-[10px] text-[color:var(--text-subtle)]">
+                Por defecto, 1 semana después, mismo horario. Ajustalo o
+                elegí una frecuencia para hacerlo fijo.
+              </p>
+            )}
 
             {errorMessage ? (
               <p
@@ -186,6 +334,15 @@ export function DuplicateAppointmentModal({
                 className="border-l-2 border-[color:var(--danger)] pl-3 text-sm font-semibold text-[color:var(--danger)]"
               >
                 {errorMessage}
+              </p>
+            ) : null}
+
+            {resultMessage ? (
+              <p
+                role="status"
+                className="rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 py-2 text-sm font-semibold text-[color:var(--success)]"
+              >
+                {resultMessage}
               </p>
             ) : null}
 
@@ -197,8 +354,16 @@ export function DuplicateAppointmentModal({
                   "inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60",
                 )}
               >
-                <Copy className="size-3.5" />
-                {isSaving ? "Creando…" : "Crear turno"}
+                {isRecurring ? (
+                  <CalendarClock className="size-3.5" />
+                ) : (
+                  <Copy className="size-3.5" />
+                )}
+                {isSaving
+                  ? "Creando…"
+                  : isRecurring
+                    ? `Crear ${count} turnos`
+                    : "Crear turno"}
               </button>
               <button
                 type="button"

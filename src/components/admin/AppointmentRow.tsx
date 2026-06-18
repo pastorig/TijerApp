@@ -1084,7 +1084,7 @@ function KebabMenu({
               className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--surface-2)] hover:text-white"
             >
               <Copy className="size-4 shrink-0" aria-hidden="true" />
-              Duplicar turno
+              Repetir / turno fijo
             </button>
           ) : null}
 
