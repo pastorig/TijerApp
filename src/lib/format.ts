@@ -23,10 +23,10 @@ const WEEKDAY_NAMES = [
 ] as const;
 
 /**
- * Formatea una fecha YYYY-MM-DD a "18/06 (jueves)" (dd/mm + día de semana
- * entre paréntesis). El cliente entiende mejor qué día cae el turno con el
- * nombre del día. Construye la Date con componentes locales para evitar el
- * corrimiento de timezone que tendría `new Date("2026-06-18")` (parsea UTC).
+ * Formatea una fecha YYYY-MM-DD a "jueves 18/06" (día de semana + dd/mm).
+ * Usado en el resumen del turno, confirmación, /r/[token] y WhatsApp.
+ * Construye la Date con componentes locales para evitar el corrimiento de
+ * timezone que tendría `new Date("2026-06-18")` (parsea UTC).
  */
 export function formatDateWithWeekday(date: string) {
   const [year, month, day] = normalizeDateValue(date).split("-").map(Number);
@@ -40,7 +40,18 @@ export function formatDateWithWeekday(date: string) {
   const dd = String(day).padStart(2, "0");
   const mm = String(month).padStart(2, "0");
 
-  return `${dd}/${mm} (${weekday})`;
+  return `${weekday} ${dd}/${mm}`;
+}
+
+/**
+ * Devuelve solo el nombre del día de la semana de una fecha YYYY-MM-DD,
+ * ej "jueves". Para mostrar como hint al lado del selector de fecha nativo
+ * (que ya muestra dd/mm/yyyy y no se puede reformatear).
+ */
+export function getWeekdayName(date: string): string {
+  const [year, month, day] = normalizeDateValue(date).split("-").map(Number);
+  if (!year || !month || !day) return "";
+  return WEEKDAY_NAMES[new Date(year, month - 1, day).getDay()];
 }
 
 export function getLocalDateInputValue(date = new Date()) {

@@ -30,6 +30,7 @@ import {
   formatDateWithWeekday,
   formatPrice,
   getLocalDateInputValue,
+  getWeekdayName,
 } from "@/lib/format";
 import type { BarberRow, BarberServiceRow } from "@/lib/supabase";
 import { createWhatsAppBookingLink } from "@/lib/whatsapp";
@@ -936,6 +937,11 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               }}
               required
             />
+            {selectedDate ? (
+              <p className="mt-1.5 text-[11px] font-medium capitalize text-[color:var(--brand-gold)]">
+                {getWeekdayName(selectedDate)}
+              </p>
+            ) : null}
           </Field>
 
           {/* Horarios como grid de pills clickeables */}
@@ -972,13 +978,28 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                   </>
                 ) : (
                   // Lista de espera desactivada por la barbería: solo aviso claro.
-                  <div className="rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-4 py-3">
+                  <div className="flex flex-col items-center gap-2.5 rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-5 py-7 text-center">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-5 w-5"
+                        aria-hidden="true"
+                      >
+                        <rect x="3" y="4" width="18" height="18" rx="2" />
+                        <path d="M16 2v4M8 2v4M3 10h18" />
+                      </svg>
+                    </span>
                     <p className="text-sm font-semibold text-white">
                       No hay turnos disponibles para esta fecha.
                     </p>
-                    <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">
-                      Probá con otro día o más tarde — se liberan turnos cuando
-                      se reacomoda la agenda.
+                    <p className="text-xs leading-5 text-[color:var(--text-muted)]">
+                      Probá con otro día para ver más horarios.
                     </p>
                   </div>
                 )}
