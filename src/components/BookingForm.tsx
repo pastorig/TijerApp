@@ -957,16 +957,31 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               </p>
             ) : availabilitySlots.length === 0 && !isLoadingTimes ? (
               <div className="mt-4 grid gap-3">
-                <p className="text-xs text-[color:var(--text-muted)]">
-                  No hay horarios disponibles para esta fecha.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowWaitlistForm(true)}
-                  className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]/80"
-                >
-                  Anotarme en lista de espera
-                </button>
+                {barbershop.waitlistEnabled ? (
+                  <>
+                    <p className="text-xs text-[color:var(--text-muted)]">
+                      No hay horarios disponibles para esta fecha.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowWaitlistForm(true)}
+                      className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]/80"
+                    >
+                      Anotarme en lista de espera
+                    </button>
+                  </>
+                ) : (
+                  // Lista de espera desactivada por la barbería: solo aviso claro.
+                  <div className="rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-4 py-3">
+                    <p className="text-sm font-semibold text-white">
+                      No hay turnos disponibles para esta fecha.
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">
+                      Probá con otro día o más tarde — se liberan turnos cuando
+                      se reacomoda la agenda.
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
               <>

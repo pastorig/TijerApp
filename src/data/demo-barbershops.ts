@@ -39,6 +39,8 @@ export type DemoBarbershop = {
   isActive?: boolean;
   /** Cuando true, las reservas entran como confirmed en vez de pending. */
   autoConfirmAppointments?: boolean;
+  /** Cuando true, se ofrece "anotarse en lista de espera" en el booking. Default true. */
+  waitlistEnabled?: boolean;
 };
 
 export const demoBarbershops: DemoBarbershop[] = [

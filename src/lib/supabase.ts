@@ -138,6 +138,7 @@ type BarbershopRow = {
   slot_interval_minutes: number;
   is_active: boolean;
   auto_confirm_appointments: boolean;
+  waitlist_enabled: boolean;
   // MercadoPago (B1) — toggle de cobro de seña + credentials por barbería
   mp_enabled: boolean;
   mp_access_token: string | null;
@@ -156,6 +157,7 @@ type BarbershopInsert = Omit<
   | "logo_url"
   | "google_reviews_url"
   | "auto_confirm_appointments"
+  | "waitlist_enabled"
   | "mp_enabled"
   | "mp_access_token"
   | "mp_public_key"
@@ -171,6 +173,8 @@ type BarbershopInsert = Omit<
   google_reviews_url?: string | null;
   /** Defaultea a false en DB — opcional al insertar. */
   auto_confirm_appointments?: boolean;
+  /** Defaultea a true en DB — opcional al insertar. */
+  waitlist_enabled?: boolean;
   // MercadoPago — todos opcionales al insertar (defaults en DB)
   mp_enabled?: boolean;
   mp_access_token?: string | null;
