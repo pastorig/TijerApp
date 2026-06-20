@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Search, X } from "lucide-react";
+import {
+  CalendarPlus,
+  ChevronDown,
+  ChevronRight,
+  Search,
+  X,
+} from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import {
   cancelAppointment,
@@ -56,6 +62,7 @@ import {
   type CancellationContext,
 } from "./admin/CancelAppointmentDialog";
 import { DuplicateAppointmentModal } from "./admin/DuplicateAppointmentModal";
+import { ManualAppointmentModal } from "./admin/ManualAppointmentModal";
 import { QuickBlockTimeButton } from "./admin/QuickBlockTimeButton";
 import { getTodayYmd, normalizeTimeShort } from "./admin/date-utils";
 
@@ -158,6 +165,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const [isBulkHardDeleting, setIsBulkHardDeleting] = useState(false);
   const [duplicatingAppointment, setDuplicatingAppointment] =
     useState<AppointmentRow | null>(null);
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const confirm = useConfirm();
   const toast = useToast();
   const [calendarQuickBlockDate, setCalendarQuickBlockDate] = useState<
@@ -1146,6 +1154,14 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
             Gestiona las reservas del dia. Confirmar y enviar WhatsApp son
             acciones separadas.
           </p>
+          <button
+            type="button"
+            onClick={() => setIsManualModalOpen(true)}
+            className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-all duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)] hover:bg-[color:var(--brand-gold)]/15"
+          >
+            <CalendarPlus className="size-4" aria-hidden="true" />
+            Turno fuera de horario
+          </button>
         </header>
 
         {isLoading ? <AppointmentRowSkeletonList count={3} /> : null}
@@ -1513,6 +1529,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                         `${appointment.customer_phone}-${appointment.appointment_date}-${appointment.appointment_time}`
                       }
                       appointment={appointment}
+                      barbershopName={barbershop.name}
                       onConfirm={handleConfirmAppointment}
                       onWhatsApp={handleSendWhatsApp}
                       onCancel={handleCancelAppointment}
@@ -1681,6 +1698,29 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
             description: "Aparece como pendiente en la nueva fecha.",
           });
           // Refresca lista para que aparezca el nuevo turno
+          void (async () => {
+            const { data } = await listAppointmentsByBarbershop(
+              barbershop.slug,
+            );
+            setAppointments(data ?? []);
+          })();
+        }}
+      />
+
+      <ManualAppointmentModal
+        isOpen={isManualModalOpen}
+        barbershopSlug={barbershop.slug}
+        barbers={barbers.filter((b) => b.is_active)}
+        services={services}
+        defaultDate={focusDate}
+        preselectedBarberId={
+          selectedBarberFilter !== "all" ? selectedBarberFilter : undefined
+        }
+        onClose={() => setIsManualModalOpen(false)}
+        onCreated={() => {
+          toast.success("Turno agregado", {
+            description: "Aparece confirmado en la agenda.",
+          });
           void (async () => {
             const { data } = await listAppointmentsByBarbershop(
               barbershop.slug,

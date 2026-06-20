@@ -34,6 +34,7 @@ import {
   timeValueToMinutes,
 } from "@/lib/format";
 import type { AppointmentRow } from "@/lib/supabase";
+import { createWhatsAppClientContactLink } from "@/lib/whatsapp";
 import { formatDayHeading, getTodayYmd } from "./date-utils";
 import { useCurrentPlan } from "./PlanContext";
 import { hasFeature } from "@/lib/plans";
@@ -904,14 +905,17 @@ function NextAppointmentHero({
   const rel = getRelativeTimeForAppointment(startMin, endMin, currentMinutes);
   const statusMeta = STATUS_META[appointment.status ?? "pending"];
   const phoneDigits = appointment.customer_phone?.replace(/\D+/g, "") ?? "";
-  // Mensaje pre-cargado para que el barbero no escriba desde cero. Incluye
-  // nombre del cliente, día (jueves 18/06) y hora del turno.
-  const firstName = (appointment.customer_name ?? "").split(" ")[0] || "";
-  const waMessage = encodeURIComponent(
-    `Hola ${firstName}! Te escribo de ${barbershopName} 👋 Es por tu turno del ${formatDateWithWeekday(appointment.appointment_date)} a las ${normalizeTimeValue(appointment.appointment_time)}hs.`,
-  );
+  // Mensaje pre-cargado para que el barbero no escriba desde cero. Mismo
+  // texto que la fila del turnero, e incluye el link de detalle/confirmación.
   const phoneWaHref = phoneDigits
-    ? `https://wa.me/${phoneDigits}?text=${waMessage}`
+    ? createWhatsAppClientContactLink({
+        barbershopName,
+        clientName: appointment.customer_name ?? "",
+        clientPhone: appointment.customer_phone ?? "",
+        date: formatDateWithWeekday(appointment.appointment_date),
+        time: normalizeTimeValue(appointment.appointment_time),
+        confirmationToken: appointment.confirmation_token,
+      })
     : null;
 
   return (

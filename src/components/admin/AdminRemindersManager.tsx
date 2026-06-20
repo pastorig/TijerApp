@@ -210,6 +210,7 @@ export function AdminRemindersManager({
       barberName: appointment.barber_name,
       date: formatDateForDisplay(appointment.appointment_date),
       time: normalizeTimeValue(appointment.appointment_time),
+      confirmationToken: appointment.confirmation_token,
     });
   }
 

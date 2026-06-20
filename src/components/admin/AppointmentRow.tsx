@@ -24,8 +24,14 @@ import {
   tagClassesFor,
 } from "@/components/admin/ClientTagsEditor";
 import { cn } from "@/lib/cn";
-import { formatPrice, normalizeDateValue } from "@/lib/format";
+import {
+  formatDateWithWeekday,
+  formatPrice,
+  normalizeDateValue,
+  normalizeTimeValue,
+} from "@/lib/format";
 import type { AppointmentRow as AppointmentData } from "@/lib/supabase";
+import { createWhatsAppClientContactLink } from "@/lib/whatsapp";
 import {
   getStampParts,
   normalizeTimeShort,
@@ -63,6 +69,8 @@ type PendingState = {
 type AppointmentRowProps = ActionHandlers &
   PendingState & {
     appointment: AppointmentData;
+    /** Nombre de la barbería, para el mensaje pre-cargado de WhatsApp. */
+    barbershopName: string;
     dayClosingMinutes?: number;
     overtimeAccepted?: boolean;
     onAcceptOvertime?: () => void;
@@ -232,6 +240,7 @@ function getRelativeTimeInfo(opts: {
 
 export function AppointmentRow({
   appointment,
+  barbershopName,
   onConfirm,
   onWhatsApp,
   onCancel,
@@ -306,7 +315,17 @@ export function AppointmentRow({
   const estimatedStartShort = formatMinutesToTime(estimatedStartMinutes);
   const estimatedEndShort = formatMinutesToTime(estimatedEndMinutes);
   const phoneDigits = appointment.customer_phone?.replace(/\D+/g, "") ?? "";
-  const phoneWaHref = phoneDigits ? `https://wa.me/${phoneDigits}` : null;
+  // Mismo mensaje pre-cargado que el hero del dashboard, con link de detalle.
+  const phoneWaHref = phoneDigits
+    ? createWhatsAppClientContactLink({
+        barbershopName,
+        clientName: appointment.customer_name,
+        clientPhone: appointment.customer_phone,
+        date: formatDateWithWeekday(appointment.appointment_date),
+        time: normalizeTimeValue(appointment.appointment_time),
+        confirmationToken: appointment.confirmation_token,
+      })
+    : null;
 
   const relTime = getRelativeTimeInfo({
     appointmentDate: ymdDate,

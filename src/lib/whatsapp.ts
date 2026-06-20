@@ -146,7 +146,7 @@ export function createWhatsAppConfirmationLink({
 
 /**
  * Link wa.me con un mensaje de RECORDATORIO de turno para mañana.
- * Tono casual, sin link de confirmación (es solo informativo).
+ * Tono casual. Si hay token, agrega el link para confirmar/cancelar.
  */
 export function createWhatsAppDayBeforeReminderLink({
   barbershopName,
@@ -156,6 +156,7 @@ export function createWhatsAppDayBeforeReminderLink({
   barberName,
   date,
   time,
+  confirmationToken,
 }: WhatsAppReminderInput) {
   const normalizedPhone = normalizeWhatsAppPhone(clientPhone);
   const messageLines = [
@@ -171,8 +172,53 @@ export function createWhatsAppDayBeforeReminderLink({
   messageLines.push(
     "",
     "Si no podes asistir, avisanos cuanto antes asi liberamos el horario.",
-    "Te esperamos!",
   );
+  if (confirmationToken) {
+    messageLines.push(
+      "",
+      "Confirma o cancela tu turno con un click:",
+      getResponderUrl(confirmationToken),
+    );
+  }
+  messageLines.push("", "Te esperamos!");
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(
+    messageLines.join("\n"),
+  )}`;
+}
+
+type WhatsAppClientContactInput = {
+  barbershopName: string;
+  clientName: string;
+  clientPhone: string;
+  /** Fecha ya formateada para mostrar, ej "jueves 18/06". */
+  date: string;
+  /** Hora "HH:MM". */
+  time: string;
+  confirmationToken?: string;
+};
+
+/**
+ * Mensaje casual del barbero hacia el cliente sobre un turno puntual.
+ * Es el MISMO texto que se usa en el hero del dashboard ("Próximo turno")
+ * y en cada fila del turnero, para que el barbero abra WhatsApp con todo
+ * pre-cargado. Si hay token, agrega el link a /r/[token]/responder.
+ */
+export function createWhatsAppClientContactLink({
+  barbershopName,
+  clientName,
+  clientPhone,
+  date,
+  time,
+  confirmationToken,
+}: WhatsAppClientContactInput) {
+  const normalizedPhone = normalizeWhatsAppPhone(clientPhone);
+  const firstName = clientName.split(/\s+/)[0] ?? clientName;
+  const messageLines = [
+    `Hola ${firstName}! Te escribo de ${barbershopName} 👋 Es por tu turno del ${date} a las ${time}hs.`,
+  ];
+  if (confirmationToken) {
+    messageLines.push("", "Detalle de tu turno:", getResponderUrl(confirmationToken));
+  }
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(
     messageLines.join("\n"),
   )}`;
