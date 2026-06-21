@@ -61,7 +61,7 @@ Setup (T001)
 **Objetivo**: turnos con seña pendiente vencida se cancelan y liberan el horario.
 **Test independiente**: reservar sin pagar (auto-cancel 1h) → `GET /api/cron/deposits?force=true` → turno cancelado + slot libre + estado "expirada".
 
-- [ ] T011 [US2] Crear `GET /api/cron/deposits` en `src/app/api/cron/deposits/route.ts` (Bearer `CRON_SECRET`, `?force`): expira `deposit_status='pending'` con `deposit_expires_at < now()` → `status='cancelled'`, `deposit_status='expired'`, `cancellation_reason`, `payment_events('auto_expired')` (FR-008). Devuelve `{ expired, reminded }`.
+- [x] T011 [US2] Crear `GET /api/cron/deposits` en `src/app/api/cron/deposits/route.ts` (Bearer `CRON_SECRET`, `?force`): expira `deposit_status='pending'` con `deposit_expires_at < now()` → `status='cancelled'`, `deposit_status='expired'`, `cancellation_reason`, `payment_events('auto_expired')` (FR-008). Devuelve `{ expired, reminded }`.
 
 ## Phase 5: US3 — Recordatorio de pago (P3)
 

@@ -37,10 +37,21 @@ type BookBody = {
   comment?: string;
 };
 
-function siteUrl() {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-  ).replace(/\/$/, "");
+/**
+ * Base URL pública para el webhook y los back_urls. Usamos el origin del
+ * request (el host real donde está deployado: preview o prod) para que MP
+ * pueda notificar a ESTE deploy. Fallback a NEXT_PUBLIC_SITE_URL.
+ */
+function siteUrl(request: Request) {
+  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  try {
+    const origin = new URL(request.url).origin;
+    // En localhost MP no puede llegar; preferimos el env si está seteado.
+    if (origin.includes("localhost") && fromEnv) return fromEnv;
+    return origin;
+  } catch {
+    return fromEnv || "http://localhost:3000";
+  }
 }
 
 export async function POST(request: Request) {
@@ -212,12 +223,13 @@ export async function POST(request: Request) {
   const token = (inserted as { confirmation_token: string }).confirmation_token;
 
   // 5. Preference de MercadoPago.
+  const base = siteUrl(request);
   const pref = await createDepositPreference(shopRow.mp_access_token, {
     title: `Seña - ${serviceRow.name} en ${shopRow.name}`,
     amount: depositAmount,
     appointmentId,
-    notificationUrl: `${siteUrl()}/api/mp/webhook?bs=${encodeURIComponent(slug)}`,
-    backUrl: `${siteUrl()}/r/${token}`,
+    notificationUrl: `${base}/api/mp/webhook?bs=${encodeURIComponent(slug)}`,
+    backUrl: `${base}/r/${token}`,
     expiresAt,
     payerEmail: customerEmail,
   });
