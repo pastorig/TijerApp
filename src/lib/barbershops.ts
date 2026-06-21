@@ -47,6 +47,11 @@ function mapBarbershopRowToDemoBarbershop(
     isActive: barbershop.is_active,
     autoConfirmAppointments: barbershop.auto_confirm_appointments ?? false,
     waitlistEnabled: barbershop.waitlist_enabled ?? true,
+    // Campos públicos de seña (NUNCA exponemos mp_access_token al cliente).
+    mpEnabled: barbershop.mp_enabled ?? false,
+    depositPercent: barbershop.deposit_percent ?? 30,
+    depositMinAmount: barbershop.deposit_min_amount ?? null,
+    depositAutoCancelHours: barbershop.deposit_auto_cancel_hours ?? 24,
     workingHours: {
       start:
         barbershop.working_hours_start?.trim() ||

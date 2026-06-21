@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Logo } from "@/components/ui";
 import { resolveBarbershopBySlug } from "@/lib/barbershops";
 import { getPublicAppointmentByToken } from "@/lib/public-appointment";
+import { getAppointmentDepositByToken } from "@/lib/appointment-deposit";
+import { DepositPaymentPanel } from "@/components/DepositPaymentPanel";
 import { AppointmentActionPanel } from "./AppointmentActionPanel";
 import { ClientPushOptIn } from "./ClientPushOptIn";
 import { PublicLoyaltyCard } from "./PublicLoyaltyCard";
@@ -42,9 +44,10 @@ export default async function PublicAppointmentPage({
   // El RPC cae al slug si la barbería no está en la tabla `barbershops`
   // (caso típico de las demos como SV Barber). Resolvemos el nombre real
   // desde la misma fuente que la landing pública usa.
-  const { data: resolvedBarbershop } = await resolveBarbershopBySlug(
-    appointment.barbershop_slug,
-  );
+  const [{ data: resolvedBarbershop }, deposit] = await Promise.all([
+    resolveBarbershopBySlug(appointment.barbershop_slug),
+    getAppointmentDepositByToken(token),
+  ]);
   const barbershopName =
     resolvedBarbershop?.name ?? appointment.barbershop_name;
   const appointmentWithName = {
@@ -70,6 +73,18 @@ export default async function PublicAppointmentPage({
           initialAppointment={appointmentWithName}
           showActions={false}
         />
+        {deposit ? (
+          <div className="mt-6">
+            <DepositPaymentPanel
+              amount={deposit.amount}
+              status={deposit.status}
+              payHref={
+                deposit.payable ? `/api/mp/pay?token=${token}` : undefined
+              }
+              barbershopName={barbershopName}
+            />
+          </div>
+        ) : null}
         <ClientPushOptIn token={token} />
         <PublicLoyaltyCard token={token} />
       </div>

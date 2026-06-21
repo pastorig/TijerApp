@@ -40,6 +40,28 @@ type AppointmentRow = Omit<AppointmentInsert, "status"> & {
   status: AppointmentStatus;
 };
 
+type PaymentEventRow = {
+  id: string;
+  appointment_id: string | null;
+  event_type: string;
+  amount: number | null;
+  mp_payment_id: string | null;
+  mp_preference_id: string | null;
+  raw_payload: Record<string, unknown> | null;
+  created_at: string;
+};
+
+type PaymentEventInsert = {
+  id?: string;
+  appointment_id?: string | null;
+  event_type: string;
+  amount?: number | null;
+  mp_payment_id?: string | null;
+  mp_preference_id?: string | null;
+  raw_payload?: Record<string, unknown> | null;
+  created_at?: string;
+};
+
 type AppointmentReviewRow = {
   id: string;
   appointment_id: string;
@@ -715,6 +737,12 @@ type Database = {
         Row: PushSubscriptionRow;
         Insert: PushSubscriptionInsert;
         Update: PushSubscriptionUpdate;
+        Relationships: [];
+      };
+      payment_events: {
+        Row: PaymentEventRow;
+        Insert: PaymentEventInsert;
+        Update: Partial<PaymentEventInsert>;
         Relationships: [];
       };
       push_notification_queue: {

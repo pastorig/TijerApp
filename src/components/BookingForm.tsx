@@ -35,6 +35,7 @@ import {
 import type { BarberRow, BarberServiceRow } from "@/lib/supabase";
 import { createWhatsAppBookingLink } from "@/lib/whatsapp";
 import { CouponInput } from "./booking/CouponInput";
+import { DepositPaymentPanel } from "./DepositPaymentPanel";
 import type { CouponValidation } from "@/lib/public-coupons";
 
 type AppliedCoupon = Extract<CouponValidation, { valid: true }> & { code: string };
@@ -151,6 +152,9 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     couponCode?: string | null;
     couponDiscountAmount?: number | null;
     finalPrice?: number | null;
+    // Seña MercadoPago: si están, el cierre muestra el panel de pago.
+    depositAmount?: number | null;
+    initPoint?: string | null;
   };
   const [bookingResult, setBookingResult] = useState<BookingResult | null>(
     null,
@@ -521,6 +525,76 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       return;
     } finally {
       setIsSaving(false);
+    }
+
+    // ── Barbería con seña activa ──────────────────────────────────────────
+    // La reserva la crea el server (necesita el access_token de MP, secreto).
+    // El cierre del flujo pasa a ser el pago de la seña, no el WhatsApp.
+    if (barbershop.mpEnabled) {
+      setIsSaving(true);
+      try {
+        const res = await fetch("/api/appointments/book", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            barbershopSlug: barbershop.slug,
+            barberId: selectedBarber.id,
+            barberName: selectedBarberName,
+            serviceId: selectedService.id,
+            customerName: clientName.trim(),
+            customerPhone: clientPhone.trim(),
+            customerEmail: clientEmail.trim() || null,
+            appointmentDate: selectedDate,
+            appointmentTime: selectedTime,
+            comment: comment.trim(),
+          }),
+        });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          token?: string;
+          initPoint?: string;
+          depositAmount?: number;
+          error?: string;
+        };
+
+        if (!res.ok || !data.ok || !data.token) {
+          if (res.status === 409) {
+            setAvailabilitySlots((currentSlots) =>
+              currentSlots.map((slot) =>
+                slot.time === selectedTime
+                  ? { ...slot, isAvailable: false, reason: "occupied" }
+                  : slot,
+              ),
+            );
+            setSelectedTime("");
+          }
+          setFormError(
+            data.error || "No pudimos crear la reserva. Probá de nuevo.",
+          );
+          return;
+        }
+
+        setBookingResult({
+          confirmationToken: data.token,
+          barberName: selectedBarberName,
+          serviceName: selectedService.name,
+          servicePrice: selectedService.price,
+          serviceDurationMinutes: selectedService.durationMinutes,
+          date: selectedDate,
+          time: selectedTime,
+          customerName: clientName.trim(),
+          customerPhone: clientPhone.trim(),
+          comment,
+          whatsappLink: "",
+          depositAmount: data.depositAmount ?? null,
+          initPoint: data.initPoint ?? null,
+        });
+      } catch {
+        setFormError("No pudimos crear la reserva. Probá de nuevo.");
+      } finally {
+        setIsSaving(false);
+      }
+      return;
     }
 
     setIsSaving(true);
@@ -1298,6 +1372,9 @@ type BookingSuccessResult = {
   couponCode?: string | null;
   couponDiscountAmount?: number | null;
   finalPrice?: number | null;
+  // Seña MercadoPago.
+  depositAmount?: number | null;
+  initPoint?: string | null;
 };
 
 function BookingSuccess({
@@ -1309,6 +1386,10 @@ function BookingSuccess({
 }) {
   const confirmHref = `/r/${result.confirmationToken}`;
   const isAutoConfirmed = barbershop.autoConfirmAppointments ?? false;
+  // Si hay seña, el cierre es el pago (no el WhatsApp).
+  const isDeposit = Boolean(result.initPoint) || typeof result.depositAmount === "number";
+  const payHref =
+    result.initPoint ?? `/api/mp/pay?token=${result.confirmationToken}`;
 
   return (
     <section className="grid gap-12 pb-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-start lg:gap-20 lg:pb-0">
@@ -1322,7 +1403,16 @@ function BookingSuccess({
         <p className="mt-6 max-w-xl text-sm leading-7 text-[color:var(--text-secondary)] sm:text-base">
           Tu turno en{" "}
           <span className="text-white font-semibold">{barbershop.name}</span>{" "}
-          {isAutoConfirmed ? (
+          {isDeposit ? (
+            <>
+              queda{" "}
+              <span className="text-[color:var(--brand-gold)] font-semibold">
+                reservado
+              </span>
+              . Para confirmarlo, pagá la seña acá abajo. Si no la pagás a
+              tiempo, el horario se libera.
+            </>
+          ) : isAutoConfirmed ? (
             <>
               quedó{" "}
               <span className="text-[color:var(--success)] font-semibold">
@@ -1343,7 +1433,18 @@ function BookingSuccess({
           )}
         </p>
 
-        <div className="mt-10 grid gap-3">
+        {isDeposit ? (
+          <div className="mt-8">
+            <DepositPaymentPanel
+              amount={result.depositAmount}
+              status="pending"
+              payHref={payHref}
+              barbershopName={barbershop.name}
+            />
+          </div>
+        ) : null}
+
+        <div className="mt-8 grid gap-3">
           <Button
             as="link"
             href={confirmHref}
@@ -1354,14 +1455,16 @@ function BookingSuccess({
           >
             Ver mi turno
           </Button>
-          <a
-            href={result.whatsappLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] sm:w-auto"
-          >
-            Reabrir WhatsApp con la reserva
-          </a>
+          {!isDeposit && result.whatsappLink ? (
+            <a
+              href={result.whatsappLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] sm:w-auto"
+            >
+              Reabrir WhatsApp con la reserva
+            </a>
+          ) : null}
         </div>
 
         <p className="mt-8 text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
