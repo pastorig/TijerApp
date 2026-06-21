@@ -278,7 +278,7 @@ export function PricingPlans() {
                     Empezar prueba
                   </Button>
                   <p className="mt-3 text-center text-[10px] text-[color:var(--text-secondary)]">
-                    7 días gratis · Sin tarjeta
+                    14 días gratis · Sin tarjeta
                   </p>
                 </div>
               </Card>

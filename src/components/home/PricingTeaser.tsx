@@ -72,7 +72,7 @@ export function PricingTeaser() {
             </span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:mt-5 sm:text-base sm:leading-7">
-            Cobramos en pesos al TC MEP del mes. 7 días gratis sin tarjeta.
+            Cobramos en pesos al TC MEP del mes. 14 días gratis sin tarjeta.
             Cancelás cuando quieras.
           </p>
         </header>

@@ -129,7 +129,7 @@ export default function Home() {
             <ul className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[color:var(--text-secondary)] sm:mt-8 sm:text-sm">
               <li className="flex items-center gap-1.5">
                 <span className="text-[color:var(--brand-gold)]">✓</span>
-                7 días gratis
+                14 días gratis
               </li>
               <li className="flex items-center gap-1.5">
                 <span className="text-[color:var(--brand-gold)]">✓</span>

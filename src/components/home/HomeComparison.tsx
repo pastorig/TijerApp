@@ -129,7 +129,7 @@ export function HomeComparison() {
                 Desde $22.000/mes
               </p>
               <p className="mt-1 text-sm leading-5 text-[color:var(--text-secondary)]">
-                Cobra en pesos. 7 días gratis. Cancelás cuando quieras.
+                Cobra en pesos. 14 días gratis. Cancelás cuando quieras.
               </p>
             </div>
           </div>

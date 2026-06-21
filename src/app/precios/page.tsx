@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   // El template de layout.tsx agrega "· TijerApp" automáticamente.
   title: "Precios",
   description:
-    "Planes claros para barberías argentinas. Desde $22.000/mes. 7 días gratis sin tarjeta. Cancelás cuando quieras.",
+    "Planes claros para barberías argentinas. Desde $22.000/mes. 14 días gratis sin tarjeta. Cancelás cuando quieras.",
 };
 
 export default function PricingPage() {
@@ -95,7 +95,7 @@ export default function PricingPage() {
               </Button>
             </div>
             <p className="mt-5 text-xs text-[color:var(--text-secondary)] sm:mt-7">
-              7 días gratis · Sin tarjeta · Cancelás cuando quieras
+              14 días gratis · Sin tarjeta · Cancelás cuando quieras
             </p>
           </div>
         </div>
@@ -130,8 +130,8 @@ export default function PricingPage() {
           <dl className="mt-10 space-y-6 sm:mt-12 sm:space-y-8">
             {[
               {
-                q: "¿Cómo funciona el trial de 7 días?",
-                a: "Te activamos el plan Pro durante 7 días, sin pedirte tarjeta. Probás todas las features. Al día 7 te pedimos cargar tu tarjeta de MercadoPago para seguir. Si no la cargás, tu cuenta queda en modo lectura por 30 días y después se archiva.",
+                q: "¿Cómo funciona el trial de 14 días?",
+                a: "Te activamos el plan Pro durante 14 días, sin pedirte tarjeta. Probás todas las features. Al día 14 te pedimos cargar tu tarjeta de MercadoPago para seguir. Si no la cargás, tu cuenta queda en modo lectura por 30 días y después se archiva.",
               },
               {
                 q: "¿Por qué cobran en pesos?",
