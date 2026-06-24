@@ -81,7 +81,7 @@ Setup (T001)
 ## Phase 7: Polish & Cross-Cutting
 
 - [ ] T015 [P] Sumar el trigger del cron `GET /api/cron/deposits` al schedule de GitHub Actions (junto a `cron/reminders`), mismo `CRON_SECRET`.
-- [ ] T016 [P] Unit test del helper `computeDepositAmount` en `scripts/` o el runner de tests existente (porcentaje, mínimo, redondeo, precio 0).
+- [x] T016 [P] Unit test del helper `computeDepositAmount` en `scripts/` o el runner de tests existente (porcentaje, mínimo, redondeo, precio 0).
 - [ ] T017 Verificación: `npm run lint` + `npm run build` limpios; revisar `payment_events` (un row por paso).
 - [ ] T018 QA en sandbox MP siguiendo `quickstart.md` (flujo feliz, expiración, mínimo, rechazo, webhook duplicado, sin seña, token inválido). Requiere credenciales TEST + deploy (lo hace Bautista).
 
