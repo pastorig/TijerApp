@@ -123,7 +123,18 @@ export async function POST(request: Request) {
     deposit_auto_cancel_hours: number;
   } | null;
 
-  if (!shopRow || !shopRow.mp_enabled || !shopRow.mp_access_token) {
+  // Modo simulación (solo testing): permite reservar con seña SIN token real
+  // de MP, para comprobar el flujo. Gateado por env var.
+  const simMode =
+    process.env.NEXT_PUBLIC_ALLOW_DEPOSIT_SIMULATION === "true";
+
+  if (!shopRow || !shopRow.mp_enabled) {
+    return NextResponse.json(
+      { error: "Esta barbería no tiene el cobro de seña activo." },
+      { status: 400 },
+    );
+  }
+  if (!shopRow.mp_access_token && !simMode) {
     return NextResponse.json(
       { error: "Esta barbería no tiene el cobro de seña activo." },
       { status: 400 },
@@ -222,9 +233,28 @@ export async function POST(request: Request) {
   const appointmentId = (inserted as { id: string }).id;
   const token = (inserted as { confirmation_token: string }).confirmation_token;
 
-  // 5. Preference de MercadoPago.
+  // 5. Modo simulación: NO creamos preference (no hay MP). El turno queda
+  // pending con seña, y se confirma desde el botón "Simular pago".
+  if (simMode && !shopRow.mp_access_token) {
+    await supabase.from("payment_events").insert({
+      appointment_id: appointmentId,
+      event_type: "preference_created",
+      amount: depositAmount,
+      raw_payload: { simulated: true },
+    });
+    return NextResponse.json({
+      ok: true,
+      appointmentId,
+      token,
+      initPoint: null,
+      depositAmount,
+      simulate: true,
+    });
+  }
+
+  // 5b. Preference de MercadoPago.
   const base = siteUrl(request);
-  const pref = await createDepositPreference(shopRow.mp_access_token, {
+  const pref = await createDepositPreference(shopRow.mp_access_token!, {
     title: `Seña - ${serviceRow.name} en ${shopRow.name}`,
     amount: depositAmount,
     appointmentId,

@@ -36,6 +36,7 @@ import type { BarberRow, BarberServiceRow } from "@/lib/supabase";
 import { createWhatsAppBookingLink } from "@/lib/whatsapp";
 import { CouponInput } from "./booking/CouponInput";
 import { DepositPaymentPanel } from "./DepositPaymentPanel";
+import { SimulatePaymentButton } from "./SimulatePaymentButton";
 import type { CouponValidation } from "@/lib/public-coupons";
 
 type AppliedCoupon = Extract<CouponValidation, { valid: true }> & { code: string };
@@ -1441,6 +1442,7 @@ function BookingSuccess({
               payHref={payHref}
               barbershopName={barbershop.name}
             />
+            <SimulatePaymentButton token={result.confirmationToken} />
           </div>
         ) : null}
 

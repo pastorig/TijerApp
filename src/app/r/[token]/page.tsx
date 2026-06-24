@@ -5,6 +5,7 @@ import { resolveBarbershopBySlug } from "@/lib/barbershops";
 import { getPublicAppointmentByToken } from "@/lib/public-appointment";
 import { getAppointmentDepositByToken } from "@/lib/appointment-deposit";
 import { DepositPaymentPanel } from "@/components/DepositPaymentPanel";
+import { SimulatePaymentButton } from "@/components/SimulatePaymentButton";
 import { AppointmentActionPanel } from "./AppointmentActionPanel";
 import { ClientPushOptIn } from "./ClientPushOptIn";
 import { PublicLoyaltyCard } from "./PublicLoyaltyCard";
@@ -83,6 +84,7 @@ export default async function PublicAppointmentPage({
               }
               barbershopName={barbershopName}
             />
+            {deposit.payable ? <SimulatePaymentButton token={token} /> : null}
           </div>
         ) : null}
         <ClientPushOptIn token={token} />
