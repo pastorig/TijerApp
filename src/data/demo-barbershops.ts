@@ -41,6 +41,14 @@ export type DemoBarbershop = {
   autoConfirmAppointments?: boolean;
   /** Cuando true, se ofrece "anotarse en lista de espera" en el booking. Default true. */
   waitlistEnabled?: boolean;
+  /** Cuando true, la barbería cobra seña por MercadoPago al reservar. Default false. */
+  mpEnabled?: boolean;
+  /** Porcentaje del precio que se cobra como seña (1-100). */
+  depositPercent?: number;
+  /** Monto mínimo de seña en ARS, o null si no hay piso. */
+  depositMinAmount?: number | null;
+  /** Horas tras reservar para pagar la seña antes de auto-cancelar. */
+  depositAutoCancelHours?: number;
 };
 
 export const demoBarbershops: DemoBarbershop[] = [

@@ -40,6 +40,28 @@ type AppointmentRow = Omit<AppointmentInsert, "status"> & {
   status: AppointmentStatus;
 };
 
+type PaymentEventRow = {
+  id: string;
+  appointment_id: string | null;
+  event_type: string;
+  amount: number | null;
+  mp_payment_id: string | null;
+  mp_preference_id: string | null;
+  raw_payload: Record<string, unknown> | null;
+  created_at: string;
+};
+
+type PaymentEventInsert = {
+  id?: string;
+  appointment_id?: string | null;
+  event_type: string;
+  amount?: number | null;
+  mp_payment_id?: string | null;
+  mp_preference_id?: string | null;
+  raw_payload?: Record<string, unknown> | null;
+  created_at?: string;
+};
+
 type AppointmentReviewRow = {
   id: string;
   appointment_id: string;
@@ -144,6 +166,11 @@ type BarbershopRow = {
   mp_access_token: string | null;
   mp_public_key: string | null;
   mp_user_id: string | null;
+  // OAuth (migración 20260625120000): renovación del access_token.
+  // Opcionales en el tipo: los SELECT públicos no las traen (y la columna
+  // recién existe tras aplicar la migración).
+  mp_refresh_token?: string | null;
+  mp_token_expires_at?: string | null;
   deposit_percent: number;
   deposit_min_amount: number | null;
   deposit_auto_cancel_hours: number;
@@ -162,6 +189,8 @@ type BarbershopInsert = Omit<
   | "mp_access_token"
   | "mp_public_key"
   | "mp_user_id"
+  | "mp_refresh_token"
+  | "mp_token_expires_at"
   | "deposit_percent"
   | "deposit_min_amount"
   | "deposit_auto_cancel_hours"
@@ -180,6 +209,8 @@ type BarbershopInsert = Omit<
   mp_access_token?: string | null;
   mp_public_key?: string | null;
   mp_user_id?: string | null;
+  mp_refresh_token?: string | null;
+  mp_token_expires_at?: string | null;
   deposit_percent?: number;
   deposit_min_amount?: number | null;
   deposit_auto_cancel_hours?: number;
@@ -715,6 +746,12 @@ type Database = {
         Row: PushSubscriptionRow;
         Insert: PushSubscriptionInsert;
         Update: PushSubscriptionUpdate;
+        Relationships: [];
+      };
+      payment_events: {
+        Row: PaymentEventRow;
+        Insert: PaymentEventInsert;
+        Update: Partial<PaymentEventInsert>;
         Relationships: [];
       };
       push_notification_queue: {
