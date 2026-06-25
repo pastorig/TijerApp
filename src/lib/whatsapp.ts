@@ -217,7 +217,11 @@ export function createWhatsAppClientContactLink({
     `Hola ${firstName}! Te escribo de ${barbershopName} 👋 Es por tu turno del ${date} a las ${time}hs.`,
   ];
   if (confirmationToken) {
-    messageLines.push("", "Detalle de tu turno:", getResponderUrl(confirmationToken));
+    messageLines.push(
+      "",
+      "Podés confirmar o cancelar tu turno desde este link:",
+      getResponderUrl(confirmationToken),
+    );
   }
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(
     messageLines.join("\n"),
