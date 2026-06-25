@@ -229,7 +229,7 @@ function buildNotificationHtml(params: {
           <tr>
             <td style="padding:16px 24px 24px;border-top:1px solid #1f1f1f;text-align:center;">
               <p style="margin:0;font-size:11px;color:#666;">
-                Andá a <a href="https://tijerapp.app/owner/mensajes" style="color:#c9a23e;text-decoration:none;">/owner/mensajes</a> para marcarlo como atendido.
+                Andá a <a href="${(process.env.NEXT_PUBLIC_SITE_URL || "https://tijerapp.vercel.app").replace(/\/$/, "")}/owner/mensajes" style="color:#c9a23e;text-decoration:none;">/owner/mensajes</a> para marcarlo como atendido.
               </p>
             </td>
           </tr>

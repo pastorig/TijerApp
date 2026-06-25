@@ -693,7 +693,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
                     .replaceAll("{hora}", "17:30")}
                   {"\n\nPodés confirmar o cancelar tu turno desde este link:\n"}
                   <span className="text-[color:var(--brand-gold)]">
-                    {`https://tijerapp.vercel.app/r/…`}
+                    {`${(process.env.NEXT_PUBLIC_SITE_URL || "https://tijerapp.vercel.app").replace(/\/$/, "")}/r/…`}
                   </span>
                 </p>
               </div>
