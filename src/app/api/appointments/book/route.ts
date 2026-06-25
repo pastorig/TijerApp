@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { computeDepositAmount } from "@/lib/mercadopago/deposit";
 import { createDepositPreference } from "@/lib/mercadopago/client";
+import { refreshAccessToken, expiresAtFrom } from "@/lib/mercadopago/oauth";
 
 export const runtime = "nodejs";
 
@@ -100,7 +101,7 @@ export async function POST(request: Request) {
   const { data: shop, error: shopError } = await supabase
     .from("barbershops")
     .select(
-      "slug, name, mp_enabled, mp_access_token, deposit_percent, deposit_min_amount, deposit_auto_cancel_hours",
+      "slug, name, mp_enabled, mp_access_token, mp_refresh_token, mp_token_expires_at, deposit_percent, deposit_min_amount, deposit_auto_cancel_hours",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -118,6 +119,8 @@ export async function POST(request: Request) {
     name: string;
     mp_enabled: boolean;
     mp_access_token: string | null;
+    mp_refresh_token: string | null;
+    mp_token_expires_at: string | null;
     deposit_percent: number;
     deposit_min_amount: number | null;
     deposit_auto_cancel_hours: number;
@@ -252,9 +255,32 @@ export async function POST(request: Request) {
     });
   }
 
-  // 5b. Preference de MercadoPago.
+  // 5b. Token fresco: si el access_token está por vencer (< 7 días) y hay
+  // refresh_token (cuenta conectada por OAuth), lo renovamos y persistimos.
+  let accessToken = shopRow.mp_access_token!;
+  const expMs = shopRow.mp_token_expires_at
+    ? new Date(shopRow.mp_token_expires_at).getTime()
+    : null;
+  const needsRefresh =
+    expMs !== null && expMs - Date.now() < 7 * 24 * 60 * 60 * 1000;
+  if (needsRefresh && shopRow.mp_refresh_token) {
+    const refreshed = await refreshAccessToken(shopRow.mp_refresh_token);
+    if (refreshed.ok) {
+      accessToken = refreshed.token.access_token;
+      await supabase
+        .from("barbershops")
+        .update({
+          mp_access_token: refreshed.token.access_token,
+          mp_refresh_token: refreshed.token.refresh_token,
+          mp_token_expires_at: expiresAtFrom(refreshed.token.expires_in),
+        })
+        .eq("slug", slug);
+    }
+  }
+
+  // 5c. Preference de MercadoPago.
   const base = siteUrl(request);
-  const pref = await createDepositPreference(shopRow.mp_access_token!, {
+  const pref = await createDepositPreference(accessToken, {
     title: `Seña - ${serviceRow.name} en ${shopRow.name}`,
     amount: depositAmount,
     appointmentId,

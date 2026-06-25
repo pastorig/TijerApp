@@ -7,7 +7,9 @@ import {
   ChevronRight,
   CreditCard,
   ExternalLink,
+  Link2,
   Loader2,
+  Unlink,
 } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { useToast } from "@/components/ui";
@@ -67,6 +69,99 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
   const [accessTokenMasked, setAccessTokenMasked] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
 
+  // OAuth ("Conectar con MercadoPago")
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [showManual, setShowManual] = useState(false);
+
+  // Resultado del callback OAuth (?mp=connected|error)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const mp = params.get("mp");
+    if (mp === "connected") {
+      toast.success("¡MercadoPago conectado!", {
+        description: "Ya podés activar el cobro de seña.",
+      });
+    } else if (mp === "error") {
+      toast.error("No se pudo conectar MercadoPago", {
+        description: "Probá de nuevo. Si sigue, avisanos.",
+      });
+    }
+    if (mp) {
+      // Limpiamos el query param para no repetir el toast al refrescar.
+      params.delete("mp");
+      params.delete("reason");
+      const qs = params.toString();
+      window.history.replaceState(
+        {},
+        "",
+        window.location.pathname + (qs ? `?${qs}` : ""),
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleConnect() {
+    setIsConnecting(true);
+    try {
+      const { data: sessionData } = await getCurrentSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        toast.error("Sesión expirada");
+        return;
+      }
+      const res = await fetch("/api/mp/oauth/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ barbershopSlug: barbershop.slug }),
+      });
+      const data = (await res.json()) as { authUrl?: string; error?: string };
+      if (!res.ok || !data.authUrl) {
+        toast.error("No se pudo iniciar la conexión", {
+          description: data.error,
+        });
+        return;
+      }
+      // Redirige a MercadoPago para autorizar.
+      window.location.href = data.authUrl;
+    } catch {
+      toast.error("No se pudo iniciar la conexión");
+    } finally {
+      setIsConnecting(false);
+    }
+  }
+
+  async function handleDisconnect() {
+    setIsDisconnecting(true);
+    try {
+      const { data: sessionData } = await getCurrentSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) return;
+      const res = await fetch("/api/mp/oauth/disconnect", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ barbershopSlug: barbershop.slug }),
+      });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        toast.error("No se pudo desconectar", { description: err.error });
+        return;
+      }
+      toast.success("MercadoPago desconectado");
+      setMpEnabled(false);
+      await load();
+    } finally {
+      setIsDisconnecting(false);
+    }
+  }
+
   async function load() {
     setIsLoading(true);
     try {
@@ -102,7 +197,6 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [barbershop.slug]);
@@ -231,6 +325,80 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
         </div>
       ) : (
         <form onSubmit={handleSave} className="space-y-6">
+          {/* Conexión con MercadoPago (OAuth) */}
+          <section
+            className={cn(
+              "rounded-[var(--radius-md)] border p-5 sm:p-6",
+              hasAccessToken
+                ? "border-[color:var(--success)]/40 bg-[color:var(--success-soft)]"
+                : "border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] ring-1 ring-[color:var(--brand-gold)]/20",
+            )}
+          >
+            {hasAccessToken ? (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <Check
+                    aria-hidden="true"
+                    className="size-5 shrink-0 text-[color:var(--success)]"
+                  />
+                  <div>
+                    <p className="text-sm font-bold text-[color:var(--success)]">
+                      MercadoPago conectado
+                    </p>
+                    <p className="text-xs text-[color:var(--text-secondary)]">
+                      El dinero de las señas va directo a tu cuenta.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleDisconnect()}
+                  disabled={isDisconnecting}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors hover:border-[color:var(--danger)] hover:text-[color:var(--danger)] disabled:opacity-50"
+                >
+                  <Unlink className="size-3.5" aria-hidden="true" />
+                  {isDisconnecting ? "Desconectando…" : "Desconectar"}
+                </button>
+              </div>
+            ) : (
+              <div>
+                <p className="flex items-center gap-2 text-sm font-bold text-white">
+                  <Link2
+                    aria-hidden="true"
+                    className="size-4 text-[color:var(--brand-gold)]"
+                  />
+                  Conectá tu cuenta de MercadoPago
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[color:var(--text-secondary)]">
+                  Un solo clic: iniciás sesión en MercadoPago, autorizás, y listo.
+                  No tenés que copiar ningún código ni token.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void handleConnect()}
+                  disabled={isConnecting}
+                  className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[#009ee3] px-5 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  {isConnecting ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Link2 className="size-4" aria-hidden="true" />
+                  )}
+                  {isConnecting ? "Abriendo MercadoPago…" : "Conectar con MercadoPago"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowManual((v) => !v)}
+                  className="mt-3 block text-[11px] font-semibold text-[color:var(--text-muted)] underline transition-colors hover:text-[color:var(--brand-gold)]"
+                >
+                  {showManual
+                    ? "Ocultar carga manual"
+                    : "¿Preferís cargar tus credenciales a mano?"}
+                </button>
+              </div>
+            )}
+          </section>
+
           {/* Toggle principal */}
           <section
             className={cn(
@@ -264,7 +432,8 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
             </label>
           </section>
 
-          {/* Credenciales MP */}
+          {/* Credenciales MP — fallback manual (colapsado por defecto) */}
+          {showManual ? (
           <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 sm:p-6">
             <h2 className="text-lg font-black uppercase tracking-tight">
               Credenciales de Mercado Pago
@@ -401,6 +570,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
               ) : null}
             </div>
           </section>
+          ) : null}
 
           {/* Config de seña */}
           <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 sm:p-6">
