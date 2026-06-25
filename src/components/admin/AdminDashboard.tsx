@@ -547,6 +547,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
               currentMinutes={currentMinutes}
               barbershopSlug={barbershop.slug}
               barbershopName={barbershop.name}
+              whatsappMessageTemplate={barbershop.whatsappMessageTemplate ?? null}
             />
 
             {/* Resumen del día — Mobile: grid compacto 3x2. Desktop: lista vertical. */}
@@ -872,11 +873,13 @@ function NextAppointmentHero({
   currentMinutes,
   barbershopSlug,
   barbershopName,
+  whatsappMessageTemplate,
 }: {
   appointment: AppointmentRow | undefined;
   currentMinutes: number;
   barbershopSlug: string;
   barbershopName: string;
+  whatsappMessageTemplate: string | null;
 }) {
   if (!appointment) {
     return (
@@ -915,6 +918,7 @@ function NextAppointmentHero({
         date: formatDateWithWeekday(appointment.appointment_date),
         time: normalizeTimeValue(appointment.appointment_time),
         confirmationToken: appointment.confirmation_token,
+        template: whatsappMessageTemplate,
       })
     : null;
 

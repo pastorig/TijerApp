@@ -5,7 +5,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 export const runtime = "nodejs";
 
 const barbershopSelectFields =
-  "id, created_at, slug, name, description, whatsapp, instagram, address, logo_url, google_reviews_url, working_hours_start, working_hours_end, slot_interval_minutes, is_active, auto_confirm_appointments, waitlist_enabled";
+  "id, created_at, slug, name, description, whatsapp, instagram, address, logo_url, google_reviews_url, working_hours_start, working_hours_end, slot_interval_minutes, is_active, auto_confirm_appointments, waitlist_enabled, whatsapp_message_template";
 
 async function assertAdminOfBarbershop(
   authHeader: string | null,
@@ -146,6 +146,9 @@ export async function PATCH(request: Request) {
           auto_confirm_appointments: Boolean(payload.autoConfirmAppointments),
           // Default true: solo es false si lo mandan explícito como false.
           waitlist_enabled: payload.waitlistEnabled !== false,
+          whatsapp_message_template: asTrimmedOrNull(
+            payload.whatsappMessageTemplate,
+          ),
         },
         { onConflict: "slug" },
       );
@@ -178,6 +181,9 @@ export async function PATCH(request: Request) {
       is_active: Boolean(payload.isActive ?? true),
       auto_confirm_appointments: Boolean(payload.autoConfirmAppointments),
       waitlist_enabled: payload.waitlistEnabled !== false,
+      whatsapp_message_template: asTrimmedOrNull(
+        payload.whatsappMessageTemplate,
+      ),
     })
     .eq("slug", barbershopSlug)
     .select(barbershopSelectFields)

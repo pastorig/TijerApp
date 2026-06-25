@@ -1530,6 +1530,9 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                       }
                       appointment={appointment}
                       barbershopName={barbershop.name}
+                      whatsappMessageTemplate={
+                        barbershop.whatsappMessageTemplate ?? null
+                      }
                       onConfirm={handleConfirmAppointment}
                       onWhatsApp={handleSendWhatsApp}
                       onCancel={handleCancelAppointment}

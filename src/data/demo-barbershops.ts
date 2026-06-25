@@ -41,6 +41,12 @@ export type DemoBarbershop = {
   autoConfirmAppointments?: boolean;
   /** Cuando true, se ofrece "anotarse en lista de espera" en el booking. Default true. */
   waitlistEnabled?: boolean;
+  /**
+   * Texto personalizado del mensaje de WhatsApp del barbero al cliente.
+   * null/undefined = mensaje por defecto. Placeholders: {nombre} {barberia}
+   * {fecha} {hora}. El link de confirmar/cancelar se agrega siempre al final.
+   */
+  whatsappMessageTemplate?: string | null;
 };
 
 export const demoBarbershops: DemoBarbershop[] = [
