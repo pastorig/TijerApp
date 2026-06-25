@@ -402,8 +402,8 @@ export function AppointmentRow({
                 )}
               </div>
 
-              {/* Línea 2: tiempo relativo + tag */}
-              {relTime || primaryTag ? (
+              {/* Línea 2: tiempo relativo + tag + estado de seña */}
+              {relTime || primaryTag || appointment.deposit_status ? (
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   {relTime ? <RelativeTimeChip info={relTime} /> : null}
                   {primaryTag ? (
@@ -415,6 +415,9 @@ export function AppointmentRow({
                     >
                       {primaryTag}
                     </span>
+                  ) : null}
+                  {appointment.deposit_status ? (
+                    <DepositStatusChip status={appointment.deposit_status} />
                   ) : null}
                 </div>
               ) : null}
@@ -840,6 +843,44 @@ function StatusPill({
         ) : null}
       </span>
       {meta.label}
+    </span>
+  );
+}
+
+/** Chip con el estado de la seña de MercadoPago (si la barbería cobra seña). */
+function DepositStatusChip({ status }: { status: string }) {
+  const meta: Record<string, { label: string; classes: string }> = {
+    pending: {
+      label: "Seña pendiente",
+      classes:
+        "border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]",
+    },
+    paid: {
+      label: "Seña pagada",
+      classes:
+        "border-[color:var(--success)]/40 bg-[color:var(--success-soft)] text-[color:var(--success)]",
+    },
+    expired: {
+      label: "Seña vencida",
+      classes:
+        "border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] text-[color:var(--danger)]",
+    },
+    failed: {
+      label: "Seña rechazada",
+      classes:
+        "border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] text-[color:var(--danger)]",
+    },
+  };
+  const m = meta[status];
+  if (!m) return null;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]",
+        m.classes,
+      )}
+    >
+      {m.label}
     </span>
   );
 }
