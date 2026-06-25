@@ -71,6 +71,8 @@ type AppointmentRowProps = ActionHandlers &
     appointment: AppointmentData;
     /** Nombre de la barbería, para el mensaje pre-cargado de WhatsApp. */
     barbershopName: string;
+    /** Template personalizado del mensaje de WhatsApp (null = default). */
+    whatsappMessageTemplate?: string | null;
     dayClosingMinutes?: number;
     overtimeAccepted?: boolean;
     onAcceptOvertime?: () => void;
@@ -241,6 +243,7 @@ function getRelativeTimeInfo(opts: {
 export function AppointmentRow({
   appointment,
   barbershopName,
+  whatsappMessageTemplate,
   onConfirm,
   onWhatsApp,
   onCancel,
@@ -324,6 +327,7 @@ export function AppointmentRow({
         date: formatDateWithWeekday(appointment.appointment_date),
         time: normalizeTimeValue(appointment.appointment_time),
         confirmationToken: appointment.confirmation_token,
+        template: whatsappMessageTemplate,
       })
     : null;
 

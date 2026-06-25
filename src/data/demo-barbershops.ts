@@ -49,6 +49,12 @@ export type DemoBarbershop = {
   depositMinAmount?: number | null;
   /** Horas tras reservar para pagar la seña antes de auto-cancelar. */
   depositAutoCancelHours?: number;
+  /**
+   * Texto personalizado del mensaje de WhatsApp del barbero al cliente.
+   * null/undefined = mensaje por defecto. Placeholders: {nombre} {barberia}
+   * {fecha} {hora}. El link de confirmar/cancelar se agrega siempre al final.
+   */
+  whatsappMessageTemplate?: string | null;
 };
 
 export const demoBarbershops: DemoBarbershop[] = [

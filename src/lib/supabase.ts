@@ -161,6 +161,9 @@ type BarbershopRow = {
   is_active: boolean;
   auto_confirm_appointments: boolean;
   waitlist_enabled: boolean;
+  // Mensaje de WhatsApp personalizable (null = default). Opcional en el tipo
+  // por compatibilidad con SELECT que no la traigan / antes de la migración.
+  whatsapp_message_template?: string | null;
   // MercadoPago (B1) — toggle de cobro de seña + credentials por barbería
   mp_enabled: boolean;
   mp_access_token: string | null;

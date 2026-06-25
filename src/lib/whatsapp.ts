@@ -195,13 +195,34 @@ type WhatsAppClientContactInput = {
   /** Hora "HH:MM". */
   time: string;
   confirmationToken?: string;
+  /**
+   * Texto personalizado de la barbería. null/vacío = mensaje por defecto.
+   * Placeholders: {nombre} {barberia} {fecha} {hora}.
+   */
+  template?: string | null;
 };
 
+/** Mensaje por defecto (lo que tiene SV Barber). */
+export const DEFAULT_CLIENT_CONTACT_TEMPLATE =
+  "Hola {nombre}! Te escribo de {barberia} 👋 Es por tu turno del {fecha} a las {hora}hs.";
+
+/** Reemplaza los placeholders del template con los datos del turno. */
+function fillContactTemplate(
+  template: string,
+  vars: { nombre: string; barberia: string; fecha: string; hora: string },
+): string {
+  return template
+    .replaceAll("{nombre}", vars.nombre)
+    .replaceAll("{barberia}", vars.barberia)
+    .replaceAll("{fecha}", vars.fecha)
+    .replaceAll("{hora}", vars.hora);
+}
+
 /**
- * Mensaje casual del barbero hacia el cliente sobre un turno puntual.
- * Es el MISMO texto que se usa en el hero del dashboard ("Próximo turno")
- * y en cada fila del turnero, para que el barbero abra WhatsApp con todo
- * pre-cargado. Si hay token, agrega el link a /r/[token]/responder.
+ * Mensaje del barbero hacia el cliente sobre un turno puntual. Mismo texto en
+ * el hero del dashboard ("Próximo turno") y en cada fila del turnero. La
+ * barbería puede personalizar el cuerpo (template); el link de confirmar/
+ * cancelar se agrega SIEMPRE al final si hay token.
  */
 export function createWhatsAppClientContactLink({
   barbershopName,
@@ -210,12 +231,15 @@ export function createWhatsAppClientContactLink({
   date,
   time,
   confirmationToken,
+  template,
 }: WhatsAppClientContactInput) {
   const normalizedPhone = normalizeWhatsAppPhone(clientPhone);
   const firstName = clientName.split(/\s+/)[0] ?? clientName;
-  const messageLines = [
-    `Hola ${firstName}! Te escribo de ${barbershopName} 👋 Es por tu turno del ${date} a las ${time}hs.`,
-  ];
+  const body = fillContactTemplate(
+    template?.trim() ? template : DEFAULT_CLIENT_CONTACT_TEMPLATE,
+    { nombre: firstName, barberia: barbershopName, fecha: date, hora: time },
+  );
+  const messageLines = [body];
   if (confirmationToken) {
     messageLines.push(
       "",

@@ -39,6 +39,9 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
   const [waitlistEnabled, setWaitlistEnabled] = useState(
     barbershop.waitlistEnabled ?? true,
   );
+  const [whatsappMessageTemplate, setWhatsappMessageTemplate] = useState(
+    barbershop.whatsappMessageTemplate ?? "",
+  );
   const [logoUrl, setLogoUrl] = useState<string | null>(
     barbershop.logoUrl ?? null,
   );
@@ -114,6 +117,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
           isActive,
           autoConfirmAppointments,
           waitlistEnabled,
+          whatsappMessageTemplate: whatsappMessageTemplate.trim() || null,
         }),
       });
 
@@ -141,6 +145,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
           is_active: boolean;
           auto_confirm_appointments: boolean;
           waitlist_enabled: boolean;
+          whatsapp_message_template: string | null;
         };
       };
       const fresh = payload.barbershop;
@@ -156,6 +161,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
       setIsActive(fresh.is_active ?? true);
       setAutoConfirmAppointments(fresh.auto_confirm_appointments ?? false);
       setWaitlistEnabled(fresh.waitlist_enabled ?? true);
+      setWhatsappMessageTemplate(fresh.whatsapp_message_template ?? "");
       setSuccessMessage("Configuración guardada correctamente.");
       toast.success("Configuración guardada");
     } catch {
@@ -626,6 +632,71 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
                   </p>
                 </div>
               </label>
+            </article>
+
+            <article className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-4 shadow-2xl shadow-black/20 sm:p-5">
+              <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
+                Mensaje de WhatsApp al cliente
+              </p>
+              <p className="mt-2 text-xs leading-5 text-[color:var(--text-muted)]">
+                El texto que se carga solo cuando le escribís a un cliente por su
+                turno (desde &quot;Próximo turno&quot; o el turnero). Dejalo vacío
+                para usar el mensaje por defecto.
+              </p>
+
+              <textarea
+                id="settings-wa-template"
+                value={whatsappMessageTemplate}
+                disabled={isSaving}
+                onChange={(event) => {
+                  setWhatsappMessageTemplate(event.target.value);
+                  setErrorMessage("");
+                }}
+                rows={3}
+                placeholder="Hola {nombre}! Te escribo de {barberia} 👋 Es por tu turno del {fecha} a las {hora}hs."
+                className="mt-3 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 py-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
+              />
+
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {["{nombre}", "{barberia}", "{fecha}", "{hora}"].map((ph) => (
+                  <button
+                    key={ph}
+                    type="button"
+                    disabled={isSaving}
+                    onClick={() =>
+                      setWhatsappMessageTemplate(
+                        (prev) => `${prev}${prev && !prev.endsWith(" ") ? " " : ""}${ph}`,
+                      )
+                    }
+                    className="rounded-full border border-[color:var(--border-default)] bg-black px-2.5 py-1 font-mono text-[10px] text-[color:var(--brand-gold)] transition hover:border-[color:var(--brand-gold)] disabled:opacity-50"
+                  >
+                    {ph}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-[10px] leading-4 text-[color:var(--text-subtle)]">
+                Tocá un dato para insertarlo. El link para confirmar/cancelar el
+                turno se agrega siempre automáticamente al final.
+              </p>
+
+              {/* Preview en vivo */}
+              <div className="mt-3 rounded-md border border-[color:var(--border-subtle)] bg-black p-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+                  Vista previa
+                </p>
+                <p className="mt-1.5 whitespace-pre-line text-xs leading-5 text-[color:var(--text-secondary)]">
+                  {(whatsappMessageTemplate.trim() ||
+                    "Hola {nombre}! Te escribo de {barberia} 👋 Es por tu turno del {fecha} a las {hora}hs.")
+                    .replaceAll("{nombre}", "Juan")
+                    .replaceAll("{barberia}", name || barbershop.name)
+                    .replaceAll("{fecha}", "jueves 18/06")
+                    .replaceAll("{hora}", "17:30")}
+                  {"\n\nPodés confirmar o cancelar tu turno desde este link:\n"}
+                  <span className="text-[color:var(--brand-gold)]">
+                    {`https://tijerapp.vercel.app/r/…`}
+                  </span>
+                </p>
+              </div>
             </article>
 
             {errorMessage ? (
