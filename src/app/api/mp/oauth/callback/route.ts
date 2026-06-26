@@ -47,8 +47,22 @@ export async function GET(request: Request) {
   }
 
   const redirectUri = `${origin}/api/mp/oauth/callback`;
+  const supabase = getSupabaseAdminClient();
   const result = await exchangeCodeForToken(code, redirectUri);
   if (!result.ok) {
+    // El `code` de OAuth es de un solo uso. MercadoPago (o el browser) a veces
+    // pega DOS veces al callback: el primer hit guarda las credenciales y el
+    // segundo falla porque el code ya se usó. Si la barbería YA quedó conectada
+    // (tiene mp_user_id), tratamos este segundo hit como éxito y NO mostramos
+    // un error confuso.
+    const { data: already } = await supabase
+      .from("barbershops")
+      .select("mp_user_id")
+      .eq("slug", slug)
+      .maybeSingle();
+    if ((already as { mp_user_id?: string | null } | null)?.mp_user_id) {
+      return redirectCobros(slug, "connected");
+    }
     Sentry.captureMessage(`mp oauth exchange failed: ${result.error}`, {
       tags: { route: "mp/oauth/callback" },
     });
@@ -56,7 +70,6 @@ export async function GET(request: Request) {
   }
 
   const t = result.token;
-  const supabase = getSupabaseAdminClient();
   const { error: updateError } = await supabase
     .from("barbershops")
     .update({
