@@ -20,7 +20,11 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code") ?? "";
   const state = url.searchParams.get("state") ?? "";
-  const origin = url.origin;
+  // Base determinística (debe matchear el redirect_uri del start y el
+  // registrado en MercadoPago). Preferimos NEXT_PUBLIC_SITE_URL.
+  const origin = (
+    process.env.NEXT_PUBLIC_SITE_URL || url.origin
+  ).replace(/\/$/, "");
 
   function redirectCobros(slug: string, status: "connected" | "error", reason?: string) {
     const u = new URL(`${origin}/${slug}/admin/cobros`);

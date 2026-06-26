@@ -58,8 +58,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const origin = new URL(request.url).origin;
-  const redirectUri = `${origin}/api/mp/oauth/callback`;
+  // El redirect_uri DEBE coincidir exactamente con el registrado en la app de
+  // MercadoPago. Usamos NEXT_PUBLIC_SITE_URL (https://tijerapp.com) para que sea
+  // determinístico y no dependa de cómo Vercel resuelva el host del request.
+  const base = (
+    process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin
+  ).replace(/\/$/, "");
+  const redirectUri = `${base}/api/mp/oauth/callback`;
   const authUrl = buildAuthorizationUrl(slug, redirectUri);
 
   return NextResponse.json({ ok: true, authUrl });
