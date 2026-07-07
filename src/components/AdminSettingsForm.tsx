@@ -42,6 +42,9 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
   const [whatsappMessageTemplate, setWhatsappMessageTemplate] = useState(
     barbershop.whatsappMessageTemplate ?? "",
   );
+  const [minBookingNoticeMinutes, setMinBookingNoticeMinutes] = useState(
+    barbershop.minBookingNoticeMinutes ?? 0,
+  );
   const [logoUrl, setLogoUrl] = useState<string | null>(
     barbershop.logoUrl ?? null,
   );
@@ -117,6 +120,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
           isActive,
           autoConfirmAppointments,
           waitlistEnabled,
+          minBookingNoticeMinutes,
           whatsappMessageTemplate: whatsappMessageTemplate.trim() || null,
         }),
       });
@@ -145,6 +149,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
           is_active: boolean;
           auto_confirm_appointments: boolean;
           waitlist_enabled: boolean;
+          min_booking_notice_minutes: number;
           whatsapp_message_template: string | null;
         };
       };
@@ -161,6 +166,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
       setIsActive(fresh.is_active ?? true);
       setAutoConfirmAppointments(fresh.auto_confirm_appointments ?? false);
       setWaitlistEnabled(fresh.waitlist_enabled ?? true);
+      setMinBookingNoticeMinutes(fresh.min_booking_notice_minutes ?? 0);
       setWhatsappMessageTemplate(fresh.whatsapp_message_template ?? "");
       setSuccessMessage("Configuración guardada correctamente.");
       toast.success("Configuración guardada");
@@ -548,6 +554,40 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
                     required
                   />
                 </div>
+              </div>
+
+              {/* Anticipación mínima para reservar */}
+              <div className="mt-4">
+                <label
+                  htmlFor="settings-min-notice"
+                  className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
+                >
+                  Anticipación mínima para reservar
+                </label>
+                <select
+                  id="settings-min-notice"
+                  value={minBookingNoticeMinutes}
+                  disabled={isSaving}
+                  onChange={(event) => {
+                    setMinBookingNoticeMinutes(Number(event.target.value));
+                    setErrorMessage("");
+                  }}
+                  className="mt-1 min-h-11 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
+                >
+                  <option value={0}>Sin restricción</option>
+                  <option value={30}>30 minutos antes</option>
+                  <option value={60}>1 hora antes</option>
+                  <option value={90}>1 hora y media antes</option>
+                  <option value={120}>2 horas antes</option>
+                  <option value={180}>3 horas antes</option>
+                  <option value={1440}>1 día antes</option>
+                </select>
+                <p className="mt-1 text-[10px] leading-4 text-[color:var(--text-subtle)]">
+                  Con cuánto tiempo mínimo pueden reservarte. Ej: &quot;1 hora
+                  antes&quot; → a las 15:20 ya no pueden tomar el turno de las
+                  16:00 (el más cercano pasa a ser el siguiente según tu
+                  intervalo). Solo afecta los turnos de hoy.
+                </p>
               </div>
             </article>
 

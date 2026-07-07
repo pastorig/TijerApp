@@ -41,6 +41,12 @@ export type DemoBarbershop = {
   autoConfirmAppointments?: boolean;
   /** Cuando true, se ofrece "anotarse en lista de espera" en el booking. Default true. */
   waitlistEnabled?: boolean;
+  /**
+   * Anticipación mínima (en minutos) para que un cliente pueda reservar un
+   * turno. 0 = sin restricción. Ej: 60 → a las 15:20 no se puede tomar el de
+   * las 16:00. Solo aplica a los turnos de hoy.
+   */
+  minBookingNoticeMinutes?: number;
   /** Cuando true, la barbería cobra seña por MercadoPago al reservar. Default false. */
   mpEnabled?: boolean;
   /** Porcentaje del precio que se cobra como seña (1-100). */
@@ -84,49 +90,6 @@ export const demoBarbershops: DemoBarbershop[] = [
             name: "Corte + barba",
             price: 10000,
             durationMinutes: 30,
-          },
-        ],
-      },
-    ],
-    workingHours: {
-      start: "16:00",
-      end: "21:00",
-      intervalMinutes: 30,
-    },
-    isActive: true,
-  },
-  {
-    id: "barbershop_gino_barber",
-    slug: "gino-barber",
-    name: "Gino Barber",
-    description: "Turnos online para barberia moderna",
-    instagram: "https://instagram.com/ginobarber",
-    whatsapp: "+54 9 11 1111-1111",
-    barbers: [
-      {
-        id: "gino",
-        name: "Gino",
-        role: "Barbero",
-        displayName: "Gino",
-        isActive: true,
-        services: [
-          {
-            id: "gino_service_haircut",
-            name: "Corte",
-            price: 8000,
-            durationMinutes: 30,
-          },
-          {
-            id: "gino_service_beard",
-            name: "Barba",
-            price: 5000,
-            durationMinutes: 30,
-          },
-          {
-            id: "gino_service_haircut_beard",
-            name: "Corte + barba",
-            price: 11000,
-            durationMinutes: 45,
           },
         ],
       },

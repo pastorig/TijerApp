@@ -161,6 +161,9 @@ type BarbershopRow = {
   is_active: boolean;
   auto_confirm_appointments: boolean;
   waitlist_enabled: boolean;
+  // Anticipación mínima (min) para reservar. 0 = sin restricción. Opcional
+  // en el tipo para no romper SELECT que no la traigan / antes de la migración.
+  min_booking_notice_minutes?: number;
   // Mensaje de WhatsApp personalizable (null = default). Opcional en el tipo
   // por compatibilidad con SELECT que no la traigan / antes de la migración.
   whatsapp_message_template?: string | null;

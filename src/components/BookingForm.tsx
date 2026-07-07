@@ -66,6 +66,7 @@ const SLOT_REASON_TITLE: Record<AvailabilitySlot["reason"], string> = {
   blocked: "Bloqueado",
   past: "Horario pasado",
   "outside-hours": "Fuera de horario",
+  "too-soon": "Reservá con más anticipación",
 };
 
 export function BookingForm({ barbershop }: BookingFormProps) {
@@ -416,6 +417,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           appointmentDurationMinutes: selectedService.durationMinutes,
           barbershopIntervalMinutes: barbershop.workingHours.intervalMinutes,
           workingHours: barbershop.workingHours,
+          minBookingNoticeMinutes: barbershop.minBookingNoticeMinutes ?? 0,
         });
 
         if (!isMounted) {
@@ -457,6 +459,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
   }, [
     barbershop.slug,
     barbershop.workingHours,
+    barbershop.minBookingNoticeMinutes,
     selectedBarberId,
     selectedDate,
     selectedService,
@@ -502,6 +505,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
         appointmentDurationMinutes: selectedService.durationMinutes,
         barbershopIntervalMinutes: barbershop.workingHours.intervalMinutes,
         workingHours: barbershop.workingHours,
+        minBookingNoticeMinutes: barbershop.minBookingNoticeMinutes ?? 0,
       });
 
       if (error) {

@@ -15,6 +15,8 @@ type AppointmentAvailabilityInput = {
     end: string;
   };
   barbershopIntervalMinutes: number;
+  /** Anticipación mínima (min) para reservar. 0 = sin restricción. */
+  minBookingNoticeMinutes?: number;
 };
 
 type AppointmentTimeInput = AppointmentAvailabilityInput & {
@@ -133,6 +135,7 @@ export async function validateAppointmentTimeIsAvailable({
   appointmentDurationMinutes,
   workingHours,
   barbershopIntervalMinutes,
+  minBookingNoticeMinutes = 0,
 }: AppointmentTimeInput) {
   const { data, error } = await getBarberDayAvailability({
     barbershopSlug,
@@ -141,6 +144,7 @@ export async function validateAppointmentTimeIsAvailable({
     appointmentDurationMinutes,
     workingHours,
     barbershopIntervalMinutes,
+    minBookingNoticeMinutes,
   });
 
   if (error) {

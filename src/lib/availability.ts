@@ -13,7 +13,13 @@ export type AppointmentInterval = {
 export type AvailabilitySlot = {
   time: string;
   isAvailable: boolean;
-  reason: "available" | "outside-hours" | "blocked" | "occupied" | "past";
+  reason:
+    | "available"
+    | "outside-hours"
+    | "blocked"
+    | "occupied"
+    | "past"
+    | "too-soon";
 };
 
 export type WeeklyScheduleDraft = {
@@ -168,6 +174,13 @@ export function buildAvailabilitySlots(params: {
   timeBlocks: BarberTimeBlockRow[];
   appointments: AppointmentInterval[];
   now?: Date;
+  /**
+   * Anticipación mínima (en minutos) para poder reservar un turno. Si es 60,
+   * a las 15:20 no se puede tomar el de las 16:00 (faltan 40 min) — el más
+   * cercano pasa a ser el siguiente slot según el intervalo del barbero.
+   * 0 = sin restricción (comportamiento por defecto). Solo aplica a HOY.
+   */
+  minBookingNoticeMinutes?: number;
 }) {
   const {
     appointmentDate,
@@ -179,6 +192,7 @@ export function buildAvailabilitySlots(params: {
     timeBlocks,
     appointments,
     now = new Date(),
+    minBookingNoticeMinutes = 0,
   } = params;
 
   if (appointmentDurationMinutes <= 0) {
@@ -300,11 +314,17 @@ export function buildAvailabilitySlots(params: {
     );
     if (overlapsBusy) continue;
 
+    // "past" = ya arrancó. "too-soon" = todavía no arrancó pero falta menos que
+    // la anticipación mínima configurada (ej. faltan 40 min y el mínimo es 60).
+    const notice = appointmentDate === today ? Math.max(0, minBookingNoticeMinutes) : 0;
     const isPast = appointmentDate === today && t < currentMinutes;
+    const isTooSoon =
+      !isPast && appointmentDate === today && t < currentMinutes + notice;
+    const unavailable = isPast || isTooSoon;
     slots.push({
       time: formatMinutesToTime(t),
-      isAvailable: !isPast,
-      reason: isPast ? "past" : "available",
+      isAvailable: !unavailable,
+      reason: isPast ? "past" : isTooSoon ? "too-soon" : "available",
     });
   }
 

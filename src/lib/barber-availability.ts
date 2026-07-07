@@ -60,6 +60,8 @@ type GetBarberDayAvailabilityInput = BarberLookupInput & {
     start: string;
     end: string;
   };
+  /** Anticipación mínima (min) para reservar. 0 = sin restricción. */
+  minBookingNoticeMinutes?: number;
 };
 
 const weeklySchedulesSelect =
@@ -252,6 +254,7 @@ export async function getBarberDayAvailability({
   appointmentDurationMinutes,
   barbershopIntervalMinutes,
   workingHours,
+  minBookingNoticeMinutes = 0,
 }: GetBarberDayAvailabilityInput) {
   const [schedulesResult, dayOverrideResult, blocksResult, appointmentsResult] =
     await Promise.all([
@@ -296,6 +299,7 @@ export async function getBarberDayAvailability({
     dayOverride: dayOverrideResult.data?.[0] ?? null,
     timeBlocks: blocksResult.data ?? [],
     appointments: (appointmentsResult.data ?? []) as AppointmentInterval[],
+    minBookingNoticeMinutes,
   });
 
   return {

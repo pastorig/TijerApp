@@ -5,7 +5,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 export const runtime = "nodejs";
 
 const barbershopSelectFields =
-  "id, created_at, slug, name, description, whatsapp, instagram, address, logo_url, google_reviews_url, working_hours_start, working_hours_end, slot_interval_minutes, is_active, auto_confirm_appointments, waitlist_enabled, whatsapp_message_template";
+  "id, created_at, slug, name, description, whatsapp, instagram, address, logo_url, google_reviews_url, working_hours_start, working_hours_end, slot_interval_minutes, is_active, auto_confirm_appointments, waitlist_enabled, min_booking_notice_minutes, whatsapp_message_template";
 
 async function assertAdminOfBarbershop(
   authHeader: string | null,
@@ -47,6 +47,13 @@ function asTrimmedOrNull(value: unknown): string | null {
 
 function isValidTimeValue(value: string): boolean {
   return /^([01]\d|2[0-3]):([0-5]\d)$/.test(value);
+}
+
+/** Anticipación mínima para reservar, en minutos. Clamp a [0, 10080] (7 días). */
+function parseMinBookingNotice(value: unknown): number {
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(n, 10080);
 }
 
 export async function PATCH(request: Request) {
@@ -146,6 +153,9 @@ export async function PATCH(request: Request) {
           auto_confirm_appointments: Boolean(payload.autoConfirmAppointments),
           // Default true: solo es false si lo mandan explícito como false.
           waitlist_enabled: payload.waitlistEnabled !== false,
+          min_booking_notice_minutes: parseMinBookingNotice(
+            payload.minBookingNoticeMinutes,
+          ),
           whatsapp_message_template: asTrimmedOrNull(
             payload.whatsappMessageTemplate,
           ),
@@ -181,6 +191,9 @@ export async function PATCH(request: Request) {
       is_active: Boolean(payload.isActive ?? true),
       auto_confirm_appointments: Boolean(payload.autoConfirmAppointments),
       waitlist_enabled: payload.waitlistEnabled !== false,
+      min_booking_notice_minutes: parseMinBookingNotice(
+        payload.minBookingNoticeMinutes,
+      ),
       whatsapp_message_template: asTrimmedOrNull(
         payload.whatsappMessageTemplate,
       ),
