@@ -4,9 +4,21 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
-## 🎯 PRÓXIMA FEATURE — Cobro de barberos (suscripción) · Opción A
+## ✅ Cobro de barberos (Opción A) — IMPLEMENTADO en rama `007-cobro-barberos`
 
-**Decidido con Bautista (2026-07-07):** que los barberos le paguen el plan a Gino (founder). Se hace por **fases**, arrancando por la **Opción A: transferencia + activación manual** (cero integración, sirve ya). Después se evalúa MP Suscripciones (auto-recurrente).
+**Decidido + implementado (2026-07-07):** los barberos le pagan el plan a Gino por transferencia; el owner registra el cobro desde `/owner/planes` (botón **"Registrar pago"**) y la barbería se reactiva +1 mes. El barbero vencido ve monto + **Alias `pastorinx` / CBU / Gino Pastori** en el paywall. Spec/plan/tasks en `specs/007-cobro-barberos/`. Build + tsc + lint verdes.
+
+### ⚠️ FALTA (Bautista): aplicar la migración en Supabase (SQL Editor)
+
+Correr **`supabase/migrations/20260707120000_barber_billing.sql`** — crea la tabla `barbershop_payments` + la RPC `register_barbershop_payment` (reusa la columna existente `current_period_ends_at` como "pagado hasta"). Es **aditiva** (no toca datos). Pegá el archivo completo en el SQL Editor y ejecutá. Sin esto el botón "Registrar pago" del owner da error; el resto (paywall/banner con monto + datos de transferencia) ya funciona igual.
+
+Después: probar el loop (registrar pago a una barbería vencida → queda activa; barbero vencido ve los datos de transferencia + monto).
+
+---
+
+### (Fase futura, cuando escale) Opción C — MercadoPago Suscripciones (auto-recurrente)
+
+Después de la Opción A, se puede sumar cobro automático con MP (preapproval + webhook), reusando el webhook/OAuth de las señas. OJO: para recibir la plata de los barberos va la MP de Gino/plataforma, distinta de la MP por-barbería de las señas.
 
 **Ya existe:**
 - Tabla `barbershop_subscriptions` (`plan_tier`, `status`, `trial_expires_at`, `grace_expires_at`).

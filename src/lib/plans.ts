@@ -149,11 +149,45 @@ export type ResolvedPlan = {
   daysToTrialExpire: number | null;
   /** Fecha en la que termina la gracia (7d post-trial). */
   graceExpiresAt: Date | null;
+  /**
+   * Hasta cuándo está pago (current_period_ends_at). Null si nunca registró
+   * un pago (en ese caso rige el trial — comportamiento legacy).
+   */
+  paidUntil: Date | null;
+  /** Días restantes hasta que vence el período pago. Null si no aplica. */
+  daysToPaidExpire: number | null;
   /** True si está en período de gracia. */
   isInGracePeriod: boolean;
   /** True si el barbero todavía puede usar features de su tier. */
   canAccessFeatures: boolean;
 };
+
+/** Días de gracia después de que vence el trial o el período pago. */
+export const GRACE_DAYS = 7;
+
+/**
+ * Suma `n` meses a una fecha, clampeando al último día válido del mes destino
+ * (ej. 31/01 + 1 mes = 28/02, no 03/03). Pura, sin libs.
+ */
+export function addMonths(date: Date, n: number): Date {
+  const d = new Date(date.getTime());
+  const day = d.getDate();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + n);
+  const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  d.setDate(Math.min(day, lastDay));
+  return d;
+}
+
+/**
+ * Próximo "pagado hasta" al registrar un pago mensual: un mes desde el mayor
+ * entre hoy y el vencimiento vigente. Así un pago retroactivo no regala días
+ * y un pago anticipado se acumula sobre lo ya pagado.
+ */
+export function computeNextPaidUntil(now: Date, current: Date | null): Date {
+  const base = current && current.getTime() > now.getTime() ? current : now;
+  return addMonths(base, 1);
+}
 
 /**
  * Computa el status efectivo a partir de fechas + status raw.
@@ -165,16 +199,35 @@ export function resolvePlanStatus(input: {
   rawStatus: SubscriptionStatus;
   trialExpiresAt: Date | null;
   graceExpiresAt: Date | null;
+  /**
+   * current_period_ends_at: hasta cuándo está pago. Si está seteada, PRECEDE al
+   * trial. Null => rige el trial (comportamiento legacy, cero regresión).
+   */
+  currentPeriodEndsAt?: Date | null;
   now?: Date;
 }): ResolvedPlan {
   const now = input.now ?? new Date();
   const { tier, rawStatus, trialExpiresAt, graceExpiresAt } = input;
+  const paidUntil = input.currentPeriodEndsAt ?? null;
 
   let effectiveStatus: ResolvedPlan["effectiveStatus"];
   let isInGracePeriod = false;
 
   if (rawStatus === "cancelled") {
     effectiveStatus = "cancelled";
+  } else if (paidUntil) {
+    // Vigencia por pago (precede al trial). Al vencer: gracia y luego expired.
+    if (paidUntil.getTime() > now.getTime()) {
+      effectiveStatus = "active";
+    } else if (
+      paidUntil.getTime() + GRACE_DAYS * 24 * 60 * 60 * 1000 >
+      now.getTime()
+    ) {
+      effectiveStatus = "grace";
+      isInGracePeriod = true;
+    } else {
+      effectiveStatus = "expired";
+    }
   } else if (rawStatus === "active") {
     effectiveStatus = "active";
   } else if (rawStatus === "trial") {
@@ -208,6 +261,10 @@ export function resolvePlanStatus(input: {
       )
     : null;
 
+  const daysToPaidExpire = paidUntil
+    ? Math.ceil((paidUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+
   // canAccessFeatures: en active y grace, sí. En expired/cancelled, no.
   const canAccessFeatures =
     effectiveStatus === "active" || effectiveStatus === "grace";
@@ -219,6 +276,8 @@ export function resolvePlanStatus(input: {
     trialExpiresAt,
     daysToTrialExpire,
     graceExpiresAt,
+    paidUntil,
+    daysToPaidExpire,
     isInGracePeriod,
     canAccessFeatures,
   };

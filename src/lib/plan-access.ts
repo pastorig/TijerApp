@@ -34,7 +34,7 @@ export async function getBarbershopPlan(
   const { data, error } = await supabase
     .from("barbershop_subscriptions")
     .select(
-      "plan_tier, status, trial_expires_at, grace_expires_at",
+      "plan_tier, status, trial_expires_at, grace_expires_at, current_period_ends_at",
     )
     .eq("barbershop_slug", barbershopSlug)
     .maybeSingle();
@@ -56,6 +56,7 @@ export async function getBarbershopPlan(
     status: SubscriptionStatus;
     trial_expires_at: string | null;
     grace_expires_at: string | null;
+    current_period_ends_at: string | null;
   };
   const row = data as Row;
 
@@ -64,6 +65,9 @@ export async function getBarbershopPlan(
     rawStatus: row.status,
     trialExpiresAt: row.trial_expires_at ? new Date(row.trial_expires_at) : null,
     graceExpiresAt: row.grace_expires_at ? new Date(row.grace_expires_at) : null,
+    currentPeriodEndsAt: row.current_period_ends_at
+      ? new Date(row.current_period_ends_at)
+      : null,
   });
 }
 

@@ -4,9 +4,8 @@ import Link from "next/link";
 import { AlertTriangle, Clock, MessageCircle } from "lucide-react";
 import { useCurrentPlan } from "./PlanContext";
 import { cn } from "@/lib/cn";
-
-// Gino (founder) — 3571 624511 → formato WhatsApp: 54 9 3571 624511
-const FOUNDER_WHATSAPP = "5493571624511";
+import { FOUNDER, founderWaLink } from "@/lib/founder";
+import { PLAN_META, formatArs } from "@/lib/plans";
 
 /**
  * Banner sticky arriba del admin que muestra estado del plan/trial cuando
@@ -26,10 +25,10 @@ type Props = {
 export function PlanStatusBanner({ barbershopSlug }: Props) {
   const plan = useCurrentPlan();
 
-  const wamessage = encodeURIComponent(
-    `Hola Gino! Soy admin de ${barbershopSlug}. Quiero activar mi plan pago.`,
+  const precio = formatArs(PLAN_META[plan.tier].priceArs);
+  const waLink = founderWaLink(
+    `Hola ${FOUNDER.name}! Soy admin de ${barbershopSlug}. Quiero activar mi plan pago (${precio}/mes).`,
   );
-  const waLink = `https://wa.me/${FOUNDER_WHATSAPP}?text=${wamessage}`;
 
   // Si está active y no expira → silencio
   if (
@@ -54,7 +53,7 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
           <strong>
             {plan.daysToTrialExpire} día{plan.daysToTrialExpire !== 1 ? "s" : ""}
           </strong>
-          . Activá tu plan para seguir usando todas las features.
+          . Activá tu plan ({precio}/mes) para seguir usando todas las features.
         </p>
         <WaCta href={waLink} />
       </BannerBase>
@@ -68,7 +67,7 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
         <AlertTriangle className="size-4 shrink-0" />
         <p className="flex-1 text-xs sm:text-sm">
           Tu trial expiró. Estás en período de gracia — la app sigue
-          funcionando unos días más. <strong>Activá tu plan ya</strong> antes
+          funcionando unos días más. <strong>Activá tu plan ya ({precio}/mes)</strong> antes
           que se cancele.
         </p>
         <WaCta href={waLink} />
@@ -86,7 +85,7 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
         <AlertTriangle className="size-4 shrink-0" />
         <p className="flex-1 text-xs sm:text-sm">
           Tu plan está {plan.effectiveStatus === "expired" ? "expirado" : "cancelado"}.
-          Activalo para recuperar el acceso completo.
+          Activalo ({precio}/mes) para recuperar el acceso completo.
         </p>
         <WaCta href={waLink} />
       </BannerBase>
