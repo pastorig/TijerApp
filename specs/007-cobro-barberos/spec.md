@@ -35,13 +35,13 @@ Un barbero cuyo plan venció necesita reactivarlo pagando su cuota mensual. Como
 - **FR-002**: El acceso del barbero debe **bloquearse cuando "pagado hasta" ya pasó** (y no hay trial vigente), con el mismo paywall + período de gracia que hoy usa el trial vencido.
 - **FR-003**: El founder debe poder **registrar un pago** de una barbería (monto, fecha de pago, método, nota opcional); al registrarlo, el plan queda **activo** y "pagado hasta" se **extiende un mes** desde `max(hoy, vencimiento vigente)`.
 - **FR-004**: Cada pago registrado debe quedar en un **historial consultable** por barbería (monto, método, período cubierto, quién lo registró, cuándo).
-- **FR-005**: El aviso/paywall que ve el barbero con plan vencido o por vencer debe mostrar el **monto a pagar** y los **datos de transferencia del founder (alias/CBU)**, además del contacto por WhatsApp ya existente. _[NEEDS CLARIFICATION: ¿cuál es el alias/CBU exacto de Gino que se muestra?]_
+- **FR-005**: El aviso/paywall que ve el barbero con plan vencido o por vencer debe mostrar el **monto a pagar** y los **datos de transferencia del founder**, además del contacto por WhatsApp ya existente. **Datos a mostrar:** Alias **`pastorinx`** (Naranja X) · Titular **Gino Pastori** · CBU **`4530000800016883827535`**.
 - **FR-006**: El founder debe poder ver, por barbería, **hasta cuándo está paga** y su **historial de pagos**.
 
 ### Should Have
 
 - **FR-101**: El aviso debe comunicar el estado/urgencia (por vencer, en gracia, vencido) y los días restantes cuando aplique.
-- **FR-102**: El monto mostrado debe corresponder al plan (tier) vigente de la barbería. _[NEEDS CLARIFICATION: ¿el monto sale del precio del tier de la barbería (Solo/Esencial/Pro) o es un precio fijo único por ahora?]_
+- **FR-102**: El monto mostrado corresponde al **precio del tier vigente** de la barbería (Solo / Esencial / Pro, tomado de `PLAN_META`). Cada barbería ve el precio de su propio plan.
 
 ### Won't Have (out of scope)
 
@@ -76,7 +76,14 @@ Un barbero cuyo plan venció necesita reactivarlo pagando su cuota mensual. Como
 - Precios por tier existentes (para mostrar el monto).
 - Dato de negocio: **alias/CBU de Gino** (lo provee Bautista).
 
+## Clarifications
+
+### Session 2026-07-07
+
+- **Monto en el paywall** → sale del **precio del tier vigente** de la barbería (`PLAN_META`), no un precio fijo. (Resuelve FR-102.)
+- **Datos de transferencia de Gino** → Alias `pastorinx` (Naranja X) · Titular Gino Pastori · CBU `4530000800016883827535`. (Resuelve FR-005.)
+
 ## Next Steps
 
-- Run **speckit-clarify** para resolver los 2 `[NEEDS CLARIFICATION]` (alias/CBU y origen del monto).
+- ✅ Clarificaciones resueltas (no quedan `[NEEDS CLARIFICATION]`).
 - Run **speckit-plan** para diseñar la implementación.

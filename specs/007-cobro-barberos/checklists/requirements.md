@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain — **2 pendientes** (alias/CBU, origen del monto)
+- [x] No [NEEDS CLARIFICATION] markers remain — resueltas 2026-07-07 (alias/CBU y origen del monto)
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,7 +31,6 @@
 
 ## Notes
 
-- Faltan resolver 2 clarificaciones antes de `speckit-plan`:
-  1. Alias/CBU exacto de Gino a mostrar en el paywall (FR-005).
-  2. Monto mostrado: precio del tier (Solo/Esencial/Pro) vs precio fijo único (FR-102).
-- El resto del spec pasa validación.
+- ✅ Todas las clarificaciones resueltas (2026-07-07). Spec listo para `speckit-plan`.
+  1. Monto → precio del tier vigente (`PLAN_META`). (FR-102)
+  2. Transferencia → Alias `pastorinx` · Gino Pastori · CBU `4530000800016883827535`. (FR-005)
