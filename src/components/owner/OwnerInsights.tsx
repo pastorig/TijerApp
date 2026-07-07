@@ -11,6 +11,7 @@ import {
 import { getOwnerDashboardMetrics } from "@/lib/owner-metrics";
 import type { OwnerBarbershopSummary } from "@/lib/owner-metrics";
 import { cn } from "@/lib/cn";
+import { StackedBar } from "./charts";
 
 /**
  * OwnerInsights — Panel de insights estratégicos para el dueño SaaS (TijerApp).
@@ -146,6 +147,38 @@ export function OwnerInsights() {
           tone="danger"
         />
       </div>
+
+      {/* Distribución visual — barra apilada proporcional (activas/quiet/inactivas) */}
+      {barbershops.length > 0 ? (
+        <div className="rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-3.5 py-3">
+          <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+            Distribución de barberías
+          </p>
+          <StackedBar
+            ariaLabel={`Distribución de ${barbershops.length} barberías por salud`}
+            segments={[
+              {
+                label: "Activas",
+                value: buckets.active.length,
+                barClass: "bg-[color:var(--success)]",
+                textClass: "text-[color:var(--success)]",
+              },
+              {
+                label: "Quiet",
+                value: buckets.quiet.length,
+                barClass: "bg-amber-400",
+                textClass: "text-amber-300",
+              },
+              {
+                label: "Inactivas",
+                value: buckets.inactive.length,
+                barClass: "bg-[color:var(--danger)]",
+                textClass: "text-[color:var(--danger)]",
+              },
+            ]}
+          />
+        </div>
+      ) : null}
 
       {/* Alertas operativas — compactas */}
       {buckets.inactive.length > 0 ? (

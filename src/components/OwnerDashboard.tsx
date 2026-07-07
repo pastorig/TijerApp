@@ -29,6 +29,7 @@ import {
   type OwnerWeeklyRankingEntry,
 } from "@/lib/owner-metrics";
 import { HardDeleteBarbershopDialog } from "@/components/owner/HardDeleteBarbershopDialog";
+import { ProportionBar } from "@/components/owner/charts";
 
 /**
  * Salud de una barbería basada en su actividad reciente.
@@ -1232,6 +1233,8 @@ function OwnerCardKebab({
 function WeeklyRanking({ ranking }: { ranking: OwnerWeeklyRankingEntry[] }) {
   const top3 = ranking.slice(0, 3);
   const rest = ranking.slice(3, 8); // hasta top-8
+  // Máximo de la ventana para normalizar los anchos de las barras.
+  const maxCount = Math.max(1, ...ranking.map((entry) => entry.count));
 
   const PODIUM: Array<{
     medal: string;
@@ -1239,6 +1242,7 @@ function WeeklyRanking({ ranking }: { ranking: OwnerWeeklyRankingEntry[] }) {
     accentBg: string;
     border: string;
     label: string;
+    bar: string;
   }> = [
     {
       medal: "🥇",
@@ -1246,6 +1250,7 @@ function WeeklyRanking({ ranking }: { ranking: OwnerWeeklyRankingEntry[] }) {
       accentBg: "bg-[color:var(--brand-gold-soft)]",
       border: "border-[color:var(--brand-gold)]/40",
       label: "1°",
+      bar: "bg-[color:var(--brand-gold)]",
     },
     {
       medal: "🥈",
@@ -1253,6 +1258,7 @@ function WeeklyRanking({ ranking }: { ranking: OwnerWeeklyRankingEntry[] }) {
       accentBg: "bg-slate-400/10",
       border: "border-slate-400/30",
       label: "2°",
+      bar: "bg-slate-300",
     },
     {
       medal: "🥉",
@@ -1260,6 +1266,7 @@ function WeeklyRanking({ ranking }: { ranking: OwnerWeeklyRankingEntry[] }) {
       accentBg: "bg-amber-700/10",
       border: "border-amber-700/30",
       label: "3°",
+      bar: "bg-amber-700",
     },
   ];
 
@@ -1289,39 +1296,47 @@ function WeeklyRanking({ ranking }: { ranking: OwnerWeeklyRankingEntry[] }) {
               key={entry.slug}
               href={`/${entry.slug}/admin`}
               className={cn(
-                "group flex items-center gap-3 rounded-[var(--radius-sm)] border bg-[color:var(--surface-1)] p-3 transition-all duration-[var(--duration-fast)] hover-lift press-shrink",
+                "group flex flex-col gap-2.5 rounded-[var(--radius-sm)] border bg-[color:var(--surface-1)] p-3 transition-all duration-[var(--duration-fast)] hover-lift press-shrink",
                 meta.border,
               )}
             >
-              <div
-                className={cn(
-                  "flex size-10 shrink-0 items-center justify-center rounded-full text-lg",
-                  meta.accentBg,
-                )}
-                aria-hidden="true"
-              >
-                {meta.medal}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p
+              <div className="flex items-center gap-3">
+                <div
                   className={cn(
-                    "text-[9px] font-bold uppercase tracking-[0.18em]",
-                    meta.accent,
+                    "flex size-10 shrink-0 items-center justify-center rounded-full text-lg",
+                    meta.accentBg,
                   )}
+                  aria-hidden="true"
                 >
-                  {meta.label} · {entry.count} reserva
-                  {entry.count === 1 ? "" : "s"}
-                </p>
-                <p className="mt-0.5 truncate text-sm font-bold text-white">
-                  {entry.name}
-                </p>
-                <p className="font-mono text-[10px] text-[color:var(--text-subtle)]">
-                  /{entry.slug}
-                </p>
+                  {meta.medal}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={cn(
+                      "text-[9px] font-bold uppercase tracking-[0.18em]",
+                      meta.accent,
+                    )}
+                  >
+                    {meta.label} · {entry.count} reserva
+                    {entry.count === 1 ? "" : "s"}
+                  </p>
+                  <p className="mt-0.5 truncate text-sm font-bold text-white">
+                    {entry.name}
+                  </p>
+                  <p className="font-mono text-[10px] text-[color:var(--text-subtle)]">
+                    /{entry.slug}
+                  </p>
+                </div>
+                <ArrowUpRight
+                  className="size-4 shrink-0 text-[color:var(--text-subtle)] transition-colors group-hover:text-[color:var(--brand-gold)]"
+                  aria-hidden="true"
+                />
               </div>
-              <ArrowUpRight
-                className="size-4 shrink-0 text-[color:var(--text-subtle)] transition-colors group-hover:text-[color:var(--brand-gold)]"
-                aria-hidden="true"
+              <ProportionBar
+                value={entry.count}
+                max={maxCount}
+                fillClass={meta.bar}
+                className="h-1.5 w-full"
               />
             </Link>
           );
@@ -1337,13 +1352,19 @@ function WeeklyRanking({ ranking }: { ranking: OwnerWeeklyRankingEntry[] }) {
                 href={`/${entry.slug}/admin`}
                 className="group flex items-center gap-3 px-3 py-2 transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]/30"
               >
-                <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
+                <span className="w-6 shrink-0 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
                   {i + 4}°
                 </span>
-                <span className="min-w-0 flex-1 truncate text-xs font-semibold text-[color:var(--text-secondary)] group-hover:text-white">
+                <span className="w-24 shrink-0 truncate text-xs font-semibold text-[color:var(--text-secondary)] group-hover:text-white sm:w-40">
                   {entry.name}
                 </span>
-                <span className="font-mono text-[11px] font-bold tabular-nums text-[color:var(--brand-gold)]">
+                <ProportionBar
+                  value={entry.count}
+                  max={maxCount}
+                  fillClass="bg-[color:var(--brand-gold)]/60"
+                  className="h-1.5 flex-1"
+                />
+                <span className="w-6 shrink-0 text-right font-mono text-[11px] font-bold tabular-nums text-[color:var(--brand-gold)]">
                   {entry.count}
                 </span>
               </Link>
