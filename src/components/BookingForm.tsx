@@ -8,7 +8,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import {
   type Barber,
   getActiveBarbers,
@@ -35,6 +35,11 @@ import {
 import type { BarberRow, BarberServiceRow } from "@/lib/supabase";
 import { createWhatsAppBookingLink } from "@/lib/whatsapp";
 import { CouponInput } from "./booking/CouponInput";
+import { BarberPicker } from "./booking/BarberPicker";
+import { InitialsAvatar } from "./booking/InitialsAvatar";
+import { ServicePicker } from "./booking/ServicePicker";
+import { DateStrip } from "./booking/DateStrip";
+import { StepHeader } from "./booking/StepHeader";
 import { DepositPaymentPanel } from "./DepositPaymentPanel";
 import { SimulatePaymentButton } from "./SimulatePaymentButton";
 import type { CouponValidation } from "@/lib/public-coupons";
@@ -44,7 +49,6 @@ import {
   Button,
   Field,
   Input,
-  Select,
   Textarea,
   useToast,
 } from "@/components/ui";
@@ -915,9 +919,19 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             {barbershop.name}
           </h1>
           <p className="mt-5 max-w-xl text-sm leading-7 text-[color:var(--text-secondary)] sm:mt-6 sm:text-base">
-            Elegí el servicio, la fecha y el horario. Guardamos tu reserva y
-            abrimos WhatsApp con el mensaje listo.
+            Reservá tu turno en un minuto. Elegí barbero, servicio, día y hora —
+            listo.
           </p>
+          <ul className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-[color:var(--text-muted)]">
+            <li className="flex items-center gap-1.5">
+              <ShieldCheck className="size-3.5 text-[color:var(--brand-gold)]" aria-hidden="true" />
+              Sin cuenta, sin vueltas
+            </li>
+            <li className="flex items-center gap-1.5">
+              <ShieldCheck className="size-3.5 text-[color:var(--brand-gold)]" aria-hidden="true" />
+              Cancelás gratis hasta 1h antes
+            </li>
+          </ul>
         </div>
 
         <div className="space-y-7">
@@ -927,108 +941,95 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             </p>
           ) : null}
 
-          {activeBarbers.length > 1 ? (
-            <Field label="Barbero" htmlFor="barber" required>
-              <Select
-                id="barber"
-                value={selectedBarberId}
+          <div className="space-y-3">
+            <StepHeader
+              number={1}
+              title={activeBarbers.length > 1 ? "Elegí tu barbero" : "Tu barbero"}
+              done={Boolean(selectedBarberId)}
+            />
+            {activeBarbers.length > 1 ? (
+              <BarberPicker
+                barbers={activeBarbers}
+                selectedId={selectedBarberId}
                 disabled={isSaving}
-                onChange={(event) => handleBarberChange(event.target.value)}
-                required
-              >
-                {activeBarbers.map((barber) => (
-                  <option key={barber.id} value={barber.id}>
-                    {getBarberDisplayName(barber)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          ) : selectedBarber ? (
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
-                Barbero
-              </p>
-              <p className="mt-2 text-lg font-bold text-white">
-                {selectedBarberName}
-              </p>
-            </div>
-          ) : null}
+                onSelect={handleBarberChange}
+              />
+            ) : selectedBarber ? (
+              <div className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 py-2.5">
+                <InitialsAvatar name={selectedBarberName} active />
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold text-white">
+                    {selectedBarberName}
+                  </span>
+                  {selectedBarber.role ? (
+                    <span className="block truncate text-[11px] text-[color:var(--text-muted)]">
+                      {selectedBarber.role}
+                    </span>
+                  ) : null}
+                </span>
+              </div>
+            ) : null}
+          </div>
 
-          <Field
-            label="Servicio"
-            htmlFor="service"
-            required
-            hint={isLoadingServices ? "Actualizando servicios…" : undefined}
-            error={
+          <div className="space-y-3">
+            <StepHeader
+              number={2}
+              title="¿Qué te hacés?"
+              subtitle={isLoadingServices ? "Actualizando…" : undefined}
+              done={Boolean(selectedService)}
+            />
+            {!selectedBarber ? (
+              <p className="text-xs text-[color:var(--text-muted)]">
+                Elegí un barbero primero.
+              </p>
+            ) : availableServices.length === 0 &&
               !isLoadingServices &&
-              !isLoadingBarbers &&
-              selectedBarber &&
-              availableServices.length === 0
-                ? "Este barbero no tiene servicios activos."
-                : undefined
-            }
-          >
-            <Select
-              id="service"
-              value={selectedService?.id ?? ""}
-              disabled={
-                isSaving ||
-                isLoadingBarbers ||
-                isLoadingServices ||
-                !selectedBarber ||
-                availableServices.length === 0
-              }
-              onChange={(event) => handleServiceChange(event.target.value)}
-              required
-            >
-              {availableServices.length === 0 ? (
-                <option value="">Sin servicios disponibles</option>
-              ) : null}
-              {availableServices.map((service) => (
-                <option key={service.id} value={service.id}>
-                  {service.name} — {formatPrice(service.price)}
-                </option>
-              ))}
-            </Select>
-          </Field>
+              !isLoadingBarbers ? (
+              <p className="text-xs font-semibold text-[color:var(--danger)]">
+                Este barbero no tiene servicios activos.
+              </p>
+            ) : (
+              <ServicePicker
+                services={availableServices}
+                selectedId={selectedService?.id ?? ""}
+                disabled={isSaving || isLoadingServices}
+                onSelect={handleServiceChange}
+              />
+            )}
+          </div>
 
-          <Field label="Fecha" htmlFor="date" required>
-            <Input
-              id="date"
-              type="date"
+          <div className="space-y-3">
+            <StepHeader
+              number={3}
+              title="¿Qué día?"
+              subtitle={
+                selectedDate ? getWeekdayName(selectedDate) : undefined
+              }
+              done={Boolean(selectedDate)}
+            />
+            <DateStrip
               value={selectedDate}
-              // No permitimos fechas pasadas. El input nativo respeta `min`
-              // en browsers modernos. Igual validamos en el submit por si
-              // alguien manipula el DOM.
-              min={getTodayInputValue()}
+              today={getTodayInputValue()}
               disabled={isSaving}
-              onChange={(event) => {
-                const next = event.target.value;
-                // Doble guard: si el user mete una fecha pasada manualmente,
-                // forzamos hoy.
-                if (next && next < getTodayInputValue()) {
-                  setSelectedDate(getTodayInputValue());
-                } else {
-                  setSelectedDate(next);
-                }
+              onChange={(ymd) => {
+                // Doble guard contra fechas pasadas (por el input "otra fecha").
+                setSelectedDate(
+                  ymd < getTodayInputValue() ? getTodayInputValue() : ymd,
+                );
                 setSelectedTime("");
                 setFormError("");
               }}
-              required
             />
-            {selectedDate ? (
-              <p className="mt-1.5 text-[11px] font-medium capitalize text-[color:var(--brand-gold)]">
-                {getWeekdayName(selectedDate)}
-              </p>
-            ) : null}
-          </Field>
+          </div>
 
           {/* Horarios como grid de pills clickeables */}
           <div>
-            <div className="flex items-baseline justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
-                Horario <span className="text-[color:var(--brand-gold)]">*</span>
-              </p>
+            <div className="flex items-center justify-between gap-2">
+              <StepHeader
+                number={4}
+                title="¿A qué hora?"
+                done={Boolean(selectedTime)}
+              />
               {isLoadingTimes ? (
                 <span className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
                   Actualizando…
@@ -1163,6 +1164,14 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             )}
           </div>
 
+          {selectedTime ? (
+          <div className="space-y-5 animate-fade-up">
+            <StepHeader
+              number={5}
+              title="Tus datos"
+              subtitle="Último paso"
+              done={Boolean(clientName.trim() && clientPhone.trim())}
+            />
           <div className="grid gap-5 sm:grid-cols-2">
             <Field label="Nombre" htmlFor="clientName" required>
               <Input
@@ -1232,6 +1241,12 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               rows={2}
             />
           </Field>
+          </div>
+          ) : (
+            <p className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-default)] px-4 py-6 text-center text-xs text-[color:var(--text-muted)]">
+              Elegí un horario y te pedimos tus datos.
+            </p>
+          )}
         </div>
       </section>
 
@@ -1334,10 +1349,18 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--border-default)] bg-black/95 px-4 py-3 backdrop-blur-md lg:hidden">
         <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-3">
           <div className="min-w-0">
-            <p className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-subtle)]">
-              Tu turno
-            </p>
-            <p className="mt-0.5 truncate text-xs font-semibold text-white">
+            {selectedService ? (
+              <p className="font-mono text-lg font-black tabular-nums leading-none text-[color:var(--brand-gold)]">
+                {appliedCoupon
+                  ? formatPrice(appliedCoupon.finalPrice)
+                  : formatPrice(selectedService.price)}
+              </p>
+            ) : (
+              <p className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-subtle)]">
+                Tu turno
+              </p>
+            )}
+            <p className="mt-0.5 truncate text-[11px] text-[color:var(--text-muted)]">
               {compactSummary || "Completá los datos"}
             </p>
           </div>
