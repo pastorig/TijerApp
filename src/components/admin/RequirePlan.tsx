@@ -31,7 +31,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-const FOUNDER_WHATSAPP = "5491168547616"; // Bauti
+const FOUNDER_WHATSAPP = "5493571624511"; // Gino (founder) — 3571 624511
 
 export function RequirePlan({ feature, barbershopSlug, children }: Props) {
   const plan = useCurrentPlan();
@@ -73,7 +73,7 @@ function FeaturePaywall({
   };
 
   const wamessage = encodeURIComponent(
-    `Hola Bauti! Soy admin de una barbería en TijerApp. Estoy en plan ${currentTierMeta.name} y quiero pasar a ${minTierMeta.name} para usar ${featureLabel[feature]}.`,
+    `Hola Gino! Soy admin de una barbería en TijerApp. Estoy en plan ${currentTierMeta.name} y quiero pasar a ${minTierMeta.name} para usar ${featureLabel[feature]}.`,
   );
   const waLink = `https://wa.me/${FOUNDER_WHATSAPP}?text=${wamessage}`;
 
@@ -125,7 +125,7 @@ function FeaturePaywall({
 
 function ExpiredPaywall({ barbershopSlug }: { barbershopSlug: string }) {
   const wamessage = encodeURIComponent(
-    `Hola Bauti! Soy admin de ${barbershopSlug} y mi trial expiró. Quiero activar mi plan para seguir usando TijerApp.`,
+    `Hola Gino! Soy admin de ${barbershopSlug} y mi trial expiró. Quiero activar mi plan para seguir usando TijerApp.`,
   );
   const waLink = `https://wa.me/${FOUNDER_WHATSAPP}?text=${wamessage}`;
 

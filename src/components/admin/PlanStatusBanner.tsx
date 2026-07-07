@@ -5,7 +5,8 @@ import { AlertTriangle, Clock, MessageCircle } from "lucide-react";
 import { useCurrentPlan } from "./PlanContext";
 import { cn } from "@/lib/cn";
 
-const FOUNDER_WHATSAPP = "5491168547616";
+// Gino (founder) — 3571 624511 → formato WhatsApp: 54 9 3571 624511
+const FOUNDER_WHATSAPP = "5493571624511";
 
 /**
  * Banner sticky arriba del admin que muestra estado del plan/trial cuando
@@ -26,7 +27,7 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
   const plan = useCurrentPlan();
 
   const wamessage = encodeURIComponent(
-    `Hola Bauti! Soy admin de ${barbershopSlug}. Quiero activar mi plan pago.`,
+    `Hola Gino! Soy admin de ${barbershopSlug}. Quiero activar mi plan pago.`,
   );
   const waLink = `https://wa.me/${FOUNDER_WHATSAPP}?text=${wamessage}`;
 
