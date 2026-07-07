@@ -106,13 +106,12 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const intervalValue = Number(payload.slotIntervalMinutes);
-  if (!Number.isFinite(intervalValue) || intervalValue <= 0) {
-    return NextResponse.json(
-      { error: "El intervalo debe ser mayor a cero." },
-      { status: 400 },
-    );
-  }
+  // El intervalo ya no se edita desde la UI (la grilla de horarios sigue la
+  // duración del servicio de cada barbero). Se conserva como fallback interno
+  // para turnos viejos sin duración; default 30 si no viene o es inválido.
+  const rawInterval = Number(payload.slotIntervalMinutes);
+  const intervalValue =
+    Number.isFinite(rawInterval) && rawInterval > 0 ? rawInterval : 30;
 
   const auth = await assertAdminOfBarbershop(
     request.headers.get("authorization"),

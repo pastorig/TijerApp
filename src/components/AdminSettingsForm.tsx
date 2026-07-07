@@ -66,6 +66,9 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    // El intervalo ya no se edita en la UI (la grilla sigue la duración del
+    // servicio de cada barbero). Se sigue enviando para preservar el valor
+    // guardado; si faltara, el backend lo defaultea a 30.
     const intervalValue = Number(slotIntervalMinutes);
 
     if (!name.trim()) {
@@ -80,11 +83,6 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
 
     if (startTime >= endTime) {
       setErrorMessage("El horario de cierre debe ser posterior al de apertura.");
-      return;
-    }
-
-    if (!Number.isFinite(intervalValue) || intervalValue <= 0) {
-      setErrorMessage("El intervalo de turnos debe ser mayor a cero.");
       return;
     }
 
@@ -492,7 +490,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
                 Horarios base
               </p>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div>
                   <label
                     htmlFor="settings-start-time"
@@ -533,27 +531,6 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
                     required
                   />
                 </div>
-                <div>
-                  <label
-                    htmlFor="settings-slot-interval"
-                    className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
-                  >
-                    Intervalo
-                  </label>
-                  <input
-                    id="settings-slot-interval"
-                    type="number"
-                    min="5"
-                    value={slotIntervalMinutes}
-                    disabled={isSaving}
-                    onChange={(event) => {
-                      setSlotIntervalMinutes(event.target.value);
-                      setErrorMessage("");
-                    }}
-                    className="mt-1 min-h-11 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-                    required
-                  />
-                </div>
               </div>
 
               {/* Anticipación mínima para reservar */}
@@ -585,8 +562,8 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
                 <p className="mt-1 text-[10px] leading-4 text-[color:var(--text-subtle)]">
                   Con cuánto tiempo mínimo pueden reservarte. Ej: &quot;1 hora
                   antes&quot; → a las 15:20 ya no pueden tomar el turno de las
-                  16:00 (el más cercano pasa a ser el siguiente según tu
-                  intervalo). Solo afecta los turnos de hoy.
+                  16:00 (el más cercano pasa a ser el siguiente disponible).
+                  Solo afecta los turnos de hoy.
                 </p>
               </div>
             </article>
