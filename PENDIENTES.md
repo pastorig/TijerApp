@@ -4,6 +4,28 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## 🎯 PRÓXIMA FEATURE — Cobro de barberos (suscripción) · Opción A
+
+**Decidido con Bautista (2026-07-07):** que los barberos le paguen el plan a Gino (founder). Se hace por **fases**, arrancando por la **Opción A: transferencia + activación manual** (cero integración, sirve ya). Después se evalúa MP Suscripciones (auto-recurrente).
+
+**Ya existe:**
+- Tabla `barbershop_subscriptions` (`plan_tier`, `status`, `trial_expires_at`, `grace_expires_at`).
+- Panel `/owner/planes` (`OwnerPlansManager`) para setear tier/status a mano.
+- Gating por plan + paywall (`RequirePlan`) + banner (`PlanStatusBanner`) + resolución de estado (`resolvePlanStatus`: trial/active/grace/expired/cancelled).
+- Contacto de pago = WhatsApp a Gino (3571 624511), ya en el paywall/banner.
+
+**Piezas que faltan (Opción A):**
+1. **`pagado_hasta` (date) en `barbershop_subscriptions`** + que `resolvePlanStatus` derive "vencido" cuando esa fecha pasa (igual que ya hace con `trial_expires_at`). Migración aditiva.
+2. **Panel Owner "Cobros"**: registrar un pago (monto, fecha, método) → extiende `pagado_hasta` (+1 mes) y pone `status=active`. Idealmente con tabla `barbershop_payments` (historial/auditoría).
+3. **Alias/CBU + monto en el paywall** (`RequirePlan` ExpiredPaywall + `PlanStatusBanner`): mostrar alias/CBU de Gino + el precio del plan, al lado del botón de WhatsApp, para que el barbero sepa cuánto y a dónde transferir.
+4. (Opcional, después) auto-expiry: computar el vencimiento desde `pagado_hasta` al leer (sin cron nuevo).
+
+**A definir con Bautista antes del spec:** alias/CBU de Gino; si el precio se lee de `PLAN_META` (Solo/Esencial/Pro) o es fijo; si "registrar cobro" vive dentro de `/owner/planes` o en sección nueva.
+
+**Cómo se arranca:** Spec Kit (specify → clarify → plan → tasks → implement).
+
+---
+
 ## ✅ Hecho (2026-06-25)
 
 - Dominio **tijerapp.com** comprado (DonWeb) + conectado a Vercel (DNS A `@` → 216.198.79.1, CNAME `www` → vercel-dns; `tijerapp.com` principal, `www` redirige). **Valid** ✅.
