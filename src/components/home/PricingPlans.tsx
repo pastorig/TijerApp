@@ -322,19 +322,19 @@ export function FoundersProgram() {
         <ul className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-3 sm:mt-12 sm:gap-4">
           {[
             {
-              title: "Precio congelado 12 meses",
+              title: "Precio congelado 3 meses",
               detail:
-                "Pagás el precio del momento durante un año entero, sin importar si subimos o ajustamos.",
+                "Pagás el precio del momento durante 3 meses, sin importar si subimos o ajustamos.",
             },
             {
               title: "Upgrade gratis al tier siguiente",
               detail:
-                "Si entrás en Esencial, te activamos Pro durante 6 meses. Si entrás en Solo, te subimos a Esencial.",
+                "Si entrás en Esencial, te activamos Pro durante 1 mes. Si entrás en Solo, te subimos a Esencial durante 1 mes.",
             },
             {
               title: "WhatsApp directo conmigo",
               detail:
-                "Bautista, founder de TijerApp, tu canal directo para feedback, dudas y soporte.",
+                "Gino, founder de TijerApp, tu canal directo para feedback, dudas y soporte.",
             },
             {
               title: "Badge Fundador en el panel",
