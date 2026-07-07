@@ -194,7 +194,7 @@ export function OwnerDashboard() {
         }
 
         if (metricsResult.error) {
-          setErrorMessage("No pudimos cargar las metricas owner.");
+          setErrorMessage("No pudimos cargar las métricas del panel.");
           setMetrics(metricsResult.data);
           return;
         }
@@ -202,7 +202,7 @@ export function OwnerDashboard() {
         setMetrics(metricsResult.data);
       } catch {
         if (isMounted) {
-          setErrorMessage("No pudimos cargar las metricas owner.");
+          setErrorMessage("No pudimos cargar las métricas del panel.");
         }
       } finally {
         if (isMounted) {
@@ -497,7 +497,7 @@ export function OwnerDashboard() {
 
         {isLoading ? (
           <div className="mt-4 rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 text-[color:var(--text-secondary)] sm:mt-6">
-            Cargando dashboard owner...
+            Cargando dashboard…
           </div>
         ) : null}
 

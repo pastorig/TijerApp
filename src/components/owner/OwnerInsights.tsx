@@ -95,7 +95,7 @@ export function OwnerInsights() {
 
   return (
     <section className="space-y-3">
-      <header className="flex items-center justify-between gap-3">
+      <header className="flex items-end justify-between gap-3">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
             Insights estratégicos
@@ -104,6 +104,10 @@ export function OwnerInsights() {
             Health del SaaS
           </h2>
         </div>
+        <Activity
+          aria-hidden="true"
+          className="size-5 shrink-0 text-[color:var(--brand-gold)]/70"
+        />
       </header>
 
       {/* KPIs financieros + Health Status — 1 sola fila en desktop, stack en mobile */}
@@ -137,7 +141,7 @@ export function OwnerInsights() {
           tone="success"
         />
         <HealthBlock
-          label="Quiet"
+          label="En pausa"
           count={buckets.quiet.length}
           tone="warning"
         />
@@ -164,7 +168,7 @@ export function OwnerInsights() {
                 textClass: "text-[color:var(--success)]",
               },
               {
-                label: "Quiet",
+                label: "En pausa",
                 value: buckets.quiet.length,
                 barClass: "bg-amber-400",
                 textClass: "text-amber-300",

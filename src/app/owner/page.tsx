@@ -7,13 +7,9 @@ export default function OwnerPage() {
   return (
     <OwnerAuthGuard>
       <OwnerShell>
-        <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
-          <OwnerInsights />
-        </div>
+        <OwnerInsights />
         {/* Separador visual entre Insights y Dashboard operativo */}
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-8 lg:px-12">
-          <div className="border-t border-[color:var(--border-subtle)]" />
-        </div>
+        <div className="my-6 border-t border-[color:var(--border-subtle)] sm:my-8" />
         <OwnerDashboard />
       </OwnerShell>
     </OwnerAuthGuard>

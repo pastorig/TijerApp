@@ -97,12 +97,12 @@ export function OwnerPlansManager() {
   }, [load]);
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
-      <header>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
-          Owner
+    <div className="space-y-6 sm:space-y-8">
+      <header className="animate-fade-up">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
+          Planes
         </p>
-        <h1 className="mt-2 text-2xl font-black uppercase leading-tight tracking-tight sm:text-3xl lg:text-4xl">
+        <h1 className="mt-4 text-3xl font-black uppercase leading-tight tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
           Planes por barbería
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)]">
@@ -112,7 +112,7 @@ export function OwnerPlansManager() {
         </p>
       </header>
 
-      <section className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)]">
+      <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)]">
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
             <Loader2 className="size-5 animate-spin text-[color:var(--brand-gold)]" />
@@ -256,7 +256,7 @@ export function OwnerPlansManager() {
           }}
         />
       ) : null}
-    </main>
+    </div>
   );
 }
 
