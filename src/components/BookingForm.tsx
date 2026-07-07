@@ -1345,18 +1345,18 @@ export function BookingForm({ barbershop }: BookingFormProps) {
         </div>
       </aside>
 
-      {/* Sticky bottom CTA (mobile) */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--border-default)] bg-black/95 px-4 py-3 backdrop-blur-md lg:hidden">
-        <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-3">
-          <div className="min-w-0">
+      {/* Sticky bottom CTA (mobile) — barra prominente: precio + RESERVAR grande */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--border-strong)] bg-black/95 px-4 py-3 backdrop-blur-md lg:hidden">
+        <div className="mx-auto flex max-w-6xl items-center gap-3">
+          <div className="min-w-0 flex-1">
             {selectedService ? (
-              <p className="font-mono text-lg font-black tabular-nums leading-none text-[color:var(--brand-gold)]">
+              <p className="font-mono text-xl font-black tabular-nums leading-none text-[color:var(--brand-gold)]">
                 {appliedCoupon
                   ? formatPrice(appliedCoupon.finalPrice)
                   : formatPrice(selectedService.price)}
               </p>
             ) : (
-              <p className="text-[9px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-subtle)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[color:var(--text-subtle)]">
                 Tu turno
               </p>
             )}
@@ -1366,11 +1366,15 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           </div>
           <Button
             type="submit"
-            size="md"
+            size="lg"
             loading={isSaving}
             disabled={isSubmitDisabled}
+            iconRight={
+              isSaving ? undefined : <ArrowUpRight className="size-4" />
+            }
+            className="shrink-0 px-7 text-sm shadow-[0_0_0_1px_var(--brand-gold-ring),0_8px_24px_-8px_rgba(201,162,62,0.5)]"
           >
-            {isSaving ? "…" : "Reservar"}
+            {isSaving ? "Guardando…" : "Reservar"}
           </Button>
         </div>
       </div>

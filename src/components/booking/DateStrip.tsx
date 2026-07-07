@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const WEEKDAY_SHORT = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"] as const;
@@ -33,10 +33,11 @@ type DateStripProps = {
 
 /**
  * Tira horizontal de días como pills ("JUE 18"). Reemplaza el input de fecha
- * nativo por algo táctil e intuitivo. Se DESLIZA horizontalmente para ver más
- * días: fades dinámicos en los bordes + un chevron a la derecha señalan que hay
- * más para scrollear. Incluye un input nativo "otra fecha" para fechas más
- * lejanas que el strip.
+ * nativo por algo táctil e intuitivo. Se navega deslizando (touch) o con las
+ * FLECHAS ubicadas a los costados — por fuera de los recuadros, así no pisan
+ * ningún día. Las flechas se deshabilitan al llegar a cada extremo. En mobile
+ * un texto refuerza que se puede deslizar. Incluye un input nativo "otra fecha"
+ * para fechas más lejanas que el strip.
  */
 export function DateStrip({
   value,
@@ -49,35 +50,67 @@ export function DateStrip({
   const beyondStrip = value && !list.includes(value);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [showLeftFade, setShowLeftFade] = useState(false);
-  const [showRightFade, setShowRightFade] = useState(true);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
-  // Actualiza los fades según la posición de scroll: el izquierdo aparece
-  // cuando te corriste a la derecha; el derecho desaparece al llegar al final.
-  function updateFades() {
+  // Recalcula si se puede scrollear hacia cada lado (para habilitar/atenuar
+  // las flechas en los extremos).
+  function updateArrows() {
     const el = scrollRef.current;
     if (!el) return;
     const maxScroll = el.scrollWidth - el.clientWidth;
-    setShowLeftFade(el.scrollLeft > 4);
-    setShowRightFade(maxScroll > 4 && el.scrollLeft < maxScroll - 4);
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(maxScroll > 4 && el.scrollLeft < maxScroll - 4);
+  }
+
+  // Desplaza ~75% del viewport visible en la dirección indicada (-1 izq, 1 der).
+  function scrollByDir(dir: -1 | 1) {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({
+      left: dir * Math.max(180, el.clientWidth * 0.75),
+      behavior: "smooth",
+    });
   }
 
   useEffect(() => {
-    updateFades();
-    window.addEventListener("resize", updateFades);
-    return () => window.removeEventListener("resize", updateFades);
+    updateArrows();
+    window.addEventListener("resize", updateArrows);
+    return () => window.removeEventListener("resize", updateArrows);
     // Re-medimos si cambia la cantidad de días.
   }, [days]);
 
+  const arrowBase =
+    "flex w-9 shrink-0 items-center justify-center self-stretch rounded-[var(--radius-md)] border transition-colors duration-[var(--duration-fast)] press-shrink";
+  const arrowEnabled =
+    "border-[color:var(--border-default)] bg-[color:var(--surface-1)] text-[color:var(--brand-gold)] hover:border-[color:var(--brand-gold)] hover:bg-[color:var(--brand-gold-soft)]";
+  const arrowDisabled =
+    "cursor-not-allowed border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] text-[color:var(--text-subtle)] opacity-40";
+
   return (
     <div>
-      <div className="relative">
+      <div className="flex items-stretch gap-2">
+        {/* Flecha izquierda — fuera de los recuadros */}
+        <button
+          type="button"
+          aria-label="Ver días anteriores"
+          onClick={() => scrollByDir(-1)}
+          disabled={disabled || !canScrollLeft}
+          className={cn(
+            arrowBase,
+            !disabled && canScrollLeft ? arrowEnabled : arrowDisabled,
+          )}
+        >
+          <ChevronLeft className="size-5" aria-hidden="true" />
+        </button>
+
+        {/* Pills deslizables */}
         <div
           ref={scrollRef}
-          onScroll={updateFades}
+          onScroll={updateArrows}
           role="radiogroup"
-          aria-label="Elegí el día — deslizá para ver más"
-          className="-mx-1 flex snap-x scroll-smooth gap-2 overflow-x-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          aria-label="Elegí el día"
+          className="flex min-w-0 flex-1 snap-x scroll-smooth gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {list.map((ymd, i) => {
             const [, mm, dd] = ymd.split("-");
@@ -131,39 +164,42 @@ export function DateStrip({
           })}
         </div>
 
-        {/* Fade izquierdo — aparece al deslizar hacia la derecha */}
-        <div
-          aria-hidden="true"
+        {/* Flecha derecha — fuera de los recuadros */}
+        <button
+          type="button"
+          aria-label="Ver días siguientes"
+          onClick={() => scrollByDir(1)}
+          disabled={disabled || !canScrollRight}
           className={cn(
-            "pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-black to-transparent transition-opacity duration-[var(--duration-fast)]",
-            showLeftFade ? "opacity-100" : "opacity-0",
-          )}
-        />
-
-        {/* Fade derecho + chevron — señala que hay más días para deslizar */}
-        <div
-          aria-hidden="true"
-          className={cn(
-            "pointer-events-none absolute inset-y-0 right-0 flex w-14 items-center justify-end bg-gradient-to-l from-black via-black/85 to-transparent pb-2 transition-opacity duration-[var(--duration-fast)]",
-            showRightFade ? "opacity-100" : "opacity-0",
+            arrowBase,
+            !disabled && canScrollRight ? arrowEnabled : arrowDisabled,
           )}
         >
-          <ChevronRight className="size-5 animate-pulse text-[color:var(--brand-gold)]" />
-        </div>
+          <ChevronRight className="size-5" aria-hidden="true" />
+        </button>
       </div>
 
-      {/* Otra fecha (más lejana que el strip) */}
-      <label className="mt-2 flex items-center gap-2 text-[11px] text-[color:var(--text-muted)]">
-        <span>¿Otra fecha?</span>
-        <input
-          type="date"
-          value={beyondStrip ? value : ""}
-          min={today}
-          disabled={disabled}
-          onChange={(e) => e.target.value && onChange(e.target.value)}
-          className="min-h-9 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-2 text-xs text-white outline-none focus:border-[color:var(--brand-gold)]"
-        />
-      </label>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        {/* Hint mobile: deslizá (en desktop se entiende con las flechas + mouse) */}
+        <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)] sm:hidden">
+          <ChevronLeft className="size-3 text-[color:var(--brand-gold)]" aria-hidden="true" />
+          Deslizá para ver más días
+          <ChevronRight className="size-3 text-[color:var(--brand-gold)]" aria-hidden="true" />
+        </p>
+
+        {/* Otra fecha (más lejana que el strip) */}
+        <label className="flex items-center gap-2 text-[11px] text-[color:var(--text-muted)]">
+          <span>¿Otra fecha?</span>
+          <input
+            type="date"
+            value={beyondStrip ? value : ""}
+            min={today}
+            disabled={disabled}
+            onChange={(e) => e.target.value && onChange(e.target.value)}
+            className="min-h-9 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-2 text-xs text-white outline-none focus:border-[color:var(--brand-gold)]"
+          />
+        </label>
+      </div>
     </div>
   );
 }
