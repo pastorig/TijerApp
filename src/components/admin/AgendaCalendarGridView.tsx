@@ -396,8 +396,19 @@ export function AgendaCalendarGridView({
     [gridStartTime, gridEndTime, workingHours.intervalMinutes],
   );
 
-  // 4. Indexar appointments por (barberId, time) para acceso O(1)
+  // 4. Indexar appointments por (barberId, slotDeGrilla) para acceso O(1).
+  //    OJO: la hora de arranque de un turno NO siempre cae en la grilla fija
+  //    de esta vista. El motor de reservas genera horarios según la DURACIÓN
+  //    del servicio (y un "slot de cierre" pegado al fin de jornada), así que
+  //    hay turnos fuera de grilla (ej. 16:20 en una grilla de 30'). Si
+  //    buscáramos por hora EXACTA, esos turnos no matchearían ninguna fila y
+  //    desaparecerían del calendario (seguían visibles solo en la vista Lista).
+  //    Solución: encajamos cada turno en la fila que lo CONTIENE (floor al
+  //    slot). Si la hora ya cae justo en la grilla, el floor la deja igual
+  //    → no-op y cero regresión con cualquier intervalo.
   const appointmentsByBarberAndTime = useMemo(() => {
+    const gridStartMin = timeToMinutes(gridStartTime);
+    const step = workingHours.intervalMinutes;
     const map = new Map<string, AppointmentRow>();
     for (const appointment of appointments) {
       if (appointment.appointment_date !== focusDate) continue;
@@ -407,11 +418,26 @@ export function AgendaCalendarGridView({
       ) {
         continue;
       }
-      const time = appointment.appointment_time.slice(0, 5);
-      map.set(`${appointment.barber_id}:${time}`, appointment);
+      const apptMin = timeToMinutes(appointment.appointment_time.slice(0, 5));
+      const slotMin =
+        step > 0 && apptMin >= gridStartMin
+          ? gridStartMin + Math.floor((apptMin - gridStartMin) / step) * step
+          : apptMin;
+      const key = `${appointment.barber_id}:${minutesToTimeLabel(slotMin)}`;
+      // Colisión (2 turnos que caen en la misma fila, solo posible si la
+      // duración del servicio < intervalo de grilla): gana el que arranca
+      // más temprano — así el que está pegado al borde del slot no queda
+      // tapado por uno posterior.
+      const existing = map.get(key);
+      if (
+        !existing ||
+        apptMin < timeToMinutes(existing.appointment_time.slice(0, 5))
+      ) {
+        map.set(key, appointment);
+      }
     }
     return map;
-  }, [appointments, focusDate]);
+  }, [appointments, focusDate, gridStartTime, workingHours.intervalMinutes]);
 
   function isSlotInBarberWorkingHours(
     barberSchedule: BarberDaySchedule,
