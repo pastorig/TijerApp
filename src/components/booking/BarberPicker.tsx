@@ -28,7 +28,7 @@ export function BarberPicker({
     <div
       role="radiogroup"
       aria-label="Elegí tu barbero"
-      className="grid gap-2.5 sm:grid-cols-2"
+      className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
     >
       {barbers.map((barber) => {
         const name = getBarberDisplayName(barber);

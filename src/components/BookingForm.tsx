@@ -908,21 +908,21 @@ export function BookingForm({ barbershop }: BookingFormProps) {
 
     <form
       onSubmit={handleSubmit}
-      className="grid gap-10 pb-32 sm:gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-start lg:gap-20 lg:pb-0"
+      className="grid grid-cols-1 gap-8 pb-28 sm:gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start lg:gap-20 lg:pb-0"
     >
-      <section className="space-y-8 sm:space-y-10">
+      <section className="min-w-0 space-y-6 sm:space-y-10">
         <div className="animate-fade-up">
           <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
             Reserva online
           </p>
-          <h1 className="mt-4 text-[2rem] font-black uppercase leading-[0.95] tracking-tight text-balance break-words sm:mt-6 sm:text-5xl lg:text-6xl">
+          <h1 className="mt-3 text-[1.75rem] font-black uppercase leading-[0.95] tracking-tight text-balance break-words sm:mt-6 sm:text-5xl lg:text-6xl">
             {barbershop.name}
           </h1>
-          <p className="mt-5 max-w-xl text-sm leading-7 text-[color:var(--text-secondary)] sm:mt-6 sm:text-base">
+          <p className="mt-3 max-w-xl text-sm leading-6 text-[color:var(--text-secondary)] sm:mt-6 sm:text-base sm:leading-7">
             Reservá tu turno en un minuto. Elegí barbero, servicio, día y hora —
             listo.
           </p>
-          <ul className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-[color:var(--text-muted)]">
+          <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-[color:var(--text-muted)]">
             <li className="flex items-center gap-1.5">
               <ShieldCheck className="size-3.5 text-[color:var(--brand-gold)]" aria-hidden="true" />
               Sin cuenta, sin vueltas
@@ -934,7 +934,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           </ul>
         </div>
 
-        <div className="space-y-7">
+        <div className="space-y-6">
           {isLoadingBarbers ? (
             <p className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-muted)]">
               Cargando barberos…
@@ -1172,7 +1172,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               subtitle="Último paso"
               done={Boolean(clientName.trim() && clientPhone.trim())}
             />
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Field label="Nombre" htmlFor="clientName" required>
               <Input
                 id="clientName"
@@ -1251,9 +1251,9 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       </section>
 
       {/* Resumen — columna lateral minimalista */}
-      <aside className="lg:sticky lg:top-12">
+      <aside className="min-w-0 lg:sticky lg:top-12">
         <div
-          className="animate-fade-up border-t border-[color:var(--border-subtle)] pt-8 sm:border-t-0 sm:border-l sm:pl-6 sm:pt-0 lg:pl-10"
+          className="animate-fade-up border-t border-[color:var(--border-subtle)] pt-6 sm:border-t-0 sm:border-l sm:pl-6 sm:pt-0 lg:pl-10"
           style={{ animationDelay: "120ms" }}
         >
           <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
@@ -1270,12 +1270,12 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                   <p className="mt-1 font-mono text-base font-semibold tabular-nums leading-none text-[color:var(--text-muted)] line-through">
                     {formatPrice(selectedService.price)}
                   </p>
-                  <p className="mt-1 font-mono text-4xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl lg:text-6xl">
+                  <p className="mt-1 font-mono text-3xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl lg:text-6xl">
                     {formatPrice(appliedCoupon.finalPrice)}
                   </p>
                 </>
               ) : (
-                <p className="mt-2 font-mono text-4xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl lg:text-6xl">
+                <p className="mt-2 font-mono text-3xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl lg:text-6xl">
                   {formatPrice(selectedService.price)}
                 </p>
               )}
@@ -1293,7 +1293,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             </div>
           ) : null}
 
-          <dl className="mt-8 grid gap-4 sm:mt-10 sm:gap-5">
+          <dl className="mt-6 grid grid-cols-1 gap-3 sm:mt-10 sm:gap-5">
             {summaryRows.map((row) => (
               <div
                 key={row.label}
@@ -1420,7 +1420,7 @@ function BookingSuccess({
     result.initPoint ?? `/api/mp/pay?token=${result.confirmationToken}`;
 
   return (
-    <section className="grid gap-12 pb-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-start lg:gap-20 lg:pb-0">
+    <section className="grid grid-cols-1 gap-12 pb-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start lg:gap-20 lg:pb-0">
       <div className="animate-fade-up">
         <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
           Turno reservado
@@ -1502,7 +1502,7 @@ function BookingSuccess({
       </div>
 
       {/* Aside: resumen del turno */}
-      <aside className="lg:sticky lg:top-12">
+      <aside className="min-w-0 lg:sticky lg:top-12">
         <div
           className="animate-fade-up border-t border-[color:var(--border-subtle)] pt-8 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0 lg:pl-10"
           style={{ animationDelay: "120ms" }}
@@ -1528,7 +1528,7 @@ function BookingSuccess({
               {formatPrice(result.servicePrice)}
             </p>
           )}
-          <dl className="mt-8 grid gap-4">
+          <dl className="mt-8 grid grid-cols-1 gap-4">
             {[
               { label: "Servicio", value: result.serviceName },
               {

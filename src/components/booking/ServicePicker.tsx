@@ -24,7 +24,7 @@ export function ServicePicker({
     <div
       role="radiogroup"
       aria-label="Elegí el servicio"
-      className="grid gap-2.5"
+      className="grid grid-cols-1 gap-2.5"
     >
       {services.map((service) => {
         const isSelected = service.id === selectedId;
