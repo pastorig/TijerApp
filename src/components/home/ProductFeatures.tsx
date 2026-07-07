@@ -118,7 +118,7 @@ export function ProductFeatures() {
                   <h3 className="text-sm font-bold leading-tight text-white sm:text-lg">
                     {feature.title}
                   </h3>
-                  <p className="mt-1 hidden text-sm leading-5 text-[color:var(--text-secondary)] sm:mt-2 sm:block sm:leading-6">
+                  <p className="mt-1.5 text-xs leading-5 text-[color:var(--text-secondary)] sm:mt-2 sm:text-sm sm:leading-6">
                     {feature.description}
                   </p>
                 </div>

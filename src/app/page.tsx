@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Check } from "lucide-react";
 import { Button } from "@/components/ui";
 import { CommercialFooter } from "@/components/home/CommercialFooter";
 import { CommercialNav } from "@/components/home/CommercialNav";
@@ -128,19 +128,31 @@ export default function Home() {
             {/* Proof points */}
             <ul className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[color:var(--text-secondary)] sm:mt-8 sm:text-sm">
               <li className="flex items-center gap-1.5">
-                <span className="text-[color:var(--brand-gold)]">✓</span>
+                <Check
+                  aria-hidden="true"
+                  className="size-3.5 shrink-0 text-[color:var(--brand-gold)]"
+                />
                 14 días gratis
               </li>
               <li className="flex items-center gap-1.5">
-                <span className="text-[color:var(--brand-gold)]">✓</span>
+                <Check
+                  aria-hidden="true"
+                  className="size-3.5 shrink-0 text-[color:var(--brand-gold)]"
+                />
                 Sin tarjeta
               </li>
               <li className="flex items-center gap-1.5">
-                <span className="text-[color:var(--brand-gold)]">✓</span>
+                <Check
+                  aria-hidden="true"
+                  className="size-3.5 shrink-0 text-[color:var(--brand-gold)]"
+                />
                 Cancelás cuando quieras
               </li>
               <li className="flex items-center gap-1.5">
-                <span className="text-[color:var(--brand-gold)]">✓</span>
+                <Check
+                  aria-hidden="true"
+                  className="size-3.5 shrink-0 text-[color:var(--brand-gold)]"
+                />
                 Hecho en Argentina
               </li>
             </ul>
