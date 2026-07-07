@@ -19,6 +19,8 @@ export type SerializedPlan = {
   trialExpiresAtIso: string | null;
   daysToTrialExpire: number | null;
   graceExpiresAtIso: string | null;
+  paidUntilIso: string | null;
+  daysToPaidExpire: number | null;
   isInGracePeriod: boolean;
   canAccessFeatures: boolean;
 };
@@ -48,6 +50,8 @@ export function useCurrentPlan(): SerializedPlan {
       trialExpiresAtIso: null,
       daysToTrialExpire: null,
       graceExpiresAtIso: null,
+      paidUntilIso: null,
+      daysToPaidExpire: null,
       isInGracePeriod: false,
       canAccessFeatures: true,
     };

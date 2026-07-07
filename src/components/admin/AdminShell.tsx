@@ -34,6 +34,8 @@ export async function AdminShell({
     trialExpiresAtIso: plan.trialExpiresAt?.toISOString() ?? null,
     daysToTrialExpire: plan.daysToTrialExpire,
     graceExpiresAtIso: plan.graceExpiresAt?.toISOString() ?? null,
+    paidUntilIso: plan.paidUntil?.toISOString() ?? null,
+    daysToPaidExpire: plan.daysToPaidExpire,
     isInGracePeriod: plan.isInGracePeriod,
     canAccessFeatures: plan.canAccessFeatures,
   };

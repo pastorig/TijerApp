@@ -4,11 +4,13 @@ import Link from "next/link";
 import { Lock, MessageCircle } from "lucide-react";
 import { useCurrentPlan } from "./PlanContext";
 import {
+  formatArs,
   hasFeature,
   minTierForFeature,
   PLAN_META,
   type Feature,
 } from "@/lib/plans";
+import { FOUNDER, founderWaLink } from "@/lib/founder";
 
 /**
  * Wrapper que protege una página/sección según el plan de la barbería.
@@ -31,14 +33,12 @@ type Props = {
   children: React.ReactNode;
 };
 
-const FOUNDER_WHATSAPP = "5493571624511"; // Gino (founder) — 3571 624511
-
 export function RequirePlan({ feature, barbershopSlug, children }: Props) {
   const plan = useCurrentPlan();
 
   // Si está expired/cancelled, mostramos paywall genérico
   if (!plan.canAccessFeatures) {
-    return <ExpiredPaywall barbershopSlug={barbershopSlug} />;
+    return <ExpiredPaywall barbershopSlug={barbershopSlug} tier={plan.tier} />;
   }
 
   // Si el plan no incluye la feature, paywall feature-specific
@@ -72,10 +72,9 @@ function FeaturePaywall({
     soporte_prioritario: "Soporte prioritario",
   };
 
-  const wamessage = encodeURIComponent(
-    `Hola Gino! Soy admin de una barbería en TijerApp. Estoy en plan ${currentTierMeta.name} y quiero pasar a ${minTierMeta.name} para usar ${featureLabel[feature]}.`,
+  const waLink = founderWaLink(
+    `Hola ${FOUNDER.name}! Soy admin de una barbería en TijerApp. Estoy en plan ${currentTierMeta.name} y quiero pasar a ${minTierMeta.name} para usar ${featureLabel[feature]}.`,
   );
-  const waLink = `https://wa.me/${FOUNDER_WHATSAPP}?text=${wamessage}`;
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-24">
@@ -123,11 +122,17 @@ function FeaturePaywall({
   );
 }
 
-function ExpiredPaywall({ barbershopSlug }: { barbershopSlug: string }) {
-  const wamessage = encodeURIComponent(
-    `Hola Gino! Soy admin de ${barbershopSlug} y mi trial expiró. Quiero activar mi plan para seguir usando TijerApp.`,
+function ExpiredPaywall({
+  barbershopSlug,
+  tier,
+}: {
+  barbershopSlug: string;
+  tier: ReturnType<typeof useCurrentPlan>["tier"];
+}) {
+  const precio = formatArs(PLAN_META[tier].priceArs);
+  const waLink = founderWaLink(
+    `Hola ${FOUNDER.name}! Soy admin de ${barbershopSlug} y mi plan venció. Quiero activarlo (${precio}/mes).`,
   );
-  const waLink = `https://wa.me/${FOUNDER_WHATSAPP}?text=${wamessage}`;
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-24">
@@ -147,6 +152,42 @@ function ExpiredPaywall({ barbershopSlug }: { barbershopSlug: string }) {
           pago. Tus datos (clientes, turnos, configuración) están todos
           guardados — apenas activás, vuelve todo.
         </p>
+
+        {/* Datos de transferencia — cuánto y a dónde */}
+        <div className="mx-auto mt-6 max-w-sm rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] p-4 text-left">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)]">
+              A pagar
+            </p>
+            <p className="font-mono text-xl font-black tabular-nums text-[color:var(--brand-gold)]">
+              {precio}
+              <span className="ml-0.5 text-xs font-semibold text-[color:var(--text-muted)]">
+                /mes
+              </span>
+            </p>
+          </div>
+          <dl className="mt-3 grid gap-1.5 text-xs">
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-[color:var(--text-muted)]">Alias</dt>
+              <dd className="font-mono font-semibold text-white">
+                {FOUNDER.alias}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="shrink-0 text-[color:var(--text-muted)]">CBU</dt>
+              <dd className="break-all text-right font-mono font-semibold text-white">
+                {FOUNDER.cbu}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-[color:var(--text-muted)]">Titular</dt>
+              <dd className="font-semibold text-white">{FOUNDER.titular}</dd>
+            </div>
+          </dl>
+          <p className="mt-2.5 text-[11px] leading-4 text-[color:var(--text-muted)]">
+            Transferí y avisá por WhatsApp para que activemos tu plan.
+          </p>
+        </div>
 
         <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <a
