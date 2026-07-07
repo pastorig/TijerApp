@@ -4,7 +4,7 @@
 >
 > Para tareas de **código** (Claude Code, Codex, Cursor), ver `AGENTS.md` y los specs en `specs/<NNN>-<feature>/`.
 >
-> **Última actualización**: 2026-06-05
+> **Última actualización**: 2026-07-06
 
 ---
 
@@ -158,7 +158,7 @@ TijerApp **no es una app para una sola barbería**.
 
 ### Beneficios para el barbero empleado
 
-1. **Notificaciones en tiempo real** (próximamente push notifs)
+1. **Notificaciones en tiempo real** (push notifs implementadas)
 2. **Agenda lista cuando llegás** — sabés exactamente cuántos turnos tenés
 3. **Sin tener que mirar el WhatsApp constantemente**
 4. **Tu propia disponibilidad** — vos definís cuándo trabajás
@@ -216,11 +216,11 @@ Barbería establecida con 2+ sillones. El **plan default**.
 Barberías que quieren crecer en serio o tienen socios/managers.
 
 - Todo lo de Esencial +
-- 🔔 Push notifications en tiempo real (en cuanto se implemente)
+- 🔔 Push notifications en tiempo real
 - 📊 Reportes avanzados + comparativas multi-barbero + export PDF
 - 👥 Hasta 5 users admin (socios/managers)
-- 🏷️ Cupones de descuento (cuando esté implementado)
-- 🎁 Sistema de fidelización (cuando esté implementado)
+- 🏷️ Cupones de descuento
+- 🎁 Sistema de fidelización
 - 📧 Reportes mensuales por email automáticos
 - 🎨 Logo en emails transaccionales (white-label parcial)
 - ⚡ Soporte prioritario por WhatsApp (<24h)
@@ -346,6 +346,14 @@ Beneficios exclusivos para los primeros 10 que paguen el primer mes:
 | `waitlist_entries` | Lista de espera |
 | `reminder_log` | Tracking de recordatorios enviados |
 | `contact_requests` | Contactos comerciales entrantes |
+| `barbershop_subscriptions` | Plan del tenant (tier Solo/Esencial/Pro + estado) para plan gating |
+| `push_subscriptions` | Suscripciones Web Push del equipo (admin/barbero) |
+| `push_notification_queue` | Cola de notificaciones push a despachar |
+| `client_push_subscriptions` | Suscripciones Web Push del cliente final |
+| `payment_events` | Eventos de pago de la seña MercadoPago (webhook) |
+| `coupons` | Cupones de descuento por barbería |
+| `loyalty_programs` | Configuración del programa de fidelización por barbería |
+| `loyalty_stamps` | Sellos/visitas acumuladas por cliente para fidelización |
 
 ### Características clave del modelo
 
@@ -363,15 +371,16 @@ Beneficios exclusivos para los primeros 10 que paguen el primer mes:
 | **Resend** | ✅ Producción | Emails transaccionales (recordatorios, notificaciones al owner) |
 | **Sentry** | ✅ Producción | Error tracking en client + server + edge |
 | **WhatsApp via `wa.me`** | ✅ Producción | Links prearmados para que el admin contacte al cliente |
-| **GitHub Actions** | ✅ Producción | Cron horario que ejecuta `/api/cron/reminders` |
+| **MercadoPago (OAuth + Checkout Pro)** | ✅ Producción (código) | Cobro de seña al reservar; el barbero conecta su MP con OAuth. Implementado y probado en prod (OAuth funciona, 19/19 tests integración). Todavía sin activar comercialmente (`mp_enabled=false` en todas) — falta la app de plataforma MP y una prueba con pago real |
+| **Web Push (VAPID)** | ✅ Producción | Notificaciones push al admin/barbero y al cliente. Self-hosted con `web-push`+VAPID, triggers en DB y crons de envío/cleanup |
+| **GitHub Actions** | ✅ Producción | Crons: `/api/cron/reminders` (recordatorios), `/api/cron/deposits` (auto-cancelación de señas), `/api/cron/monthly-reports` (reportes mensuales por email), `push-cleanup` |
 
 ### Integraciones planeadas (en spec o roadmap)
 
 | Integración | Estado | Cuándo |
 |---|---|---|
-| **Web Push Notifications** | Spec + Plan + Tasks listos en `specs/002-push-notifications/` | Próxima sesión grande de implement |
-| **Supabase Database Webhooks** | Configuración manual al implementar push | Con push notifs |
-| **Dominio propio tijerapp.com** | Sin comprar aún | A definir por el founder |
+| **Google Calendar sync** | Idea conceptual, sin spec | A definir por el founder |
+| **WhatsApp API oficial** | No planeado a corto plazo (la integración `wa.me` alcanza para el MVP) | — |
 
 ## 2.5 Features implementadas (en producción)
 
@@ -384,6 +393,9 @@ Beneficios exclusivos para los primeros 10 que paguen el primer mes:
 - Link permite confirmar / cancelar / reprogramar sin login
 - Reseñas post-turno por link único
 - Recordatorios automáticos por email
+- Seña por MercadoPago al reservar (opt-in por barbería): el cliente paga una seña o el turno se auto-cancela al vencer el plazo (implementado; sin activar comercialmente aún)
+- Anticipación mínima de reserva configurable (no se puede tomar un turno con menos de X minutos de antelación)
+- Notificaciones push al cliente (recordatorio/estado del turno)
 - PWA instalable en home screen
 
 ### Para el admin (barbero / dueño)
@@ -405,6 +417,19 @@ Beneficios exclusivos para los primeros 10 que paguen el primer mes:
 - Cierre de caja diario
 - Reportes: KPIs operativos, ingresos, producción por barbero, top servicios, horarios pico, clientes nuevos vs recurrentes
 - Galería pública con upload múltiple + reorder + captions
+- Push notifications en tiempo real (aviso al barbero cuando entra una reserva)
+- Cupones de descuento (crear/gestionar, aplicables en la reserva)
+- Sistema de fidelización (X visitas = premio/corte gratis)
+- Multi-admin / Equipo (varios usuarios admin por barbería, hasta 5 en Pro)
+- Plan gating: 3 tiers (Solo/Esencial/Pro) con features y límites gateados + trial/gracia/expirado
+- Reportes mensuales por email automáticos (cron día 1 de cada mes)
+- Reportes con export a PDF y comparativas por barbero
+- Cobro de seña por MercadoPago (conectar MP por OAuth, % y mínimo de seña, plazo de pago, badge de estado de seña en el turnero, auto-cancelación por cron)
+- Turno fuera de horario (alta manual forzada aunque el barbero no atienda en ese slot)
+- Turnos recurrentes / duplicar turno a futuro
+- Drag & drop en la agenda para mover turnos
+- Mensaje de WhatsApp personalizable por barbería (con placeholders {nombre} {barberia} {fecha} {hora})
+- Anticipación mínima de reserva configurable
 - Configuración completa: nombre, descripción, WhatsApp, IG, dirección, horarios, auto-confirm, Google Reviews URL, logo
 - PWA instalable con icon en home screen
 - Last-context routing (al abrir la PWA, te lleva a la última barbería que estabas administrando)
@@ -422,36 +447,33 @@ Beneficios exclusivos para los primeros 10 que paguen el primer mes:
 
 | Feature | Estado | Doc |
 |---|---|---|
-| **Push notifications** | Spec + Plan + Tasks listos, implementación pendiente | `specs/002-push-notifications/` |
-| **Sistema de fidelización** (X visitas = corte gratis) | Idea conceptual | — |
+| **Recordatorio de pago de seña (US3)** | ✅ Implementado (cron `/api/cron/deposits`, push + email, dedup por `reminder_log`) — falta prueba con señas MP reales activas | `PENDIENTES.md` (Tarea 4) |
 | **Alertas VIP** (notif al admin cuando cliente top reserva) | Idea conceptual | — |
-| **Reportes mensuales por email** | Idea conceptual, depende de dominio propio | — |
-| **Cupones de descuento** | Idea conceptual | — |
-| **Drag & drop en agenda** | Idea conceptual | — |
-| **Tooltips contextuales en admin** | Idea conceptual | — |
+| **Tooltips contextuales en admin** | Parcial (hay OnboardingTip); resto idea conceptual | — |
 | **Performance optimization** (Lighthouse 79 → 90+) | Idea conceptual | — |
 
 ## 2.7 Roadmap público
 
 **Próximas 4 semanas (estimado)**:
-1. Implementar push notifications (feature spec'd)
-2. Comprar y configurar dominio tijerapp.com
+1. Activar comercialmente el cobro de seña por MercadoPago (crear app de plataforma MP + prueba con pago real) + el recordatorio de pago (US3) ya está en código
+2. Setear `OWNER_NOTIFICATION_FROM` con el dominio para que los emails salgan a clientes reales (Resend ya verificado con tijerapp.com)
 3. Lighthouse optimization
 4. Primer cliente real en producción
 
+> Ya hechos: push notifications (implementado), dominio tijerapp.com (comprado + conectado a Vercel) y Resend verificado con el dominio.
+
 **Próximos 3 meses (estimado)**:
-- Sistema de fidelización
-- Cupones
-- Reportes mensuales por email
 - Onboarding optimizado
+- Google Calendar sync (a evaluar)
+
+> Ya implementados (no siguen en roadmap): sistema de fidelización, cupones y reportes mensuales por email.
 
 **No están en roadmap inmediato**:
 - App nativa iOS/Android (la PWA cubre el caso)
-- Pagos online integrados
-- Google Calendar sync
 - WhatsApp API oficial (la integración por `wa.me` es suficiente para MVP)
-- Roles avanzados por equipo
 - Marketplace público de barberos
+
+> Nota: el cobro de **seña** por MercadoPago SÍ está implementado (no es una pasarela de pago total del corte, es una seña opcional). Multi-admin (roles básicos por equipo) también está implementado; roles avanzados/granulares siguen fuera de scope. Google Calendar sync pasó a evaluación (ver próximos 3 meses).
 
 ## 2.8 Workflow de desarrollo
 
@@ -474,7 +496,8 @@ Cada feature tiene su carpeta `specs/<NNN>-<short-name>/` con todos los docs. Es
 ### Specs actuales en el repo
 
 - `specs/001-pwa-installable/` — PWA instalable (✅ implementada, en producción)
-- `specs/002-push-notifications/` — Push notifications (📅 spec+plan+tasks, implement pendiente)
+- `specs/002-push-notifications/` — Push notifications (✅ implementada, en producción)
+- `specs/003-mp-deposit-checkout/` + `specs/004-mp-oauth-connect/` — Seña + conexión MercadoPago por OAuth (✅ implementadas)
 
 ---
 
@@ -492,7 +515,7 @@ Cada feature tiene su carpeta `specs/<NNN>-<short-name>/` con todos los docs. Es
 - ✅ TIJERAPP (solo en logos/wordmarks all-caps)
 - ❌ Tijer App (separado)
 - ❌ TIJER APP
-- ❌ tijerapp.com (en plano, no como dominio formal — el dominio aún no se compra)
+- ❌ tijerapp.com como forma de escribir la marca en prosa (es el dominio real y activo, pero la **marca** se escribe TijerApp)
 - ❌ Tijer-App
 - ❌ Tijera App
 - ❌ BarberSync (nombre anterior, NUNCA usar)
@@ -698,7 +721,7 @@ T estilizada con dos "alas" arriba (pequeñas formas en gold sobre fondo negro).
 ### Claims a EVITAR o matizar
 
 - ❌ "App nativa para iOS y Android" → SÍ podemos decir: "PWA instalable que funciona como app"
-- ❌ "Pagos online integrados" → no implementado
+- ⚠️ "Pagos online integrados" → matizar: hay cobro de **seña opcional** por MercadoPago (implementado y probado, 19/19 tests de integración). Requiere que el barbero conecte su cuenta de MP por OAuth + env vars de plataforma (`MP_CLIENT_ID`/`MP_CLIENT_SECRET`). No es una pasarela de pago total del corte, es una seña opcional. Hoy todavía sin activar en ninguna barbería (`mp_enabled=false`)
 - ❌ "Google Calendar sync" → no implementado
 - ❌ "WhatsApp API oficial" → usamos links, no API oficial
 - ❌ "IA que gestiona todo sola" → no hay IA en el producto
@@ -733,7 +756,7 @@ Canales secundarios futuros (en orden de prioridad): WhatsApp Business outbound,
 **Hook (0-2s)**: Mensaje de WhatsApp confuso ("¿Lo confirmás?", "¿14 o 15?", "¿Mañana?")
 **Desarrollo (3-10s)**: Caos visible: barbero cortando + celular vibrando + 3 chats abiertos
 **Resolución (10-15s)**: Pantalla limpia con panel TijerApp ordenado
-**CTA visual**: "TijerApp.com" (o "Link en bio" hasta tener dominio)
+**CTA visual**: "tijerapp.com" (dominio propio ya activo) o "Link en bio"
 
 ### Template 2 — "Mirá en 7 segundos"
 
@@ -759,7 +782,7 @@ Canales secundarios futuros (en orden de prioridad): WhatsApp Business outbound,
 
 **Después (6-15s)**:
 - Panel TijerApp limpio
-- Reserva entrante con notif (cuando tengamos push)
+- Reserva entrante con notif push
 - Reporte de la semana
 - Voz: "Así trabajan las barberías que vienen creciendo"
 
@@ -975,7 +998,7 @@ Similar a Meta pero con interés agregado:
 - ❌ "Sabemos que es difícil..." — condescendiente
 - ❌ "Solo nosotros podemos..." — arrogante
 - ❌ "Como en cualquier negocio..." — no, somos vertical-específico
-- ❌ "Por solo $X al mes" donde $X es un precio en ARS hardcodeado (los precios oficiales están en USD y se convierten mensualmente — ver 1.7)
+- ❌ "Por solo $X al mes" donde $X no coincide con los precios oficiales en ARS definidos en 1.7 (Solo $22.000 / Esencial $41.000 / Pro $61.000)
 - ❌ Tutearse con el lector (en AR rioplatense usamos "vos")
 
 ### Sobre el visual
@@ -1011,7 +1034,7 @@ Similar a Meta pero con interés agregado:
 
 ### "¿Reciben pagos?"
 
-> Por ahora no procesamos pagos online dentro de TijerApp. El cliente paga en el local como hasta ahora (efectivo, QR, MP, lo que ya usás).
+> Podés activar el cobro de una **seña opcional** por MercadoPago al reservar (el barbero conecta su cuenta de MP con un clic y define el porcentaje/monto). El resto del corte se paga en el local como siempre (efectivo, QR, MP). Si no la activás, la reserva funciona igual que hoy, sin cobro online.
 
 ### "¿Tienen Google Calendar?"
 
@@ -1072,7 +1095,8 @@ Estas viven en `data/demo-barbershops.ts` y se usan para testing y como ejemplos
 | 2026-06-04 | US3 PWA completa (botón install + iOS tooltip + banner mobile) |
 | 2026-06-04 | Spec + plan + tasks de push notifications listos para implementar |
 | 2026-06-05 | Este doc reescrito a versión max-quality |
-| 2026-06-13 | **Pricing actualizado**: 3 tiers en ARS (Solo $22.000, Esencial $41.000, Pro $61.000) + anual 15% off + trial 7d + programa Fundadores |
+| 2026-06-13 | **Pricing actualizado**: 3 tiers en ARS (Solo $22.000, Esencial $41.000, Pro $61.000) + anual 15% off + trial 14d + programa Fundadores |
+| 2026-07-06 | **Doc sincronizado con el código real** (auditoría): seña MercadoPago (OAuth) + push + cupones + fidelización + multi-admin + plan gating + reportes mensuales + anticipación mínima + mensaje WhatsApp personalizable = todos IMPLEMENTADOS (el doc los marcaba como conceptuales). Dominio tijerapp.com comprado + activo, Resend verificado. Seña MP conectada en prod (sin activar comercialmente aún). US3 (recordatorio de pago de seña) implementado |
 
 ## 5.4 Cómo extender este documento
 
@@ -1115,6 +1139,6 @@ Cualquier IA que trabaje sobre marketing, contenido o comunicación de TijerApp 
 7. El producto está pensado **mobile-first** para uso desde el celular del barbero
 8. Foco inicial **Argentina**, arquitectura LATAM-ready
 9. Canal principal de marketing: **Instagram**
-10. Pricing **definido** (ver 1.7): Solo $22.000 / Esencial $41.000 / Pro $61.000 — no inventar precios distintos
+10. Pricing **definido** (ver 1.7): Solo $22.000 / Esencial $41.000 / Pro $61.000 en ARS — no inventar precios distintos ni decir que se convierten desde USD
 
 Para detalles técnicos profundos, ver `AGENTS.md` y los specs en `specs/<NNN>-<feature>/`.

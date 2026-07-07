@@ -52,11 +52,17 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
-## ⏳ TAREA PENDIENTE 4 — Recordatorio de pago al cliente (US3, lo hace Claude)
+## ✅ TAREA 4 — Recordatorio de pago al cliente (US3, HECHO por Claude)
 
-**Por qué:** avisarle al cliente que tiene la seña impaga antes de que venza, para recuperar la reserva.
+**Qué hace:** el cron `/api/cron/deposits` ahora, además de expirar, manda un recordatorio de pago (push + email) cuando la seña pasó la mitad de su plazo y sigue impaga. Una sola vez por turno (`reminder_log` kind `deposit_reminder`), con link para pagar. Reusa `sendClientPushForAppointment` + Resend.
 
-**Estado:** diferido a propósito. Toca el cron de pagos + la infra de push/email y **no se puede testear sin señas reales activas**. Se construye cuando MercadoPago esté andando (TAREA 2) y haya un turno con seña pendiente para probar. Reutilizaría el canal push del cron de reminders + `reminder_log` kind `deposit_reminder`.
+**Falta (Bautista):** correr esta migración en Supabase **antes** de activar señas reales (mientras no haya señas activas, el cron no inserta nada, así que es inofensivo si tarda):
+```sql
+alter table public.reminder_log drop constraint if exists reminder_log_kind_check;
+alter table public.reminder_log add constraint reminder_log_kind_check
+  check (kind in ('reminder_24h', 'confirmation', 'deposit_reminder'));
+```
+Después: **una prueba humana con pago real** (activar toggle seña + reservar + pagar) es lo único que queda para dar el cobro de seña por 100% cerrado.
 
 ---
 

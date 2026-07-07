@@ -411,7 +411,7 @@ type WaitlistEntryUpdate = Partial<WaitlistEntryInsert> & {
 type ReminderLogRow = {
   id: string;
   appointment_id: string;
-  kind: "reminder_24h" | "confirmation";
+  kind: "reminder_24h" | "confirmation" | "deposit_reminder";
   channel: "email" | "whatsapp" | "push";
   sent_at: string;
   status: "sent" | "failed";
@@ -420,7 +420,7 @@ type ReminderLogRow = {
 
 type ReminderLogInsert = {
   appointment_id: string;
-  kind: "reminder_24h" | "confirmation";
+  kind: "reminder_24h" | "confirmation" | "deposit_reminder";
   channel: "email" | "whatsapp" | "push";
   status?: "sent" | "failed";
   error_message?: string | null;
