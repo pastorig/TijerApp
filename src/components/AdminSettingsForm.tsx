@@ -58,8 +58,8 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
   const publicStatusText = useMemo(
     () =>
       isActive
-        ? "La barberia esta visible para reservas publicas."
-        : "La barberia quedara oculta en rutas publicas, pero seguira administrable.",
+        ? "La barbería está visible para reservas públicas."
+        : "La barbería quedará oculta en rutas públicas, pero seguirá administrable.",
     [isActive],
   );
 
@@ -72,12 +72,12 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
     const intervalValue = Number(slotIntervalMinutes);
 
     if (!name.trim()) {
-      setErrorMessage("El nombre de la barberia es obligatorio.");
+      setErrorMessage("El nombre de la barbería es obligatorio.");
       return;
     }
 
     if (!isValidTimeValue(startTime) || !isValidTimeValue(endTime)) {
-      setErrorMessage("Revisa el horario de apertura y cierre.");
+      setErrorMessage("Revisá el horario de apertura y cierre.");
       return;
     }
 
@@ -268,16 +268,16 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
     <main className="min-h-screen bg-black text-white">
       <section className="mx-auto w-full max-w-5xl px-3 py-5 sm:px-6 sm:py-8 lg:px-12 lg:py-12">
         <div className="flex flex-col gap-4 border-b border-[color:var(--border-default)] pb-5 sm:pb-8">
-          <p className="text-sm font-semibold uppercase text-[color:var(--brand-gold)]">
-            TijerApp admin
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
+            Ajustes
           </p>
           <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
             <div>
-              <h1 className="text-3xl font-black text-balance sm:text-5xl">
-                Configuracion de {barbershop.name}
+              <h1 className="text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
+                Configuración de {barbershop.name}
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base sm:leading-7">
-                Edita la identidad publica y los horarios base de la barberia.
+                Editá la identidad pública y los horarios base de la barbería.
               </p>
             </div>
             <Link
@@ -295,7 +295,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
         >
           <section className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-4 shadow-2xl shadow-black/20 sm:p-5">
             <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
-              Identidad publica
+              Identidad pública
             </p>
 
             <div className="mt-4 grid gap-3">
@@ -378,7 +378,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
                   htmlFor="settings-description"
                   className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
                 >
-                  Descripcion
+                  Descripción
                 </label>
                 <textarea
                   id="settings-description"
@@ -586,7 +586,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
                 />
                 <div>
                   <p className="text-sm font-bold text-white">
-                    Barberia activa
+                    Barbería activa
                   </p>
                   <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">
                     {publicStatusText}
