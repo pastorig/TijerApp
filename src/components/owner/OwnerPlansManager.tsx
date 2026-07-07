@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Crown, Loader2, X } from "lucide-react";
+import { Crown, Loader2, Wallet, X } from "lucide-react";
 import { useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
@@ -50,11 +50,20 @@ function daysRemaining(iso: string | null): number | null {
   return Math.ceil((target - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
+function formatShortDate(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${dd}/${mm}/${d.getFullYear()}`;
+}
+
 export function OwnerPlansManager() {
   const toast = useToast();
   const [plans, setPlans] = useState<PlanRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editing, setEditing] = useState<PlanRow | null>(null);
+  const [paying, setPaying] = useState<PlanRow | null>(null);
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -171,11 +180,16 @@ export function OwnerPlansManager() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-[11px] text-[color:var(--text-secondary)]">
-                        {/* Si está pagado (active), no muestra trial countdown.
-                            Si está en trial real con días restantes, sí. */}
-                        {p.status === "active" ? (
+                        {/* Prioridad: si tiene período pago vigente, lo mostramos.
+                            Sino, el countdown de trial/gracia. */}
+                        {p.current_period_ends_at ? (
+                          <span className="font-semibold text-[color:var(--success)]">
+                            Pagado hasta{" "}
+                            {formatShortDate(p.current_period_ends_at)}
+                          </span>
+                        ) : p.status === "active" ? (
                           <span className="text-[color:var(--text-muted)]">
-                            sin trial
+                            activo
                           </span>
                         ) : p.status === "trial" &&
                           trialDays !== null &&
@@ -194,13 +208,23 @@ export function OwnerPlansManager() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => setEditing(p)}
-                          className="inline-flex min-h-8 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-[color:var(--brand-gold)] hover:text-black"
-                        >
-                          Editar
-                        </button>
+                        <div className="inline-flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setPaying(p)}
+                            className="inline-flex min-h-8 items-center justify-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--success)]/50 bg-[color:var(--success-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors hover:bg-[color:var(--success)] hover:text-black"
+                          >
+                            <Wallet className="size-3" />
+                            Registrar pago
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditing(p)}
+                            className="inline-flex min-h-8 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-[color:var(--brand-gold)] hover:text-black"
+                          >
+                            Editar
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -217,6 +241,17 @@ export function OwnerPlansManager() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
+            void load();
+          }}
+        />
+      ) : null}
+
+      {paying ? (
+        <RegisterPaymentModal
+          row={paying}
+          onClose={() => setPaying(null)}
+          onSaved={() => {
+            setPaying(null);
             void load();
           }}
         />
@@ -464,6 +499,208 @@ function EditPlanModal({
             >
               {isSaving ? <Loader2 className="size-3.5 animate-spin" /> : <Crown className="size-3.5" />}
               {isSaving ? "Guardando…" : "Guardar"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Registrar pago manual (transferencia) de una barbería. Extiende el período
+ * pago (current_period_ends_at) +1 mes y la activa. Ver spec 007-cobro-barberos.
+ */
+function RegisterPaymentModal({
+  row,
+  onClose,
+  onSaved,
+}: {
+  row: PlanRow;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const toast = useToast();
+  const defaultAmount = row.plan_tier ? PLAN_META[row.plan_tier].priceArs : 0;
+  const [amount, setAmount] = useState<string>(String(defaultAmount));
+  const [method, setMethod] = useState<"transferencia" | "efectivo" | "otro">(
+    "transferencia",
+  );
+  const [note, setNote] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function handleSave() {
+    const amountNum = Number(amount);
+    if (!Number.isFinite(amountNum) || amountNum < 0) {
+      toast.error("Monto inválido");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const { data: sessionData } = await getCurrentSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        toast.error("Sesión expirada");
+        return;
+      }
+      const res = await fetch("/api/owner/register-payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          slug: row.slug,
+          amount: amountNum,
+          method,
+          note: note.trim() || null,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        pagadoHasta?: string;
+      };
+      if (!res.ok || !data.ok) {
+        toast.error("No se registró el pago", { description: data.error });
+        return;
+      }
+      toast.success("Pago registrado", {
+        description: data.pagadoHasta
+          ? `Pagado hasta ${formatShortDate(data.pagadoHasta)}`
+          : undefined,
+      });
+      onSaved();
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  const METHODS: Array<{ value: typeof method; label: string }> = [
+    { value: "transferencia", label: "Transferencia" },
+    { value: "efectivo", label: "Efectivo" },
+    { value: "otro", label: "Otro" },
+  ];
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--success)]">
+              Registrar pago
+            </p>
+            <h2 className="mt-1 text-xl font-black uppercase tracking-tight text-white">
+              {row.name}
+            </h2>
+            <p className="text-[11px] text-[color:var(--text-muted)]">
+              {row.current_period_ends_at
+                ? `Pagado hasta ${formatShortDate(row.current_period_ends_at)} — suma 1 mes`
+                : "Activa la barbería por 1 mes"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="rounded-[var(--radius-xs)] border border-[color:var(--border-default)] p-1.5 text-[color:var(--text-muted)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+          >
+            <X className="size-4" />
+          </button>
+        </header>
+
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="pay-amount"
+              className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--success)]"
+            >
+              Monto (ARS)
+            </label>
+            <input
+              id="pay-amount"
+              type="number"
+              min={0}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 font-mono text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+            />
+            <p className="mt-1 text-[10px] text-[color:var(--text-muted)]">
+              Prefill: precio del plan{" "}
+              {row.plan_tier ? PLAN_META[row.plan_tier].name : "—"}.
+            </p>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--success)]">
+              Método
+            </label>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {METHODS.map((m) => (
+                <button
+                  key={m.value}
+                  type="button"
+                  onClick={() => setMethod(m.value)}
+                  className={cn(
+                    "rounded-[var(--radius-sm)] border px-2 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors",
+                    method === m.value
+                      ? "border-[color:var(--success)] bg-[color:var(--success)] text-black"
+                      : "border-[color:var(--border-default)] bg-[color:var(--surface-0)] text-white hover:border-[color:var(--success)]",
+                  )}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="pay-note"
+              className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--success)]"
+            >
+              Nota{" "}
+              <span className="text-[color:var(--text-muted)]">— opcional</span>
+            </label>
+            <input
+              id="pay-note"
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={200}
+              placeholder="Ej. Transferencia Naranja X 07/07"
+              className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-xs font-bold uppercase tracking-[0.14em] text-white"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={isSaving}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--success)] px-4 text-xs font-bold uppercase tracking-[0.14em] text-black hover:brightness-110 disabled:opacity-50"
+            >
+              {isSaving ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Wallet className="size-3.5" />
+              )}
+              {isSaving ? "Registrando…" : "Registrar pago"}
             </button>
           </div>
         </div>
