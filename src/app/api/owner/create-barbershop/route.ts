@@ -247,6 +247,7 @@ export async function POST(request: Request) {
         user_id: adminUser.id,
         barbershop_slug: slug,
         role: "admin",
+        is_owner: true,
       });
 
     if (adminAccessError) {
