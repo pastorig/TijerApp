@@ -302,7 +302,7 @@ async function sendWaitlistOwnerNotification(
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
   const fromAddress = resolveEmailFrom();
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://tijerapp-iota.vercel.app";
+    process.env.NEXT_PUBLIC_SITE_URL || "https://tijerapp.com";
 
   if (!resendApiKey || !ownerEmail) {
     console.log(

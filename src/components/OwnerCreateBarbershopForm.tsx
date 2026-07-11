@@ -274,7 +274,7 @@ export function OwnerCreateBarbershopForm() {
               <Field
                 label="Slug"
                 htmlFor="barbershop-slug"
-                hint="Aparece en la URL: tijerapp.app/[slug]"
+                hint="Aparece en la URL: https://tijerapp.com/[slug]"
                 required
               >
                 <Input

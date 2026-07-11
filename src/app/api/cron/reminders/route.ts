@@ -293,7 +293,7 @@ export async function GET(request: Request) {
   const resendApiKey = process.env.RESEND_API_KEY;
   const fromAddress = resolveEmailFrom();
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://tijerapp-iota.vercel.app";
+    process.env.NEXT_PUBLIC_SITE_URL || "https://tijerapp.com";
 
   const resend = resendApiKey ? new Resend(resendApiKey) : null;
 

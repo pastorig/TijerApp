@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { getCurrentPlatformOwnerAccess } from "@/lib/platform-owner-access";
 import {
   getCurrentSession,
@@ -19,6 +20,7 @@ export function OwnerLoginForm({ errorCode = "" }: OwnerLoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -135,19 +137,37 @@ export function OwnerLoginForm({ errorCode = "" }: OwnerLoginFormProps) {
               >
                 Contrasena
               </label>
-              <input
-                id="owner-password"
-                type="password"
-                value={password}
-                disabled={isSubmitting}
-                onChange={(event) => {
-                  setPassword(event.target.value);
-                  setErrorMessage("");
-                }}
-                className="mt-2 min-h-12 w-full rounded-md border border-[color:var(--border-default)] bg-black px-4 text-base text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
-                placeholder="Tu contrasena"
-                required
-              />
+              <div className="relative mt-2">
+                <input
+                  id="owner-password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  disabled={isSubmitting}
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                    setErrorMessage("");
+                  }}
+                  className="min-h-12 w-full rounded-md border border-[color:var(--border-default)] bg-black px-4 pr-11 text-base text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
+                  placeholder="Tu contrasena"
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  disabled={isSubmitting}
+                  aria-label={
+                    showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                  }
+                  className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--brand-gold)] disabled:opacity-50"
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </button>
+              </div>
             </div>
 
             {errorMessage ? (

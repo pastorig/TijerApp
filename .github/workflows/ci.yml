@@ -51,7 +51,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: dummy-anon-key-for-build
           NEXT_PUBLIC_VAPID_PUBLIC_KEY: dummy-vapid-public-key
-          NEXT_PUBLIC_SITE_URL: https://tijerapp.vercel.app
+          NEXT_PUBLIC_SITE_URL: https://tijerapp.com
           # Sentry: skip auth durante CI builds para no requerir token
           SENTRY_AUTH_TOKEN: ""
           NEXT_TELEMETRY_DISABLED: "1"

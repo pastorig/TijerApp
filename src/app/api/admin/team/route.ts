@@ -391,7 +391,7 @@ export async function POST(request: Request) {
   const siteUrl =
     `${requestUrl.protocol}//${requestUrl.host}` ||
     process.env.NEXT_PUBLIC_SITE_URL ||
-    "https://tijerapp.vercel.app";
+    "https://tijerapp.com";
 
   // Magic link de recovery para incluir como opción adicional. El user
   // siempre recibe password temporal, pero también el link de reset por
