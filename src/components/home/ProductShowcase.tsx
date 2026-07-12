@@ -303,8 +303,8 @@ export function ProductShowcase() {
             Cómo se ve
           </p>
           <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
-            Diseñado para usarlo{" "}
-            <span className="text-[color:var(--brand-gold)]">en el local</span>
+            Fácil de usar{" "}
+            <span className="text-[color:var(--brand-gold)]">mientras cortás</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:mt-5 sm:text-base sm:leading-7">
             Interfaz mobile-first, sin curva de aprendizaje, sin pasos

@@ -18,6 +18,12 @@ const HomeStats = dynamic(
       default: m.HomeStats,
     })),
 );
+const PricingRoiCalculator = dynamic(
+  () =>
+    import("@/components/home/PricingRoiCalculator").then((m) => ({
+      default: m.PricingRoiCalculator,
+    })),
+);
 const HomeWhatIsIt = dynamic(
   () =>
     import("@/components/home/HomeWhatIsIt").then((m) => ({
@@ -161,6 +167,7 @@ export default function Home() {
       </section>
 
       <HomeStats />
+      <PricingRoiCalculator />
       <HomeWhatIsIt />
       <HomePersonas />
       <HomeHowItWorks />

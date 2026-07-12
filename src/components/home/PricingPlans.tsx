@@ -334,7 +334,7 @@ export function FoundersProgram() {
             {
               title: "WhatsApp directo conmigo",
               detail:
-                "Gino, founder de TijerApp, tu canal directo para feedback, dudas y soporte.",
+                "El fundador de TijerApp, tu canal directo para feedback, dudas y soporte.",
             },
             {
               title: "Badge Fundador en el panel",

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AlertTriangle, Clock, MessageCircle, X } from "lucide-react";
 import { useCurrentPlan } from "./PlanContext";
 import { cn } from "@/lib/cn";
-import { FOUNDER, founderWaLink } from "@/lib/founder";
+import { founderWaLink } from "@/lib/founder";
 import { PLAN_META, formatArs } from "@/lib/plans";
 import { TransferDetailsCard } from "./TransferDetailsCard";
 
@@ -33,7 +33,7 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
 
   const precio = formatArs(PLAN_META[plan.tier].priceArs);
   const waLink = founderWaLink(
-    `Hola ${FOUNDER.name}! Soy admin de ${barbershopSlug}. Quiero activar mi plan pago (${precio}/mes).`,
+    `¡Hola! Soy admin de ${barbershopSlug}. Quiero activar mi plan pago (${precio}/mes).`,
   );
 
   let banner: React.ReactNode = null;

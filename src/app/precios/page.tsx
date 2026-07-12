@@ -27,12 +27,6 @@ const FoundersProgram = dynamic(
       default: m.FoundersProgram,
     })),
 );
-const SocialProofPlaceholder = dynamic(
-  () =>
-    import("@/components/home/SocialProofPlaceholder").then((m) => ({
-      default: m.SocialProofPlaceholder,
-    })),
-);
 const HomeContact = dynamic(
   () =>
     import("@/components/home/HomeContact").then((m) => ({
@@ -112,8 +106,6 @@ export default function PricingPage() {
       <div id="fundadores">
         <FoundersProgram />
       </div>
-
-      <SocialProofPlaceholder />
 
       {/* Mini FAQ sobre billing */}
       <section className="border-t border-[color:var(--border-subtle)] bg-black">

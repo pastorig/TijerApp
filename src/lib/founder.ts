@@ -3,8 +3,12 @@
  * repetir el número/alias en varios componentes. Si cambian, se actualiza acá.
  */
 export const FOUNDER = {
-  name: "Gino",
-  titular: "Gino Pastori",
+  /**
+   * Cómo se muestra el titular de la cuenta en la UI pública/admin. Es texto
+   * de marca, NO el nombre legal — el banco del que transfiere igual muestra
+   * el titular real al pegar el alias/CBU.
+   */
+  titular: "El fundador de TijerApp",
   /** WhatsApp en formato internacional (54 9 3571 624511). */
   whatsapp: "5493571624511",
   /** Alias de la cuenta (Naranja X). */

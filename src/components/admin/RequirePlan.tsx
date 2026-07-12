@@ -10,7 +10,7 @@ import {
   PLAN_META,
   type Feature,
 } from "@/lib/plans";
-import { FOUNDER, founderWaLink } from "@/lib/founder";
+import { founderWaLink } from "@/lib/founder";
 import { TransferDetailsCard } from "./TransferDetailsCard";
 
 /**
@@ -74,7 +74,7 @@ function FeaturePaywall({
   };
 
   const waLink = founderWaLink(
-    `Hola ${FOUNDER.name}! Soy admin de una barbería en TijerApp. Estoy en plan ${currentTierMeta.name} y quiero pasar a ${minTierMeta.name} para usar ${featureLabel[feature]}.`,
+    `¡Hola! Soy admin de una barbería en TijerApp. Estoy en plan ${currentTierMeta.name} y quiero pasar a ${minTierMeta.name} para usar ${featureLabel[feature]}.`,
   );
 
   return (
@@ -132,7 +132,7 @@ function ExpiredPaywall({
 }) {
   const precio = formatArs(PLAN_META[tier].priceArs);
   const waLink = founderWaLink(
-    `Hola ${FOUNDER.name}! Soy admin de ${barbershopSlug} y mi plan venció. Quiero activarlo (${precio}/mes).`,
+    `¡Hola! Soy admin de ${barbershopSlug} y mi plan venció. Quiero activarlo (${precio}/mes).`,
   );
 
   return (
