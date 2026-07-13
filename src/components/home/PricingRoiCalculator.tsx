@@ -70,7 +70,7 @@ export function PricingRoiCalculator() {
                     id="ticket"
                     type="number"
                     min={1000}
-                    max={50000}
+                    max={25000}
                     step={500}
                     value={ticketPromedio}
                     onChange={(e) => setTicketPromedio(Number(e.target.value))}
@@ -80,7 +80,7 @@ export function PricingRoiCalculator() {
                 <input
                   type="range"
                   min={2000}
-                  max={20000}
+                  max={25000}
                   step={500}
                   value={ticketPromedio}
                   onChange={(e) => setTicketPromedio(Number(e.target.value))}
@@ -88,7 +88,7 @@ export function PricingRoiCalculator() {
                 />
                 <div className="mt-1 flex justify-between text-[10px] text-[color:var(--text-muted)]">
                   <span>$2.000</span>
-                  <span>$20.000</span>
+                  <span>$25.000</span>
                 </div>
               </div>
 
