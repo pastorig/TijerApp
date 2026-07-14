@@ -509,22 +509,7 @@ export function BarberAvailabilityManager({
       ) : (
         <>
           <form onSubmit={handleSaveSchedules} className="mt-4">
-            <div className="overflow-hidden rounded-md border border-[color:var(--border-subtle)]">
-              <div className="hidden border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-2)] px-3 py-2 sm:grid sm:grid-cols-[104px_76px_1fr_1.15fr]">
-                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
-                  Día
-                </span>
-                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
-                  Activo
-                </span>
-                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
-                  Horario
-                </span>
-                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
-                  Pausa
-                </span>
-              </div>
-
+            <div className="space-y-2">
               {weeklySchedules.map((schedule) => {
                 const hasBreak =
                   schedule.breakStart !== null && schedule.breakEnd !== null;
@@ -532,167 +517,184 @@ export function BarberAvailabilityManager({
                   <div
                     key={schedule.dayOfWeek}
                     className={cn(
-                      "grid grid-cols-2 items-center gap-x-2 gap-y-2 border-b border-[color:var(--border-subtle)] px-3 py-2.5 last:border-b-0 sm:grid-cols-[104px_76px_1fr_1.15fr]",
-                      !schedule.isWorking && "opacity-60",
+                      "rounded-lg border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-3 sm:flex sm:items-center sm:gap-4 sm:py-2.5",
+                      !schedule.isWorking && "opacity-70",
                     )}
                   >
-                    {/* Día */}
-                    <p className="text-sm font-bold text-white">
-                      {schedule.label}
-                    </p>
-
-                    {/* Activo */}
-                    <label className="inline-flex items-center justify-self-end gap-2 text-[10px] font-semibold uppercase text-[color:var(--text-muted)] sm:justify-self-start">
-                      <input
-                        type="checkbox"
-                        checked={schedule.isWorking}
-                        onChange={(event) =>
+                    {/* Día + toggle */}
+                    <div className="flex items-center justify-between gap-3 sm:w-[140px] sm:shrink-0 sm:justify-start">
+                      <span className="text-sm font-bold text-white">
+                        {schedule.label}
+                      </span>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={schedule.isWorking}
+                        aria-label={`${schedule.label} activo`}
+                        disabled={isSavingSchedules}
+                        onClick={() =>
                           updateScheduleRow(
                             schedule.dayOfWeek,
                             "isWorking",
-                            event.target.checked,
+                            !schedule.isWorking,
                           )
                         }
-                        className="size-4 accent-[color:var(--brand-gold)]"
-                      />
-                      <span className="sm:hidden">Activo</span>
-                    </label>
-
-                    {/* Horario */}
-                    {schedule.isWorking ? (
-                      <div className="col-span-2 flex items-center gap-2 sm:col-span-1">
-                        <input
-                          type="time"
-                          value={schedule.startTime}
-                          disabled={isSavingSchedules}
-                          onChange={(event) =>
-                            updateScheduleRow(
-                              schedule.dayOfWeek,
-                              "startTime",
-                              event.target.value,
-                            )
-                          }
-                          className="min-h-9 w-[104px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
+                        className={cn(
+                          "relative h-5 w-9 shrink-0 rounded-full transition disabled:opacity-60",
+                          schedule.isWorking
+                            ? "bg-[color:var(--brand-gold)]"
+                            : "bg-white/15",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "absolute top-0.5 size-4 rounded-full bg-white transition-all",
+                            schedule.isWorking ? "left-[18px]" : "left-0.5",
+                          )}
                         />
-                        <span className="text-[color:var(--text-subtle)]">
-                          →
-                        </span>
-                        <input
-                          type="time"
-                          value={schedule.endTime}
-                          disabled={isSavingSchedules}
-                          onChange={(event) =>
-                            updateScheduleRow(
-                              schedule.dayOfWeek,
-                              "endTime",
-                              event.target.value,
-                            )
-                          }
-                          className="min-h-9 w-[104px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-                        />
-                      </div>
-                    ) : (
-                      <p className="col-span-2 text-sm text-[color:var(--text-subtle)] sm:col-span-1">
-                        Cerrado
-                      </p>
-                    )}
+                      </button>
+                    </div>
 
-                    {/* Pausa */}
+                    {/* Campos del día */}
                     {schedule.isWorking ? (
-                      hasBreak ? (
-                        <div className="col-span-2 flex items-center gap-2 sm:col-span-1">
-                          <input
-                            type="time"
-                            value={schedule.breakStart ?? ""}
-                            disabled={isSavingSchedules}
-                            onChange={(event) =>
-                              updateScheduleRow(
-                                schedule.dayOfWeek,
-                                "breakStart",
-                                event.target.value,
-                              )
-                            }
-                            className="min-h-9 w-[92px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-                          />
-                          <span className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
-                            a
+                      <div className="mt-3 flex flex-col gap-2.5 sm:mt-0 sm:flex-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-5 sm:gap-y-2">
+                        {/* Horario */}
+                        <div className="flex items-center gap-2">
+                          <span className="w-12 shrink-0 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--text-muted)] sm:w-auto">
+                            Horario
                           </span>
                           <input
                             type="time"
-                            value={schedule.breakEnd ?? ""}
+                            value={schedule.startTime}
                             disabled={isSavingSchedules}
                             onChange={(event) =>
                               updateScheduleRow(
                                 schedule.dayOfWeek,
-                                "breakEnd",
+                                "startTime",
                                 event.target.value,
                               )
                             }
-                            className="min-h-9 w-[92px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
+                            className="min-h-9 w-[104px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
                           />
-                          <button
-                            type="button"
-                            aria-label="Quitar pausa"
+                          <span className="text-[color:var(--text-subtle)]">
+                            →
+                          </span>
+                          <input
+                            type="time"
+                            value={schedule.endTime}
                             disabled={isSavingSchedules}
-                            onClick={() => {
+                            onChange={(event) =>
                               updateScheduleRow(
                                 schedule.dayOfWeek,
-                                "breakStart",
-                                "",
-                              );
-                              updateScheduleRow(
-                                schedule.dayOfWeek,
-                                "breakEnd",
-                                "",
-                              );
-                            }}
-                            className="inline-flex size-7 items-center justify-center rounded-md text-[color:var(--text-muted)] transition hover:text-[color:var(--danger)] disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            <X className="size-3.5" />
-                          </button>
+                                "endTime",
+                                event.target.value,
+                              )
+                            }
+                            className="min-h-9 w-[104px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
+                          />
                         </div>
-                      ) : (
-                        <div className="col-span-2 sm:col-span-1">
-                          <button
-                            type="button"
-                            disabled={isSavingSchedules}
-                            onClick={() => {
-                              // Default: pausa de 1 hora al medio del rango
-                              const startMin = timeValueToMinutes(
-                                schedule.startTime,
-                              );
-                              const endMin = timeValueToMinutes(
-                                schedule.endTime,
-                              );
-                              const middle = Math.floor(
-                                (startMin + endMin) / 2,
-                              );
-                              const breakStart = middle - 30;
-                              const breakEnd = middle + 30;
-                              const toTime = (mins: number) => {
-                                const h = Math.floor(mins / 60);
-                                const m = mins % 60;
-                                return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-                              };
-                              updateScheduleRow(
-                                schedule.dayOfWeek,
-                                "breakStart",
-                                toTime(Math.max(startMin, breakStart)),
-                              );
-                              updateScheduleRow(
-                                schedule.dayOfWeek,
-                                "breakEnd",
-                                toTime(Math.min(endMin, breakEnd)),
-                              );
-                            }}
-                            className="inline-flex min-h-8 items-center gap-1 rounded-md border border-dashed border-[color:var(--border-default)] px-2.5 text-[10px] font-bold uppercase text-[color:var(--text-muted)] transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            <Plus className="size-3" /> Pausa
-                          </button>
+
+                        {/* Pausa */}
+                        <div className="flex items-center gap-2">
+                          <span className="w-12 shrink-0 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--text-muted)] sm:w-auto">
+                            Pausa
+                          </span>
+                          {hasBreak ? (
+                            <>
+                              <input
+                                type="time"
+                                value={schedule.breakStart ?? ""}
+                                disabled={isSavingSchedules}
+                                onChange={(event) =>
+                                  updateScheduleRow(
+                                    schedule.dayOfWeek,
+                                    "breakStart",
+                                    event.target.value,
+                                  )
+                                }
+                                className="min-h-9 w-[92px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
+                              />
+                              <span className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                                a
+                              </span>
+                              <input
+                                type="time"
+                                value={schedule.breakEnd ?? ""}
+                                disabled={isSavingSchedules}
+                                onChange={(event) =>
+                                  updateScheduleRow(
+                                    schedule.dayOfWeek,
+                                    "breakEnd",
+                                    event.target.value,
+                                  )
+                                }
+                                className="min-h-9 w-[92px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
+                              />
+                              <button
+                                type="button"
+                                aria-label="Quitar pausa"
+                                disabled={isSavingSchedules}
+                                onClick={() => {
+                                  updateScheduleRow(
+                                    schedule.dayOfWeek,
+                                    "breakStart",
+                                    "",
+                                  );
+                                  updateScheduleRow(
+                                    schedule.dayOfWeek,
+                                    "breakEnd",
+                                    "",
+                                  );
+                                }}
+                                className="inline-flex size-7 items-center justify-center rounded-md text-[color:var(--text-muted)] transition hover:text-[color:var(--danger)] disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                <X className="size-3.5" />
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={isSavingSchedules}
+                              onClick={() => {
+                                // Default: pausa de 1 hora al medio del rango
+                                const startMin = timeValueToMinutes(
+                                  schedule.startTime,
+                                );
+                                const endMin = timeValueToMinutes(
+                                  schedule.endTime,
+                                );
+                                const middle = Math.floor(
+                                  (startMin + endMin) / 2,
+                                );
+                                const breakStart = middle - 30;
+                                const breakEnd = middle + 30;
+                                const toTime = (mins: number) => {
+                                  const h = Math.floor(mins / 60);
+                                  const m = mins % 60;
+                                  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                                };
+                                updateScheduleRow(
+                                  schedule.dayOfWeek,
+                                  "breakStart",
+                                  toTime(Math.max(startMin, breakStart)),
+                                );
+                                updateScheduleRow(
+                                  schedule.dayOfWeek,
+                                  "breakEnd",
+                                  toTime(Math.min(endMin, breakEnd)),
+                                );
+                              }}
+                              className="inline-flex min-h-8 items-center gap-1 rounded-md border border-dashed border-[color:var(--border-default)] px-2.5 text-[10px] font-bold uppercase text-[color:var(--text-muted)] transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              <Plus className="size-3" /> Pausa
+                            </button>
+                          )}
                         </div>
-                      )
+                      </div>
                     ) : (
-                      <span className="hidden sm:block" />
+                      <span className="mt-2 block text-sm text-[color:var(--text-subtle)] sm:mt-0">
+                        Cerrado
+                      </span>
                     )}
                   </div>
                 );
