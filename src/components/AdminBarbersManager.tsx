@@ -642,10 +642,10 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
           </button>
         </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[300px_1fr] lg:items-start">
-          {/* LEFT: lista de barberos */}
+        <div className="space-y-4">
+          {/* ARRIBA: lista de barberos (tira horizontal) */}
           <div className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)]">
-            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--border-subtle)] p-3">
+            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--border-subtle)] px-4 py-3">
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
                 Barberos · {barbers.length}
               </p>
@@ -657,19 +657,19 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                 <Plus className="size-3.5" /> Agregar
               </button>
             </div>
-            <ul className="flex gap-2 overflow-x-auto p-2 lg:flex-col lg:gap-0 lg:overflow-visible lg:p-0">
+            <ul className="flex gap-2 overflow-x-auto p-3">
               {barbers.map((barber) => {
                 const isSelected = barber.id === selectedBarber?.id;
                 return (
-                  <li key={barber.id} className="shrink-0 lg:w-full lg:shrink">
+                  <li key={barber.id} className="shrink-0">
                     <button
                       type="button"
                       onClick={() => setSelectedBarberId(barber.id)}
                       className={cn(
-                        "flex w-[200px] shrink-0 items-center gap-3 rounded-lg border border-[color:var(--border-subtle)] p-3 text-left transition lg:w-full lg:shrink lg:rounded-none lg:border-0 lg:border-b lg:border-[color:var(--border-subtle)]",
+                        "flex w-[210px] shrink-0 items-center gap-3 rounded-lg border p-3 text-left transition",
                         isSelected
-                          ? "bg-[color:var(--brand-gold-soft)] lg:shadow-[inset_3px_0_0_var(--brand-gold)]"
-                          : "hover:bg-[color:var(--surface-2)]/40",
+                          ? "border-[color:var(--brand-gold)]/50 bg-[color:var(--brand-gold-soft)]"
+                          : "border-[color:var(--border-subtle)] hover:bg-[color:var(--surface-2)]/40",
                       )}
                     >
                       <span className="grid size-9 shrink-0 place-items-center rounded-full border border-[color:var(--brand-gold)]/35 bg-[#241d0c] text-xs font-bold text-[color:var(--brand-gold)]">

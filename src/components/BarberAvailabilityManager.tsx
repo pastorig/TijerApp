@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Plus, X } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
+import { cn } from "@/lib/cn";
 import {
   buildDefaultWeeklySchedules,
   mergeWeeklySchedulesWithDefaults,
@@ -507,156 +509,191 @@ export function BarberAvailabilityManager({
       ) : (
         <>
           <form onSubmit={handleSaveSchedules} className="mt-4">
-            <div className="grid gap-2">
+            <div className="overflow-hidden rounded-md border border-[color:var(--border-subtle)]">
+              <div className="hidden border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-2)] px-3 py-2 sm:grid sm:grid-cols-[104px_76px_1fr_1.15fr]">
+                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
+                  Día
+                </span>
+                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
+                  Activo
+                </span>
+                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
+                  Horario
+                </span>
+                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
+                  Pausa
+                </span>
+              </div>
+
               {weeklySchedules.map((schedule) => {
                 const hasBreak =
                   schedule.breakStart !== null && schedule.breakEnd !== null;
                 return (
                   <div
                     key={schedule.dayOfWeek}
-                    className="rounded-md border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 py-2"
+                    className={cn(
+                      "grid grid-cols-2 items-center gap-x-2 gap-y-2 border-b border-[color:var(--border-subtle)] px-3 py-2.5 last:border-b-0 sm:grid-cols-[104px_76px_1fr_1.15fr]",
+                      !schedule.isWorking && "opacity-60",
+                    )}
                   >
-                    <div className="grid grid-cols-[minmax(92px,1fr)_auto_minmax(0,1fr)_minmax(0,1fr)] items-center gap-2">
-                      <div>
-                        <p className="text-sm font-semibold text-white">
-                          {schedule.label}
-                        </p>
-                      </div>
-                      <label className="inline-flex items-center gap-2 text-xs font-semibold uppercase text-[color:var(--text-muted)]">
+                    {/* Día */}
+                    <p className="text-sm font-bold text-white">
+                      {schedule.label}
+                    </p>
+
+                    {/* Activo */}
+                    <label className="inline-flex items-center justify-self-end gap-2 text-[10px] font-semibold uppercase text-[color:var(--text-muted)] sm:justify-self-start">
+                      <input
+                        type="checkbox"
+                        checked={schedule.isWorking}
+                        onChange={(event) =>
+                          updateScheduleRow(
+                            schedule.dayOfWeek,
+                            "isWorking",
+                            event.target.checked,
+                          )
+                        }
+                        className="size-4 accent-[color:var(--brand-gold)]"
+                      />
+                      <span className="sm:hidden">Activo</span>
+                    </label>
+
+                    {/* Horario */}
+                    {schedule.isWorking ? (
+                      <div className="col-span-2 flex items-center gap-2 sm:col-span-1">
                         <input
-                          type="checkbox"
-                          checked={schedule.isWorking}
+                          type="time"
+                          value={schedule.startTime}
+                          disabled={isSavingSchedules}
                           onChange={(event) =>
                             updateScheduleRow(
                               schedule.dayOfWeek,
-                              "isWorking",
-                              event.target.checked,
+                              "startTime",
+                              event.target.value,
                             )
                           }
-                          className="size-4 accent-[color:var(--brand-gold)]"
+                          className="min-h-9 w-[104px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
                         />
-                        Activo
-                      </label>
-                      <input
-                        type="time"
-                        value={schedule.startTime}
-                        disabled={!schedule.isWorking || isSavingSchedules}
-                        onChange={(event) =>
-                          updateScheduleRow(
-                            schedule.dayOfWeek,
-                            "startTime",
-                            event.target.value,
-                          )
-                        }
-                        className="min-h-9 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)] disabled:opacity-60"
-                      />
-                      <input
-                        type="time"
-                        value={schedule.endTime}
-                        disabled={!schedule.isWorking || isSavingSchedules}
-                        onChange={(event) =>
-                          updateScheduleRow(
-                            schedule.dayOfWeek,
-                            "endTime",
-                            event.target.value,
-                          )
-                        }
-                        className="min-h-9 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)] disabled:opacity-60"
-                      />
-                    </div>
-
-                    {/* Fila opcional: pausa al medio. Solo visible si el día
-                        está activo. Toggle "tiene pausa" + 2 inputs cuando se
-                        habilita. */}
-                    {schedule.isWorking ? (
-                      <div className="mt-2 border-t border-[color:var(--border-subtle)] pt-2">
-                        <label className="inline-flex cursor-pointer items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
-                          <input
-                            type="checkbox"
-                            checked={hasBreak}
-                            disabled={isSavingSchedules}
-                            onChange={(event) => {
-                              if (event.target.checked) {
-                                // Default: pausa de 1 hora al medio del rango
-                                const startMin = timeValueToMinutes(
-                                  schedule.startTime,
-                                );
-                                const endMin = timeValueToMinutes(
-                                  schedule.endTime,
-                                );
-                                const middle = Math.floor(
-                                  (startMin + endMin) / 2,
-                                );
-                                const breakStart = middle - 30;
-                                const breakEnd = middle + 30;
-                                const toTime = (mins: number) => {
-                                  const h = Math.floor(mins / 60);
-                                  const m = mins % 60;
-                                  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-                                };
-                                updateScheduleRow(
-                                  schedule.dayOfWeek,
-                                  "breakStart",
-                                  toTime(Math.max(startMin, breakStart)),
-                                );
-                                updateScheduleRow(
-                                  schedule.dayOfWeek,
-                                  "breakEnd",
-                                  toTime(Math.min(endMin, breakEnd)),
-                                );
-                              } else {
-                                updateScheduleRow(
-                                  schedule.dayOfWeek,
-                                  "breakStart",
-                                  "",
-                                );
-                                updateScheduleRow(
-                                  schedule.dayOfWeek,
-                                  "breakEnd",
-                                  "",
-                                );
-                              }
-                            }}
-                            className="size-3.5 accent-[color:var(--brand-gold)]"
-                          />
-                          Pausa al medio
-                        </label>
-
-                        {hasBreak ? (
-                          <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-                            <input
-                              type="time"
-                              value={schedule.breakStart ?? ""}
-                              disabled={isSavingSchedules}
-                              onChange={(event) =>
-                                updateScheduleRow(
-                                  schedule.dayOfWeek,
-                                  "breakStart",
-                                  event.target.value,
-                                )
-                              }
-                              className="min-h-9 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-                            />
-                            <span className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
-                              hasta
-                            </span>
-                            <input
-                              type="time"
-                              value={schedule.breakEnd ?? ""}
-                              disabled={isSavingSchedules}
-                              onChange={(event) =>
-                                updateScheduleRow(
-                                  schedule.dayOfWeek,
-                                  "breakEnd",
-                                  event.target.value,
-                                )
-                              }
-                              className="min-h-9 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-                            />
-                          </div>
-                        ) : null}
+                        <span className="text-[color:var(--text-subtle)]">
+                          →
+                        </span>
+                        <input
+                          type="time"
+                          value={schedule.endTime}
+                          disabled={isSavingSchedules}
+                          onChange={(event) =>
+                            updateScheduleRow(
+                              schedule.dayOfWeek,
+                              "endTime",
+                              event.target.value,
+                            )
+                          }
+                          className="min-h-9 w-[104px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
+                        />
                       </div>
-                    ) : null}
+                    ) : (
+                      <p className="col-span-2 text-sm text-[color:var(--text-subtle)] sm:col-span-1">
+                        Cerrado
+                      </p>
+                    )}
+
+                    {/* Pausa */}
+                    {schedule.isWorking ? (
+                      hasBreak ? (
+                        <div className="col-span-2 flex items-center gap-2 sm:col-span-1">
+                          <input
+                            type="time"
+                            value={schedule.breakStart ?? ""}
+                            disabled={isSavingSchedules}
+                            onChange={(event) =>
+                              updateScheduleRow(
+                                schedule.dayOfWeek,
+                                "breakStart",
+                                event.target.value,
+                              )
+                            }
+                            className="min-h-9 w-[92px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
+                          />
+                          <span className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                            a
+                          </span>
+                          <input
+                            type="time"
+                            value={schedule.breakEnd ?? ""}
+                            disabled={isSavingSchedules}
+                            onChange={(event) =>
+                              updateScheduleRow(
+                                schedule.dayOfWeek,
+                                "breakEnd",
+                                event.target.value,
+                              )
+                            }
+                            className="min-h-9 w-[92px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
+                          />
+                          <button
+                            type="button"
+                            aria-label="Quitar pausa"
+                            disabled={isSavingSchedules}
+                            onClick={() => {
+                              updateScheduleRow(
+                                schedule.dayOfWeek,
+                                "breakStart",
+                                "",
+                              );
+                              updateScheduleRow(
+                                schedule.dayOfWeek,
+                                "breakEnd",
+                                "",
+                              );
+                            }}
+                            className="inline-flex size-7 items-center justify-center rounded-md text-[color:var(--text-muted)] transition hover:text-[color:var(--danger)] disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="col-span-2 sm:col-span-1">
+                          <button
+                            type="button"
+                            disabled={isSavingSchedules}
+                            onClick={() => {
+                              // Default: pausa de 1 hora al medio del rango
+                              const startMin = timeValueToMinutes(
+                                schedule.startTime,
+                              );
+                              const endMin = timeValueToMinutes(
+                                schedule.endTime,
+                              );
+                              const middle = Math.floor(
+                                (startMin + endMin) / 2,
+                              );
+                              const breakStart = middle - 30;
+                              const breakEnd = middle + 30;
+                              const toTime = (mins: number) => {
+                                const h = Math.floor(mins / 60);
+                                const m = mins % 60;
+                                return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                              };
+                              updateScheduleRow(
+                                schedule.dayOfWeek,
+                                "breakStart",
+                                toTime(Math.max(startMin, breakStart)),
+                              );
+                              updateScheduleRow(
+                                schedule.dayOfWeek,
+                                "breakEnd",
+                                toTime(Math.min(endMin, breakEnd)),
+                              );
+                            }}
+                            className="inline-flex min-h-8 items-center gap-1 rounded-md border border-dashed border-[color:var(--border-default)] px-2.5 text-[10px] font-bold uppercase text-[color:var(--text-muted)] transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            <Plus className="size-3" /> Pausa
+                          </button>
+                        </div>
+                      )
+                    ) : (
+                      <span className="hidden sm:block" />
+                    )}
                   </div>
                 );
               })}
