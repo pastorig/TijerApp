@@ -779,7 +779,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
               href={`/${barbershop.slug}/reservar`}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-[12px] font-bold uppercase tracking-[0.16em] text-black transition-all duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--brand-gold-hi)] hover:shadow-[0_0_0_3px_var(--brand-gold-ring)]"
+              className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] px-4 text-[12px] font-bold uppercase tracking-[0.16em] text-black shadow-[0_12px_26px_-10px_var(--brand-gold-ring)] transition-all duration-[var(--duration-fast)] press-shrink hover:brightness-110 hover:shadow-[0_0_0_3px_var(--brand-gold-ring)]"
             >
               <Plus className="size-4" aria-hidden="true" />
               Nuevo turno
