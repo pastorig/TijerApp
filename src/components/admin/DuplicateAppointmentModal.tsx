@@ -275,7 +275,7 @@ export function DuplicateAppointmentModal({
                     className={cn(
                       "min-h-10 rounded-[var(--radius-sm)] border px-2 text-[11px] font-bold uppercase tracking-[0.1em] transition-colors",
                       frequency === opt.value
-                        ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                        ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                         : "border-[color:var(--border-default)] bg-black text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)]",
                     )}
                   >
@@ -351,7 +351,7 @@ export function DuplicateAppointmentModal({
                 type="submit"
                 disabled={isSaving}
                 className={cn(
-                  "inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60",
+                  "inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60",
                 )}
               >
                 {isRecurring ? (

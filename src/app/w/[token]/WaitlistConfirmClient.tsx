@@ -223,7 +223,7 @@ export function WaitlistConfirmClient({ token }: WaitlistConfirmClientProps) {
         </p>
         <Link
           href={`/r/${confirmedAppointmentToken}`}
-          className="mt-8 inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-5 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
+          className="mt-8 inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-5 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
         >
           Ver detalle del turno
         </Link>
@@ -318,7 +318,7 @@ export function WaitlistConfirmClient({ token }: WaitlistConfirmClientProps) {
                   className={cn(
                     "min-h-11 rounded-[var(--radius-sm)] border font-mono text-xs font-bold tabular-nums transition-colors duration-[var(--duration-fast)]",
                     isSelected
-                      ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                      ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                       : "border-[color:var(--border-default)] text-white hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
                   )}
                 >

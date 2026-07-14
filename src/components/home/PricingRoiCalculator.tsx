@@ -193,7 +193,7 @@ export function PricingRoiCalculator() {
           <div className="mt-6 flex justify-center sm:mt-8">
             <Link
               href="/#contacto"
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
             >
               Empezar prueba gratis
               <ArrowUpRight aria-hidden="true" className="size-4" />

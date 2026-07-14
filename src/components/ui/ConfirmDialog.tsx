@@ -265,7 +265,7 @@ function ConfirmDialogView({
               "inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] px-5 text-[11px] font-bold uppercase tracking-[0.14em] transition-all duration-[var(--duration-fast)] active:scale-95",
               danger
                 ? "bg-[color:var(--danger)] text-white hover:brightness-110"
-                : "bg-[color:var(--brand-gold)] text-black hover:bg-[color:var(--brand-gold-hi)]",
+                : "bg-gold-grad text-black hover:bg-[color:var(--brand-gold-hi)]",
             )}
           >
             {pending.confirmLabel ?? "Confirmar"}

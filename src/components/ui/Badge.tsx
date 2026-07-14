@@ -26,7 +26,7 @@ const variantClass: Record<BadgeVariant, string> = {
 
 const dotColor: Record<BadgeVariant, string> = {
   neutral: "bg-[color:var(--text-muted)]",
-  accent: "bg-[color:var(--brand-gold)]",
+  accent: "bg-gold-grad",
   success: "bg-[color:var(--success)]",
   danger: "bg-[color:var(--danger)]",
   muted: "bg-[color:var(--text-subtle)]",

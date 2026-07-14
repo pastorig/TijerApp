@@ -161,7 +161,7 @@ export function ClientPushOptIn({ token }: Props) {
             type="button"
             onClick={() => void handleOptIn()}
             disabled={isLoading}
-            className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-xs font-bold uppercase tracking-[0.14em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-4 text-xs font-bold uppercase tracking-[0.14em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Bell className="size-3.5" />
             {isLoading ? "Activando…" : "Activar"}

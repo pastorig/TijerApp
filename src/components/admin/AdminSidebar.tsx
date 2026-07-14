@@ -54,7 +54,7 @@ export function AdminSidebar({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] transition-transform duration-[var(--duration-base)] ease-[var(--ease-out-soft)]",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] transition-transform duration-[var(--duration-base)] ease-[var(--ease-out-soft)]",
           "lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}

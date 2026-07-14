@@ -442,7 +442,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                     className={cn(
                       "inline-flex min-h-9 shrink-0 items-center rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
                       isActive
-                        ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                        ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                         : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
                     )}
                   >
@@ -686,7 +686,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                       </span>
                       <div className="relative h-6 flex-1 overflow-hidden rounded-[var(--radius-xs)] bg-[color:var(--surface-1)]">
                         <div
-                          className="h-full bg-[color:var(--brand-gold)]"
+                          className="h-full bg-gold-grad"
                           style={{ width: `${row.ratio * 100}%` }}
                         />
                       </div>
@@ -730,7 +730,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                             className={cn(
                               "h-full",
                               row.dow === weekDayStats.top.dow
-                                ? "bg-[color:var(--brand-gold)]"
+                                ? "bg-gold-grad"
                                 : "bg-[color:var(--brand-silver)]/40",
                             )}
                             style={{ width: `${row.ratio * 100}%` }}
@@ -783,7 +783,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                   <div className="mt-4 h-2 overflow-hidden rounded-full bg-[color:var(--surface-1)]">
                     <div className="flex h-full">
                       <div
-                        className="h-full bg-[color:var(--brand-gold)]"
+                        className="h-full bg-gold-grad"
                         style={{ width: `${clientMix.nuevosPct}%` }}
                       />
                       <div
@@ -863,19 +863,39 @@ function KpiCard({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-sm)] border p-4",
+        "group relative overflow-hidden rounded-[var(--radius-md)] border p-4 shadow-card transition-all duration-[var(--duration-fast)] ease-[var(--ease-out-soft)] hover:-translate-y-0.5",
         highlight
-          ? "border-[color:var(--border-default)] bg-[color:var(--surface-1)]"
-          : "border-[color:var(--border-subtle)]",
+          ? "border-[color:var(--brand-gold)]/25 bg-[color:var(--surface-1)] hover:border-[color:var(--brand-gold)]/40"
+          : "border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] hover:border-[color:var(--brand-gold)]/25",
       )}
+      style={
+        highlight
+          ? {
+              backgroundImage:
+                "radial-gradient(120% 130% at 0% 0%, rgba(201,162,62,0.14), rgba(201,162,62,0.03) 26%, transparent 52%)",
+            }
+          : undefined
+      }
     >
+      {highlight ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent, rgba(226,194,102,0.7), transparent)",
+          }}
+        />
+      ) : null}
       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
         {label}
       </p>
       <p
         className={cn(
           "mt-1 font-mono text-2xl font-black tabular-nums leading-none sm:text-3xl",
-          highlight ? "text-[color:var(--brand-gold)]" : "text-white",
+          highlight
+            ? "w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-transparent"
+            : "text-white",
         )}
       >
         {value}

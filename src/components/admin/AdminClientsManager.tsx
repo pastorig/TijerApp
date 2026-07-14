@@ -673,7 +673,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving}
-                className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSaving ? "Guardando…" : "Guardar"}
               </button>
@@ -722,7 +722,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                         ? "bg-[color:var(--success)]"
                         : appointment.status === "cancelled"
                           ? "bg-[color:var(--danger)]"
-                          : "bg-[color:var(--brand-gold)]",
+                          : "bg-gold-grad",
                     )}
                   />
                   <div className="min-w-0 flex-1">
@@ -909,7 +909,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 className={cn(
                   "inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-xs)] border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
                   isActive
-                    ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                    ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                     : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)]/50 hover:text-[color:var(--brand-gold)]",
                 )}
               >
@@ -993,7 +993,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
               <button
                 type="button"
                 onClick={() => handleSelectClient(client)}
-                className="flex w-full items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 text-left transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40"
+                className="hover-lift group flex w-full items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 text-left shadow-card transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40"
               >
                 <div
                   aria-hidden="true"

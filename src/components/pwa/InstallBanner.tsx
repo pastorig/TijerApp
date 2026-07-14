@@ -121,7 +121,7 @@ export function InstallBanner({
           <button
             type="button"
             onClick={handleInstall}
-            className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] active:scale-95"
+            className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] active:scale-95"
           >
             Instalar
           </button>

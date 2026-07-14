@@ -193,7 +193,7 @@ export function AppointmentRescheduleDrawer({
                   className={cn(
                     "min-h-11 rounded-[var(--radius-sm)] border font-mono text-xs font-bold tabular-nums transition-colors duration-[var(--duration-fast)]",
                     isSelected
-                      ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                      ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                       : "border-[color:var(--border-default)] text-white hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
                   )}
                 >

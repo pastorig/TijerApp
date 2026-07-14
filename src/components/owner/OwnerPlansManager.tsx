@@ -220,7 +220,7 @@ export function OwnerPlansManager() {
                           <button
                             type="button"
                             onClick={() => setEditing(p)}
-                            className="inline-flex min-h-8 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-[color:var(--brand-gold)] hover:text-black"
+                            className="inline-flex min-h-8 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-gold-grad hover:text-black"
                           >
                             Editar
                           </button>
@@ -364,7 +364,7 @@ function EditPlanModal({
                     className={cn(
                       "rounded-[var(--radius-sm)] border p-2 text-center transition-colors",
                       isActive
-                        ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                        ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                         : "border-[color:var(--border-default)] bg-[color:var(--surface-0)] text-white hover:border-[color:var(--brand-gold)]",
                     )}
                   >
@@ -391,7 +391,7 @@ function EditPlanModal({
                 className={cn(
                   "rounded-[var(--radius-sm)] border px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] transition-colors",
                   status === "trial"
-                    ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                    ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                     : "border-[color:var(--border-default)] bg-[color:var(--surface-0)] text-white hover:border-[color:var(--brand-gold)]",
                 )}
               >
@@ -425,7 +425,7 @@ function EditPlanModal({
                     className={cn(
                       "rounded-[var(--radius-xs)] border px-2 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors",
                       isActive
-                        ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                        ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                         : "border-[color:var(--border-default)] bg-[color:var(--surface-0)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)]",
                     )}
                   >
@@ -495,7 +495,7 @@ function EditPlanModal({
               type="button"
               onClick={() => void handleSave()}
               disabled={isSaving}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-xs font-bold uppercase tracking-[0.14em] text-black hover:bg-[color:var(--brand-gold-hi)] disabled:opacity-50"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-4 text-xs font-bold uppercase tracking-[0.14em] text-black hover:bg-[color:var(--brand-gold-hi)] disabled:opacity-50"
             >
               {isSaving ? <Loader2 className="size-3.5 animate-spin" /> : <Crown className="size-3.5" />}
               {isSaving ? "Guardando…" : "Guardar"}

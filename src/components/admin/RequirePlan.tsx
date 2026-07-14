@@ -106,7 +106,7 @@ function FeaturePaywall({
             href={waLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:brightness-110 sm:w-auto"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:brightness-110 sm:w-auto"
           >
             <MessageCircle className="size-4" />
             Pedir upgrade por WhatsApp
@@ -162,7 +162,7 @@ function ExpiredPaywall({
             href={waLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-black hover:brightness-110 sm:w-auto"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black hover:brightness-110 sm:w-auto"
           >
             <MessageCircle className="size-4" />
             Activar plan por WhatsApp

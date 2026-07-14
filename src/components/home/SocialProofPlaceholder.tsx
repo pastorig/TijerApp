@@ -76,7 +76,7 @@ export function SocialProofPlaceholder() {
         <div className="mt-10 flex justify-center sm:mt-12">
           <Link
             href="/#contacto"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
           >
             Quiero ser de los primeros 10
             <ArrowUpRight aria-hidden="true" className="size-4" />

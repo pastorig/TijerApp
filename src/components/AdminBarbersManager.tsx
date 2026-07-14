@@ -636,7 +636,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
-            className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[color:var(--brand-gold)] px-4 py-2 text-xs font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)]"
+            className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-gold-grad px-4 py-2 text-xs font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)]"
           >
             <Plus className="size-4" /> Agregar barbero
           </button>
@@ -652,7 +652,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
               <button
                 type="button"
                 onClick={() => setShowAddModal(true)}
-                className="inline-flex min-h-8 items-center justify-center gap-1 rounded-md bg-[color:var(--brand-gold)] px-2.5 py-1.5 text-[10px] font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)]"
+                className="inline-flex min-h-8 items-center justify-center gap-1 rounded-md bg-gold-grad px-2.5 py-1.5 text-[10px] font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)]"
               >
                 <Plus className="size-3.5" /> Agregar
               </button>
@@ -846,7 +846,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                         <button
                           type="submit"
                           disabled={updatingBarberId === selectedBarber.id}
-                          className="inline-flex min-h-10 items-center justify-center rounded-md bg-[color:var(--brand-gold)] px-3 py-2 text-xs font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+                          className="inline-flex min-h-10 items-center justify-center rounded-md bg-gold-grad px-3 py-2 text-xs font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {updatingBarberId === selectedBarber.id
                             ? "Guardando..."
@@ -993,7 +993,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                     <button
                                       type="submit"
                                       disabled={updatingServiceId === service.id}
-                                      className="inline-flex min-h-9 items-center justify-center rounded-md bg-[color:var(--brand-gold)] px-3 py-2 text-[11px] font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="inline-flex min-h-9 items-center justify-center rounded-md bg-gold-grad px-3 py-2 text-[11px] font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                       {updatingServiceId === service.id
                                         ? "Guardando..."
@@ -1137,7 +1137,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                             disabled={
                               updatingServiceId === `new-${selectedBarber.id}`
                             }
-                            className="inline-flex min-h-9 items-center justify-center rounded-md bg-[color:var(--brand-gold)] px-3 py-2 text-[11px] font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex min-h-9 items-center justify-center rounded-md bg-gold-grad px-3 py-2 text-[11px] font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {updatingServiceId === `new-${selectedBarber.id}`
                               ? "Creando..."
@@ -1277,7 +1277,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
               <button
                 type="submit"
                 disabled={isCreating}
-                className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-[color:var(--brand-gold)] px-4 py-2 text-xs font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-gold-grad px-4 py-2 text-xs font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isCreating ? "Creando..." : "Agregar barbero"}
               </button>

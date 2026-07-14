@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  Activity,
   AlertTriangle,
   ArrowUpRight,
   CalendarDays,
   Check,
   Clock3,
+  DollarSign,
   Gift,
   LineChart,
   MessageCircle,
@@ -36,6 +38,7 @@ import {
 import type { AppointmentRow } from "@/lib/supabase";
 import { createWhatsAppClientContactLink } from "@/lib/whatsapp";
 import { formatDayHeading, getTodayYmd } from "./date-utils";
+import { DistributionBar, MetricCard, RadialGauge } from "./MetricCard";
 import { useCurrentPlan } from "./PlanContext";
 import { hasFeature } from "@/lib/plans";
 
@@ -539,107 +542,84 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
             </section>
           ) : null}
 
-          {/* ─────────────── PRÓXIMO TURNO + KPIs ─────────────── */}
-          <section className="grid gap-4 sm:gap-6 lg:grid-cols-[1.2fr_1fr]">
-            {/* Próximo turno HERO */}
-            <NextAppointmentHero
-              appointment={upcomingAppointment}
-              currentMinutes={currentMinutes}
-              barbershopSlug={barbershop.slug}
-              barbershopName={barbershop.name}
-              whatsappMessageTemplate={barbershop.whatsappMessageTemplate ?? null}
+          {/* ─────────────── KPIs HERO (premium) ─────────────── */}
+          <section className="relative">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 -top-6 -z-10 h-40"
+              style={{
+                background:
+                  "radial-gradient(55% 90% at 25% 0%, color-mix(in oklab, var(--brand-gold) 9%, transparent), transparent 70%)",
+              }}
             />
+            <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
+              <MetricCard label="Turnos hoy" icon={CalendarDays}>
+                <p className="stat-number text-4xl font-black tabular-nums leading-none text-white">
+                  {stats.total}
+                </p>
+                <div className="mt-4">
+                  <DistributionBar
+                    total={stats.total}
+                    segments={[
+                      {
+                        label: "Confirmados",
+                        value: stats.confirmed,
+                        barClass: "bg-[color:var(--success)]",
+                      },
+                      {
+                        label: "Pendientes",
+                        value: stats.pending,
+                        barClass: "bg-amber-400",
+                      },
+                      {
+                        label: "Cancelados",
+                        value: stats.cancelled,
+                        barClass: "bg-[color:var(--danger)]",
+                      },
+                    ]}
+                  />
+                </div>
+              </MetricCard>
 
-            {/* Resumen del día — Mobile: grid compacto 3x2. Desktop: lista vertical. */}
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
-                Resumen del día
-              </p>
+              <MetricCard label="Ingresos estimados" icon={DollarSign}>
+                <p className="stat-number w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-4xl font-black tabular-nums leading-none text-transparent">
+                  {formatPrice(stats.estimatedRevenue)}
+                </p>
+                <p className="mt-3 text-[11px] text-[color:var(--text-muted)]">
+                  hoy · {activeAppointments.length} turno
+                  {activeAppointments.length === 1 ? "" : "s"} activo
+                  {activeAppointments.length === 1 ? "" : "s"}
+                </p>
+              </MetricCard>
 
-              {/* MOBILE: grid 3×2 compacto */}
-              <dl className="mt-3 grid grid-cols-3 overflow-hidden rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] sm:hidden">
-                <SummaryTile
-                  label="Turnos"
-                  value={String(stats.total)}
-                  accent="gold"
-                />
-                <SummaryTile
-                  label="Pendientes"
-                  value={String(stats.pending)}
-                  accent={stats.pending > 0 ? "warning" : undefined}
-                  borderLeft
-                />
-                <SummaryTile
-                  label="Confirmados"
-                  value={String(stats.confirmed)}
-                  accent={stats.confirmed > 0 ? "success" : undefined}
-                  borderLeft
-                />
-                <SummaryTile
-                  label="Ingresos est."
-                  value={formatPrice(stats.estimatedRevenue)}
-                  accent="gold"
-                  borderTop
-                />
-                <SummaryTile
-                  label="Ocupación"
-                  value={`${stats.occupancyPct}%`}
-                  borderTop
-                  borderLeft
-                />
-                <SummaryTile
-                  label="Cierre est."
-                  value={formatMinutesToTime(stats.effectiveClosingMin)}
-                  accent={stats.hasOvertime ? "warning" : undefined}
-                  borderTop
-                  borderLeft
-                />
-              </dl>
-
-              {/* DESKTOP: lista vertical detallada (con hints) */}
-              <dl className="mt-3 hidden overflow-hidden rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] sm:block">
-                <SummaryRow
-                  label="Turnos programados"
-                  value={String(stats.total)}
-                  accent="gold"
-                />
-                <SummaryRow
-                  label="Pendientes"
-                  value={String(stats.pending)}
-                  accent={stats.pending > 0 ? "warning" : undefined}
-                />
-                <SummaryRow
-                  label="Confirmados"
-                  value={String(stats.confirmed)}
-                  accent={stats.confirmed > 0 ? "success" : undefined}
-                />
-                <SummaryRow
-                  label="Ingresos estimados"
-                  value={formatPrice(stats.estimatedRevenue)}
-                  accent="gold"
-                  emphasize
-                />
-                <SummaryRow
-                  label="Ocupación"
-                  value={`${stats.occupancyPct}%`}
-                  hint={
-                    stats.occupancyPct >= 70
-                      ? "Día lleno"
-                      : stats.occupancyPct >= 30
-                        ? "Día activo"
-                        : "Tranquilo"
-                  }
-                />
-                <SummaryRow
-                  label="Cierre estimado"
-                  value={formatMinutesToTime(stats.effectiveClosingMin)}
-                  hint={stats.hasOvertime ? `+${stats.effectiveClosingMin - stats.baseClosingMin} min` : `Base ${baseClosingStr}`}
-                  accent={stats.hasOvertime ? "warning" : undefined}
-                  isLast
-                />
-              </dl>
+              <MetricCard label="Ocupación" icon={Activity}>
+                <div className="flex items-center gap-4">
+                  <RadialGauge value={stats.occupancyPct} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-white">
+                      {stats.occupancyPct >= 70
+                        ? "Día lleno"
+                        : stats.occupancyPct >= 30
+                          ? "Día activo"
+                          : "Tranquilo"}
+                    </p>
+                    <p className="mt-1 text-[11px] text-[color:var(--text-subtle)]">
+                      Cierre est. {formatMinutesToTime(stats.effectiveClosingMin)}
+                    </p>
+                  </div>
+                </div>
+              </MetricCard>
             </div>
           </section>
+
+          {/* ─────────────── PRÓXIMO TURNO (hero, full width) ─────────────── */}
+          <NextAppointmentHero
+            appointment={upcomingAppointment}
+            currentMinutes={currentMinutes}
+            barbershopSlug={barbershop.slug}
+            barbershopName={barbershop.name}
+            whatsappMessageTemplate={barbershop.whatsappMessageTemplate ?? null}
+          />
 
           {/* ─────────────── AGENDA DEL DÍA enriquecida ─────────────── */}
           <section>
@@ -799,7 +779,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
               href={`/${barbershop.slug}/reservar`}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-[12px] font-bold uppercase tracking-[0.16em] text-black transition-all duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--brand-gold-hi)] hover:shadow-[0_0_0_3px_var(--brand-gold-ring)]"
+              className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] px-4 text-[12px] font-bold uppercase tracking-[0.16em] text-black shadow-[0_12px_26px_-10px_var(--brand-gold-ring)] transition-all duration-[var(--duration-fast)] press-shrink hover:brightness-110 hover:shadow-[0_0_0_3px_var(--brand-gold-ring)]"
             >
               <Plus className="size-4" aria-hidden="true" />
               Nuevo turno
@@ -1050,117 +1030,6 @@ function NextAppointmentHero({
   );
 }
 
-/**
- * Tile compacto para el resumen mobile — value centrado arriba +
- * label uppercase pequeño debajo. Pensado para grid 3 cols.
- * Soporta borders selectivos (left + top) para el efecto "tabla"
- * sin tener que usar divide-x/divide-y a nivel parent.
- */
-function SummaryTile({
-  label,
-  value,
-  accent,
-  borderLeft,
-  borderTop,
-}: {
-  label: string;
-  value: string;
-  accent?: "gold" | "warning" | "success" | "danger";
-  borderLeft?: boolean;
-  borderTop?: boolean;
-}) {
-  const valueColor =
-    accent === "gold"
-      ? "text-[color:var(--brand-gold)]"
-      : accent === "warning"
-        ? "text-amber-300"
-        : accent === "success"
-          ? "text-[color:var(--success)]"
-          : accent === "danger"
-            ? "text-[color:var(--danger)]"
-            : "text-white";
-
-  return (
-    <div
-      className={cn(
-        "flex flex-col items-center justify-center gap-1 px-2 py-3 text-center",
-        borderLeft ? "border-l border-white/[0.04]" : "",
-        borderTop ? "border-t border-white/[0.04]" : "",
-      )}
-    >
-      <dd
-        className={cn(
-          "font-mono text-lg font-black tabular-nums leading-none",
-          valueColor,
-        )}
-      >
-        {value}
-      </dd>
-      <dt className="text-[9px] font-bold uppercase tracking-[0.14em] leading-tight text-[color:var(--text-muted)]">
-        {label}
-      </dt>
-    </div>
-  );
-}
-
-function SummaryRow({
-  label,
-  value,
-  hint,
-  accent,
-  emphasize,
-  isLast,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  accent?: "gold" | "warning" | "success" | "danger";
-  /** Si true, el value usa text-lg en lugar de text-base — para destacar (ej. ingresos). */
-  emphasize?: boolean;
-  /** Si true, no agrega border-bottom (último item del list). */
-  isLast?: boolean;
-}) {
-  const valueColor =
-    accent === "gold"
-      ? "text-[color:var(--brand-gold)]"
-      : accent === "warning"
-        ? "text-amber-300"
-        : accent === "success"
-          ? "text-[color:var(--success)]"
-          : accent === "danger"
-            ? "text-[color:var(--danger)]"
-            : "text-white";
-
-  return (
-    <div
-      className={cn(
-        "flex items-baseline justify-between gap-3 px-4 py-2.5 transition-colors duration-[var(--duration-fast)] hover:bg-white/[0.02]",
-        isLast ? "" : "border-b border-white/[0.04]",
-      )}
-    >
-      <div className="min-w-0 flex-1">
-        <dt className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)] sm:text-xs">
-          {label}
-        </dt>
-        {hint ? (
-          <p className="mt-0.5 text-[10px] text-[color:var(--text-subtle)]">
-            {hint}
-          </p>
-        ) : null}
-      </div>
-      <dd
-        className={cn(
-          "shrink-0 font-mono font-black tabular-nums leading-none",
-          emphasize ? "text-xl sm:text-2xl" : "text-base sm:text-lg",
-          valueColor,
-        )}
-      >
-        {value}
-      </dd>
-    </div>
-  );
-}
-
 function QuickActionIcon({
   href,
   icon,
@@ -1174,9 +1043,9 @@ function QuickActionIcon({
     <Link
       href={href}
       title={label}
-      className="group flex aspect-square min-h-[68px] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] px-2 py-2 text-[color:var(--text-secondary)] transition-all duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)]/40 hover:bg-[color:var(--brand-gold-soft)] hover:text-[color:var(--brand-gold)] sm:aspect-auto sm:min-h-[80px]"
+      className="hover-lift group flex aspect-square min-h-[68px] flex-col items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-2 py-2 text-[color:var(--text-secondary)] shadow-card transition-colors duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)]/40 hover:text-[color:var(--brand-gold)] sm:aspect-auto sm:min-h-[80px]"
     >
-      <span className="text-[color:var(--text-subtle)] transition-colors group-hover:text-[color:var(--brand-gold)]">
+      <span className="flex size-9 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/25 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105">
         {icon}
       </span>
       <span className="text-center text-[9px] font-bold uppercase tracking-[0.14em] leading-tight sm:text-[10px]">

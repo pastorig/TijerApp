@@ -1339,7 +1339,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                         className={cn(
                           "inline-flex min-h-9 shrink-0 items-center gap-2 rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
                           isActive
-                            ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                            ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                             : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
                         )}
                       >
@@ -1411,7 +1411,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                         className={cn(
                           "inline-flex min-h-8 items-center justify-center rounded-[var(--radius-xs)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
                           isActive
-                            ? "bg-[color:var(--brand-gold)] text-black"
+                            ? "bg-gold-grad text-black"
                             : "text-[color:var(--text-secondary)] hover:text-white",
                         )}
                       >

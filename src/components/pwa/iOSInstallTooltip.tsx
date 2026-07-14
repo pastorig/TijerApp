@@ -109,7 +109,7 @@ export function IOSInstallTooltip({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-all duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] active:scale-95"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-all duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] active:scale-95"
           >
             Entendido
           </button>

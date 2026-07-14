@@ -310,7 +310,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
             <button
               type="submit"
               disabled={isSaving}
-              className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving ? "Guardando…" : "Guardar cambios"}
             </button>
@@ -379,7 +379,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
                   <button
                     type="button"
                     onClick={() => void handleRedeem(c)}
-                    className="mt-3 inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-3 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-[color:var(--brand-gold)] hover:text-black sm:w-auto sm:self-end"
+                    className="mt-3 inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-3 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-gold-grad hover:text-black sm:w-auto sm:self-end"
                   >
                     <Check className="size-3.5" />
                     Canjear {program.reward_name}

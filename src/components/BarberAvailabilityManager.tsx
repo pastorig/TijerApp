@@ -542,7 +542,7 @@ export function BarberAvailabilityManager({
                         className={cn(
                           "relative h-5 w-9 shrink-0 rounded-full transition disabled:opacity-60",
                           schedule.isWorking
-                            ? "bg-[color:var(--brand-gold)]"
+                            ? "bg-gold-grad"
                             : "bg-white/15",
                         )}
                       >
@@ -704,7 +704,7 @@ export function BarberAvailabilityManager({
             <button
               type="submit"
               disabled={isSavingSchedules}
-              className="mt-3 inline-flex min-h-9 items-center justify-center rounded-md bg-[color:var(--brand-gold)] px-3 py-2 text-[11px] font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-3 inline-flex min-h-9 items-center justify-center rounded-md bg-gold-grad px-3 py-2 text-[11px] font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSavingSchedules ? "Guardando..." : "Guardar horarios"}
             </button>
@@ -778,7 +778,7 @@ export function BarberAvailabilityManager({
                                   <span
                                     key={idx}
                                     style={{ width: `${cutWidth}%` }}
-                                    className="h-full bg-[color:var(--brand-gold)]"
+                                    className="h-full bg-gold-grad"
                                   />
                                 ),
                               )}

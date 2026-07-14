@@ -73,7 +73,7 @@ export default function PricingPage() {
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:mt-9 sm:flex-row">
               <Link
                 href="#planes"
-                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
               >
                 Ver planes
                 <ArrowUpRight aria-hidden="true" className="size-4" />
