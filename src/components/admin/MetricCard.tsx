@@ -27,14 +27,14 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 transition-all duration-[var(--duration-fast)] ease-[var(--ease-out-soft)] hover:-translate-y-0.5 hover:border-[color:var(--brand-gold)]/25 sm:p-5",
+        "group relative overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--brand-gold)]/12 bg-[color:var(--surface-1)] p-4 transition-all duration-[var(--duration-base)] ease-[var(--ease-out-soft)] hover:-translate-y-0.5 hover:border-[color:var(--brand-gold)]/35 sm:p-5",
         className,
       )}
       style={{
         backgroundImage:
-          "linear-gradient(180deg, rgba(255,255,255,0.025), transparent 42%)",
+          "radial-gradient(120% 130% at 0% 0%, rgba(201,162,62,0.16), rgba(201,162,62,0.04) 26%, transparent 52%), linear-gradient(155deg, rgba(226,194,102,0.06), transparent 46%), linear-gradient(180deg, rgba(255,255,255,0.03), transparent 40%)",
         boxShadow:
-          "inset 0 1px 0 rgba(255,255,255,0.05), 0 20px 44px -26px rgba(0,0,0,0.9)",
+          "inset 0 1px 0 rgba(255,255,255,0.06), 0 24px 48px -26px rgba(0,0,0,0.92)",
       }}
     >
       <div className="flex items-center justify-between gap-2">
@@ -78,6 +78,13 @@ export function RadialGauge({
       aria-label={`${Math.round(pct)}%`}
     >
       <svg width={size} height={size} className="-rotate-90">
+        <defs>
+          <linearGradient id="rg-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#8a6e25" />
+            <stop offset="50%" stopColor="#c9a23e" />
+            <stop offset="100%" stopColor="#e2c266" />
+          </linearGradient>
+        </defs>
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -91,12 +98,12 @@ export function RadialGauge({
           cy={size / 2}
           r={radius}
           fill="none"
+          stroke="url(#rg-gold)"
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           style={{
-            stroke: "var(--brand-gold)",
             transition: "stroke-dashoffset 700ms var(--ease-out-soft)",
           }}
         />

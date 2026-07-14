@@ -582,7 +582,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
               </MetricCard>
 
               <MetricCard label="Ingresos estimados" icon={DollarSign}>
-                <p className="stat-number text-4xl font-black tabular-nums leading-none text-[color:var(--brand-gold-hi)]">
+                <p className="stat-number w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-4xl font-black tabular-nums leading-none text-transparent">
                   {formatPrice(stats.estimatedRevenue)}
                 </p>
                 <p className="mt-3 text-[11px] text-[color:var(--text-muted)]">
