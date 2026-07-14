@@ -227,7 +227,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
                   className={cn(
                     "min-h-10 rounded-[var(--radius-xs)] px-4 text-xs font-bold uppercase tracking-[0.14em] transition-colors",
                     discountType === "percent"
-                      ? "bg-[color:var(--brand-gold)] text-black"
+                      ? "bg-gold-grad text-black"
                       : "text-[color:var(--text-secondary)]",
                   )}
                 >
@@ -239,7 +239,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
                   className={cn(
                     "min-h-10 rounded-[var(--radius-xs)] px-4 text-xs font-bold uppercase tracking-[0.14em] transition-colors",
                     discountType === "fixed"
-                      ? "bg-[color:var(--brand-gold)] text-black"
+                      ? "bg-gold-grad text-black"
                       : "text-[color:var(--text-secondary)]",
                   )}
                 >
@@ -294,7 +294,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
           <button
             type="submit"
             disabled={isCreating}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="size-4" />
             {isCreating ? "Creando…" : "Crear cupón"}

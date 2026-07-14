@@ -83,7 +83,7 @@ export function StackedBar({
 export function ProportionBar({
   value,
   max,
-  fillClass = "bg-[color:var(--brand-gold)]",
+  fillClass = "bg-gold-grad",
   className,
 }: {
   value: number;

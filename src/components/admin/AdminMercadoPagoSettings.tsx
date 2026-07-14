@@ -525,7 +525,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                 disabled={
                   isTesting || (!accessTokenInput && !hasAccessToken)
                 }
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-[color:var(--brand-gold)] hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-gold-grad hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isTesting ? (
                   <Loader2 className="size-3.5 animate-spin" />
@@ -660,7 +660,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
             <button
               type="submit"
               disabled={isSaving}
-              className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving ? "Guardando…" : "Guardar cambios"}
             </button>

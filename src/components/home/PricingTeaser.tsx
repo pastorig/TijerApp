@@ -93,7 +93,7 @@ export function PricingTeaser() {
               )}
             >
               {plan.highlight && (
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[color:var(--brand-gold)] px-3 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-black">
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-gold-grad px-3 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-black">
                   Más elegido
                 </div>
               )}
@@ -145,7 +145,7 @@ export function PricingTeaser() {
         <div className="mt-10 flex flex-col items-center gap-3 sm:mt-12 sm:flex-row sm:justify-center">
           <Link
             href="/precios"
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
           >
             Ver todos los planes
             <ArrowUpRight aria-hidden="true" className="size-4" />

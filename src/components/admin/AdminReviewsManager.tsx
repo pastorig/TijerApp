@@ -185,7 +185,7 @@ export function AdminReviewsManager({ barbershop }: AdminReviewsManagerProps) {
                     </button>
                     <div className="h-2 flex-1 overflow-hidden rounded-full bg-[color:var(--surface-0)]">
                       <div
-                        className="h-full rounded-full bg-[color:var(--brand-gold)] transition-all"
+                        className="h-full rounded-full bg-gold-grad transition-all"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -216,7 +216,7 @@ export function AdminReviewsManager({ barbershop }: AdminReviewsManagerProps) {
                   className={cn(
                     "inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-xs)] border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
                     isActive
-                      ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                      ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                       : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)]/50 hover:text-[color:var(--brand-gold)]",
                   )}
                 >

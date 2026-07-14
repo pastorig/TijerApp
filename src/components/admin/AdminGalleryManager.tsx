@@ -264,7 +264,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
               </p>
             </div>
           </div>
-          <label className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]">
+          <label className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]">
             {isUploading ? "Subiendo…" : "Elegir archivos"}
             <input
               ref={inputRef}

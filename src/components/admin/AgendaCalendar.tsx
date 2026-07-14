@@ -58,7 +58,7 @@ function dotColorClass(count: number | undefined, isToday: boolean): string {
   if (count >= 4) return "bg-amber-400";
   if (count >= 1) return "bg-[color:var(--success)]";
   return isToday
-    ? "bg-[color:var(--brand-gold)]"
+    ? "bg-gold-grad"
     : "bg-[color:var(--brand-silver)]";
 }
 
@@ -393,7 +393,7 @@ function DayCell({
         // del contenedor, dejando el número visualmente en la parte inferior.
         "relative flex h-12 items-center justify-center rounded-[var(--radius-sm)] font-mono text-xs font-bold tabular-nums transition-colors duration-[var(--duration-fast)] sm:h-14 sm:text-sm",
         isFocused
-          ? "bg-[color:var(--brand-gold)] text-black"
+          ? "bg-gold-grad text-black"
           : isToday
             ? "border border-[color:var(--brand-gold)] text-[color:var(--brand-gold)]"
             : inCurrentMonth

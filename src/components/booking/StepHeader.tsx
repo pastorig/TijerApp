@@ -21,7 +21,7 @@ export function StepHeader({ number, title, subtitle, done }: StepHeaderProps) {
         className={cn(
           "flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-black tabular-nums transition-colors",
           done
-            ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+            ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
             : "border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]",
         )}
       >

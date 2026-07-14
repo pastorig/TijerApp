@@ -132,7 +132,7 @@ export function DateStrip({
                 className={cn(
                   "flex min-h-16 w-14 shrink-0 snap-start flex-col items-center justify-center gap-0.5 rounded-[var(--radius-md)] border transition-colors duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed disabled:opacity-60",
                   isSelected
-                    ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                    ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                     : "border-[color:var(--border-default)] bg-[color:var(--surface-1)] text-white hover:border-[color:var(--brand-gold)]/50",
                 )}
               >

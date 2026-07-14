@@ -158,7 +158,7 @@ export function ReviewFormClient({
               href={googleReviewsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-5 text-[11px] font-bold uppercase tracking-[0.16em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
+              className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-5 text-[11px] font-bold uppercase tracking-[0.16em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
             >
               Dejar reseña en Google
             </a>
@@ -258,7 +258,7 @@ export function ReviewFormClient({
           type="button"
           onClick={handleSubmit}
           disabled={isBlocked || isSubmitting || rating < 1}
-          className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-5 text-[12px] font-bold uppercase tracking-[0.16em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-5 text-[12px] font-bold uppercase tracking-[0.16em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSubmitting ? "Guardando…" : "Enviar reseña"}
         </button>

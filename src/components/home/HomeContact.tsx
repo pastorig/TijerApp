@@ -239,7 +239,7 @@ export function HomeContact() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-5 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-5 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting ? "Enviando…" : "Enviar mensaje"}
               </button>

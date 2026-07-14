@@ -205,7 +205,7 @@ function PayModal({
           href={waLink}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:brightness-110"
+          className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:brightness-110"
         >
           <MessageCircle className="size-4" />
           Avisar por WhatsApp

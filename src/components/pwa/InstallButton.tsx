@@ -45,7 +45,7 @@ export function InstallButton({
     "sidebar-item":
       "inline-flex w-full items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--surface-1)] hover:text-[color:var(--brand-gold)]",
     "card-cta":
-      "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-all duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] active:scale-95",
+      "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-all duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] active:scale-95",
   };
 
   return (

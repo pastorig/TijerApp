@@ -654,7 +654,7 @@ export function AppointmentRow({
                   ? "animate-success-pop border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] text-[color:var(--success)]"
                   : isCancelled
                     ? "border border-white/[0.04] bg-transparent text-[color:var(--text-subtle)] opacity-50"
-                    : "bg-[color:var(--brand-gold)] text-black shadow-[0_0_0_0_var(--brand-gold-ring)] hover:bg-[color:var(--brand-gold-hi)] hover:shadow-[0_0_0_3px_var(--brand-gold-ring)]",
+                    : "bg-gold-grad text-black shadow-[0_0_0_0_var(--brand-gold-ring)] hover:bg-[color:var(--brand-gold-hi)] hover:shadow-[0_0_0_3px_var(--brand-gold-ring)]",
               )}
             >
               <Check className="size-5 sm:size-4" aria-hidden="true" />
@@ -1018,7 +1018,7 @@ function InternalNotesField({
           type="button"
           onClick={save}
           disabled={isSaving || draft === current}
-          className="rounded-[var(--radius-xs)] bg-[color:var(--brand-gold)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-black transition-colors press-shrink hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-[var(--radius-xs)] bg-gold-grad px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-black transition-colors press-shrink hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSaving ? "Guardando…" : "Guardar"}
         </button>

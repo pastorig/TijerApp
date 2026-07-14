@@ -273,14 +273,14 @@ function ToastItem({
         "border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]",
       icon: <Info className="size-4" />,
       border: "border-[color:var(--brand-gold)]/30",
-      barColor: "bg-[color:var(--brand-gold)]",
+      barColor: "bg-gold-grad",
     },
     loading: {
       iconBg:
         "border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]",
       icon: <Loader2 className="size-4 animate-spin" />,
       border: "border-[color:var(--border-default)]",
-      barColor: "bg-[color:var(--brand-gold)]",
+      barColor: "bg-gold-grad",
     },
   };
   const style = variantStyles[toast.variant];

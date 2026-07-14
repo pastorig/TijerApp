@@ -179,7 +179,7 @@ export function PushNotificationsCard({
             type="button"
             onClick={handleSubscribe}
             disabled={isWorking}
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             <BellRing aria-hidden="true" className="size-4" />
             {isWorking ? "Activando…" : "Activar notificaciones"}
@@ -198,7 +198,7 @@ export function PushNotificationsCard({
               type="button"
               onClick={handleSubscribe}
               disabled={isWorking}
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               <BellRing aria-hidden="true" className="size-4" />
               {isWorking

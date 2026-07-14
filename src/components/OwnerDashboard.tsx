@@ -479,7 +479,7 @@ export function OwnerDashboard() {
           </div>
           <Link
             href="/owner/create-barbershop"
-            className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
+            className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
           >
             Crear barbería
           </Link>
@@ -772,7 +772,7 @@ export function OwnerDashboard() {
                           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                             <Link
                               href={`/${barbershop.slug}/admin`}
-                              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-all duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--brand-gold-hi)] hover:shadow-[0_0_0_3px_var(--brand-gold-ring)]"
+                              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-all duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--brand-gold-hi)] hover:shadow-[0_0_0_3px_var(--brand-gold-ring)]"
                             >
                               Abrir admin
                               <ArrowUpRight
@@ -1250,7 +1250,7 @@ function WeeklyRanking({ ranking }: { ranking: OwnerWeeklyRankingEntry[] }) {
       accentBg: "bg-[color:var(--brand-gold-soft)]",
       border: "border-[color:var(--brand-gold)]/40",
       label: "1°",
-      bar: "bg-[color:var(--brand-gold)]",
+      bar: "bg-gold-grad",
     },
     {
       medal: "🥈",

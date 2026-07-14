@@ -813,7 +813,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               setWaitlistSubmitted(false);
               setSelectedDate(getTodayInputValue());
             }}
-            className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
+            className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-6 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
           >
             Probar otra fecha
           </button>
@@ -897,7 +897,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 type="button"
                 onClick={handleSubmitWaitlist}
                 disabled={isSubmittingWaitlist}
-                className="inline-flex min-h-10 items-center rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:opacity-50"
+                className="inline-flex min-h-10 items-center rounded-[var(--radius-sm)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:opacity-50"
               >
                 {isSubmittingWaitlist ? "Guardando…" : "Confirmar"}
               </button>
@@ -1111,7 +1111,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                         className={cn(
                           "min-h-11 rounded-[var(--radius-sm)] border font-mono text-xs font-bold tabular-nums transition-colors duration-[var(--duration-fast)]",
                           isSelected
-                            ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                            ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                             : slot.isAvailable
                               ? "border-[color:var(--border-default)] text-white hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
                               : "cursor-not-allowed border-[color:var(--border-subtle)] text-[color:var(--text-subtle)] line-through",

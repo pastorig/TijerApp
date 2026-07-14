@@ -124,7 +124,7 @@ export function CouponInput({
           type="button"
           onClick={() => void handleApply()}
           disabled={isValidating || code.trim().length === 0}
-          className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-[color:var(--brand-gold)] hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-gold-grad hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isValidating ? (
             <Loader2 className="size-3.5 animate-spin" />

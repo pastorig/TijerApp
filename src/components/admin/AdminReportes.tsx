@@ -442,7 +442,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                     className={cn(
                       "inline-flex min-h-9 shrink-0 items-center rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
                       isActive
-                        ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                        ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                         : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
                     )}
                   >
@@ -686,7 +686,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                       </span>
                       <div className="relative h-6 flex-1 overflow-hidden rounded-[var(--radius-xs)] bg-[color:var(--surface-1)]">
                         <div
-                          className="h-full bg-[color:var(--brand-gold)]"
+                          className="h-full bg-gold-grad"
                           style={{ width: `${row.ratio * 100}%` }}
                         />
                       </div>
@@ -730,7 +730,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                             className={cn(
                               "h-full",
                               row.dow === weekDayStats.top.dow
-                                ? "bg-[color:var(--brand-gold)]"
+                                ? "bg-gold-grad"
                                 : "bg-[color:var(--brand-silver)]/40",
                             )}
                             style={{ width: `${row.ratio * 100}%` }}
@@ -783,7 +783,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                   <div className="mt-4 h-2 overflow-hidden rounded-full bg-[color:var(--surface-1)]">
                     <div className="flex h-full">
                       <div
-                        className="h-full bg-[color:var(--brand-gold)]"
+                        className="h-full bg-gold-grad"
                         style={{ width: `${clientMix.nuevosPct}%` }}
                       />
                       <div

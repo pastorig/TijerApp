@@ -193,7 +193,7 @@ export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex min-h-12 w-full items-center justify-center rounded-md bg-[color:var(--brand-gold)] px-6 py-3 text-sm font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-md bg-gold-grad px-6 py-3 text-sm font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? "Ingresando..." : "Ingresar"}
             </button>

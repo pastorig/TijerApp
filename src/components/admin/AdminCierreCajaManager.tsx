@@ -552,7 +552,7 @@ export function AdminCierreCajaManager({
                           ? "bg-[color:var(--success)]"
                           : appointment.status === "cancelled"
                             ? "bg-[color:var(--danger)]"
-                            : "bg-[color:var(--brand-gold)]",
+                            : "bg-gold-grad",
                       )}
                     />
                     <div className="min-w-0 flex-1">

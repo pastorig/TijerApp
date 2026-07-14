@@ -131,7 +131,7 @@ function MockupPublica() {
         <span className="text-[7px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)] sm:text-[9px]">
           ← PRIME BARBER
         </span>
-        <div className="size-3 rounded-sm bg-[color:var(--brand-gold)] sm:size-4" />
+        <div className="size-3 rounded-sm bg-gold-grad sm:size-4" />
       </div>
 
       {/* Title block */}
@@ -190,7 +190,7 @@ function MockupPublica() {
               key={slot.time}
               className={
                 slot.state === "selected"
-                  ? "rounded-sm border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] py-1 text-center text-[8px] font-bold text-black"
+                  ? "rounded-sm border border-[color:var(--brand-gold)] bg-gold-grad py-1 text-center text-[8px] font-bold text-black"
                   : slot.state === "taken"
                     ? "rounded-sm border border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] py-1 text-center text-[8px] font-bold text-[color:var(--text-subtle)] line-through"
                     : "rounded-sm border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] py-1 text-center text-[8px] font-bold text-[color:var(--brand-gold)]"
@@ -212,7 +212,7 @@ function MockupPublica() {
             17:30 · Corte · Jeremias
           </div>
         </div>
-        <div className="rounded-sm bg-[color:var(--brand-gold)] px-2 py-1.5 text-[8px] font-bold uppercase tracking-wider text-black">
+        <div className="rounded-sm bg-gold-grad px-2 py-1.5 text-[8px] font-bold uppercase tracking-wider text-black">
           Reservar
         </div>
       </div>
@@ -270,7 +270,7 @@ function MockupReportes() {
             </div>
             <div className="h-1 overflow-hidden rounded-full bg-[color:var(--surface-3)]">
               <div
-                className="h-full bg-[color:var(--brand-gold)]"
+                className="h-full bg-gold-grad"
                 style={{ width: `${b.pct}%` }}
               />
             </div>
@@ -348,7 +348,7 @@ export function ProductShowcase() {
                       >
                         <span
                           aria-hidden="true"
-                          className="mt-1 size-1 shrink-0 rounded-full bg-[color:var(--brand-gold)] sm:size-1.5"
+                          className="mt-1 size-1 shrink-0 rounded-full bg-gold-grad sm:size-1.5"
                         />
                         <span className="leading-snug sm:leading-normal">
                           {b}

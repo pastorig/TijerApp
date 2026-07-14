@@ -734,7 +734,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
             <button
               type="submit"
               disabled={isSaving}
-              className="inline-flex min-h-12 items-center justify-center rounded-md bg-[color:var(--brand-gold)] px-6 py-3 text-sm font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-12 items-center justify-center rounded-md bg-gold-grad px-6 py-3 text-sm font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving ? "Guardando..." : "Guardar cambios"}
             </button>
