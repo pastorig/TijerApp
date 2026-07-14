@@ -1,0 +1,167 @@
+import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/cn";
+
+/**
+ * Componentes premium reutilizables para KPIs (la "receta" del level-up visual).
+ * Todo dentro del sistema negro/dorado. Pensados para el dashboard del admin
+ * y para replicar en el resto de la app (reportes, owner, etc.).
+ *
+ *  - MetricCard: tarjeta con profundidad (borde, brillo interno, sombra en capas)
+ *    + header con ícono, y hover con elevación.
+ *  - RadialGauge: medidor radial (anillo SVG) para porcentajes (ocupación, etc.).
+ *  - DistributionBar: barra segmentada + leyenda para desgloses (estados, etc.).
+ */
+
+export function MetricCard({
+  label,
+  icon: Icon,
+  children,
+  className,
+}: {
+  label: string;
+  icon?: LucideIcon;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "group relative overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 transition-all duration-[var(--duration-fast)] ease-[var(--ease-out-soft)] hover:-translate-y-0.5 hover:border-[color:var(--brand-gold)]/25 sm:p-5",
+        className,
+      )}
+      style={{
+        backgroundImage:
+          "linear-gradient(180deg, rgba(255,255,255,0.025), transparent 42%)",
+        boxShadow:
+          "inset 0 1px 0 rgba(255,255,255,0.05), 0 20px 44px -26px rgba(0,0,0,0.9)",
+      }}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
+          {label}
+        </p>
+        {Icon ? (
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105">
+            <Icon className="size-3.5" aria-hidden="true" />
+          </span>
+        ) : null}
+      </div>
+      <div className="mt-3">{children}</div>
+    </div>
+  );
+}
+
+export function RadialGauge({
+  value,
+  max = 100,
+  size = 88,
+  stroke = 9,
+  className,
+}: {
+  value: number;
+  max?: number;
+  size?: number;
+  stroke?: number;
+  className?: string;
+}) {
+  const pct = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - pct / 100);
+
+  return (
+    <span
+      className={cn("relative inline-flex shrink-0", className)}
+      style={{ width: size, height: size }}
+      role="img"
+      aria-label={`${Math.round(pct)}%`}
+    >
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={stroke}
+          style={{ stroke: "var(--surface-2)" }}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          style={{
+            stroke: "var(--brand-gold)",
+            transition: "stroke-dashoffset 700ms var(--ease-out-soft)",
+          }}
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center">
+        <span className="stat-number text-xl font-black tabular-nums text-white">
+          {Math.round(pct)}%
+        </span>
+      </span>
+    </span>
+  );
+}
+
+export type DistributionSegment = {
+  label: string;
+  value: number;
+  /** Clase de fondo del segmento + del dot de la leyenda. */
+  barClass: string;
+};
+
+export function DistributionBar({
+  segments,
+  total,
+}: {
+  segments: DistributionSegment[];
+  total?: number;
+}) {
+  const sum =
+    total ?? segments.reduce((acc, segment) => acc + segment.value, 0);
+
+  return (
+    <div>
+      <div className="flex h-2 w-full overflow-hidden rounded-full bg-[color:var(--surface-2)]">
+        {sum > 0
+          ? segments.map((segment) =>
+              segment.value > 0 ? (
+                <div
+                  key={segment.label}
+                  className={cn(
+                    "h-full transition-[width] duration-[var(--duration-slow)] ease-[var(--ease-out-soft)]",
+                    segment.barClass,
+                  )}
+                  style={{ width: `${(segment.value / sum) * 100}%` }}
+                />
+              ) : null,
+            )
+          : null}
+      </div>
+      <ul className="mt-2.5 flex flex-wrap gap-x-3.5 gap-y-1.5">
+        {segments.map((segment) => (
+          <li
+            key={segment.label}
+            className="inline-flex items-center gap-1.5 text-[11px] text-[color:var(--text-muted)]"
+          >
+            <span
+              aria-hidden="true"
+              className={cn("inline-block size-1.5 rounded-full", segment.barClass)}
+            />
+            {segment.label}
+            <b className="stat-number font-bold tabular-nums text-white">
+              {segment.value}
+            </b>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
