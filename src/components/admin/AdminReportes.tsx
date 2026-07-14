@@ -863,19 +863,39 @@ function KpiCard({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-sm)] border p-4",
+        "group relative overflow-hidden rounded-[var(--radius-md)] border p-4 shadow-card transition-all duration-[var(--duration-fast)] ease-[var(--ease-out-soft)] hover:-translate-y-0.5",
         highlight
-          ? "border-[color:var(--border-default)] bg-[color:var(--surface-1)]"
-          : "border-[color:var(--border-subtle)]",
+          ? "border-[color:var(--brand-gold)]/25 bg-[color:var(--surface-1)] hover:border-[color:var(--brand-gold)]/40"
+          : "border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] hover:border-[color:var(--brand-gold)]/25",
       )}
+      style={
+        highlight
+          ? {
+              backgroundImage:
+                "radial-gradient(120% 130% at 0% 0%, rgba(201,162,62,0.14), rgba(201,162,62,0.03) 26%, transparent 52%)",
+            }
+          : undefined
+      }
     >
+      {highlight ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent, rgba(226,194,102,0.7), transparent)",
+          }}
+        />
+      ) : null}
       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
         {label}
       </p>
       <p
         className={cn(
           "mt-1 font-mono text-2xl font-black tabular-nums leading-none sm:text-3xl",
-          highlight ? "text-[color:var(--brand-gold)]" : "text-white",
+          highlight
+            ? "w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-transparent"
+            : "text-white",
         )}
       >
         {value}
