@@ -128,7 +128,7 @@ function BannerBase({
     <div
       role="status"
       className={cn(
-        "sticky top-0 z-30 flex flex-wrap items-center gap-3 border-b px-4 py-2 sm:px-6",
+        "flex flex-wrap items-center gap-3 border-b px-4 py-2 sm:px-6",
         toneClasses[tone],
       )}
     >

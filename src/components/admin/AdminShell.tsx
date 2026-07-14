@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 import { LastContextTracker } from "@/components/pwa/LastContextTracker";
 import { getBarbershopPlan } from "@/lib/plan-access";
-import { AdminSidebar } from "./AdminSidebar";
+import { AdminChrome } from "./AdminChrome";
 import { PlanProvider, type SerializedPlan } from "./PlanContext";
-import { PlanStatusBanner } from "./PlanStatusBanner";
 
 type AdminShellProps = {
   children: ReactNode;
@@ -42,23 +41,16 @@ export async function AdminShell({
 
   return (
     <PlanProvider plan={serializedPlan}>
-      <div className="min-h-screen bg-black text-white lg:flex">
-        {/* PWA: registra que el usuario está en el admin de esta barbería
-            para que al abrir la PWA del home screen lo traiga acá. */}
-        <LastContextTracker slug={barbershopSlug} role="admin" />
+      {/* PWA: registra que el usuario está en el admin de esta barbería
+          para que al abrir la PWA del home screen lo traiga acá. */}
+      <LastContextTracker slug={barbershopSlug} role="admin" />
 
-        <AdminSidebar
-          barbershopSlug={barbershopSlug}
-          barbershopName={barbershopName}
-        />
-
-        <main className="min-w-0 flex-1">
-          <PlanStatusBanner barbershopSlug={barbershopSlug} />
-          <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
-            {children}
-          </div>
-        </main>
-      </div>
+      <AdminChrome
+        barbershopSlug={barbershopSlug}
+        barbershopName={barbershopName}
+      >
+        {children}
+      </AdminChrome>
     </PlanProvider>
   );
 }
