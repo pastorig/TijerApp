@@ -993,7 +993,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
               <button
                 type="button"
                 onClick={() => handleSelectClient(client)}
-                className="flex w-full items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 text-left transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40"
+                className="hover-lift group flex w-full items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 text-left shadow-card transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40"
               >
                 <div
                   aria-hidden="true"

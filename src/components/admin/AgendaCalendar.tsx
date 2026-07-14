@@ -391,9 +391,9 @@ function DayCell({
         // vista semanal colapsada y mensual expandida. Antes el aspect-square
         // en desktop hacía cells de ~80px de alto, recortadas por el maxHeight
         // del contenedor, dejando el número visualmente en la parte inferior.
-        "relative flex h-12 items-center justify-center rounded-[var(--radius-sm)] font-mono text-xs font-bold tabular-nums transition-colors duration-[var(--duration-fast)] sm:h-14 sm:text-sm",
+        "relative flex h-12 items-center justify-center rounded-[var(--radius-sm)] font-mono text-xs font-bold tabular-nums transition-all duration-[var(--duration-fast)] sm:h-14 sm:text-sm",
         isFocused
-          ? "bg-gold-grad text-black"
+          ? "z-10 scale-[1.04] bg-gold-grad text-black shadow-[0_8px_18px_-6px_var(--brand-gold-ring)] ring-1 ring-[color:var(--brand-gold-hi)]/60"
           : isToday
             ? "border border-[color:var(--brand-gold)] text-[color:var(--brand-gold)]"
             : inCurrentMonth
