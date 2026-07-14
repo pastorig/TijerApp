@@ -157,6 +157,20 @@ export function groupIsActive(
   return visibleItems(group, canUse).some((item) => itemIsActive(item, pathname));
 }
 
+/**
+ * Grupo (sección) activo según la ruta actual. Usado tanto por la barra
+ * superior (para mostrar el nombre de la sección) como por las subpestañas.
+ */
+export function getActiveGroup(
+  barbershopSlug: string,
+  pathname: string,
+  canUse: CanUseFeature,
+): AdminNavGroup | undefined {
+  return getAdminNavGroups(barbershopSlug).find((group) =>
+    groupIsActive(group, pathname, canUse),
+  );
+}
+
 /** Href por defecto de un grupo = su primer item visible. */
 export function groupDefaultHref(
   group: AdminNavGroup,

@@ -34,7 +34,7 @@ export function AdminSubtabs({ barbershopSlug }: { barbershopSlug: string }) {
   if (items.length < 2) return null;
 
   return (
-    <div className="border-b border-[color:var(--border-subtle)] bg-black/95">
+    <div className="sticky top-14 z-30 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-6xl gap-1 overflow-x-auto px-4 sm:px-8 lg:px-12">
         {items.map((item) => {
           const active = itemIsActive(item, pathname);
