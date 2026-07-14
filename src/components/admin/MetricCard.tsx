@@ -27,7 +27,7 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--brand-gold)]/12 bg-[color:var(--surface-1)] p-4 transition-all duration-[var(--duration-base)] ease-[var(--ease-out-soft)] hover:-translate-y-0.5 hover:border-[color:var(--brand-gold)]/35 sm:p-5",
+        "group relative overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--brand-gold)]/20 bg-[color:var(--surface-1)] p-4 transition-all duration-[var(--duration-base)] ease-[var(--ease-out-soft)] hover:-translate-y-0.5 hover:border-[color:var(--brand-gold)]/40 sm:p-5",
         className,
       )}
       style={{
@@ -42,7 +42,7 @@ export function MetricCard({
         className="pointer-events-none absolute inset-x-0 top-0 h-px"
         style={{
           background:
-            "linear-gradient(90deg, transparent, rgba(201,162,62,0.55), transparent)",
+            "linear-gradient(90deg, transparent, rgba(226,194,102,0.75), transparent)",
         }}
       />
       <div className="flex items-center justify-between gap-2">

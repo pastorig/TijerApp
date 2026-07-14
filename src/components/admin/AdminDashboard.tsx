@@ -1043,9 +1043,9 @@ function QuickActionIcon({
     <Link
       href={href}
       title={label}
-      className="group flex aspect-square min-h-[68px] flex-col items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] px-2 py-2 text-[color:var(--text-secondary)] transition-all duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)]/40 hover:bg-[color:var(--brand-gold-soft)] hover:text-[color:var(--brand-gold)] sm:aspect-auto sm:min-h-[80px]"
+      className="hover-lift group flex aspect-square min-h-[68px] flex-col items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-2 py-2 text-[color:var(--text-secondary)] shadow-card transition-colors duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)]/40 hover:text-[color:var(--brand-gold)] sm:aspect-auto sm:min-h-[80px]"
     >
-      <span className="text-[color:var(--text-subtle)] transition-colors group-hover:text-[color:var(--brand-gold)]">
+      <span className="flex size-9 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/25 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105">
         {icon}
       </span>
       <span className="text-center text-[9px] font-bold uppercase tracking-[0.14em] leading-tight sm:text-[10px]">
