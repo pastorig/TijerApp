@@ -167,7 +167,7 @@ export function AdminTeamManager({ barbershop }: Props) {
 
       {/* Invitar nuevo admin */}
       {iAmOwner ? (
-        <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 sm:p-6">
+        <section className="card-premium p-5 sm:p-6">
           <h2 className="text-lg font-black uppercase tracking-tight">
             Invitar admin
           </h2>
@@ -204,7 +204,7 @@ export function AdminTeamManager({ barbershop }: Props) {
       ) : null}
 
       {/* Lista actual */}
-      <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 sm:p-6">
+      <section className="card-premium p-5 sm:p-6">
         <h2 className="text-lg font-black uppercase tracking-tight">
           Admins actuales ({admins.length}/{maxAdmins})
         </h2>

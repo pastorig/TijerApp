@@ -312,7 +312,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
             return (
               <li
                 key={photo.id}
-                className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)]"
+                className="card-premium overflow-hidden"
               >
                 <div className="relative aspect-[4/3] w-full bg-black">
                   <Image

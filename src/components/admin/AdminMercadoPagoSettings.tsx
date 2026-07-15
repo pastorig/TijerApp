@@ -402,10 +402,8 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
           {/* Toggle principal */}
           <section
             className={cn(
-              "rounded-[var(--radius-md)] border bg-[color:var(--surface-1)] p-5 sm:p-6",
-              mpEnabled
-                ? "border-[color:var(--brand-gold)]/40 ring-1 ring-[color:var(--brand-gold)]/20"
-                : "border-[color:var(--border-subtle)]",
+              "card-premium p-5 sm:p-6",
+              mpEnabled && "card-premium-glow",
             )}
           >
             <label className="flex cursor-pointer items-start gap-3">
@@ -434,7 +432,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
 
           {/* Credenciales MP — fallback manual (colapsado por defecto) */}
           {showManual ? (
-          <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 sm:p-6">
+          <section className="card-premium p-5 sm:p-6">
             <h2 className="text-lg font-black uppercase tracking-tight">
               Credenciales de Mercado Pago
             </h2>
@@ -573,7 +571,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
           ) : null}
 
           {/* Config de seña */}
-          <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 sm:p-6">
+          <section className="card-premium p-5 sm:p-6">
             <h2 className="text-lg font-black uppercase tracking-tight">
               Configuración de la seña
             </h2>
