@@ -114,6 +114,34 @@ export function isNoShowReason(reason: string | null | undefined): boolean {
 }
 
 /**
+ * Fuente ÚNICA de verdad de qué cuenta como una "visita" a los fines de las
+ * estadísticas del cliente (recuento de visitas, VIP/recurrente, LTV, etc.).
+ *
+ * Una visita = turno CONFIRMADO cuya fecha ya llegó (<= hoy).
+ *
+ * Antes se contaba "cualquier turno no cancelado con fecha pasada", lo que
+ * inflaba el número: los turnos `pending` (que el barbero NUNCA confirmó — el
+ * cliente reservó online y quedó sin confirmar, pudo no haber venido) sumaban
+ * como visita. Al pasar la fecha, un turno reservado y nunca confirmado hacía
+ * subir el conteo de más y empujaba al cliente a un segmento que no le
+ * corresponde (ej. 2 confirmadas mostradas como 3 → "Recurrente").
+ *
+ * Importante: usar SIEMPRE este helper donde se cuenten visitas, para que la
+ * lista y el detalle del cliente nunca den números distintos.
+ *
+ * @param status estado del turno (pending | confirmed | cancelled | deleted)
+ * @param appointmentDateIso fecha del turno normalizada "yyyy-mm-dd"
+ * @param todayIso hoy "yyyy-mm-dd"
+ */
+export function isCompletedVisit(
+  status: string,
+  appointmentDateIso: string,
+  todayIso: string,
+): boolean {
+  return status === "confirmed" && appointmentDateIso <= todayIso;
+}
+
+/**
  * Calcula el segmento de un cliente a partir de:
  * - visits: cantidad de visitas activas (no canceladas, no eliminadas).
  * - daysSinceLastVisit: días desde la última visita, o null si nunca vino.

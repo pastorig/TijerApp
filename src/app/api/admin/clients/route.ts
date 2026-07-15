@@ -115,3 +115,52 @@ export async function PATCH(request: Request) {
 
   return NextResponse.json({ ok: true, client });
 }
+
+/**
+ * Borra (soft-delete) un cliente: marca `deleted_at`. NO toca los turnos
+ * (el historial se preserva); el cliente simplemente deja de aparecer en el
+ * listado (listClientsByBarbershop filtra deleted_at IS NULL). Si el mismo
+ * teléfono vuelve a reservar, el trigger de DB recrea/reactiva el cliente.
+ */
+export async function DELETE(request: Request) {
+  let payload: Record<string, unknown>;
+  try {
+    payload = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return NextResponse.json({ error: "Body inválido." }, { status: 400 });
+  }
+
+  const clientId = typeof payload.clientId === "string" ? payload.clientId : "";
+  const barbershopSlug =
+    typeof payload.barbershopSlug === "string" ? payload.barbershopSlug : "";
+  if (!clientId || !barbershopSlug) {
+    return NextResponse.json({ error: "Faltan parámetros." }, { status: 400 });
+  }
+
+  const auth = await assertAdminOfBarbershop(
+    request.headers.get("authorization"),
+    barbershopSlug,
+  );
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const supabaseAdmin = getSupabaseAdminClient();
+  const { error: deleteError } = await supabaseAdmin
+    .from("barbershop_clients")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", clientId)
+    .eq("barbershop_slug", barbershopSlug)
+    .is("deleted_at", null);
+
+  if (deleteError) {
+    Sentry.captureException(deleteError);
+    console.error("[clients] delete error", deleteError);
+    return NextResponse.json(
+      { error: "No pudimos eliminar el cliente." },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json({ ok: true });
+}

@@ -10,6 +10,7 @@ import {
   Phone,
   Scissors,
   Search,
+  Trash2,
   TrendingUp,
   Upload,
   UserRound,
@@ -17,7 +18,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { ImportClientsModal } from "@/components/admin/ImportClientsModal";
-import { useToast } from "@/components/ui";
+import { useConfirm, useToast } from "@/components/ui";
 import {
   ClientTagsEditor,
   getTagTone,
@@ -33,6 +34,7 @@ import {
 } from "@/lib/barbershop-clients";
 import {
   computeSegment,
+  isCompletedVisit,
   isNoShowReason,
   daysBetween,
   SEGMENT_META,
@@ -70,6 +72,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
   );
   const [isImportOpen, setIsImportOpen] = useState(false);
   const toast = useToast();
+  const confirm = useConfirm();
 
   useEffect(() => {
     let isMounted = true;
@@ -117,12 +120,14 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
     const todayIso = new Date().toISOString().slice(0, 10);
     return clients.map((client) => {
       const appts = appointmentsByClient.get(client.phone_normalized) ?? [];
-      // Visitas "completadas" = no canceladas, no eliminadas, fecha <= hoy.
-      const completedVisits = appts.filter(
-        (a) =>
-          a.status !== "cancelled" &&
-          a.status !== "deleted" &&
-          normalizeDateValue(a.appointment_date) <= todayIso,
+      // Visitas = turnos CONFIRMADOS con fecha <= hoy (ver isCompletedVisit).
+      // Los 'pending' (reservados y nunca confirmados) NO cuentan.
+      const completedVisits = appts.filter((a) =>
+        isCompletedVisit(
+          a.status,
+          normalizeDateValue(a.appointment_date),
+          todayIso,
+        ),
       );
       const visits = completedVisits.length;
       // Cuenta de turnos cancelados marcados como "Cliente no vino" — el
@@ -192,11 +197,26 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
   // (≥8 dígitos). El trigger de DB los ignora, así que quedan sin cliente
   // asociado y son invisibles en este listado. Le avisamos al admin para
   // que sepa que existen — y se evita la sorpresa de "faltan clientes".
-  const orphanAppointmentsCount = useMemo(() => {
+  const orphanAppointments = useMemo(() => {
     return appointments.filter(
       (a) => a.status !== "deleted" && !normalizePhone(a.customer_phone),
-    ).length;
+    );
   }, [appointments]);
+
+  // Nombres distintos de los turnos huérfanos, para nombrarlos en el aviso.
+  const orphanNames = useMemo(() => {
+    const seen = new Set<string>();
+    const names: string[] = [];
+    for (const a of orphanAppointments) {
+      const label = (a.customer_name ?? "").trim() || "(sin nombre)";
+      const phone = (a.customer_phone ?? "").trim();
+      const key = `${label}|${phone}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      names.push(phone ? `${label} (tel: ${phone})` : `${label} (sin teléfono)`);
+    }
+    return names;
+  }, [orphanAppointments]);
 
   const filteredClients = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -237,11 +257,12 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
   const selectedClientInsights = useMemo(() => {
     if (!selectedClient) return null;
     const todayIso = new Date().toISOString().slice(0, 10);
-    const completed = selectedClientAppointments.filter(
-      (a) =>
-        a.status !== "cancelled" &&
-        a.status !== "deleted" &&
-        normalizeDateValue(a.appointment_date) <= todayIso,
+    const completed = selectedClientAppointments.filter((a) =>
+      isCompletedVisit(
+        a.status,
+        normalizeDateValue(a.appointment_date),
+        todayIso,
+      ),
     );
 
     if (completed.length === 0) {
@@ -432,6 +453,61 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
       });
     } catch {
       toast.error("No pudimos guardar.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!selectedClient) return;
+    const { client } = selectedClient;
+    const label = client.name?.trim() || client.phone_display || "este cliente";
+    const ok = await confirm({
+      title: "Eliminar cliente",
+      body: (
+        <>
+          Vas a eliminar a <strong className="text-white">{label}</strong> de tu
+          lista de clientes. El historial de turnos se conserva. Si el mismo
+          teléfono vuelve a reservar, el cliente se vuelve a crear solo.
+        </>
+      ),
+      danger: true,
+      confirmLabel: "Eliminar",
+      cancelLabel: "Cancelar",
+    });
+    if (!ok) return;
+
+    setIsSaving(true);
+    try {
+      const { data: sessionData } = await getCurrentSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        toast.error("Tu sesión expiró, volvé a iniciar sesión.");
+        return;
+      }
+      const response = await fetch("/api/admin/clients", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          clientId: client.id,
+          barbershopSlug: barbershop.slug,
+        }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        toast.error(payload.error ?? "No pudimos eliminar el cliente.");
+        return;
+      }
+      setClients((current) => current.filter((c) => c.id !== client.id));
+      setSelectedClientId(null);
+      toast.success("Cliente eliminado", { description: label });
+    } catch {
+      toast.error("No pudimos eliminar el cliente.");
     } finally {
       setIsSaving(false);
     }
@@ -685,6 +761,15 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
               >
                 Reservar nuevo turno
               </Link>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isSaving}
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60 sm:ml-auto"
+              >
+                <Trash2 aria-hidden="true" className="size-3.5" />
+                Eliminar cliente
+              </button>
             </div>
           </div>
         </section>
@@ -809,7 +894,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
       </div>
 
       {/* Alerta de turnos huérfanos — teléfonos inválidos que no generaron cliente */}
-      {orphanAppointmentsCount > 0 && !isLoading ? (
+      {orphanAppointments.length > 0 && !isLoading ? (
         <div className="flex flex-wrap items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--text-subtle)]/30 bg-[color:var(--surface-1)] p-4">
           <AlertTriangle
             aria-hidden="true"
@@ -820,11 +905,31 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
               Turnos sin cliente asociado
             </p>
             <p className="mt-1 text-xs text-[color:var(--text-secondary)] sm:text-sm">
-              Hay <strong className="text-white">{orphanAppointmentsCount}</strong>{" "}
-              turno{orphanAppointmentsCount === 1 ? "" : "s"} con teléfono inválido
-              (menos de 8 dígitos). No aparecen acá porque el sistema identifica
-              clientes por número. Las próximas reservas ya validan el teléfono
-              automáticamente.
+              Hay{" "}
+              <strong className="text-white">{orphanAppointments.length}</strong>{" "}
+              turno{orphanAppointments.length === 1 ? "" : "s"} con teléfono
+              inválido (menos de 8 dígitos). No aparece
+              {orphanAppointments.length === 1 ? "" : "n"} acá porque el sistema
+              identifica clientes por número.
+            </p>
+            <ul className="mt-2 grid gap-1">
+              {orphanNames.map((n) => (
+                <li
+                  key={n}
+                  className="flex items-start gap-1.5 text-xs text-white"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="mt-1 size-1 shrink-0 rounded-full bg-[color:var(--brand-gold)]"
+                  />
+                  {n}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-[11px] leading-5 text-[color:var(--text-muted)]">
+              Para incluirlo{orphanAppointments.length === 1 ? "" : "s"} en tus
+              clientes, editá ese turno y cargá un teléfono válido. Las próximas
+              reservas ya validan el teléfono automáticamente.
             </p>
           </div>
         </div>
