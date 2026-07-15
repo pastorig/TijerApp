@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Check, Crown, Sparkles } from "lucide-react";
-import { Button, Card } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
 
 type BillingCycle = "monthly" | "annual";
@@ -183,25 +183,29 @@ export function PricingPlans() {
           {PLANS.map((plan) => {
             const { display, perPeriod } = getPrice(plan);
             return (
-              <Card
+              <div
                 key={plan.id}
-                variant={plan.highlight ? "elevated" : "default"}
-                padding="md"
                 className={cn(
-                  "hover-glow relative flex w-[85%] shrink-0 snap-center flex-col sm:w-auto sm:shrink sm:snap-align-none sm:p-8",
-                  plan.highlight &&
-                    "glow-gold-soft border-[color:var(--brand-gold)]/40 ring-1 ring-[color:var(--brand-gold)]/30",
+                  "card-premium card-premium-hover relative flex w-[85%] shrink-0 snap-center flex-col p-6 sm:w-auto sm:shrink sm:snap-align-none sm:p-8",
+                  plan.highlight && "card-premium-glow",
                 )}
               >
                 {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gold-grad px-3 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-black">
+                  <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-gold-grad px-3 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-black shadow-[0_6px_20px_-6px_rgba(201,162,62,0.7)]">
                     Más elegido
                   </div>
                 )}
 
                 <header>
                   <div className="flex items-baseline justify-between">
-                    <h3 className="text-2xl font-black uppercase tracking-tight text-white">
+                    <h3
+                      className={cn(
+                        "text-2xl font-black uppercase tracking-tight",
+                        plan.highlight
+                          ? "text-gold-gradient"
+                          : "text-white",
+                      )}
+                    >
                       {plan.name}
                     </h3>
                     {plan.id === "pro" && (
@@ -217,7 +221,12 @@ export function PricingPlans() {
                 </header>
 
                 <div className="mt-6 flex items-baseline gap-2">
-                  <span className="text-4xl font-black tracking-tight text-white sm:text-5xl">
+                  <span
+                    className={cn(
+                      "text-4xl font-black tracking-tight sm:text-5xl",
+                      plan.highlight ? "text-gold-gradient" : "text-white",
+                    )}
+                  >
                     {display}
                   </span>
                 </div>
@@ -281,7 +290,7 @@ export function PricingPlans() {
                     14 días gratis · Sin tarjeta
                   </p>
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>
@@ -354,7 +363,7 @@ export function FoundersProgram() {
           ].map((perk) => (
             <li
               key={perk.title}
-              className="hover-glow rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-3 sm:p-6"
+              className="card-premium card-premium-hover p-3 sm:p-6"
             >
               <div className="flex items-start gap-2 sm:gap-3">
                 <Check

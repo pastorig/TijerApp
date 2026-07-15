@@ -736,13 +736,13 @@ option:hover {
   );
   pointer-events: none;
 }
-.card-premium-hover:hover {
-  transform: translateY(-3px);
+/* Card premium destacada (plan recomendado): glow dorado + anillo. */
+.card-premium-glow {
   border-color: var(--brand-gold-ring);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 30px 62px -28px rgba(0, 0, 0, 0.95),
-    0 0 44px -18px rgba(201, 162, 62, 0.34);
+    0 30px 60px -26px rgba(0, 0, 0, 0.95),
+    0 0 64px -22px rgba(201, 162, 62, 0.5);
 }
 
 /* "Pantalla" interna donde vive la mini-viz de cada card. */
@@ -798,6 +798,17 @@ option:hover {
 .reveal.is-visible {
   opacity: 1;
   transform: none;
+}
+
+/* Hover de la card premium — DESPUÉS de .reveal.is-visible a propósito:
+   igual especificidad, así el lift en hover gana sobre transform:none. */
+.card-premium-hover:hover {
+  transform: translateY(-3px);
+  border-color: var(--brand-gold-ring);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 30px 62px -28px rgba(0, 0, 0, 0.95),
+    0 0 44px -18px rgba(201, 162, 62, 0.34);
 }
 
 /* Barra vertical animada (crece desde abajo) — para mini bar charts. */

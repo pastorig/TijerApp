@@ -1,4 +1,5 @@
 import { CalendarCheck, Settings2, Smartphone } from "lucide-react";
+import { Reveal } from "./ui/Reveal";
 
 const STEPS = [
   {
@@ -46,20 +47,23 @@ export function HomeHowItWorks() {
                 "linear-gradient(to right, transparent, var(--brand-gold-ring) 15%, var(--brand-gold-ring) 85%, transparent)",
             }}
           />
-          {STEPS.map((step) => {
+          {STEPS.map((step, index) => {
             const Icon = step.icon;
             return (
-              <li
+              <Reveal
+                as="li"
                 key={step.number}
-                className="relative rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-6"
+                delay={index * 90}
+                className="card-premium card-premium-hover group relative p-6"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-mono text-2xl font-black tabular-nums leading-none text-[color:var(--brand-gold)]">
+                  <span className="font-mono text-3xl font-black tabular-nums leading-none text-gold-gradient">
                     {step.number}
                   </span>
                   <span
                     aria-hidden="true"
-                    className="relative z-10 flex size-11 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
+                    className="relative z-10 flex size-11 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105"
+                    style={{ boxShadow: "0 0 22px -8px rgba(201,162,62,0.6)" }}
                   >
                     <Icon className="size-5" />
                   </span>
@@ -70,7 +74,7 @@ export function HomeHowItWorks() {
                 <p className="mt-3 text-sm leading-6 text-[color:var(--text-muted)]">
                   {step.body}
                 </p>
-              </li>
+              </Reveal>
             );
           })}
         </ol>

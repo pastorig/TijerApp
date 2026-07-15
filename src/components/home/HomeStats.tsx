@@ -1,4 +1,5 @@
 import { BellRing, CalendarCheck, Clock, Smartphone } from "lucide-react";
+import { Reveal } from "./ui/Reveal";
 
 /**
  * Tira de beneficios de la home (debajo del hero). Reemplazó a las 4 métricas
@@ -47,16 +48,19 @@ export function HomeStats() {
       />
       <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20">
         <ul className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-          {BENEFITS.map((benefit) => {
+          {BENEFITS.map((benefit, index) => {
             const Icon = benefit.icon;
             return (
-              <li
+              <Reveal
+                as="li"
                 key={benefit.title}
-                className="flex flex-col items-start gap-2 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 sm:p-5"
+                delay={(index % 4) * 70}
+                className="card-premium card-premium-hover group flex flex-col items-start gap-2 p-4 sm:p-5"
               >
                 <div
                   aria-hidden="true"
-                  className="flex size-9 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] sm:size-10"
+                  className="flex size-9 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105 sm:size-10"
+                  style={{ boxShadow: "0 0 20px -8px rgba(201,162,62,0.6)" }}
                 >
                   <Icon className="size-4 sm:size-5" />
                 </div>
@@ -66,7 +70,7 @@ export function HomeStats() {
                 <p className="text-xs leading-5 text-[color:var(--text-secondary)] sm:text-sm">
                   {benefit.caption}
                 </p>
-              </li>
+              </Reveal>
             );
           })}
         </ul>
