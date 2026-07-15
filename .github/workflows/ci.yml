@@ -27,7 +27,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 22: requerido por `node --experimental-strip-types` (test:unit).
+          node-version: 22
           # Cache automático de node_modules basado en package-lock.json
           # Acelera builds posteriores de ~60s a ~10s
           cache: npm
@@ -42,6 +43,10 @@ jobs:
         # noEmit = solo verificar tipos, no generar JS
         # Esto detecta los bugs tipo mismatch que tuvimos hoy con el RPC
         run: npx tsc --noEmit
+
+      - name: Unit tests (lógica pura)
+        # Seña + gating de plan + fechas de facturación. Sin DB ni red.
+        run: npm run test:unit
 
       - name: Build (next build)
         # Necesita env vars públicas dummy para no fallar al cargar módulos.
