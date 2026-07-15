@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { assertPlanFeature } from "@/lib/api-plan-guard";
 
 export const runtime = "nodejs";
 
@@ -84,6 +85,11 @@ export async function POST(request: Request) {
   );
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const gate = await assertPlanFeature(barbershopSlug, "push_notifications");
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
   }
 
   const supabaseAdmin = getSupabaseAdminClient();

@@ -7,6 +7,7 @@ import {
   upsertLoyaltyProgram,
 } from "@/lib/loyalty";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { assertPlanFeature } from "@/lib/api-plan-guard";
 
 export const runtime = "nodejs";
 
@@ -68,6 +69,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
+  const gate = await assertPlanFeature(barbershopSlug, "fidelizacion");
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
+  }
+
   try {
     const program = await getLoyaltyProgram(barbershopSlug);
     if (action === "customers") {
@@ -109,6 +115,11 @@ export async function PATCH(request: Request) {
   );
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const gate = await assertPlanFeature(barbershopSlug, "fidelizacion");
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
   }
 
   const patch: {
@@ -197,6 +208,11 @@ export async function POST(request: Request) {
   );
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const gate = await assertPlanFeature(barbershopSlug, "fidelizacion");
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
   }
 
   try {
