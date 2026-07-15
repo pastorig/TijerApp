@@ -1143,21 +1143,23 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   return (
     <div className="min-w-0">
       <section className="min-w-0">
-        <header className="mb-8 animate-fade-up">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
-            Turnero
-          </p>
-          <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
-            Agenda de {barbershop.name}
-          </h1>
-          <p className="mt-3 max-w-xl text-sm text-[color:var(--text-secondary)] sm:text-base">
-            Gestiona las reservas del dia. Confirmar y enviar WhatsApp son
-            acciones separadas.
-          </p>
+        <header className="mb-8 flex animate-fade-up flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
+              Turnero
+            </p>
+            <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
+              Agenda de {barbershop.name}
+            </h1>
+            <p className="mt-3 max-w-xl text-sm text-[color:var(--text-secondary)] sm:text-base">
+              Gestiona las reservas del dia. Confirmar y enviar WhatsApp son
+              acciones separadas.
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => setIsManualModalOpen(true)}
-            className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-all duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)] hover:bg-[color:var(--brand-gold)]/15"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-all duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)] hover:bg-[color:var(--brand-gold)]/15"
           >
             <CalendarPlus className="size-4" aria-hidden="true" />
             Agregar turno
