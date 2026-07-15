@@ -23,14 +23,14 @@ type ManualAppointmentModalProps = {
 };
 
 /**
- * Modal para que el barbero agregue un turno MANUAL, incluso FUERA del
- * horario de atención configurado. No valida el horario laboral: si el
- * turno cae antes de abrir o después de cerrar, igual se crea y en el
- * turnero aparece la advertencia de "fuera de horario" que ya existe.
+ * Modal para que el barbero agregue un turno MANUAL a cualquier hora: dentro
+ * de su horario de atención o fuera de él. El campo de hora es libre y no se
+ * valida contra el horario laboral — si el turno cae antes de abrir o después
+ * de cerrar, igual se crea y en el turnero aparece la advertencia de "fuera de
+ * horario" que ya existe. El turno entra confirmado (autoConfirm).
  *
- * Pensado para esos casos en que el barbero quiere encajar un corte
- * antes o después de su horario habitual sin tener que ir a la sección
- * de barberos a estirar la agenda.
+ * Cubre tanto "encajar un corte fuera del horario" como "cargar a mano un
+ * turno de alguien que vino sin reservar por la app".
  */
 export function ManualAppointmentModal({
   isOpen,
@@ -173,7 +173,7 @@ export function ManualAppointmentModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Agregar turno fuera de horario"
+      aria-label="Agregar turno"
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -183,10 +183,10 @@ export function ManualAppointmentModal({
         <div className="flex items-center justify-between border-b border-[color:var(--border-subtle)] px-5 py-4">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
-              Turno fuera de horario
+              Agregar turno
             </p>
             <p className="mt-0.5 text-[11px] text-[color:var(--text-muted)]">
-              Encajá un corte antes o después de tu horario, sin tocar la agenda.
+              Cargá un turno a mano, en tu horario o fuera de él.
             </p>
           </div>
           <button

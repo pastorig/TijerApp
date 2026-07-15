@@ -1160,7 +1160,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
             className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-all duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)] hover:bg-[color:var(--brand-gold)]/15"
           >
             <CalendarPlus className="size-4" aria-hidden="true" />
-            Turno fuera de horario
+            Agregar turno
           </button>
         </header>
 
