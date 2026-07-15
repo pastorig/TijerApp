@@ -179,7 +179,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
       </header>
 
       {/* Formulario crear cupón */}
-      <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 sm:p-6">
+      <section className="card-premium p-5 sm:p-6">
         <h2 className="text-lg font-black uppercase tracking-tight">
           Nuevo cupón
         </h2>
@@ -303,7 +303,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
       </section>
 
       {/* Lista de cupones */}
-      <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 sm:p-6">
+      <section className="card-premium p-5 sm:p-6">
         <h2 className="text-lg font-black uppercase tracking-tight">
           Cupones existentes
         </h2>

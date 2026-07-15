@@ -293,7 +293,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
           onSubmit={handleSubmit}
           className="mt-5 grid gap-4 lg:grid-cols-[1.05fr_0.95fr] lg:items-start"
         >
-          <section className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-4 shadow-2xl shadow-black/20 sm:p-5">
+          <section className="card-premium p-4 sm:p-5">
             <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
               Identidad pública
             </p>
@@ -485,7 +485,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
           </section>
 
           <section className="grid gap-4">
-            <article className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-4 shadow-2xl shadow-black/20 sm:p-5">
+            <article className="card-premium p-4 sm:p-5">
               <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
                 Horarios base
               </p>
@@ -568,7 +568,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
               </div>
             </article>
 
-            <article className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-4 shadow-2xl shadow-black/20 sm:p-5">
+            <article className="card-premium p-4 sm:p-5">
               <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
                 Estado
               </p>
@@ -651,7 +651,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
               </label>
             </article>
 
-            <article className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-4 shadow-2xl shadow-black/20 sm:p-5">
+            <article className="card-premium p-4 sm:p-5">
               <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
                 Mensaje de WhatsApp al cliente
               </p>

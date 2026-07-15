@@ -519,7 +519,7 @@ export function OwnerDashboard() {
               <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
                 Totales de plataforma
               </p>
-              <div className="mt-3 grid grid-cols-2 overflow-hidden rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] sm:grid-cols-4">
+              <div className="card-premium mt-3 grid grid-cols-2 overflow-hidden sm:grid-cols-4">
                 {platformTotals.map((card, i) => (
                   <div
                     key={card.label}
@@ -679,7 +679,7 @@ export function OwnerDashboard() {
                     return (
                       <article
                         key={barbershop.slug}
-                        className="overflow-hidden rounded-[var(--radius-md)] border border-white/[0.06] bg-[color:var(--surface-1)] hover-lift"
+                        className="card-premium card-premium-hover overflow-hidden"
                       >
                         <div className="p-4 sm:p-5">
                           {/* Header: nombre + health badge + kebab */}

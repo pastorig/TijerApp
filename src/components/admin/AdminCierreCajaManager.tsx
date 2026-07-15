@@ -626,10 +626,8 @@ function KpiCard({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-sm)] border p-4",
-        highlight
-          ? "border-[color:var(--border-default)] bg-[color:var(--surface-1)]"
-          : "border-[color:var(--border-subtle)]",
+        "card-premium card-premium-hover p-4",
+        highlight && "card-premium-glow",
       )}
     >
       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
@@ -638,7 +636,7 @@ function KpiCard({
       <p
         className={cn(
           "mt-1 font-mono text-2xl font-black tabular-nums leading-none sm:text-3xl",
-          highlight ? "text-[color:var(--brand-gold)]" : "text-white",
+          highlight ? "text-gold-gradient" : "text-white",
         )}
       >
         {value}

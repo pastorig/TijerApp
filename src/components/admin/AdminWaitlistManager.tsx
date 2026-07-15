@@ -285,10 +285,10 @@ export function AdminWaitlistManager({ barbershop }: AdminWaitlistManagerProps) 
               <li
                 key={entry.id}
                 className={cn(
-                  "rounded-[var(--radius-md)] border bg-[color:var(--surface-1)] p-4",
+                  "card-premium p-4",
                   isPending
-                    ? "border-[color:var(--brand-gold)]/30"
-                    : "border-[color:var(--border-subtle)] opacity-70",
+                    ? "card-premium-hover"
+                    : "opacity-70",
                 )}
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-3">

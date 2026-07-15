@@ -249,10 +249,8 @@ function InsightCard({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-sm)] border bg-[color:var(--surface-1)] px-3 py-2.5",
-        highlight
-          ? "border-[color:var(--brand-gold)]/40 ring-1 ring-[color:var(--brand-gold)]/20"
-          : "border-[color:var(--border-subtle)]",
+        "card-premium card-premium-hover px-3 py-2.5",
+        highlight && "card-premium-glow",
       )}
     >
       <div className="flex items-center gap-2.5">
@@ -270,7 +268,12 @@ function InsightCard({
             <p className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
               {label}
             </p>
-            <p className="stat-number text-base font-black tracking-tight text-white sm:text-lg">
+            <p
+              className={cn(
+                "stat-number text-base font-black tracking-tight sm:text-lg",
+                highlight ? "text-gold-gradient" : "text-white",
+              )}
+            >
               {value}
             </p>
           </div>
