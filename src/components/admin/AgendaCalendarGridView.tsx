@@ -930,18 +930,37 @@ export function AgendaCalendarGridView({
     ((nowMinutes - gridStartMin) / workingHours.intervalMinutes) *
     SLOT_HEIGHT_PX;
 
-  // Etiquetas de hora completa para la regla (izquierda).
+  // Marcas de la regla izquierda alineadas al INICIO de cada turno. Como los
+  // turnos caen según la duración del servicio (ej. cada 40' → 15:40, 16:20…),
+  // no coinciden con las horas enteras: sin esto un turno de 17:40 "pisa" la
+  // marca de las 18:00 y no se lee a qué hora es. Cada marca se ubica en el
+  // borde superior de su bloque (mismo `top`), así la hora queda pegada al turno.
+  const blockStartTicks: { min: number; top: number; label: string }[] = [];
+  const seenTickMin = new Set<number>();
+  for (const list of blocksByBarber.values()) {
+    for (const geo of list) {
+      const startMin = timeToMinutes(
+        geo.appointment.appointment_time.slice(0, 5),
+      );
+      if (seenTickMin.has(startMin)) continue;
+      seenTickMin.add(startMin);
+      blockStartTicks.push({
+        min: startMin,
+        top: geo.top,
+        label: minutesToTimeLabel(startMin),
+      });
+    }
+  }
+  blockStartTicks.sort((a, b) => a.min - b.min);
+
+  // Horas completas de referencia, pero omitimos las que quedan pegadas a una
+  // marca de turno (±18px) para no duplicar/encimar etiquetas.
   const hourLabels: { min: number; top: number; label: string }[] = [];
-  for (
-    let m = Math.ceil(gridStartMin / 60) * 60;
-    m <= gridEndMin;
-    m += 60
-  ) {
-    hourLabels.push({
-      min: m,
-      top: ((m - gridStartMin) / workingHours.intervalMinutes) * SLOT_HEIGHT_PX,
-      label: minutesToTimeLabel(m),
-    });
+  for (let m = Math.ceil(gridStartMin / 60) * 60; m <= gridEndMin; m += 60) {
+    const top =
+      ((m - gridStartMin) / workingHours.intervalMinutes) * SLOT_HEIGHT_PX;
+    if (blockStartTicks.some((t) => Math.abs(t.top - top) < 18)) continue;
+    hourLabels.push({ min: m, top, label: minutesToTimeLabel(m) });
   }
 
   const columnsMinWidth =
@@ -1038,15 +1057,32 @@ export function AgendaCalendarGridView({
               style={{ width: RULER_WIDTH_PX, height: gridHeight }}
             >
               <div className="relative h-full">
+                {/* Horas enteras: referencia tenue */}
                 {hourLabels.map((h) => (
                   <div
                     key={`hour-${h.min}`}
                     className="absolute right-2 -translate-y-1/2"
                     style={{ top: h.top }}
                   >
-                    <span className="font-mono text-[11px] font-bold text-white">
+                    <span className="font-mono text-[11px] text-[color:var(--text-muted)]">
                       {h.label}
                     </span>
+                  </div>
+                ))}
+                {/* Hora exacta de cada turno, alineada a su bloque */}
+                {blockStartTicks.map((t) => (
+                  <div
+                    key={`tick-${t.min}`}
+                    className="absolute right-1.5 flex -translate-y-1/2 items-center gap-1"
+                    style={{ top: t.top }}
+                  >
+                    <span className="font-mono text-[11px] font-bold text-[color:var(--brand-gold)]">
+                      {t.label}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className="h-1.5 w-1.5 rounded-full bg-[color:var(--brand-gold)]"
+                    />
                   </div>
                 ))}
                 {showNowLine && (
