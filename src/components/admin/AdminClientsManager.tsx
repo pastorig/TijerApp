@@ -330,6 +330,21 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
     };
   }, [selectedClient, selectedClientAppointments]);
 
+  // Nombres distintos que reservaron con ESTE número. Como los clientes se
+  // identifican por teléfono, si un mismo número lo usaron varias personas
+  // (ej. alguien reserva para todo un grupo), todos esos turnos se cuentan
+  // como visitas de este "cliente". Lo detectamos para avisar al barbero.
+  const selectedClientSharedNames = useMemo(() => {
+    const byLower = new Map<string, string>();
+    for (const a of selectedClientAppointments) {
+      const raw = (a.customer_name ?? "").trim();
+      if (!raw) continue;
+      const lower = raw.toLowerCase();
+      if (!byLower.has(lower)) byLower.set(lower, raw);
+    }
+    return [...byLower.values()];
+  }, [selectedClientAppointments]);
+
   function handleSelectClient(client: BarbershopClient) {
     setSelectedClientId(client.id);
     setEditedNotes(client.notes ?? "");
@@ -679,6 +694,40 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
               </p>
             ) : null}
           </section>
+        ) : null}
+
+        {/* Aviso: número compartido por varias personas */}
+        {selectedClientSharedNames.length > 1 ? (
+          <div className="flex flex-wrap items-start gap-3 rounded-[var(--radius-md)] border border-amber-400/30 bg-amber-400/5 p-4">
+            <AlertTriangle
+              aria-hidden="true"
+              className="size-5 shrink-0 text-amber-300"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300">
+                Número compartido
+              </p>
+              <p className="mt-1 text-xs leading-5 text-[color:var(--text-secondary)] sm:text-sm">
+                Con este teléfono reservaron{" "}
+                <strong className="text-white">
+                  {selectedClientSharedNames.length} personas distintas
+                </strong>
+                , así que las visitas de este cliente incluyen los turnos de
+                todas. Suele pasar cuando alguien reserva para un grupo con su
+                número.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {selectedClientSharedNames.map((n) => (
+                  <span
+                    key={n}
+                    className="inline-flex items-center rounded-[var(--radius-xs)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-1.5 py-0.5 text-[11px] text-[color:var(--text-secondary)]"
+                  >
+                    {n}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
         ) : null}
 
         {/* Editar nombre + notas */}

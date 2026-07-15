@@ -1,8 +1,15 @@
 import {
   getSupabaseClient,
   type AppointmentInsert,
+  type AppointmentRow,
 } from "@/lib/supabase";
 import { getBarberDayAvailability } from "@/lib/barber-availability";
+
+const APPOINTMENT_SELECT =
+  "id, barbershop_slug, barber_id, barber_name, customer_name, customer_phone, customer_email, service_name, service_price, service_duration_minutes, actual_duration_minutes, appointment_date, appointment_time, comment, status, created_at, confirmation_token, internal_notes, deposit_status, deposit_amount";
+
+/** Tope de filas por request de PostgREST/Supabase (default del proyecto). */
+const PAGE_SIZE = 1000;
 
 type AppointmentDraft = Omit<AppointmentInsert, "status">;
 type AppointmentAvailabilityInput = {
@@ -91,17 +98,40 @@ export async function updateAppointmentActualDuration(
     .single();
 }
 
+/**
+ * Trae TODOS los turnos de una barbería, paginando para saltar el tope de
+ * ~1000 filas por request de Supabase/PostgREST. Sin esto, una barbería con
+ * más de 1000 turnos recibía la lista truncada SIN error, y el recuento de
+ * visitas por cliente (que se calcula sobre esta lista) daba números
+ * incompletos/equivocados. La paginación garantiza el conteo correcto a
+ * cualquier escala.
+ */
 export async function listAppointmentsByBarbershop(barbershopSlug: string) {
-  const { data, error } = await getSupabaseClient()
-    .from("appointments")
-    .select(
-      "id, barbershop_slug, barber_id, barber_name, customer_name, customer_phone, customer_email, service_name, service_price, service_duration_minutes, actual_duration_minutes, appointment_date, appointment_time, comment, status, created_at, confirmation_token, internal_notes, deposit_status, deposit_amount",
-    )
-    .eq("barbershop_slug", barbershopSlug)
-    .order("appointment_date", { ascending: true })
-    .order("appointment_time", { ascending: true });
+  const client = getSupabaseClient();
+  const all: AppointmentRow[] = [];
+  let from = 0;
 
-  return { data, error };
+  // Loop acotado por seguridad (máx 100 páginas = 100k turnos) para que un
+  // bug jamás derive en un loop infinito.
+  for (let page = 0; page < 100; page++) {
+    const { data, error } = await client
+      .from("appointments")
+      .select(APPOINTMENT_SELECT)
+      .eq("barbershop_slug", barbershopSlug)
+      .order("appointment_date", { ascending: true })
+      .order("appointment_time", { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) {
+      return { data: null, error };
+    }
+    const rows = (data ?? []) as unknown as AppointmentRow[];
+    all.push(...rows);
+    if (rows.length < PAGE_SIZE) break; // última página
+    from += PAGE_SIZE;
+  }
+
+  return { data: all, error: null };
 }
 
 export async function listOccupiedAppointmentTimes({
