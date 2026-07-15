@@ -264,12 +264,12 @@ export function OwnerMessagesList() {
               <li
                 key={request.id}
                 className={cn(
-                  "relative rounded-[var(--radius-md)] border bg-[color:var(--surface-1)] p-5",
+                  "relative card-premium p-5",
                   isDeleted
-                    ? "border-[color:var(--border-subtle)] opacity-50"
+                    ? "opacity-50"
                     : isHandled
-                      ? "border-[color:var(--border-subtle)] opacity-60"
-                      : "border-[color:var(--brand-gold)]/30",
+                      ? "opacity-60"
+                      : "card-premium-hover",
                 )}
               >
                 {/* X para eliminar (solo en mensajes no eliminados) */}
