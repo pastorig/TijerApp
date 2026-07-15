@@ -165,7 +165,7 @@ export function AdminReviewsManager({ barbershop }: AdminReviewsManagerProps) {
           </section>
 
           {/* Distribución */}
-          <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5">
+          <section className="card-premium p-5">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
               Distribución
             </p>
@@ -351,10 +351,8 @@ function KpiCard({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-sm)] border p-4",
-        hilight
-          ? "border-[color:var(--brand-gold)]/30 bg-[color:var(--surface-1)]"
-          : "border-[color:var(--border-subtle)] bg-[color:var(--surface-1)]",
+        "card-premium card-premium-hover p-4",
+        hilight && "card-premium-glow",
       )}
     >
       <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
@@ -365,7 +363,7 @@ function KpiCard({
           className={cn(
             "font-mono text-2xl font-black tabular-nums sm:text-3xl",
             hilight
-              ? "text-[color:var(--brand-gold)]"
+              ? "text-gold-gradient"
               : danger
                 ? "text-[color:var(--danger)]"
                 : "text-white",

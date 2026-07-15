@@ -218,7 +218,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
       </div>
 
       {/* Form config */}
-      <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 sm:p-6">
+      <section className="card-premium p-5 sm:p-6">
         <h2 className="text-lg font-black uppercase tracking-tight">
           Configuración del programa
         </h2>
@@ -319,7 +319,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
       </section>
 
       {/* Customer list */}
-      <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 sm:p-6">
+      <section className="card-premium p-5 sm:p-6">
         <h2 className="text-lg font-black uppercase tracking-tight">
           Clientes
         </h2>
@@ -408,27 +408,28 @@ function StatCard({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-md)] border bg-[color:var(--surface-1)] p-3 sm:p-4",
-        highlight
-          ? "border-[color:var(--brand-gold)]/40 ring-1 ring-[color:var(--brand-gold)]/30"
-          : "border-[color:var(--border-subtle)]",
+        "card-premium card-premium-hover group p-3 sm:p-4",
+        highlight && "card-premium-glow",
       )}
     >
       <div className="flex items-start gap-2">
-        <Icon
+        <span
           aria-hidden="true"
-          className={cn(
-            "mt-0.5 size-4 shrink-0",
-            highlight
-              ? "text-[color:var(--brand-gold)]"
-              : "text-[color:var(--text-muted)]",
-          )}
-        />
+          className="flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105"
+          style={{ boxShadow: "0 0 18px -8px rgba(201,162,62,0.6)" }}
+        >
+          <Icon className="size-4" />
+        </span>
         <div>
           <p className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)] sm:text-[11px]">
             {label}
           </p>
-          <p className="mt-1 stat-number text-xl font-black tracking-tight text-white sm:text-2xl">
+          <p
+            className={cn(
+              "mt-1 stat-number text-xl font-black tracking-tight sm:text-2xl",
+              highlight ? "text-gold-gradient" : "text-white",
+            )}
+          >
             {value}
           </p>
         </div>
