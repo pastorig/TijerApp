@@ -112,7 +112,7 @@ export function OwnerPlansManager() {
         </p>
       </header>
 
-      <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)]">
+      <section className="card-premium overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
             <Loader2 className="size-5 animate-spin text-[color:var(--brand-gold)]" />
