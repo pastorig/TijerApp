@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 import { Resend } from "resend";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { resolveEmailFrom } from "@/lib/email/from";
+import { assertPlanFeature } from "@/lib/api-plan-guard";
 
 export const runtime = "nodejs";
 
@@ -261,6 +262,11 @@ export async function POST(request: Request) {
       { error: "Solo el owner puede invitar nuevos admins." },
       { status: 403 },
     );
+  }
+
+  const gate = await assertPlanFeature(barbershopSlug, "multi_admin");
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
   }
 
   const supabase = getSupabaseAdminClient();

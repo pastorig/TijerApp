@@ -7,6 +7,7 @@ import {
   updateCoupon,
 } from "@/lib/coupons";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { assertPlanFeature } from "@/lib/api-plan-guard";
 import type { CouponDiscountType } from "@/lib/supabase";
 
 export const runtime = "nodejs";
@@ -68,6 +69,11 @@ export async function GET(request: Request) {
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
+
+  const gate = await assertPlanFeature(barbershopSlug, "cupones");
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
+  }
   try {
     const coupons = await listCoupons(barbershopSlug);
     return NextResponse.json({ coupons });
@@ -104,6 +110,11 @@ export async function POST(request: Request) {
   );
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const gate = await assertPlanFeature(barbershopSlug, "cupones");
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
   }
 
   const code = typeof body.code === "string" ? body.code.trim() : "";
@@ -195,6 +206,11 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
+  const gate = await assertPlanFeature(barbershopSlug, "cupones");
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
+  }
+
   const patch: Record<string, unknown> = {};
   if (typeof body.code === "string") patch.code = body.code.trim();
   if (typeof body.description === "string" || body.description === null) {
@@ -269,6 +285,11 @@ export async function DELETE(request: Request) {
   );
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const gate = await assertPlanFeature(barbershopSlug, "cupones");
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
   }
   try {
     await deleteCoupon(id);

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { assertPlanFeature } from "@/lib/api-plan-guard";
 import { testMPConnection } from "@/lib/mercadopago/client";
 
 export const runtime = "nodejs";
@@ -67,6 +68,11 @@ export async function GET(request: Request) {
   );
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const gate = await assertPlanFeature(barbershopSlug, "cobros_online");
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
   }
 
   const supabase = getSupabaseAdminClient();
@@ -154,6 +160,11 @@ export async function PATCH(request: Request) {
   );
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const gate = await assertPlanFeature(barbershopSlug, "cobros_online");
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
   }
 
   // Solo los campos válidos del body
@@ -276,6 +287,11 @@ export async function POST(request: Request) {
   );
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const gate = await assertPlanFeature(barbershopSlug, "cobros_online");
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
   }
 
   const result = await testMPConnection(accessToken);
