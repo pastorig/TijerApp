@@ -1,5 +1,6 @@
 import { ArrowUpRight, CalendarX, MessageSquare, UserX } from "lucide-react";
 import Link from "next/link";
+import { Reveal } from "./ui/Reveal";
 
 /**
  * Sección "¿es para vos?" de la home. Antes eran 3 "perfiles" con personajes
@@ -52,12 +53,14 @@ export function HomePersonas() {
         </header>
 
         <ul className="-mx-4 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:mt-12 sm:grid sm:snap-none sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
-          {ITEMS.map((item) => {
+          {ITEMS.map((item, index) => {
             const Icon = item.icon;
             return (
-              <li
+              <Reveal
+                as="li"
                 key={item.problem}
-                className="hover-glow flex w-[85%] shrink-0 snap-center flex-col gap-4 rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 sm:w-auto sm:shrink sm:snap-align-none sm:p-6"
+                delay={(index % 3) * 80}
+                className="card-premium card-premium-hover flex w-[85%] shrink-0 snap-center flex-col gap-4 p-5 sm:w-auto sm:shrink sm:snap-align-none sm:p-6"
               >
                 <div className="flex items-start gap-3">
                   <div
@@ -79,7 +82,7 @@ export function HomePersonas() {
                     {item.solution}
                   </p>
                 </div>
-              </li>
+              </Reveal>
             );
           })}
         </ul>

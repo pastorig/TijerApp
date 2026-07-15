@@ -5,6 +5,7 @@ import { ArrowUpRight, Check } from "lucide-react";
 import { Button } from "@/components/ui";
 import { CommercialFooter } from "@/components/home/CommercialFooter";
 import { CommercialNav } from "@/components/home/CommercialNav";
+import { HeroShowcase } from "@/components/home/ui/HeroShowcase";
 import { PWARedirector } from "@/components/pwa/PWARedirector";
 
 // Below-the-fold: dynamic con ssr:true mantiene SEO y reduce el chunk
@@ -88,7 +89,7 @@ export default function Home() {
               "radial-gradient(70% 50% at 50% 0%, color-mix(in oklab, var(--brand-gold) 14%, transparent) 0%, transparent 70%)",
           }}
         />
-        <div className="mx-auto w-full max-w-6xl px-4 pb-14 pt-10 sm:px-8 sm:pb-20 sm:pt-16 lg:px-12 lg:pb-24 lg:pt-20">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-14 pt-10 sm:px-8 sm:pb-20 sm:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10 lg:px-12 lg:pb-24 lg:pt-20">
           <div className="animate-fade-up">
             <div className="chip-gold">
               <span className="dot-gold-pulse" />
@@ -162,6 +163,10 @@ export default function Home() {
                 Hecho en Argentina
               </li>
             </ul>
+          </div>
+
+          <div className="animate-fade-up mb-8 sm:mb-10 lg:mb-0 lg:pl-4">
+            <HeroShowcase />
           </div>
         </div>
       </section>

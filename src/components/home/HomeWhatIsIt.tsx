@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { Reveal } from "./ui/Reveal";
 
 const BENEFITS = [
   {
@@ -29,7 +30,8 @@ export function HomeWhatIsIt() {
               Qué es TijerApp
             </p>
             <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
-              Una plataforma de turnos hecha para barberías argentinas
+              Una plataforma de turnos hecha para{" "}
+              <span className="text-gold-gradient">barberías argentinas</span>
             </h2>
             <p className="mt-5 text-base leading-7 text-[color:var(--text-secondary)] sm:text-lg sm:leading-8">
               Centralizamos reservas, barberos, servicios y agenda en un solo
@@ -39,14 +41,17 @@ export function HomeWhatIsIt() {
           </header>
 
           <ul className="grid gap-3 sm:grid-cols-2">
-            {BENEFITS.map((benefit) => (
-              <li
+            {BENEFITS.map((benefit, index) => (
+              <Reveal
+                as="li"
                 key={benefit.title}
-                className="flex gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5"
+                delay={(index % 2) * 80}
+                className="card-premium card-premium-hover group flex gap-3 p-5"
               >
                 <div
                   aria-hidden="true"
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105"
+                  style={{ boxShadow: "0 0 18px -8px rgba(201,162,62,0.6)" }}
                 >
                   <Check className="size-4" />
                 </div>
@@ -58,7 +63,7 @@ export function HomeWhatIsIt() {
                     {benefit.body}
                   </p>
                 </div>
-              </li>
+              </Reveal>
             ))}
           </ul>
         </div>
