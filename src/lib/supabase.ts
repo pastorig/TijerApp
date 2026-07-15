@@ -333,6 +333,8 @@ type BarbershopClientInsert = {
   email?: string | null;
   notes?: string | null;
   tags?: string[];
+  deleted_at?: string | null;
+  updated_at?: string;
 };
 
 type BarbershopClientUpdate = {

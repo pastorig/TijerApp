@@ -71,6 +71,9 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
     "all",
   );
   const [isImportOpen, setIsImportOpen] = useState(false);
+  // Separar (reasignar turnos de un número compartido a otro cliente).
+  const [splitName, setSplitName] = useState<string | null>(null);
+  const [splitPhone, setSplitPhone] = useState("");
   const toast = useToast();
   const confirm = useConfirm();
 
@@ -334,15 +337,21 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
   // identifican por teléfono, si un mismo número lo usaron varias personas
   // (ej. alguien reserva para todo un grupo), todos esos turnos se cuentan
   // como visitas de este "cliente". Lo detectamos para avisar al barbero.
-  const selectedClientSharedNames = useMemo(() => {
-    const byLower = new Map<string, string>();
+  const selectedClientNameGroups = useMemo(() => {
+    const byLower = new Map<
+      string,
+      { name: string; ids: string[]; count: number }
+    >();
     for (const a of selectedClientAppointments) {
       const raw = (a.customer_name ?? "").trim();
-      if (!raw) continue;
+      if (!raw || !a.id) continue;
       const lower = raw.toLowerCase();
-      if (!byLower.has(lower)) byLower.set(lower, raw);
+      const g = byLower.get(lower) ?? { name: raw, ids: [], count: 0 };
+      g.ids.push(a.id);
+      g.count++;
+      byLower.set(lower, g);
     }
-    return [...byLower.values()];
+    return [...byLower.values()].sort((a, b) => b.count - a.count);
   }, [selectedClientAppointments]);
 
   function handleSelectClient(client: BarbershopClient) {
@@ -528,6 +537,63 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
     }
   }
 
+  async function handleReassign(group: {
+    name: string;
+    ids: string[];
+    count: number;
+  }) {
+    const phone = splitPhone.trim();
+    if (phone.replace(/\D/g, "").length < 8) {
+      toast.error("Cargá un teléfono válido (al menos 8 dígitos).");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const { data: sessionData } = await getCurrentSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        toast.error("Tu sesión expiró, volvé a iniciar sesión.");
+        return;
+      }
+      const response = await fetch("/api/admin/clients", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          barbershopSlug: barbershop.slug,
+          appointmentIds: group.ids,
+          newPhone: phone,
+          newName: group.name,
+        }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        toast.error(payload.error ?? "No pudimos separar los turnos.");
+        return;
+      }
+      toast.success(`${group.name} separado`, {
+        description: `${group.count} turno${group.count === 1 ? "" : "s"} movido${group.count === 1 ? "" : "s"} a su número.`,
+      });
+      setSplitName(null);
+      setSplitPhone("");
+      // Recargar clientes + turnos para reflejar el nuevo cliente y conteos.
+      const [clientsResult, appsResult] = await Promise.all([
+        listClientsByBarbershop(barbershop.slug),
+        listAppointmentsByBarbershop(barbershop.slug),
+      ]);
+      setClients(clientsResult.data ?? []);
+      setAppointments(appsResult.data ?? []);
+    } catch {
+      toast.error("No pudimos separar los turnos.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   // ─── Detalle ─────────────────────────────────────────────────
   if (selectedClient) {
     const { client, visits, lastVisit, segment, daysSinceLastVisit } =
@@ -696,37 +762,94 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
           </section>
         ) : null}
 
-        {/* Aviso: número compartido por varias personas */}
-        {selectedClientSharedNames.length > 1 ? (
-          <div className="flex flex-wrap items-start gap-3 rounded-[var(--radius-md)] border border-amber-400/30 bg-amber-400/5 p-4">
-            <AlertTriangle
-              aria-hidden="true"
-              className="size-5 shrink-0 text-amber-300"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300">
-                Número compartido
-              </p>
-              <p className="mt-1 text-xs leading-5 text-[color:var(--text-secondary)] sm:text-sm">
-                Con este teléfono reservaron{" "}
-                <strong className="text-white">
-                  {selectedClientSharedNames.length} personas distintas
-                </strong>
-                , así que las visitas de este cliente incluyen los turnos de
-                todas. Suele pasar cuando alguien reserva para un grupo con su
-                número.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {selectedClientSharedNames.map((n) => (
-                  <span
-                    key={n}
-                    className="inline-flex items-center rounded-[var(--radius-xs)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-1.5 py-0.5 text-[11px] text-[color:var(--text-secondary)]"
-                  >
-                    {n}
-                  </span>
-                ))}
+        {/* Número compartido: separar cada persona a su propio cliente */}
+        {selectedClientNameGroups.length > 1 ? (
+          <div className="rounded-[var(--radius-md)] border border-amber-400/30 bg-amber-400/5 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle
+                aria-hidden="true"
+                className="size-5 shrink-0 text-amber-300"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300">
+                  Número compartido · {selectedClientNameGroups.length} personas
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[color:var(--text-secondary)] sm:text-sm">
+                  Con este teléfono reservaron varias personas, así que las
+                  visitas incluyen los turnos de todas. Separá a cada una a su
+                  propio número para que el conteo quede bien.
+                </p>
               </div>
             </div>
+
+            <ul className="mt-3 grid gap-2">
+              {selectedClientNameGroups.map((g) => (
+                <li
+                  key={g.name}
+                  className="rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] p-2.5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-white">
+                        {g.name}
+                      </p>
+                      <p className="text-[11px] text-[color:var(--text-muted)]">
+                        {g.count} turno{g.count === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                    {splitName === g.name ? null : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSplitName(g.name);
+                          setSplitPhone("");
+                        }}
+                        disabled={isSaving}
+                        className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand-gold)] transition-colors hover:bg-[color:var(--brand-gold-soft)] disabled:opacity-50"
+                      >
+                        <UserRound aria-hidden="true" className="size-3.5" />
+                        Separar
+                      </button>
+                    )}
+                  </div>
+
+                  {splitName === g.name ? (
+                    <div className="mt-2.5 flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <input
+                        value={splitPhone}
+                        onChange={(e) => setSplitPhone(e.target.value)}
+                        inputMode="tel"
+                        autoFocus
+                        placeholder={`Teléfono real de ${g.name}`}
+                        disabled={isSaving}
+                        className="min-h-10 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleReassign(g)}
+                          disabled={isSaving}
+                          className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.12em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:opacity-50"
+                        >
+                          {isSaving ? "Moviendo…" : "Mover"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSplitName(null);
+                            setSplitPhone("");
+                          }}
+                          disabled={isSaving}
+                          className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--text-secondary)] transition-colors hover:text-white disabled:opacity-50"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
           </div>
         ) : null}
 

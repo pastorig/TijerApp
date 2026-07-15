@@ -116,6 +116,115 @@ export async function PATCH(request: Request) {
   return NextResponse.json({ ok: true, client });
 }
 
+/** Normaliza un teléfono igual que la función SQL: solo dígitos, null si <8. */
+function normalizePhoneServer(raw: string): string | null {
+  const digits = raw.replace(/\D/g, "");
+  return digits.length >= 8 ? digits : null;
+}
+
+/**
+ * Separa turnos hacia otro cliente (por teléfono). Caso de uso: un mismo
+ * número lo usaron varias personas (alguien reservó para un grupo), así que
+ * quedaron mezcladas en un solo cliente. Con esto el barbero mueve los turnos
+ * de una persona a SU número real → pasan a ser un cliente aparte con su
+ * conteo correcto.
+ *
+ * Mueve customer_phone (+ customer_name) de los turnos indicados y hace upsert
+ * del cliente destino (el trigger sync_client solo corre en INSERT, no en
+ * UPDATE, por eso lo creamos acá). Los otros triggers de appointments son
+ * INSERT-only (push, cupón) o idempotentes (sello), así que mover el teléfono
+ * es seguro.
+ */
+export async function POST(request: Request) {
+  let payload: Record<string, unknown>;
+  try {
+    payload = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return NextResponse.json({ error: "Body inválido." }, { status: 400 });
+  }
+
+  const barbershopSlug =
+    typeof payload.barbershopSlug === "string" ? payload.barbershopSlug : "";
+  const newPhoneRaw =
+    typeof payload.newPhone === "string" ? payload.newPhone.trim() : "";
+  const newName =
+    typeof payload.newName === "string" ? payload.newName.trim() : "";
+  const appointmentIds = Array.isArray(payload.appointmentIds)
+    ? (payload.appointmentIds as unknown[]).filter(
+        (id): id is string => typeof id === "string" && id.length > 0,
+      )
+    : [];
+
+  if (!barbershopSlug || appointmentIds.length === 0 || !newPhoneRaw) {
+    return NextResponse.json({ error: "Faltan parámetros." }, { status: 400 });
+  }
+
+  const phoneNormalized = normalizePhoneServer(newPhoneRaw);
+  if (!phoneNormalized) {
+    return NextResponse.json(
+      { error: "El teléfono no es válido (necesita al menos 8 dígitos)." },
+      { status: 400 },
+    );
+  }
+
+  const auth = await assertAdminOfBarbershop(
+    request.headers.get("authorization"),
+    barbershopSlug,
+  );
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const supabaseAdmin = getSupabaseAdminClient();
+
+  // 1) Mover los turnos al nuevo teléfono (+ nombre si se pasó).
+  const apptUpdate: { customer_phone: string; customer_name?: string } = {
+    customer_phone: newPhoneRaw,
+  };
+  if (newName) apptUpdate.customer_name = newName;
+
+  const { error: moveError, count } = await supabaseAdmin
+    .from("appointments")
+    .update(apptUpdate, { count: "exact" })
+    .eq("barbershop_slug", barbershopSlug)
+    .in("id", appointmentIds);
+
+  if (moveError) {
+    Sentry.captureException(moveError);
+    console.error("[clients] reassign move error", moveError);
+    return NextResponse.json(
+      { error: "No pudimos mover los turnos." },
+      { status: 500 },
+    );
+  }
+
+  // 2) Crear/actualizar el cliente destino (el trigger no corre en UPDATE).
+  const { error: upsertError } = await supabaseAdmin
+    .from("barbershop_clients")
+    .upsert(
+      {
+        barbershop_slug: barbershopSlug,
+        phone_normalized: phoneNormalized,
+        phone_display: newPhoneRaw,
+        name: newName || "Cliente",
+        deleted_at: null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "barbershop_slug,phone_normalized" },
+    );
+
+  if (upsertError) {
+    Sentry.captureException(upsertError);
+    console.error("[clients] reassign upsert error", upsertError);
+    return NextResponse.json(
+      { error: "Movimos los turnos pero no pudimos crear el cliente nuevo." },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json({ ok: true, moved: count ?? appointmentIds.length });
+}
+
 /**
  * Borra (soft-delete) un cliente: marca `deleted_at`. NO toca los turnos
  * (el historial se preserva); el cliente simplemente deja de aparecer en el
