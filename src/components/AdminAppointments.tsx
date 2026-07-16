@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  CalendarPlus,
+  Plus,
   ChevronDown,
   ChevronRight,
   Search,
@@ -1154,7 +1154,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
               aria-label="Agregar turno"
               className="bg-gold-grad inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-bold uppercase tracking-[0.12em] text-black shadow-[0_8px_20px_-10px_var(--brand-gold-ring)] transition-all duration-[var(--duration-fast)] press-shrink hover:brightness-110"
             >
-              <CalendarPlus className="size-3.5" aria-hidden="true" />
+              <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
               <span className="sm:hidden">Turno</span>
               <span className="hidden sm:inline">Agregar turno</span>
             </button>
