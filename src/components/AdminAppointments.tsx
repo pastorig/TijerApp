@@ -1159,7 +1159,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           <button
             type="button"
             onClick={() => setIsManualModalOpen(true)}
-            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-all duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)] hover:bg-[color:var(--brand-gold)]/15"
+            className="bg-gold-grad inline-flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] px-5 text-[12px] font-bold uppercase tracking-[0.16em] text-black shadow-[0_12px_26px_-10px_var(--brand-gold-ring)] transition-all duration-[var(--duration-fast)] press-shrink hover:brightness-110 hover:shadow-[0_0_0_3px_var(--brand-gold-ring)] sm:w-auto"
           >
             <CalendarPlus className="size-4" aria-hidden="true" />
             Agregar turno
