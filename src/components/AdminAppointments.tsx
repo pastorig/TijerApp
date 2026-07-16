@@ -1143,27 +1143,29 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   return (
     <div className="min-w-0">
       <section className="min-w-0">
-        <header className="mb-8 flex animate-fade-up flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
+        <header className="mb-8 animate-fade-up">
+          <div className="flex items-center justify-between gap-3">
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
               Turnero
             </p>
-            <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
-              Agenda de {barbershop.name}
-            </h1>
-            <p className="mt-3 max-w-xl text-sm text-[color:var(--text-secondary)] sm:text-base">
-              Gestiona las reservas del dia. Confirmar y enviar WhatsApp son
-              acciones separadas.
-            </p>
+            <button
+              type="button"
+              onClick={() => setIsManualModalOpen(true)}
+              aria-label="Agregar turno"
+              className="bg-gold-grad inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-bold uppercase tracking-[0.12em] text-black shadow-[0_8px_20px_-10px_var(--brand-gold-ring)] transition-all duration-[var(--duration-fast)] press-shrink hover:brightness-110"
+            >
+              <CalendarPlus className="size-3.5" aria-hidden="true" />
+              <span className="sm:hidden">Turno</span>
+              <span className="hidden sm:inline">Agregar turno</span>
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsManualModalOpen(true)}
-            className="bg-gold-grad inline-flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] px-5 text-[12px] font-bold uppercase tracking-[0.16em] text-black shadow-[0_12px_26px_-10px_var(--brand-gold-ring)] transition-all duration-[var(--duration-fast)] press-shrink hover:brightness-110 hover:shadow-[0_0_0_3px_var(--brand-gold-ring)] sm:w-auto"
-          >
-            <CalendarPlus className="size-4" aria-hidden="true" />
-            Agregar turno
-          </button>
+          <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
+            Agenda de {barbershop.name}
+          </h1>
+          <p className="mt-3 max-w-xl text-sm text-[color:var(--text-secondary)] sm:text-base">
+            Gestiona las reservas del dia. Confirmar y enviar WhatsApp son
+            acciones separadas.
+          </p>
         </header>
 
         {isLoading ? <AppointmentRowSkeletonList count={3} /> : null}
