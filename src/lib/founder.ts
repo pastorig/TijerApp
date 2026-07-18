@@ -4,11 +4,16 @@
  */
 export const FOUNDER = {
   /**
-   * Cómo se muestra el titular de la cuenta en la UI pública/admin. Es texto
-   * de marca, NO el nombre legal — el banco del que transfiere igual muestra
-   * el titular real al pegar el alias/CBU.
+   * Titular REAL de la cuenta para transferencias.
+   *
+   * Es la ÚNICA parte del producto donde va el nombre propio: en el resto
+   * (landing, planes, soporte) la marca habla como "el fundador de TijerApp".
+   * Acá tiene que ser el nombre real porque el barbero necesita saber a nombre
+   * de quién está transfiriendo — si no, no sabe si la cuenta es la correcta.
+   *
+   * Se usa solo en TransferDetailsCard (paywall de plan vencido + modal Pagar).
    */
-  titular: "El fundador de TijerApp",
+  titular: "Gino Pastori",
   /** WhatsApp en formato internacional (54 9 3571 624511). */
   whatsapp: "5493571624511",
   /** Alias de la cuenta (Naranja X). */
