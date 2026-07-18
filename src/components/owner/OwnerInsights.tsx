@@ -8,7 +8,7 @@ import {
   Users2,
   Activity,
 } from "lucide-react";
-import { getOwnerDashboardMetrics } from "@/lib/owner-metrics";
+import { getOwnerDashboardMetrics, isDemoBarbershop } from "@/lib/owner-metrics";
 import type { OwnerBarbershopSummary } from "@/lib/owner-metrics";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
@@ -130,9 +130,11 @@ export function OwnerInsights() {
    * De las que pagan, marcamos aparte las "atrasadas" (sin pago registrado o
    * con el período ya vencido) para que se vea a quién hay que ir a cobrarle.
    *
-   * A propósito NO usamos `isDemo`: esa bandera sale de `demo-barbershops.ts`,
-   * que hoy solo tiene a sv-barber (que es un cliente REAL) y no a la demo
-   * actual, así que excluiría a la barbería equivocada.
+   * El precio SIEMPRE sale del plan asignado a esa barbería (`plan_tier`), esté
+   * en prueba o pagando — si le cambiás el plan, el número se corrige solo.
+   *
+   * Las barberías demo (ver DEMO_BARBERSHOP_SLUGS) quedan afuera de todo: no
+   * son clientes, solo se cuentan aparte para mostrarlas como referencia.
    */
   const billing = useMemo(() => {
     const bySlug = new Map(plans.map((p) => [p.barbershop_slug, p]));
@@ -143,8 +145,13 @@ export function OwnerInsights() {
     let enPrueba = 0;
     let vencidas = 0;
     let atrasadas = 0;
+    let demos = 0;
 
     for (const bs of barbershops) {
+      if (isDemoBarbershop(bs.slug)) {
+        demos++;
+        continue;
+      }
       const row = bySlug.get(bs.slug);
       // Sin fila de suscripción = trial Pro por default (ver getBarbershopPlan).
       const tier: PlanTier = row?.plan_tier ?? "pro";
@@ -174,7 +181,9 @@ export function OwnerInsights() {
       enPrueba,
       vencidas,
       atrasadas,
-      total: barbershops.length,
+      demos,
+      /** Barberías CLIENTE (sin contar las demo). */
+      total: barbershops.length - demos,
     };
   }, [barbershops, plans, nowMs]);
 
@@ -233,9 +242,10 @@ export function OwnerInsights() {
               billing.vencidas > 0
                 ? `${billing.vencidas} vencida${billing.vencidas === 1 ? "" : "s"}`
                 : null,
+              billing.demos > 0 ? `+${billing.demos} demo` : null,
             ]
               .filter(Boolean)
-              .join(" · ") || "Sin barberías todavía"
+              .join(" · ") || "Sin clientes todavía"
           }
         />
       </div>

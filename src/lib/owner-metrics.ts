@@ -3,6 +3,31 @@ import { listKnownBarbershops } from "@/lib/barbershops";
 import { getLocalDateInputValue } from "@/lib/format";
 import { getSupabaseClient } from "@/lib/supabase";
 
+/**
+ * Barberías que son DEMO de la plataforma (vidriera pública), NO clientes
+ * reales: no cuentan para MRR, potencial ni cantidad de clientes en el panel
+ * owner.
+ *
+ * OJO: no se usa el `isDemo` del summary para esto. Ese sale de
+ * `demo-barbershops.ts`, que hoy lista a sv-barber (que es un cliente REAL,
+ * fue la demo original) — usarlo excluiría a la barbería equivocada.
+ *
+ * Se puede sobrescribir por env (coma-separado) sin tocar código:
+ *   NEXT_PUBLIC_DEMO_BARBERSHOP_SLUGS="primebarber,otra"
+ * A futuro, lo prolijo es una columna `is_demo` en la tabla barbershops.
+ */
+export const DEMO_BARBERSHOP_SLUGS = new Set(
+  (process.env.NEXT_PUBLIC_DEMO_BARBERSHOP_SLUGS ?? "primebarber")
+    .split(",")
+    .map((slug) => slug.trim())
+    .filter(Boolean),
+);
+
+/** True si la barbería es una demo de la plataforma (no factura). */
+export function isDemoBarbershop(slug: string): boolean {
+  return DEMO_BARBERSHOP_SLUGS.has(slug);
+}
+
 export type OwnerBarbershopSummary = {
   name: string;
   slug: string;
