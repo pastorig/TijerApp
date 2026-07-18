@@ -28,9 +28,13 @@ import { StackedBar } from "./charts";
  *  - Healthy / Quiet / Inactive: distribución por actividad real.
  */
 
-/** Fila de plan que devuelve /api/owner/plans. */
+/**
+ * Fila de plan que devuelve /api/owner/plans.
+ * OJO: la clave del slug es `slug` (no `barbershop_slug`, que es como se llama
+ * la columna en la tabla) — el endpoint arma el objeto desde `barbershops`.
+ */
 type OwnerPlanRow = {
-  barbershop_slug: string;
+  slug: string;
   plan_tier: PlanTier | null;
   status: SubscriptionStatus | null;
   current_period_ends_at: string | null;
@@ -43,20 +47,27 @@ type HealthBuckets = {
   inactive: OwnerBarbershopSummary[];
 };
 
-/** Trae los planes/suscripciones desde el endpoint de owner (service role). */
-async function loadOwnerPlans(): Promise<OwnerPlanRow[]> {
+/**
+ * Trae los planes/suscripciones desde el endpoint de owner (service role).
+ * Devuelve `ok:false` si falla: NO devolvemos una lista vacía y listo, porque
+ * sin planes el cálculo asumiría un plan por default e inventaría ingresos —
+ * preferimos avisar que no se pudo cargar antes que mostrar un número falso.
+ */
+async function loadOwnerPlans(): Promise<
+  { ok: true; plans: OwnerPlanRow[] } | { ok: false; plans: [] }
+> {
   try {
     const { data: sessionData } = await getCurrentSession();
     const accessToken = sessionData.session?.access_token;
-    if (!accessToken) return [];
+    if (!accessToken) return { ok: false, plans: [] };
     const res = await fetch("/api/owner/plans", {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    if (!res.ok) return [];
+    if (!res.ok) return { ok: false, plans: [] };
     const payload = (await res.json()) as { plans?: OwnerPlanRow[] };
-    return payload.plans ?? [];
+    return { ok: true, plans: payload.plans ?? [] };
   } catch {
-    return [];
+    return { ok: false, plans: [] };
   }
 }
 
@@ -87,6 +98,7 @@ function bucketByHealth(
 export function OwnerInsights() {
   const [barbershops, setBarbershops] = useState<OwnerBarbershopSummary[]>([]);
   const [plans, setPlans] = useState<OwnerPlanRow[]>([]);
+  const [plansFailed, setPlansFailed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   // "Ahora" se captura al cargar (no en render: Date.now() es impuro y React
   // lo prohíbe durante el render).
@@ -98,13 +110,14 @@ export function OwnerInsights() {
       try {
         // Los planes viven detrás de /api/owner/plans (service role): las
         // suscripciones no se pueden leer desde el browser por RLS.
-        const [{ data: metrics }, planRows] = await Promise.all([
+        const [{ data: metrics }, planResult] = await Promise.all([
           getOwnerDashboardMetrics(),
           loadOwnerPlans(),
         ]);
         if (cancelled) return;
         if (metrics) setBarbershops(metrics.barbershops);
-        setPlans(planRows);
+        setPlans(planResult.plans);
+        setPlansFailed(!planResult.ok);
         setNowMs(Date.now());
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -137,7 +150,7 @@ export function OwnerInsights() {
    * son clientes, solo se cuentan aparte para mostrarlas como referencia.
    */
   const billing = useMemo(() => {
-    const bySlug = new Map(plans.map((p) => [p.barbershop_slug, p]));
+    const bySlug = new Map(plans.map((p) => [p.slug, p]));
 
     let mrr = 0;
     let potencial = 0;
@@ -146,6 +159,7 @@ export function OwnerInsights() {
     let vencidas = 0;
     let atrasadas = 0;
     let demos = 0;
+    let sinPlan = 0;
 
     for (const bs of barbershops) {
       if (isDemoBarbershop(bs.slug)) {
@@ -153,9 +167,14 @@ export function OwnerInsights() {
         continue;
       }
       const row = bySlug.get(bs.slug);
-      // Sin fila de suscripción = trial Pro por default (ver getBarbershopPlan).
-      const tier: PlanTier = row?.plan_tier ?? "pro";
-      const status: SubscriptionStatus = row?.status ?? "trial";
+      // Sin plan asignado NO asumimos ninguno: contarlo con un precio
+      // inventado es justo lo que hacía que estos números fueran falsos.
+      if (!row?.plan_tier) {
+        sinPlan++;
+        continue;
+      }
+      const tier: PlanTier = row.plan_tier;
+      const status: SubscriptionStatus = row.status ?? "trial";
       const precio = PLAN_META[tier].priceArs;
       const paidUntilMs = row?.current_period_ends_at
         ? new Date(row.current_period_ends_at).getTime()
@@ -182,6 +201,7 @@ export function OwnerInsights() {
       vencidas,
       atrasadas,
       demos,
+      sinPlan,
       /** Barberías CLIENTE (sin contar las demo). */
       total: barbershops.length - demos,
     };
@@ -217,19 +237,21 @@ export function OwnerInsights() {
         <InsightCard
           icon={DollarSign}
           label="MRR"
-          value={`$${billing.mrr.toLocaleString("es-AR")}`}
+          value={plansFailed ? "—" : `$${billing.mrr.toLocaleString("es-AR")}`}
           hint={
-            billing.pagando > 0
-              ? `${billing.pagando} barbería${billing.pagando === 1 ? "" : "s"} pagando`
-              : "Todavía no paga ninguna"
+            plansFailed
+              ? "No pudimos cargar los planes"
+              : billing.pagando > 0
+                ? `${billing.pagando} barbería${billing.pagando === 1 ? "" : "s"} pagando`
+                : "Todavía no paga ninguna"
           }
           highlight
         />
         <InsightCard
           icon={TrendingUp}
           label="ARR"
-          value={`$${billing.arr.toLocaleString("es-AR")}`}
-          hint="MRR × 12"
+          value={plansFailed ? "—" : `$${billing.arr.toLocaleString("es-AR")}`}
+          hint={plansFailed ? "Sin datos de plan" : "MRR × 12"}
         />
         <InsightCard
           icon={Users2}
@@ -242,6 +264,7 @@ export function OwnerInsights() {
               billing.vencidas > 0
                 ? `${billing.vencidas} vencida${billing.vencidas === 1 ? "" : "s"}`
                 : null,
+              billing.sinPlan > 0 ? `${billing.sinPlan} sin plan` : null,
               billing.demos > 0 ? `+${billing.demos} demo` : null,
             ]
               .filter(Boolean)
