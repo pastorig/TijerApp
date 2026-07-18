@@ -36,6 +36,22 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
     `¡Hola! Soy admin de ${barbershopSlug}. Quiero activar mi plan pago (${precio}/mes).`,
   );
 
+  /**
+   * ¿Nunca pagó? (`current_period_ends_at` null = no hay ningún pago
+   * registrado). Entonces todavía NO eligió plan: el tier que tiene es el
+   * default del trial (Pro), así que mostrarle ese precio le tira el plan más
+   * caro y lo asusta. Para estos casos NO mostramos precio — lo invitamos a
+   * escribirnos y elegimos juntos el plan que le sirve.
+   *
+   * Usamos "nunca pagó" en vez de `rawStatus === 'trial'` porque cuando el
+   * trial vence el status pasa a grace/expired y se perdería el dato de que
+   * nunca llegó a elegir un plan.
+   */
+  const isTrial = !plan.paidUntilIso;
+  const chooseWaLink = founderWaLink(
+    `¡Hola! Soy admin de ${barbershopSlug}. Estoy terminando la prueba gratis y quiero que me ayudes a elegir el plan.`,
+  );
+
   let banner: React.ReactNode = null;
 
   // Silencio: active y sin countdown cercano
@@ -55,22 +71,33 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
       <BannerBase tone="gold">
         <Clock className="size-4 shrink-0" />
         <p className="flex-1 text-xs sm:text-sm">
-          Tu trial expira en{" "}
+          Te quedan{" "}
           <strong>
             {plan.daysToTrialExpire} día{plan.daysToTrialExpire !== 1 ? "s" : ""}
-          </strong>
-          . Activá tu plan ({precio}/mes) para seguir usando todas las features.
+          </strong>{" "}
+          de prueba gratis. Escribinos y te ayudamos a elegir el plan que mejor
+          le sirve a tu barbería.
         </p>
-        <PayCta onClick={() => setPayOpen(true)} />
+        <ContactCta href={chooseWaLink} />
       </BannerBase>
     );
   } else if (plan.effectiveStatus === "grace") {
-    // Grace period
-    banner = (
+    // Grace period — distinto según si venía de prueba o de un plan pago.
+    banner = isTrial ? (
       <BannerBase tone="amber">
         <AlertTriangle className="size-4 shrink-0" />
         <p className="flex-1 text-xs sm:text-sm">
-          Tu trial expiró. Estás en período de gracia — la app sigue
+          Terminó tu prueba gratis, pero te dejamos unos días más de cortesía.{" "}
+          <strong>Escribinos y elegimos juntos tu plan</strong> para que no
+          pierdas el acceso.
+        </p>
+        <ContactCta href={chooseWaLink} />
+      </BannerBase>
+    ) : (
+      <BannerBase tone="amber">
+        <AlertTriangle className="size-4 shrink-0" />
+        <p className="flex-1 text-xs sm:text-sm">
+          Tu plan venció. Estás en período de gracia — la app sigue
           funcionando unos días más.{" "}
           <strong>Activá tu plan ya ({precio}/mes)</strong> antes que se
           cancele.
@@ -83,7 +110,16 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
     plan.effectiveStatus === "expired" ||
     plan.effectiveStatus === "cancelled"
   ) {
-    banner = (
+    banner = isTrial ? (
+      <BannerBase tone="danger">
+        <AlertTriangle className="size-4 shrink-0" />
+        <p className="flex-1 text-xs sm:text-sm">
+          Terminó tu prueba gratis. Escribinos y activamos el plan que te sirva
+          para recuperar el acceso completo.
+        </p>
+        <ContactCta href={chooseWaLink} />
+      </BannerBase>
+    ) : (
       <BannerBase tone="danger">
         <AlertTriangle className="size-4 shrink-0" />
         <p className="flex-1 text-xs sm:text-sm">
@@ -134,6 +170,25 @@ function BannerBase({
     >
       {children}
     </div>
+  );
+}
+
+/**
+ * CTA para barberías que todavía están de prueba: en vez de mandarlas a pagar
+ * un precio que no eligieron, abre WhatsApp con el fundador para definir juntos
+ * el plan que les conviene.
+ */
+function ContactCta({ href }: { href: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex min-h-7 shrink-0 items-center gap-1 rounded-[var(--radius-xs)] border border-current px-2.5 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors hover:bg-current hover:text-black"
+    >
+      <MessageCircle className="size-3" />
+      Escribinos
+    </a>
   );
 }
 
