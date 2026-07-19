@@ -5,6 +5,7 @@ import { AdminSidebar } from "./AdminSidebar";
 import { AdminSubtabs } from "./AdminSubtabs";
 import { AdminTopBar } from "./AdminTopBar";
 import { PlanStatusBanner } from "./PlanStatusBanner";
+import { InstallBanner } from "@/components/pwa/InstallBanner";
 
 /**
  * Chrome del admin: layout + estado del drawer del sidebar (mobile). Recibe el
@@ -42,6 +43,9 @@ export function AdminChrome({
           onOpenDrawer={() => setDrawerOpen(true)}
         />
         <PlanStatusBanner barbershopSlug={barbershopSlug} />
+        {/* Ofrecer instalar la app (desktop y mobile). Se autorregula: solo
+            aparece las primeras visitas y después cada 4 días. */}
+        <InstallBanner />
         <AdminSubtabs barbershopSlug={barbershopSlug} />
         <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
           {children}
