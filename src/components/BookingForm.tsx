@@ -82,7 +82,10 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     () => demoActiveBarbers[0]?.services ?? [],
     [demoActiveBarbers],
   );
-  const initialBarber = demoActiveBarbers[0];
+  // Si hay más de un barbero, no preseleccionamos ninguno: el cliente debe
+  // elegir explícitamente para evitar confusiones. Con uno solo, va directo.
+  const initialBarber =
+    demoActiveBarbers.length === 1 ? demoActiveBarbers[0] : undefined;
   const [activeBarbers, setActiveBarbers] =
     useState<BookingBarber[]>(demoActiveBarbers);
   const [isLoadingBarbers, setIsLoadingBarbers] = useState(true);
@@ -301,9 +304,12 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               })
             : demoActiveBarbers;
 
+        // Preservamos la selección si sigue siendo válida. Si no hay ninguna,
+        // solo autoseleccionamos cuando existe un único barbero (con 2+ el
+        // cliente debe elegir a mano).
         const nextSelectedBarber =
           nextBarbers.find((barber) => barber.id === selectedBarberId) ??
-          nextBarbers[0];
+          (nextBarbers.length === 1 ? nextBarbers[0] : undefined);
 
         setActiveBarbers(nextBarbers);
         setSelectedBarberId(nextSelectedBarber?.id ?? "");
