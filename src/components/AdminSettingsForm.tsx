@@ -428,7 +428,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
 
         {/* ── Chips de sección (mobile): tira horizontal sticky ── */}
         <div className="sticky top-0 z-20 -mx-4 mt-4 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 py-2.5 backdrop-blur-sm lg:hidden">
-          <div className="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-2 touch-pan-x snap-x scroll-smooth overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {SECTIONS.map((s) => {
               const on = s.key === activeSection;
               return (
@@ -437,7 +437,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
                   type="button"
                   onClick={() => setActiveSection(s.key)}
                   className={cn(
-                    "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition",
+                    "inline-flex shrink-0 snap-start items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition",
                     on
                       ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
                       : "border-[color:var(--border-default)] text-[color:var(--text-secondary)]",
