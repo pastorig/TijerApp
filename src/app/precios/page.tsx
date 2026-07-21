@@ -27,6 +27,12 @@ const FoundersProgram = dynamic(
       default: m.FoundersProgram,
     })),
 );
+const FoundersWall = dynamic(
+  () =>
+    import("@/components/home/FoundersWall").then((m) => ({
+      default: m.FoundersWall,
+    })),
+);
 const HomeContact = dynamic(
   () =>
     import("@/components/home/HomeContact").then((m) => ({
@@ -105,6 +111,7 @@ export default function PricingPage() {
 
       <div id="fundadores">
         <FoundersProgram />
+        <FoundersWall />
       </div>
 
       {/* Mini FAQ sobre billing */}
