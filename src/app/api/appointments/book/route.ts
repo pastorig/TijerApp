@@ -101,7 +101,7 @@ export async function POST(request: Request) {
   const { data: shop, error: shopError } = await supabase
     .from("barbershops")
     .select(
-      "slug, name, mp_enabled, mp_access_token, mp_refresh_token, mp_token_expires_at, deposit_percent, deposit_min_amount, deposit_auto_cancel_hours",
+      "slug, name, mp_enabled, mp_access_token, mp_refresh_token, mp_token_expires_at, deposit_percent, deposit_min_amount, deposit_auto_cancel_hours, require_client_email",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -124,6 +124,7 @@ export async function POST(request: Request) {
     deposit_percent: number;
     deposit_min_amount: number | null;
     deposit_auto_cancel_hours: number;
+    require_client_email: boolean;
   } | null;
 
   // Modo simulación (solo testing): permite reservar con seña SIN token real
@@ -134,6 +135,15 @@ export async function POST(request: Request) {
   if (!shopRow || !shopRow.mp_enabled) {
     return NextResponse.json(
       { error: "Esta barbería no tiene el cobro de seña activo." },
+      { status: 400 },
+    );
+  }
+
+  // Email obligatorio si la barbería lo configuró (defensa server-side; el
+  // form ya lo valida antes de enviar).
+  if (shopRow.require_client_email && !customerEmail) {
+    return NextResponse.json(
+      { error: "Esta barbería necesita tu email para reservar." },
       { status: 400 },
     );
   }
