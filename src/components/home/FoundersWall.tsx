@@ -22,16 +22,21 @@ function FounderCard({ founder }: { founder: Founder }) {
   return (
     <article className="card-premium flex flex-col gap-4 p-5 sm:p-6">
       <div className="flex items-center gap-4">
-        {/* Logo (o iniciales si todavía no lo cargamos) */}
-        <div className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--brand-gold)]/30 bg-black">
+        {/* Logo (o iniciales si todavía no lo cargamos).
+            Cuadrado redondeado + object-contain: los logos de barbería suelen
+            ser lettering apaisado y un círculo con object-cover les comía los
+            bordes. */}
+        <div className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[color:var(--brand-gold)]/30 bg-black p-1.5">
           {founder.logoSrc ? (
-            <Image
-              src={founder.logoSrc}
-              alt={`Logo de ${founder.name}`}
-              fill
-              sizes="64px"
-              className="object-cover"
-            />
+            <span className="relative block size-full">
+              <Image
+                src={founder.logoSrc}
+                alt={`Logo de ${founder.name}`}
+                fill
+                sizes="80px"
+                className="object-contain"
+              />
+            </span>
           ) : (
             <span className="font-mono text-base font-black uppercase text-[color:var(--brand-gold)]">
               {founderInitials(founder.name)}

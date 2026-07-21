@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { hasFeature } from "@/lib/plans";
 import { AdminUserMenu } from "./AdminUserMenu";
+import { FounderBadge } from "./FounderBadge";
 import { useCurrentPlan } from "./PlanContext";
 import { getActiveGroup } from "./admin-nav";
 
@@ -58,6 +59,7 @@ export function AdminTopBar({
       ) : null}
 
       <div className="ml-auto flex items-center gap-2">
+        <FounderBadge barbershopSlug={barbershopSlug} />
         <AdminUserMenu
           barbershopSlug={barbershopSlug}
           barbershopName={barbershopName}

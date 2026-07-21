@@ -27,15 +27,28 @@ export type Founder = {
 /** Cupos totales del Programa Fundadores (primeros 10 clientes). */
 export const FOUNDER_SPOTS = 10;
 
+/**
+ * Slugs con status de Fundador → habilita el badge en el panel admin.
+ *
+ * Deliberadamente una constante y no una columna en la DB: son 10 clientes
+ * como máximo y no cambia solo, así que una migración + join por request no
+ * se justifica. Si el programa creciera, migrar a `barbershops.is_founder`.
+ *
+ * Es una lista APARTE de `founders` porque son dos permisos distintos: se
+ * puede ser Fundador (badge) sin querer aparecer públicamente en el sitio.
+ */
+export const FOUNDER_SLUGS: readonly string[] = ["leocuts"];
+
+export function isFounder(barbershopSlug: string): boolean {
+  return FOUNDER_SLUGS.includes(barbershopSlug);
+}
+
 export const founders: Founder[] = [
   {
-    slug: "leo-cuts",
+    slug: "leocuts",
     name: "Leo Cuts",
-    // TODO: guardar el logo en public/fundadores/leo-cuts.png y cambiar este
-    // null por "/fundadores/leo-cuts.png". Mientras tanto se ven las iniciales
-    // (si apuntamos a un archivo inexistente, next/image tira 404 en prod).
-    logoSrc: null,
-    instagram: null,
+    logoSrc: "/fundadores/leocuts.jpeg",
+    instagram: "https://instagram.com/leoo.cts",
     quote:
       "De 10 la verdad, me ayudó muchísimo con la organización y a todos mis clientes les encantó porque es muy práctico para usar.",
     location: null,
