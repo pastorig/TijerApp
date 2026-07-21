@@ -42,18 +42,21 @@ export function HomeTestimonials() {
           {withQuote.map((founder) => (
             <figure
               key={founder.slug}
-              className="card-premium relative p-6 sm:p-8"
+              className="card-premium relative flex h-full flex-col p-6 sm:p-8"
             >
               <Quote
                 aria-hidden="true"
                 className="size-7 text-[color:var(--brand-gold)]/40"
               />
 
+              {/* flex-1: empuja el pie (logo + nombre) al fondo, así en la
+                  grilla de 2 los pies quedan alineados aunque las citas midan
+                  distinto. */}
               <blockquote
                 className={
                   isSingle
-                    ? "mt-4 text-lg leading-8 text-white sm:text-xl sm:leading-9"
-                    : "mt-4 text-base leading-7 text-white"
+                    ? "mt-4 flex-1 text-lg leading-8 text-white sm:text-xl sm:leading-9"
+                    : "mt-4 flex-1 text-base leading-7 text-white"
                 }
               >
                 &ldquo;{founder.quote}&rdquo;
