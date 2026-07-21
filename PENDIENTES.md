@@ -47,21 +47,13 @@ Después de la Opción A, se puede sumar cobro automático con MP (preapproval +
 
 ---
 
-## ⏳ TAREA PENDIENTE 1 — Resend (emails reales a clientes)
+## ✅ TAREA 1 — Resend (emails reales a clientes) — HECHO (2026-07-20)
 
-**Por qué:** hoy los emails están en modo sandbox (solo llegan al mail del founder). Con el dominio propio verificado, los clientes empiezan a recibir recordatorios/confirmaciones de verdad.
+Emails reales a clientes **funcionando en producción**. Dominio `tijerapp.com` verificado en Resend, `OWNER_NOTIFICATION_FROM = TijerApp <hola@tijerapp.com>` cargado en Vercel + `RESEND_API_KEY` presente. Verificado end-to-end: reserva con email no-founder → llegó el recordatorio 24h desde `hola@tijerapp.com` con el logo de la barbería (white-label OK).
 
-**Pasos:**
-1. Resend → **Domains → Add Domain** → `tijerapp.com`.
-2. Resend te da unos registros DNS (**TXT** para SPF/DKIM, a veces un **MX** o **CNAME** para `send.tijerapp.com`).
-3. Cargá esos registros en la **Zona DNS de DonWeb** (mismo lugar donde cargaste el A y el CNAME; tipo TXT/MX/CNAME según diga Resend). TTL 900.
-4. En Resend, esperá a que el dominio quede **Verified** ✅.
-5. En **Vercel → Environment Variables**, cambiá:
-   - `OWNER_NOTIFICATION_FROM` = `TijerApp <hola@tijerapp.com>`
-6. **Redeploy** en Vercel.
-7. Verificá: reservá un turno con un email distinto al del founder → debería llegar el mail.
+**Cómo se probó (para replicar):** sacar turno para MAÑANA con un email que no sea el del founder → GitHub → Actions → **Reminders Cron** → **Run workflow** con **force=true** (ignora la ventana horaria) → el JSON devuelve `decisions:[{kind:"reminder_24h",sent:true}]`. OJO: el recordatorio 24h solo aplica a turnos de mañana y con email cargado; si el turno es de otro día o sin email → `decisions:[]`.
 
-> Ojo: NO toques los registros MX existentes si tenés casilla de correo en DonWeb. Los de Resend son aditivos.
+> Ojo si algún día toca DNS: NO borrar los MX existentes de DonWeb si hay casilla de correo. Los de Resend son aditivos.
 
 ---
 

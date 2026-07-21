@@ -41,6 +41,8 @@ export type DemoBarbershop = {
   autoConfirmAppointments?: boolean;
   /** Cuando true, se ofrece "anotarse en lista de espera" en el booking. Default true. */
   waitlistEnabled?: boolean;
+  /** Cuando true, el email del cliente es obligatorio al reservar. Default false. */
+  requireClientEmail?: boolean;
   /**
    * Anticipación mínima (en minutos) para que un cliente pueda reservar un
    * turno. 0 = sin restricción. Ej: 60 → a las 15:20 no se puede tomar el de

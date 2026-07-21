@@ -5,7 +5,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 export const runtime = "nodejs";
 
 const barbershopSelectFields =
-  "id, created_at, slug, name, description, whatsapp, instagram, address, logo_url, google_reviews_url, working_hours_start, working_hours_end, slot_interval_minutes, is_active, auto_confirm_appointments, waitlist_enabled, min_booking_notice_minutes, whatsapp_message_template";
+  "id, created_at, slug, name, description, whatsapp, instagram, address, logo_url, google_reviews_url, working_hours_start, working_hours_end, slot_interval_minutes, is_active, auto_confirm_appointments, waitlist_enabled, require_client_email, min_booking_notice_minutes, whatsapp_message_template";
 
 async function assertAdminOfBarbershop(
   authHeader: string | null,
@@ -190,6 +190,7 @@ export async function PATCH(request: Request) {
       is_active: Boolean(payload.isActive ?? true),
       auto_confirm_appointments: Boolean(payload.autoConfirmAppointments),
       waitlist_enabled: payload.waitlistEnabled !== false,
+      require_client_email: Boolean(payload.requireClientEmail),
       min_booking_notice_minutes: parseMinBookingNotice(
         payload.minBookingNoticeMinutes,
       ),

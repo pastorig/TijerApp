@@ -493,6 +493,12 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       return;
     }
 
+    // Email obligatorio si la barbería lo configuró.
+    if (barbershop.requireClientEmail && !clientEmail.trim()) {
+      setFormError("Esta barbería necesita tu email para reservar.");
+      return;
+    }
+
     // Validamos que el teléfono tenga al menos 8 dígitos. Si no, el trigger
     // de DB ignora el cliente en silencio y queda un turno huérfano sin
     // poder verlo en el panel de Clientes.
@@ -1216,8 +1222,12 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           <Field
             label="Email"
             htmlFor="clientEmail"
-            optional
-            hint="Solo para que te contactemos si hay que cambiar el turno."
+            optional={!barbershop.requireClientEmail}
+            hint={
+              barbershop.requireClientEmail
+                ? "Te enviamos la confirmación y el recordatorio del turno a este email."
+                : "Solo para que te contactemos si hay que cambiar el turno."
+            }
           >
             <Input
               id="clientEmail"
@@ -1231,6 +1241,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               placeholder="tu@email.com"
               autoComplete="email"
               inputMode="email"
+              required={barbershop.requireClientEmail}
             />
           </Field>
 

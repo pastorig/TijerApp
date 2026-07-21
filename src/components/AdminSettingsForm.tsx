@@ -16,6 +16,59 @@ function isValidTimeValue(value: string) {
   return /^([01]\d|2[0-3]):([0-5]\d)$/.test(value);
 }
 
+/**
+ * Fila de toggle con switch tipo pill. Reemplaza los checkboxes crudos para
+ * que la sección de config se vea más prolija y menos vertical (se acomodan
+ * en grilla 2×2).
+ */
+function ToggleRow({
+  label,
+  description,
+  checked,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={`flex h-full flex-col gap-2 rounded-lg border bg-black p-3.5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+        checked
+          ? "border-[color:var(--brand-gold)]/50"
+          : "border-[color:var(--border-default)] hover:border-[color:var(--brand-gold)]/40"
+      }`}
+    >
+      <span className="flex items-center justify-between gap-3">
+        <span className="text-sm font-bold text-white">{label}</span>
+        <span
+          className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+            checked ? "bg-gold-grad" : "bg-[color:var(--border-default)]"
+          }`}
+        >
+          <span
+            className={`inline-block size-4 rounded-full bg-white shadow transition-transform duration-[var(--duration-fast)] ${
+              checked ? "translate-x-4" : "translate-x-0.5"
+            }`}
+          />
+        </span>
+      </span>
+      <span className="text-xs leading-5 text-[color:var(--text-muted)]">
+        {description}
+      </span>
+    </button>
+  );
+}
+
 export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
   const confirm = useConfirm();
   const toast = useToast();
@@ -38,6 +91,9 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
   );
   const [waitlistEnabled, setWaitlistEnabled] = useState(
     barbershop.waitlistEnabled ?? true,
+  );
+  const [requireClientEmail, setRequireClientEmail] = useState(
+    barbershop.requireClientEmail ?? false,
   );
   const [whatsappMessageTemplate, setWhatsappMessageTemplate] = useState(
     barbershop.whatsappMessageTemplate ?? "",
@@ -118,6 +174,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
           isActive,
           autoConfirmAppointments,
           waitlistEnabled,
+          requireClientEmail,
           minBookingNoticeMinutes,
           whatsappMessageTemplate: whatsappMessageTemplate.trim() || null,
         }),
@@ -147,6 +204,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
           is_active: boolean;
           auto_confirm_appointments: boolean;
           waitlist_enabled: boolean;
+          require_client_email: boolean;
           min_booking_notice_minutes: number;
           whatsapp_message_template: string | null;
         };
@@ -164,6 +222,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
       setIsActive(fresh.is_active ?? true);
       setAutoConfirmAppointments(fresh.auto_confirm_appointments ?? false);
       setWaitlistEnabled(fresh.waitlist_enabled ?? true);
+      setRequireClientEmail(fresh.require_client_email ?? false);
       setMinBookingNoticeMinutes(fresh.min_booking_notice_minutes ?? 0);
       setWhatsappMessageTemplate(fresh.whatsapp_message_template ?? "");
       setSuccessMessage("Configuración guardada correctamente.");
@@ -570,85 +629,63 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
 
             <article className="card-premium p-4 sm:p-5">
               <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
-                Estado
+                Reservas y operación
               </p>
 
-              <label className="mt-4 flex items-start gap-3 rounded-md border border-[color:var(--border-default)] bg-black px-4 py-3">
-                <input
-                  type="checkbox"
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <ToggleRow
+                  label="Barbería activa"
+                  description={publicStatusText}
                   checked={isActive}
                   disabled={isSaving}
-                  onChange={(event) => {
-                    setIsActive(event.target.checked);
+                  onChange={(value) => {
+                    setIsActive(value);
                     setErrorMessage("");
                   }}
-                  className="mt-1 size-4 accent-[color:var(--brand-gold)]"
                 />
-                <div>
-                  <p className="text-sm font-bold text-white">
-                    Barbería activa
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">
-                    {publicStatusText}
-                  </p>
-                </div>
-              </label>
-
-              <label className="mt-3 flex items-start gap-3 rounded-md border border-[color:var(--border-default)] bg-black px-4 py-3">
-                <input
-                  type="checkbox"
+                <ToggleRow
+                  label="Auto-confirmar reservas"
+                  description={
+                    autoConfirmAppointments
+                      ? "Las reservas entrantes se marcan como confirmadas automáticamente. No tenés que confirmar a mano desde el panel."
+                      : "Las reservas entran como pendientes y tenés que confirmarlas a mano. Activá esto si confiás en el flujo (pocos no-shows)."
+                  }
                   checked={autoConfirmAppointments}
                   disabled={isSaving}
-                  onChange={(event) => {
-                    setAutoConfirmAppointments(event.target.checked);
+                  onChange={(value) => {
+                    setAutoConfirmAppointments(value);
                     setErrorMessage("");
                   }}
-                  className="mt-1 size-4 accent-[color:var(--brand-gold)]"
                 />
-                <div>
-                  <p className="text-sm font-bold text-white">
-                    Auto-confirmar reservas
-                    {autoConfirmAppointments ? (
-                      <span className="ml-2 inline-flex items-center rounded-full border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)]">
-                        Activado
-                      </span>
-                    ) : null}
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">
-                    {autoConfirmAppointments
-                      ? "Las reservas entrantes se marcan como confirmadas automáticamente. No vas a tener que confirmar a mano desde el panel."
-                      : "Las reservas entran como pendientes y tenés que confirmarlas a mano. Activá esto si confías en el flujo (pocos no-shows, clientela conocida)."}
-                  </p>
-                </div>
-              </label>
-
-              <label className="mt-3 flex items-start gap-3 rounded-md border border-[color:var(--border-default)] bg-black px-4 py-3">
-                <input
-                  type="checkbox"
+                <ToggleRow
+                  label="Lista de espera"
+                  description={
+                    waitlistEnabled
+                      ? "Cuando no hay turnos para una fecha, el cliente puede anotarse y le avisás si se libera un lugar."
+                      : "Desactivada. Si no hay turnos, el cliente solo ve un aviso de que no hay disponibilidad (sin anotarse)."
+                  }
                   checked={waitlistEnabled}
                   disabled={isSaving}
-                  onChange={(event) => {
-                    setWaitlistEnabled(event.target.checked);
+                  onChange={(value) => {
+                    setWaitlistEnabled(value);
                     setErrorMessage("");
                   }}
-                  className="mt-1 size-4 accent-[color:var(--brand-gold)]"
                 />
-                <div>
-                  <p className="text-sm font-bold text-white">
-                    Lista de espera
-                    {waitlistEnabled ? (
-                      <span className="ml-2 inline-flex items-center rounded-full border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)]">
-                        Activada
-                      </span>
-                    ) : null}
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">
-                    {waitlistEnabled
-                      ? "Cuando no hay turnos para una fecha, el cliente puede anotarse en lista de espera y le avisás si se libera un lugar."
-                      : "Desactivada. Si no hay turnos, el cliente solo ve un aviso de que no hay disponibilidad (sin opción de anotarse). Útil si la lista de espera te trae confusión con los clientes."}
-                  </p>
-                </div>
-              </label>
+                <ToggleRow
+                  label="Pedir email obligatorio"
+                  description={
+                    requireClientEmail
+                      ? "El cliente no puede reservar sin dejar su email. Asegura que le lleguen la confirmación y los recordatorios."
+                      : "El email es opcional al reservar. Algunos clientes podrían no recibir recordatorios por mail."
+                  }
+                  checked={requireClientEmail}
+                  disabled={isSaving}
+                  onChange={(value) => {
+                    setRequireClientEmail(value);
+                    setErrorMessage("");
+                  }}
+                />
+              </div>
             </article>
 
             <article className="card-premium p-4 sm:p-5">

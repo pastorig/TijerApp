@@ -161,6 +161,9 @@ type BarbershopRow = {
   is_active: boolean;
   auto_confirm_appointments: boolean;
   waitlist_enabled: boolean;
+  // Email del cliente obligatorio al reservar. Opcional en el tipo por
+  // compatibilidad con SELECT que no la traigan / antes de la migración.
+  require_client_email?: boolean;
   // Anticipación mínima (min) para reservar. 0 = sin restricción. Opcional
   // en el tipo para no romper SELECT que no la traigan / antes de la migración.
   min_booking_notice_minutes?: number;
@@ -191,6 +194,7 @@ type BarbershopInsert = Omit<
   | "google_reviews_url"
   | "auto_confirm_appointments"
   | "waitlist_enabled"
+  | "require_client_email"
   | "mp_enabled"
   | "mp_access_token"
   | "mp_public_key"
@@ -210,6 +214,8 @@ type BarbershopInsert = Omit<
   auto_confirm_appointments?: boolean;
   /** Defaultea a true en DB — opcional al insertar. */
   waitlist_enabled?: boolean;
+  /** Defaultea a false en DB — opcional al insertar. */
+  require_client_email?: boolean;
   // MercadoPago — todos opcionales al insertar (defaults en DB)
   mp_enabled?: boolean;
   mp_access_token?: string | null;
