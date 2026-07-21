@@ -53,6 +53,16 @@ export const founders: Founder[] = [
       "De 10 la verdad, me ayudó muchísimo con la organización y a todos mis clientes les encantó porque es muy práctico para usar.",
     location: null,
   },
+  {
+    slug: "sv-barber",
+    name: "SV Barber",
+    logoSrc: "/fundadores/sv-barber.jpg",
+    instagram: null,
+    // Sin testimonio: los `quote` son palabras textuales del barbero, no copy
+    // escrito por nosotros. Cuando SV Barber nos pase el suyo, va acá.
+    quote: null,
+    location: null,
+  },
 ];
 
 /** Iniciales (máx 2) para el fallback cuando no hay logo. */

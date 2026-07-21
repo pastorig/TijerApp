@@ -7,6 +7,46 @@ import { CommercialFooter } from "@/components/home/CommercialFooter";
 import { CommercialNav } from "@/components/home/CommercialNav";
 // PricingPlans es el bloque arriba del fold después del hero → carga directa.
 import { PricingPlans } from "@/components/home/PricingPlans";
+import { FaqAccordion, type FaqItem } from "@/components/home/FaqAccordion";
+
+/** FAQ de billing de /precios. Mismo acordeón que la home (FaqAccordion). */
+const BILLING_FAQ: FaqItem[] = [
+  {
+    question: "¿Cómo funciona el trial de 14 días?",
+    answer:
+      "Te activamos el plan Pro durante 14 días, sin pedirte tarjeta. Probás todas las features. Al día 14 te pedimos cargar tu tarjeta de MercadoPago para seguir. Si no la cargás, tu cuenta queda en modo lectura por 30 días y después se archiva.",
+  },
+  {
+    question: "¿Por qué cobran en pesos?",
+    answer:
+      "Porque pensamos que el barbero argentino piensa en pesos, no en dólares. Precios fijos en ARS, sin conversión, sin sorpresas. Los actualizamos cada 3 meses según evolución del MEP para mantener el valor real.",
+  },
+  {
+    question: "¿Puedo cancelar cuando quiera?",
+    answer:
+      "Sí. Cancelás desde el panel admin con un click. No te cobramos más a partir del próximo mes y seguís usando TijerApp normalmente hasta que termine el mes que ya pagaste. Sin penalidades, sin letra chica.",
+  },
+  {
+    question: "¿Qué pasa si subo de plan a mitad de mes?",
+    answer:
+      "Te cobramos la diferencia prorrateada por los días que quedan del mes actual. Desde el mes siguiente ya pagás el plan nuevo completo.",
+  },
+  {
+    question: "¿Puedo cambiar entre planes?",
+    answer:
+      "Sí, cuando quieras. Si subís de plan (ej. de Esencial a Pro), tomás las features nuevas al instante. Si bajás de plan, el cambio aplica desde el próximo mes para no perder lo que ya pagaste.",
+  },
+  {
+    question: "¿Hay descuento por pago anual?",
+    answer:
+      "Sí: 15% off pagando 12 meses upfront. Te queda en $224.000/año para Solo, $418.000/año para Esencial y $622.000/año para Pro.",
+  },
+  {
+    question: "¿Cómo sé si soy uno de los 10 Fundadores?",
+    answer:
+      "Si sos uno de los primeros 10 en activar billing real, te avisamos por WhatsApp y te aplicamos los beneficios automáticamente. El programa cierra cuando llegamos al cliente 11.",
+  },
+];
 
 // Below-the-fold: lazy loading para reducir el JS inicial.
 const PricingCompareTable = dynamic(
@@ -105,14 +145,17 @@ export default function PricingPage() {
         <PricingPlans />
       </div>
 
-      <PricingCompareTable />
-
-      <PricingRoiCalculator />
-
+      {/* Fundadores va pegado a los planes: quien acaba de ver el precio es
+          justo a quien le sirve saber que hay cupos con beneficios. La
+          comparativa y el ROI quedan después, para el que quiere más detalle. */}
       <div id="fundadores">
         <FoundersProgram />
         <FoundersWall />
       </div>
+
+      <PricingCompareTable />
+
+      <PricingRoiCalculator />
 
       {/* Mini FAQ sobre billing */}
       <section className="border-t border-[color:var(--border-subtle)] bg-black">
@@ -126,50 +169,9 @@ export default function PricingPage() {
             </h2>
           </header>
 
-          <dl className="mt-10 space-y-6 sm:mt-12 sm:space-y-8">
-            {[
-              {
-                q: "¿Cómo funciona el trial de 14 días?",
-                a: "Te activamos el plan Pro durante 14 días, sin pedirte tarjeta. Probás todas las features. Al día 14 te pedimos cargar tu tarjeta de MercadoPago para seguir. Si no la cargás, tu cuenta queda en modo lectura por 30 días y después se archiva.",
-              },
-              {
-                q: "¿Por qué cobran en pesos?",
-                a: "Porque pensamos que el barbero argentino piensa en pesos, no en dólares. Precios fijos en ARS, sin conversión, sin sorpresas. Los actualizamos cada 3 meses según evolución del MEP para mantener el valor real.",
-              },
-              {
-                q: "¿Puedo cancelar cuando quiera?",
-                a: "Sí. Cancelás desde el panel admin con un click. No te cobramos más a partir del próximo mes y seguís usando TijerApp normalmente hasta que termine el mes que ya pagaste. Sin penalidades, sin letra chica.",
-              },
-              {
-                q: "¿Qué pasa si subo de plan a mitad de mes?",
-                a: "Te cobramos la diferencia prorrateada por los días que quedan del mes actual. Desde el mes siguiente ya pagás el plan nuevo completo.",
-              },
-              {
-                q: "¿Puedo cambiar entre planes?",
-                a: "Sí, cuando quieras. Si subís de plan (ej. de Esencial a Pro), tomás las features nuevas al instante. Si bajás de plan, el cambio aplica desde el próximo mes para no perder lo que ya pagaste.",
-              },
-              {
-                q: "¿Hay descuento por pago anual?",
-                a: "Sí: 15% off pagando 12 meses upfront. Te queda en $224.000/año para Solo, $418.000/año para Esencial y $622.000/año para Pro.",
-              },
-              {
-                q: "¿Cómo sé si soy uno de los 10 Fundadores?",
-                a: "Si sos uno de los primeros 10 en activar billing real, te avisamos por WhatsApp y te aplicamos los beneficios automáticamente. El programa cierra cuando llegamos al cliente 11.",
-              },
-            ].map((item) => (
-              <div
-                key={item.q}
-                className="border-b border-[color:var(--border-subtle)] pb-6"
-              >
-                <dt className="text-base font-bold text-white sm:text-lg">
-                  {item.q}
-                </dt>
-                <dd className="mt-2 text-sm leading-7 text-[color:var(--text-secondary)] sm:text-base">
-                  {item.a}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          <div className="mt-10 sm:mt-12">
+            <FaqAccordion idPrefix="precios-faq" items={BILLING_FAQ} />
+          </div>
         </div>
       </section>
 
