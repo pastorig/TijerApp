@@ -3,10 +3,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useRef, useState, type FormEvent } from "react";
+import {
+  ArrowLeft,
+  Bell,
+  CalendarCheck,
+  Clock,
+  MessageSquare,
+  Store,
+  type LucideIcon,
+} from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { useConfirm, useToast } from "@/components/ui";
 import { PushNotificationsCard } from "@/components/push/PushNotificationsCard";
 import { getCurrentSession } from "@/lib/auth";
+import { cn } from "@/lib/cn";
 
 type AdminSettingsFormProps = {
   barbershop: DemoBarbershop;
@@ -14,6 +24,61 @@ type AdminSettingsFormProps = {
 
 function isValidTimeValue(value: string) {
   return /^([01]\d|2[0-3]):([0-5]\d)$/.test(value);
+}
+
+/** Clases compartidas de los campos (menos verborragia en el JSX). */
+const FIELD_CLASS =
+  "mt-1 min-h-11 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]";
+const LABEL_CLASS =
+  "text-[11px] font-bold uppercase text-[color:var(--text-muted)]";
+const HELP_CLASS = "mt-1 text-[10px] leading-4 text-[color:var(--text-subtle)]";
+
+/** Secciones del panel master-detail. */
+type SectionKey =
+  | "identidad"
+  | "horarios"
+  | "reservas"
+  | "mensajes"
+  | "notificaciones";
+
+const SECTIONS: {
+  key: SectionKey;
+  label: string;
+  hint: string;
+  icon: LucideIcon;
+}[] = [
+  { key: "identidad", label: "Identidad", hint: "Logo, nombre y contacto", icon: Store },
+  { key: "horarios", label: "Horarios", hint: "Apertura y anticipación", icon: Clock },
+  { key: "reservas", label: "Reservas", hint: "Confirmación y lista de espera", icon: CalendarCheck },
+  { key: "mensajes", label: "Mensajes", hint: "WhatsApp al cliente", icon: MessageSquare },
+  { key: "notificaciones", label: "Notificaciones", hint: "Avisos push al equipo", icon: Bell },
+];
+
+/** Encabezado de una sección dentro del panel (ícono en pastilla + título). */
+function SectionHeading({
+  icon: Icon,
+  title,
+  hint,
+}: {
+  icon: LucideIcon;
+  title: string;
+  hint: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 border-b border-[color:var(--border-subtle)] pb-3">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]">
+        <Icon aria-hidden="true" className="size-4.5" />
+      </span>
+      <div className="min-w-0">
+        <h2 className="text-sm font-black uppercase tracking-tight text-white">
+          {title}
+        </h2>
+        <p className="truncate text-[11px] leading-tight text-[color:var(--text-muted)]">
+          {hint}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -110,6 +175,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [activeSection, setActiveSection] = useState<SectionKey>("identidad");
 
   const publicStatusText = useMemo(
     () =>
@@ -127,17 +193,22 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
     // guardado; si faltara, el backend lo defaultea a 30.
     const intervalValue = Number(slotIntervalMinutes);
 
+    // Como solo se ve una sección por vez, ante un error de validación
+    // saltamos a la sección que lo contiene para que no quede oculto.
     if (!name.trim()) {
+      setActiveSection("identidad");
       setErrorMessage("El nombre de la barbería es obligatorio.");
       return;
     }
 
     if (!isValidTimeValue(startTime) || !isValidTimeValue(endTime)) {
+      setActiveSection("horarios");
       setErrorMessage("Revisá el horario de apertura y cierre.");
       return;
     }
 
     if (startTime >= endTime) {
+      setActiveSection("horarios");
       setErrorMessage("El horario de cierre debe ser posterior al de apertura.");
       return;
     }
@@ -281,7 +352,8 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
     if (!logoUrl) return;
     const ok = await confirm({
       title: "Quitar logo",
-      message: "El logo deja de aparecer en la landing pública. Podés subir uno nuevo cuando quieras.",
+      message:
+        "El logo deja de aparecer en la landing pública. Podés subir uno nuevo cuando quieras.",
       confirmLabel: "Quitar",
       cancelLabel: "Volver",
       danger: true,
@@ -323,466 +395,566 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
     }
   }
 
+  const defaultWaTemplate =
+    "Hola {nombre}! Te escribo de {barberia} 👋 Es por tu turno del {fecha} a las {hora}hs.";
+  const siteUrl = (
+    process.env.NEXT_PUBLIC_SITE_URL || "https://tijerapp.com"
+  ).replace(/\/$/, "");
+
   return (
     <main className="min-h-screen bg-black text-white">
-      <section className="mx-auto w-full max-w-5xl px-3 py-5 sm:px-6 sm:py-8 lg:px-12 lg:py-12">
-        <div className="flex flex-col gap-4 border-b border-[color:var(--border-default)] pb-5 sm:pb-8">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
-            Ajustes
-          </p>
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-            <div>
-              <h1 className="text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
-                Configuración de {barbershop.name}
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base sm:leading-7">
-                Editá la identidad pública y los horarios base de la barbería.
-              </p>
-            </div>
-            <Link
-              href={`/${barbershop.slug}/admin`}
-              className="inline-flex min-h-10 items-center justify-center rounded-md border border-[color:var(--border-default)] px-4 py-2 text-sm font-bold text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] sm:min-h-11"
-            >
-              Volver al panel
-            </Link>
+      <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:py-8">
+        {/* ── Header compacto ── */}
+        <header className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)]">
+              Ajustes
+            </p>
+            <h1 className="mt-1 truncate text-xl font-black uppercase tracking-tight text-white sm:text-2xl">
+              Configuración
+            </h1>
+            <p className="mt-1 text-xs leading-5 text-[color:var(--text-secondary)] sm:text-sm">
+              {barbershop.name} · identidad, horarios y reservas.
+            </p>
+          </div>
+          <Link
+            href={`/${barbershop.slug}/admin`}
+            className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-md border border-[color:var(--border-default)] px-3 py-2 text-xs font-bold text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+          >
+            <ArrowLeft aria-hidden="true" className="size-3.5" />
+            <span className="hidden sm:inline">Volver al panel</span>
+          </Link>
+        </header>
+
+        {/* ── Chips de sección (mobile): tira horizontal sticky ── */}
+        <div className="sticky top-0 z-20 -mx-4 mt-4 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 py-2.5 backdrop-blur-sm lg:hidden">
+          <div className="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {SECTIONS.map((s) => {
+              const on = s.key === activeSection;
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setActiveSection(s.key)}
+                  className={cn(
+                    "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition",
+                    on
+                      ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
+                      : "border-[color:var(--border-default)] text-[color:var(--text-secondary)]",
+                  )}
+                >
+                  <s.icon aria-hidden="true" className="size-3.5" />
+                  {s.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="mt-5 grid gap-4 lg:grid-cols-[1.05fr_0.95fr] lg:items-start"
-        >
-          <section className="card-premium p-4 sm:p-5">
-            <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
-              Identidad pública
-            </p>
-
-            <div className="mt-4 grid gap-3">
-              {/* Logo */}
-              <div>
-                <p className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]">
-                  Logo
-                </p>
-                <div className="mt-2 flex flex-wrap items-center gap-4 rounded-md border border-[color:var(--border-default)] bg-black p-3">
-                  <div className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--border-default)] bg-[color:var(--surface-1)]">
-                    {logoUrl ? (
-                      <Image
-                        src={logoUrl}
-                        alt={`Logo de ${barbershop.name}`}
-                        fill
-                        sizes="80px"
-                        className="object-cover"
-                        unoptimized
-                      />
-                    ) : (
-                      <span className="font-mono text-xs font-bold uppercase text-[color:var(--text-muted)]">
-                        Sin logo
-                      </span>
-                    )}
-                  </div>
-                  <div className="grid flex-1 gap-2">
-                    <input
-                      ref={logoInputRef}
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                      onChange={handleLogoChange}
-                      disabled={isUploadingLogo || isRemovingLogo}
-                      className="block w-full text-xs text-[color:var(--text-muted)] file:mr-3 file:rounded-md file:border file:border-[color:var(--brand-gold)]/40 file:bg-[color:var(--brand-gold-soft)] file:px-3 file:py-2 file:text-[10px] file:font-bold file:uppercase file:tracking-[0.14em] file:text-[color:var(--brand-gold)] hover:file:bg-[color:var(--brand-gold-soft)]/80 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                    <p className="text-[10px] text-[color:var(--text-subtle)]">
-                      PNG, JPG, WebP o SVG. Máx 2MB. Se muestra circular
-                      en la landing pública.
-                    </p>
-                    {logoUrl ? (
-                      <button
-                        type="button"
-                        onClick={handleRemoveLogo}
-                        disabled={isUploadingLogo || isRemovingLogo}
-                        className="self-start text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+        <form onSubmit={handleSubmit} className="mt-4 lg:mt-6">
+          <div className="lg:grid lg:grid-cols-[220px_1fr] lg:gap-6 lg:items-start">
+            {/* ── Rail (desktop) ── */}
+            <nav className="hidden lg:block">
+              <div className="sticky top-6 flex flex-col gap-1">
+                {SECTIONS.map((s) => {
+                  const on = s.key === activeSection;
+                  return (
+                    <button
+                      key={s.key}
+                      type="button"
+                      onClick={() => setActiveSection(s.key)}
+                      className={cn(
+                        "group flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition",
+                        on
+                          ? "border-[color:var(--brand-gold)]/50 bg-[color:var(--brand-gold-soft)]"
+                          : "border-transparent hover:border-[color:var(--border-default)] hover:bg-[color:var(--surface-1)]",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "flex size-8 shrink-0 items-center justify-center rounded-md border transition",
+                          on
+                            ? "border-[color:var(--brand-gold)]/40 bg-black text-[color:var(--brand-gold)]"
+                            : "border-[color:var(--border-default)] bg-black text-[color:var(--text-muted)] group-hover:text-white",
+                        )}
                       >
-                        {isRemovingLogo ? "Quitando…" : "Quitar logo"}
-                      </button>
-                    ) : null}
-                    {isUploadingLogo ? (
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
-                        Subiendo…
+                        <s.icon aria-hidden="true" className="size-4" />
+                      </span>
+                      <span className="min-w-0">
+                        <span
+                          className={cn(
+                            "block truncate text-sm font-bold",
+                            on ? "text-white" : "text-[color:var(--text-secondary)]",
+                          )}
+                        >
+                          {s.label}
+                        </span>
+                        <span className="block truncate text-[10px] leading-tight text-[color:var(--text-muted)]">
+                          {s.hint}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </nav>
+
+            {/* ── Panel: sección activa ── */}
+            <div className="min-w-0">
+              {activeSection === "notificaciones" ? (
+                <PushNotificationsCard barbershopSlug={barbershop.slug} />
+              ) : (
+                <div className="card-premium p-4 sm:p-5">
+                  {/* IDENTIDAD */}
+                  {activeSection === "identidad" && (
+                    <div className="grid gap-4">
+                      <SectionHeading
+                        icon={Store}
+                        title="Identidad pública"
+                        hint="Lo que ve el cliente en tu landing"
+                      />
+
+                      {/* Logo */}
+                      <div>
+                        <p className={LABEL_CLASS}>Logo</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-4 rounded-md border border-[color:var(--border-default)] bg-black p-3">
+                          <div className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--border-default)] bg-[color:var(--surface-1)]">
+                            {logoUrl ? (
+                              <Image
+                                src={logoUrl}
+                                alt={`Logo de ${barbershop.name}`}
+                                fill
+                                sizes="80px"
+                                className="object-cover"
+                                unoptimized
+                              />
+                            ) : (
+                              <span className="font-mono text-xs font-bold uppercase text-[color:var(--text-muted)]">
+                                Sin logo
+                              </span>
+                            )}
+                          </div>
+                          <div className="grid flex-1 gap-2">
+                            <input
+                              ref={logoInputRef}
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                              onChange={handleLogoChange}
+                              disabled={isUploadingLogo || isRemovingLogo}
+                              className="block w-full text-xs text-[color:var(--text-muted)] file:mr-3 file:rounded-md file:border file:border-[color:var(--brand-gold)]/40 file:bg-[color:var(--brand-gold-soft)] file:px-3 file:py-2 file:text-[10px] file:font-bold file:uppercase file:tracking-[0.14em] file:text-[color:var(--brand-gold)] hover:file:bg-[color:var(--brand-gold-soft)]/80 disabled:cursor-not-allowed disabled:opacity-50"
+                            />
+                            <p className="text-[10px] text-[color:var(--text-subtle)]">
+                              PNG, JPG, WebP o SVG. Máx 2MB. Se muestra circular
+                              en la landing pública.
+                            </p>
+                            {logoUrl ? (
+                              <button
+                                type="button"
+                                onClick={handleRemoveLogo}
+                                disabled={isUploadingLogo || isRemovingLogo}
+                                className="self-start text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                {isRemovingLogo ? "Quitando…" : "Quitar logo"}
+                              </button>
+                            ) : null}
+                            {isUploadingLogo ? (
+                              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
+                                Subiendo…
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label htmlFor="settings-name" className={LABEL_CLASS}>
+                          Nombre
+                        </label>
+                        <input
+                          id="settings-name"
+                          value={name}
+                          disabled={isSaving}
+                          onChange={(event) => {
+                            setName(event.target.value);
+                            setErrorMessage("");
+                          }}
+                          className={FIELD_CLASS}
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="settings-description"
+                          className={LABEL_CLASS}
+                        >
+                          Descripción
+                        </label>
+                        <textarea
+                          id="settings-description"
+                          value={description}
+                          disabled={isSaving}
+                          onChange={(event) => {
+                            setDescription(event.target.value);
+                            setErrorMessage("");
+                          }}
+                          rows={4}
+                          className="mt-1 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 py-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
+                          placeholder="Reserva tu turno online"
+                        />
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label
+                            htmlFor="settings-whatsapp"
+                            className={LABEL_CLASS}
+                          >
+                            WhatsApp
+                          </label>
+                          <input
+                            id="settings-whatsapp"
+                            value={whatsapp}
+                            disabled={isSaving}
+                            onChange={(event) => {
+                              setWhatsapp(event.target.value);
+                              setErrorMessage("");
+                            }}
+                            className={FIELD_CLASS}
+                            placeholder="+54..."
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="settings-instagram"
+                            className={LABEL_CLASS}
+                          >
+                            Instagram
+                          </label>
+                          <input
+                            id="settings-instagram"
+                            value={instagram}
+                            disabled={isSaving}
+                            onChange={(event) => {
+                              setInstagram(event.target.value);
+                              setErrorMessage("");
+                            }}
+                            className={FIELD_CLASS}
+                            placeholder="https://instagram.com/..."
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label htmlFor="settings-address" className={LABEL_CLASS}>
+                          Dirección — opcional
+                        </label>
+                        <input
+                          id="settings-address"
+                          value={address}
+                          disabled={isSaving}
+                          onChange={(event) => {
+                            setAddress(event.target.value);
+                            setErrorMessage("");
+                          }}
+                          className={FIELD_CLASS}
+                          placeholder="Calle 123, Barrio, Ciudad"
+                        />
+                        <p className={HELP_CLASS}>
+                          Se muestra en la landing pública si la cargás.
+                        </p>
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="settings-google-reviews"
+                          className={LABEL_CLASS}
+                        >
+                          Link a reseñas de Google — opcional
+                        </label>
+                        <input
+                          id="settings-google-reviews"
+                          value={googleReviewsUrl}
+                          disabled={isSaving}
+                          onChange={(event) => {
+                            setGoogleReviewsUrl(event.target.value);
+                            setErrorMessage("");
+                          }}
+                          className={FIELD_CLASS}
+                          placeholder="https://g.page/r/.../review"
+                        />
+                        <p className={HELP_CLASS}>
+                          Si está seteado, después de una reseña de 4-5 estrellas
+                          invitamos al cliente a dejarla también en Google.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* HORARIOS */}
+                  {activeSection === "horarios" && (
+                    <div className="grid gap-4">
+                      <SectionHeading
+                        icon={Clock}
+                        title="Horarios base"
+                        hint="Apertura, cierre y anticipación mínima"
+                      />
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <label
+                            htmlFor="settings-start-time"
+                            className={LABEL_CLASS}
+                          >
+                            Apertura
+                          </label>
+                          <input
+                            id="settings-start-time"
+                            type="time"
+                            value={startTime}
+                            disabled={isSaving}
+                            onChange={(event) => {
+                              setStartTime(event.target.value);
+                              setErrorMessage("");
+                            }}
+                            className={FIELD_CLASS}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="settings-end-time"
+                            className={LABEL_CLASS}
+                          >
+                            Cierre
+                          </label>
+                          <input
+                            id="settings-end-time"
+                            type="time"
+                            value={endTime}
+                            disabled={isSaving}
+                            onChange={(event) => {
+                              setEndTime(event.target.value);
+                              setErrorMessage("");
+                            }}
+                            className={FIELD_CLASS}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {/* Anticipación mínima para reservar */}
+                      <div>
+                        <label
+                          htmlFor="settings-min-notice"
+                          className={LABEL_CLASS}
+                        >
+                          Anticipación mínima para reservar
+                        </label>
+                        <select
+                          id="settings-min-notice"
+                          value={minBookingNoticeMinutes}
+                          disabled={isSaving}
+                          onChange={(event) => {
+                            setMinBookingNoticeMinutes(Number(event.target.value));
+                            setErrorMessage("");
+                          }}
+                          className={FIELD_CLASS}
+                        >
+                          <option value={0}>Sin restricción</option>
+                          <option value={30}>30 minutos antes</option>
+                          <option value={60}>1 hora antes</option>
+                          <option value={90}>1 hora y media antes</option>
+                          <option value={120}>2 horas antes</option>
+                          <option value={180}>3 horas antes</option>
+                          <option value={1440}>1 día antes</option>
+                        </select>
+                        <p className="mt-1 text-[10px] leading-4 text-[color:var(--text-subtle)]">
+                          Con cuánto tiempo mínimo pueden reservarte. Ej: &quot;1
+                          hora antes&quot; → a las 15:20 ya no pueden tomar el turno
+                          de las 16:00 (el más cercano pasa a ser el siguiente
+                          disponible). Solo afecta los turnos de hoy.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* RESERVAS */}
+                  {activeSection === "reservas" && (
+                    <div className="grid gap-4">
+                      <SectionHeading
+                        icon={CalendarCheck}
+                        title="Reservas y operación"
+                        hint="Visibilidad, confirmación y lista de espera"
+                      />
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <ToggleRow
+                          label="Barbería activa"
+                          description={publicStatusText}
+                          checked={isActive}
+                          disabled={isSaving}
+                          onChange={(value) => {
+                            setIsActive(value);
+                            setErrorMessage("");
+                          }}
+                        />
+                        <ToggleRow
+                          label="Auto-confirmar reservas"
+                          description={
+                            autoConfirmAppointments
+                              ? "Las reservas entrantes se marcan como confirmadas automáticamente. No tenés que confirmar a mano desde el panel."
+                              : "Las reservas entran como pendientes y tenés que confirmarlas a mano. Activá esto si confiás en el flujo (pocos no-shows)."
+                          }
+                          checked={autoConfirmAppointments}
+                          disabled={isSaving}
+                          onChange={(value) => {
+                            setAutoConfirmAppointments(value);
+                            setErrorMessage("");
+                          }}
+                        />
+                        <ToggleRow
+                          label="Lista de espera"
+                          description={
+                            waitlistEnabled
+                              ? "Cuando no hay turnos para una fecha, el cliente puede anotarse y le avisás si se libera un lugar."
+                              : "Desactivada. Si no hay turnos, el cliente solo ve un aviso de que no hay disponibilidad (sin anotarse)."
+                          }
+                          checked={waitlistEnabled}
+                          disabled={isSaving}
+                          onChange={(value) => {
+                            setWaitlistEnabled(value);
+                            setErrorMessage("");
+                          }}
+                        />
+                        <ToggleRow
+                          label="Pedir email obligatorio"
+                          description={
+                            requireClientEmail
+                              ? "El cliente no puede reservar sin dejar su email. Asegura que le lleguen la confirmación y los recordatorios."
+                              : "El email es opcional al reservar. Algunos clientes podrían no recibir recordatorios por mail."
+                          }
+                          checked={requireClientEmail}
+                          disabled={isSaving}
+                          onChange={(value) => {
+                            setRequireClientEmail(value);
+                            setErrorMessage("");
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* MENSAJES */}
+                  {activeSection === "mensajes" && (
+                    <div className="grid gap-3">
+                      <SectionHeading
+                        icon={MessageSquare}
+                        title="Mensaje de WhatsApp"
+                        hint="El texto que se carga al escribirle a un cliente"
+                      />
+                      <p className="text-xs leading-5 text-[color:var(--text-muted)]">
+                        Se usa solo cuando le escribís a un cliente por su turno
+                        (desde &quot;Próximo turno&quot; o el turnero). Dejalo vacío
+                        para usar el mensaje por defecto.
                       </p>
-                    ) : null}
-                  </div>
+
+                      <textarea
+                        id="settings-wa-template"
+                        value={whatsappMessageTemplate}
+                        disabled={isSaving}
+                        onChange={(event) => {
+                          setWhatsappMessageTemplate(event.target.value);
+                          setErrorMessage("");
+                        }}
+                        rows={3}
+                        placeholder={defaultWaTemplate}
+                        className="w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 py-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
+                      />
+
+                      <div className="flex flex-wrap gap-1.5">
+                        {["{nombre}", "{barberia}", "{fecha}", "{hora}"].map(
+                          (ph) => (
+                            <button
+                              key={ph}
+                              type="button"
+                              disabled={isSaving}
+                              onClick={() =>
+                                setWhatsappMessageTemplate(
+                                  (prev) =>
+                                    `${prev}${prev && !prev.endsWith(" ") ? " " : ""}${ph}`,
+                                )
+                              }
+                              className="rounded-full border border-[color:var(--border-default)] bg-black px-2.5 py-1 font-mono text-[10px] text-[color:var(--brand-gold)] transition hover:border-[color:var(--brand-gold)] disabled:opacity-50"
+                            >
+                              {ph}
+                            </button>
+                          ),
+                        )}
+                      </div>
+                      <p className="text-[10px] leading-4 text-[color:var(--text-subtle)]">
+                        Tocá un dato para insertarlo. El link para
+                        confirmar/cancelar el turno se agrega siempre
+                        automáticamente al final.
+                      </p>
+
+                      {/* Preview en vivo */}
+                      <div className="rounded-md border border-[color:var(--border-subtle)] bg-black p-3">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+                          Vista previa
+                        </p>
+                        <p className="mt-1.5 whitespace-pre-line text-xs leading-5 text-[color:var(--text-secondary)]">
+                          {(whatsappMessageTemplate.trim() || defaultWaTemplate)
+                            .replaceAll("{nombre}", "Juan")
+                            .replaceAll("{barberia}", name || barbershop.name)
+                            .replaceAll("{fecha}", "jueves 18/06")
+                            .replaceAll("{hora}", "17:30")}
+                          {"\n\nPodés confirmar o cancelar tu turno desde este link:\n"}
+                          <span className="text-[color:var(--brand-gold)]">
+                            {`${siteUrl}/r/…`}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="settings-name"
-                  className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
-                >
-                  Nombre
-                </label>
-                <input
-                  id="settings-name"
-                  value={name}
-                  disabled={isSaving}
-                  onChange={(event) => {
-                    setName(event.target.value);
-                    setErrorMessage("");
-                  }}
-                  className="mt-1 min-h-11 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-                  required
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="settings-description"
-                  className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
-                >
-                  Descripción
-                </label>
-                <textarea
-                  id="settings-description"
-                  value={description}
-                  disabled={isSaving}
-                  onChange={(event) => {
-                    setDescription(event.target.value);
-                    setErrorMessage("");
-                  }}
-                  rows={4}
-                  className="mt-1 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 py-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-                  placeholder="Reserva tu turno online"
-                />
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="settings-whatsapp"
-                    className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
-                  >
-                    WhatsApp
-                  </label>
-                  <input
-                    id="settings-whatsapp"
-                    value={whatsapp}
-                    disabled={isSaving}
-                    onChange={(event) => {
-                      setWhatsapp(event.target.value);
-                      setErrorMessage("");
-                    }}
-                    className="mt-1 min-h-11 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-                    placeholder="+54..."
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="settings-instagram"
-                    className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
-                  >
-                    Instagram
-                  </label>
-                  <input
-                    id="settings-instagram"
-                    value={instagram}
-                    disabled={isSaving}
-                    onChange={(event) => {
-                      setInstagram(event.target.value);
-                      setErrorMessage("");
-                    }}
-                    className="mt-1 min-h-11 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-                    placeholder="https://instagram.com/..."
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="settings-address"
-                  className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
-                >
-                  Dirección — opcional
-                </label>
-                <input
-                  id="settings-address"
-                  value={address}
-                  disabled={isSaving}
-                  onChange={(event) => {
-                    setAddress(event.target.value);
-                    setErrorMessage("");
-                  }}
-                  className="mt-1 min-h-11 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-                  placeholder="Calle 123, Barrio, Ciudad"
-                />
-                <p className="mt-1 text-[10px] text-[color:var(--text-subtle)]">
-                  Se muestra en la landing pública si la cargás.
-                </p>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="settings-google-reviews"
-                  className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
-                >
-                  Link a reseñas de Google — opcional
-                </label>
-                <input
-                  id="settings-google-reviews"
-                  value={googleReviewsUrl}
-                  disabled={isSaving}
-                  onChange={(event) => {
-                    setGoogleReviewsUrl(event.target.value);
-                    setErrorMessage("");
-                  }}
-                  className="mt-1 min-h-11 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-                  placeholder="https://g.page/r/.../review"
-                />
-                <p className="mt-1 text-[10px] text-[color:var(--text-subtle)]">
-                  Si está seteado, después de una reseña de 4-5 estrellas
-                  invitamos al cliente a dejarla también en Google.
-                </p>
-              </div>
+              )}
             </div>
-          </section>
+          </div>
 
-          <section className="grid gap-4">
-            <article className="card-premium p-4 sm:p-5">
-              <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
-                Horarios base
-              </p>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="settings-start-time"
-                    className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
-                  >
-                    Apertura
-                  </label>
-                  <input
-                    id="settings-start-time"
-                    type="time"
-                    value={startTime}
-                    disabled={isSaving}
-                    onChange={(event) => {
-                      setStartTime(event.target.value);
-                      setErrorMessage("");
-                    }}
-                    className="mt-1 min-h-11 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="settings-end-time"
-                    className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
-                  >
-                    Cierre
-                  </label>
-                  <input
-                    id="settings-end-time"
-                    type="time"
-                    value={endTime}
-                    disabled={isSaving}
-                    onChange={(event) => {
-                      setEndTime(event.target.value);
-                      setErrorMessage("");
-                    }}
-                    className="mt-1 min-h-11 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Anticipación mínima para reservar */}
-              <div className="mt-4">
-                <label
-                  htmlFor="settings-min-notice"
-                  className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
+          {/* ── Barra de guardar sticky ── (no aplica en Notificaciones) */}
+          {activeSection !== "notificaciones" && (
+            <div className="sticky bottom-0 z-20 -mx-4 mt-4 flex flex-col gap-2 border-t border-[color:var(--border-default)] bg-black/95 px-4 py-3 backdrop-blur-sm sm:mx-0 sm:flex-row sm:items-center sm:justify-between sm:rounded-b-xl">
+            <div className="min-w-0">
+              {errorMessage ? (
+                <p
+                  role="alert"
+                  className="truncate text-sm font-semibold text-[color:var(--danger)]"
                 >
-                  Anticipación mínima para reservar
-                </label>
-                <select
-                  id="settings-min-notice"
-                  value={minBookingNoticeMinutes}
-                  disabled={isSaving}
-                  onChange={(event) => {
-                    setMinBookingNoticeMinutes(Number(event.target.value));
-                    setErrorMessage("");
-                  }}
-                  className="mt-1 min-h-11 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-                >
-                  <option value={0}>Sin restricción</option>
-                  <option value={30}>30 minutos antes</option>
-                  <option value={60}>1 hora antes</option>
-                  <option value={90}>1 hora y media antes</option>
-                  <option value={120}>2 horas antes</option>
-                  <option value={180}>3 horas antes</option>
-                  <option value={1440}>1 día antes</option>
-                </select>
-                <p className="mt-1 text-[10px] leading-4 text-[color:var(--text-subtle)]">
-                  Con cuánto tiempo mínimo pueden reservarte. Ej: &quot;1 hora
-                  antes&quot; → a las 15:20 ya no pueden tomar el turno de las
-                  16:00 (el más cercano pasa a ser el siguiente disponible).
-                  Solo afecta los turnos de hoy.
+                  {errorMessage}
                 </p>
-              </div>
-            </article>
-
-            <article className="card-premium p-4 sm:p-5">
-              <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
-                Reservas y operación
-              </p>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <ToggleRow
-                  label="Barbería activa"
-                  description={publicStatusText}
-                  checked={isActive}
-                  disabled={isSaving}
-                  onChange={(value) => {
-                    setIsActive(value);
-                    setErrorMessage("");
-                  }}
-                />
-                <ToggleRow
-                  label="Auto-confirmar reservas"
-                  description={
-                    autoConfirmAppointments
-                      ? "Las reservas entrantes se marcan como confirmadas automáticamente. No tenés que confirmar a mano desde el panel."
-                      : "Las reservas entran como pendientes y tenés que confirmarlas a mano. Activá esto si confiás en el flujo (pocos no-shows)."
-                  }
-                  checked={autoConfirmAppointments}
-                  disabled={isSaving}
-                  onChange={(value) => {
-                    setAutoConfirmAppointments(value);
-                    setErrorMessage("");
-                  }}
-                />
-                <ToggleRow
-                  label="Lista de espera"
-                  description={
-                    waitlistEnabled
-                      ? "Cuando no hay turnos para una fecha, el cliente puede anotarse y le avisás si se libera un lugar."
-                      : "Desactivada. Si no hay turnos, el cliente solo ve un aviso de que no hay disponibilidad (sin anotarse)."
-                  }
-                  checked={waitlistEnabled}
-                  disabled={isSaving}
-                  onChange={(value) => {
-                    setWaitlistEnabled(value);
-                    setErrorMessage("");
-                  }}
-                />
-                <ToggleRow
-                  label="Pedir email obligatorio"
-                  description={
-                    requireClientEmail
-                      ? "El cliente no puede reservar sin dejar su email. Asegura que le lleguen la confirmación y los recordatorios."
-                      : "El email es opcional al reservar. Algunos clientes podrían no recibir recordatorios por mail."
-                  }
-                  checked={requireClientEmail}
-                  disabled={isSaving}
-                  onChange={(value) => {
-                    setRequireClientEmail(value);
-                    setErrorMessage("");
-                  }}
-                />
-              </div>
-            </article>
-
-            <article className="card-premium p-4 sm:p-5">
-              <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
-                Mensaje de WhatsApp al cliente
-              </p>
-              <p className="mt-2 text-xs leading-5 text-[color:var(--text-muted)]">
-                El texto que se carga solo cuando le escribís a un cliente por su
-                turno (desde &quot;Próximo turno&quot; o el turnero). Dejalo vacío
-                para usar el mensaje por defecto.
-              </p>
-
-              <textarea
-                id="settings-wa-template"
-                value={whatsappMessageTemplate}
-                disabled={isSaving}
-                onChange={(event) => {
-                  setWhatsappMessageTemplate(event.target.value);
-                  setErrorMessage("");
-                }}
-                rows={3}
-                placeholder="Hola {nombre}! Te escribo de {barberia} 👋 Es por tu turno del {fecha} a las {hora}hs."
-                className="mt-3 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 py-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
-              />
-
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {["{nombre}", "{barberia}", "{fecha}", "{hora}"].map((ph) => (
-                  <button
-                    key={ph}
-                    type="button"
-                    disabled={isSaving}
-                    onClick={() =>
-                      setWhatsappMessageTemplate(
-                        (prev) => `${prev}${prev && !prev.endsWith(" ") ? " " : ""}${ph}`,
-                      )
-                    }
-                    className="rounded-full border border-[color:var(--border-default)] bg-black px-2.5 py-1 font-mono text-[10px] text-[color:var(--brand-gold)] transition hover:border-[color:var(--brand-gold)] disabled:opacity-50"
-                  >
-                    {ph}
-                  </button>
-                ))}
-              </div>
-              <p className="mt-2 text-[10px] leading-4 text-[color:var(--text-subtle)]">
-                Tocá un dato para insertarlo. El link para confirmar/cancelar el
-                turno se agrega siempre automáticamente al final.
-              </p>
-
-              {/* Preview en vivo */}
-              <div className="mt-3 rounded-md border border-[color:var(--border-subtle)] bg-black p-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
-                  Vista previa
+              ) : successMessage ? (
+                <p className="truncate text-sm font-semibold text-[color:var(--success)]">
+                  {successMessage}
                 </p>
-                <p className="mt-1.5 whitespace-pre-line text-xs leading-5 text-[color:var(--text-secondary)]">
-                  {(whatsappMessageTemplate.trim() ||
-                    "Hola {nombre}! Te escribo de {barberia} 👋 Es por tu turno del {fecha} a las {hora}hs.")
-                    .replaceAll("{nombre}", "Juan")
-                    .replaceAll("{barberia}", name || barbershop.name)
-                    .replaceAll("{fecha}", "jueves 18/06")
-                    .replaceAll("{hora}", "17:30")}
-                  {"\n\nPodés confirmar o cancelar tu turno desde este link:\n"}
-                  <span className="text-[color:var(--brand-gold)]">
-                    {`${(process.env.NEXT_PUBLIC_SITE_URL || "https://tijerapp.com").replace(/\/$/, "")}/r/…`}
-                  </span>
+              ) : (
+                <p className="hidden text-xs text-[color:var(--text-muted)] sm:block">
+                  Los cambios aplican a todas las secciones.
                 </p>
-              </div>
-            </article>
-
-            {errorMessage ? (
-              <p
-                role="alert"
-                className="rounded-lg border border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--danger)]"
-              >
-                {errorMessage}
-              </p>
-            ) : null}
-
-            {successMessage ? (
-              <p className="rounded-lg border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--success)]">
-                {successMessage}
-              </p>
-            ) : null}
+              )}
+            </div>
 
             <button
               type="submit"
               disabled={isSaving}
-              className="inline-flex min-h-12 items-center justify-center rounded-md bg-gold-grad px-6 py-3 text-sm font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md bg-gold-grad px-6 text-sm font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving ? "Guardando..." : "Guardar cambios"}
             </button>
-          </section>
+            </div>
+          )}
         </form>
-
-        {/* Push notifications — independiente del form principal */}
-        <section className="mt-8">
-          <PushNotificationsCard barbershopSlug={barbershop.slug} />
-        </section>
-      </section>
+      </div>
     </main>
   );
 }
