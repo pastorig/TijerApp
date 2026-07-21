@@ -338,7 +338,7 @@ export function FoundersProgram() {
             {
               title: "Upgrade gratis al tier siguiente",
               detail:
-                "Si entrás en Esencial, te activamos Pro durante 1 mes. Si entrás en Solo, te subimos a Esencial durante 1 mes.",
+                "Si entrás en Esencial, te activamos Pro durante 2 meses. Si entrás en Solo, te subimos a Esencial durante 2 meses.",
             },
             {
               title: "WhatsApp directo conmigo",

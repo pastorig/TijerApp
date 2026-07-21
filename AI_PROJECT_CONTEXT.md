@@ -230,8 +230,8 @@ Barberías que quieren crecer en serio o tienen socios/managers.
 
 Beneficios exclusivos para los primeros 10 que paguen el primer mes:
 
-- 💰 **Precio congelado por 12 meses** — no se ajusta con inflación ni cambios globales
-- ⬆️ **Upgrade gratis al tier siguiente por 6 meses** (Solo→Esencial o Esencial→Pro)
+- 💰 **Precio congelado por 3 meses** — no se ajusta con inflación ni cambios globales
+- ⬆️ **Upgrade gratis al tier siguiente por 2 meses** (Solo→Esencial o Esencial→Pro)
 - 📞 **WhatsApp directo con el founder** para feedback y soporte
 - 🏅 Badge "Fundador" en el panel admin
 - 🎤 Mención opcional en website (sección "Fundadores TijerApp")
@@ -251,7 +251,7 @@ Beneficios exclusivos para los primeros 10 que paguen el primer mes:
 - "$41.000/mes para barberías con 2+ barberos" (Esencial)
 - "7 días gratis, sin tarjeta"
 - "Cancelás cuando quieras"
-- "Programa Fundadores: precio congelado 12 meses para los primeros 10"
+- "Programa Fundadores: precio congelado 3 meses para los primeros 10"
 
 ❌ **NO decir**:
 - Precios distintos a los definidos oficialmente en ARS
@@ -1046,7 +1046,7 @@ Similar a Meta pero con interés agregado:
 
 ### "¿Hay versión gratis?"
 
-> Gratis-para-siempre no, pero tenés **7 días de prueba sin necesidad de cargar tarjeta**. Probás el plan Pro completo durante una semana, y si te sirve seguís. Si no, no pagás nada y te vas tranquilo. Además, si sos uno de los primeros 10 en confiar, entrás al **programa Fundadores** con precio congelado por 12 meses.
+> Gratis-para-siempre no, pero tenés **7 días de prueba sin necesidad de cargar tarjeta**. Probás el plan Pro completo durante una semana, y si te sirve seguís. Si no, no pagás nada y te vas tranquilo. Además, si sos uno de los primeros 10 en confiar, entrás al **programa Fundadores** con precio congelado por 3 meses.
 
 ### "¿Funciona offline?"
 
