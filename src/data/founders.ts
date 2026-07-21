@@ -57,10 +57,9 @@ export const founders: Founder[] = [
     slug: "sv-barber",
     name: "SV Barber",
     logoSrc: "/fundadores/sv-barber.jpg",
-    instagram: null,
-    // Sin testimonio: los `quote` son palabras textuales del barbero, no copy
-    // escrito por nosotros. Cuando SV Barber nos pase el suyo, va acá.
-    quote: null,
+    instagram: "https://www.instagram.com/santiivargaas_/",
+    quote:
+      "Me ordenó los turnos y los días, y sobre todo hizo que la gente reserve mucho más rápido.",
     location: null,
   },
 ];
