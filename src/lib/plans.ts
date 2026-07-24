@@ -160,6 +160,16 @@ export type ResolvedPlan = {
   isInGracePeriod: boolean;
   /** True si el barbero todavía puede usar features de su tier. */
   canAccessFeatures: boolean;
+  /**
+   * True si la barbería está en MODO LECTURA: puede ver todos sus datos
+   * (agenda, clientes, reportes, configuración) pero no puede escribir nada,
+   * y la reserva online pública queda apagada.
+   *
+   * Es el inverso de canAccessFeatures — existe como campo propio porque es
+   * el concepto que consumen la UI y los guards de escritura, y leer
+   * `plan.isReadOnly` dice lo que pasa mucho mejor que `!canAccessFeatures`.
+   */
+  isReadOnly: boolean;
 };
 
 /** Días de gracia después de que vence el trial o el período pago. */
@@ -280,5 +290,6 @@ export function resolvePlanStatus(input: {
     daysToPaidExpire,
     isInGracePeriod,
     canAccessFeatures,
+    isReadOnly: !canAccessFeatures,
   };
 }

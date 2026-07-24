@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { assertPublicBookingEnabled } from "@/lib/api-plan-guard";
 import { computeDepositAmount } from "@/lib/mercadopago/deposit";
 import { createDepositPreference } from "@/lib/mercadopago/client";
 import { refreshAccessToken, expiresAtFrom } from "@/lib/mercadopago/oauth";
@@ -92,6 +93,16 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Faltan datos para crear la reserva." },
       { status: 400 },
+    );
+  }
+
+  // Plan vencido => la barbería queda en modo lectura y la reserva online se
+  // apaga. El cliente final va por WhatsApp.
+  const bookingGate = await assertPublicBookingEnabled(slug);
+  if (!bookingGate.ok) {
+    return NextResponse.json(
+      { error: bookingGate.error },
+      { status: bookingGate.status },
     );
   }
 

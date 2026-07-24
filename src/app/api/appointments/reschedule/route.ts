@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { assertPublicBookingEnabled } from "@/lib/api-plan-guard";
 
 export const runtime = "nodejs";
 
@@ -89,6 +90,17 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "El turno fue cancelado, no se puede reagendar." },
       { status: 409 },
+    );
+  }
+
+  // Plan vencido => modo lectura: el cliente tampoco puede reagendar solo.
+  const bookingGate = await assertPublicBookingEnabled(
+    appointment.barbershop_slug,
+  );
+  if (!bookingGate.ok) {
+    return NextResponse.json(
+      { error: bookingGate.error },
+      { status: bookingGate.status },
     );
   }
 

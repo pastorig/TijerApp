@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { assertPlanActive } from "@/lib/api-plan-guard";
 
 export const runtime = "nodejs";
 
@@ -118,6 +119,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
+  // Plan vencido => modo lectura: la barbería se puede leer, no escribir.
+  const planGate = await assertPlanActive(barbershopSlug);
+  if (!planGate.ok) {
+    return NextResponse.json(
+      { error: planGate.error },
+      { status: planGate.status },
+    );
+  }
+
   const supabaseAdmin = getSupabaseAdminClient();
   const extension = getExtensionFromMime(file.type);
   const newPath = `${barbershopSlug}/logo.${extension}`;
@@ -191,6 +201,15 @@ export async function DELETE(request: Request) {
   );
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  // Plan vencido => modo lectura: la barbería se puede leer, no escribir.
+  const planGate = await assertPlanActive(barbershopSlug);
+  if (!planGate.ok) {
+    return NextResponse.json(
+      { error: planGate.error },
+      { status: planGate.status },
+    );
   }
 
   const supabaseAdmin = getSupabaseAdminClient();

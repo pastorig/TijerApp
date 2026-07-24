@@ -7,11 +7,18 @@ import { BookingCTA } from "./BookingCTA";
 type ServicesSectionProps = {
   services: BarbershopService[];
   barbershopSlug: string;
+  /**
+   * False en modo lectura (plan vencido): la lista de servicios y precios se
+   * sigue mostrando, pero sin el CTA de reservar.
+   * Ver specs/009-modo-lectura/spec.md.
+   */
+  bookingEnabled?: boolean;
 };
 
 export function ServicesSection({
   services,
   barbershopSlug,
+  bookingEnabled = true,
 }: ServicesSectionProps) {
   if (services.length === 0) return null;
 
@@ -51,9 +58,11 @@ export function ServicesSection({
           ))}
         </ul>
 
-        <div className="mt-8 flex justify-center sm:justify-start">
-          <BookingCTA barbershopSlug={barbershopSlug} />
-        </div>
+        {bookingEnabled ? (
+          <div className="mt-8 flex justify-center sm:justify-start">
+            <BookingCTA barbershopSlug={barbershopSlug} />
+          </div>
+        ) : null}
       </div>
     </section>
   );

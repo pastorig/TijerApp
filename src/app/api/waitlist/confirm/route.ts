@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { assertPublicBookingEnabled } from "@/lib/api-plan-guard";
 
 export const runtime = "nodejs";
 
@@ -64,6 +65,16 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Esta entrada ya fue resuelta." },
       { status: 409 },
+    );
+  }
+
+  // Plan vencido => modo lectura. Cubre el caso de una oferta de lista de
+  // espera que quedó viva desde antes del vencimiento.
+  const bookingGate = await assertPublicBookingEnabled(entry.barbershop_slug);
+  if (!bookingGate.ok) {
+    return NextResponse.json(
+      { error: bookingGate.error },
+      { status: bookingGate.status },
     );
   }
 

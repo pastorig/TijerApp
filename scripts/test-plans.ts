@@ -120,5 +120,55 @@ check(
   new Date(2026, 1, 15).getTime(),
 );
 
+// ─── isReadOnly: modo lectura al vencer (specs/009-modo-lectura) ───────
+// Es el flag que consumen los guards de escritura del server y la UI del
+// admin, así que tiene que ser exacto en los 5 estados.
+const readOnlyCases: Array<[string, Parameters<typeof resolvePlanStatus>[0], boolean]> = [
+  [
+    "trial vigente → escribe",
+    { tier: "pro", rawStatus: "trial", trialExpiresAt: future, graceExpiresAt: null, now },
+    false,
+  ],
+  [
+    "plan pago vigente → escribe",
+    { tier: "solo", rawStatus: "active", trialExpiresAt: null, graceExpiresAt: null, currentPeriodEndsAt: future, now },
+    false,
+  ],
+  [
+    "en gracia → todavía escribe",
+    { tier: "pro", rawStatus: "trial", trialExpiresAt: past, graceExpiresAt: future, now },
+    false,
+  ],
+  [
+    "trial vencido sin gracia → MODO LECTURA",
+    { tier: "pro", rawStatus: "trial", trialExpiresAt: past, graceExpiresAt: past, now },
+    true,
+  ],
+  [
+    "cancelado → MODO LECTURA",
+    { tier: "esencial", rawStatus: "cancelled", trialExpiresAt: null, graceExpiresAt: null, now },
+    true,
+  ],
+  [
+    "pago vencido hace >7d → MODO LECTURA",
+    { tier: "esencial", rawStatus: "active", trialExpiresAt: null, graceExpiresAt: null, currentPeriodEndsAt: new Date(2025, 11, 1), now },
+    true,
+  ],
+];
+
+for (const [label, input, expected] of readOnlyCases) {
+  check(`isReadOnly: ${label}`, resolvePlanStatus(input).isReadOnly, expected);
+}
+
+// isReadOnly es, por definición, el inverso exacto de canAccessFeatures.
+for (const [label, input] of readOnlyCases) {
+  const plan = resolvePlanStatus(input);
+  check(
+    `isReadOnly === !canAccessFeatures (${label})`,
+    plan.isReadOnly,
+    !plan.canAccessFeatures,
+  );
+}
+
 console.log(`\n${passed}/${passed + failed} OK${failed ? ` · ${failed} FALLARON` : ""}`);
 if (failed) process.exit(1);

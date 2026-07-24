@@ -51,6 +51,7 @@ import {
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { CalendarX, Clock, GripVertical, Plus, Scissors } from "lucide-react";
 import { useToast } from "@/components/ui";
+import { READ_ONLY_REASON, useIsReadOnly } from "./PlanContext";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import type {
@@ -519,6 +520,7 @@ export function AgendaCalendarGridView({
   onMoveComplete,
 }: AgendaCalendarGridViewProps) {
   const toast = useToast();
+  const isReadOnly = useIsReadOnly();
   const [activeAppointment, setActiveAppointment] =
     useState<AppointmentRow | null>(null);
   const [notifyContext, setNotifyContext] =
@@ -562,9 +564,11 @@ export function AgendaCalendarGridView({
   // Mover un turno de un día pasado no tiene sentido (no podés cambiarlo
   // a otra hora de un día que ya terminó). Visualmente se mantiene
   // visible para que el barbero pueda CONSULTAR la agenda pasada.
-  const isDayLocked = useMemo(() => {
-    return focusDate < getTodayYmd();
-  }, [focusDate]);
+  // Plan vencido => modo lectura: la agenda queda congelada igual que un día
+  // pasado. Reusamos el mismo candado, que ya apaga draggable, droppable y la
+  // afordancia "+ turno".
+  const isPastDay = useMemo(() => focusDate < getTodayYmd(), [focusDate]);
+  const isDayLocked = isPastDay || isReadOnly;
 
   const isToday = useMemo(() => focusDate === getTodayYmd(), [focusDate]);
 
@@ -982,7 +986,9 @@ export function AgendaCalendarGridView({
             className="size-3.5 shrink-0 text-[color:var(--text-muted)]"
           />
           <span className="text-[11px] font-semibold text-[color:var(--text-secondary)]">
-            Agenda histórica — los turnos de días pasados no se pueden mover.
+            {isReadOnly
+              ? READ_ONLY_REASON
+              : "Agenda histórica — los turnos de días pasados no se pueden mover."}
           </span>
         </div>
       ) : (

@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { resolveEmailFrom } from "@/lib/email/from";
+import { assertPublicBookingEnabled } from "@/lib/api-plan-guard";
 
 export const runtime = "nodejs";
 
@@ -204,6 +205,15 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Faltan datos obligatorios." },
       { status: 400 },
+    );
+  }
+
+  // Plan vencido => modo lectura: la lista de espera pública también se apaga.
+  const bookingGate = await assertPublicBookingEnabled(barbershopSlug);
+  if (!bookingGate.ok) {
+    return NextResponse.json(
+      { error: bookingGate.error },
+      { status: bookingGate.status },
     );
   }
 

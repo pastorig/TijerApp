@@ -18,11 +18,19 @@ import { ServicesSection } from "./ServicesSection";
 type PublicBarbershopLandingProps = {
   barbershop: DemoBarbershop;
   reviews?: PublicReview[];
+  /**
+   * False cuando la barbería está en modo lectura (plan vencido): se caen los
+   * CTA de reservar y el cliente va por WhatsApp. La landing se muestra
+   * entera igual — servicios, equipo, fotos y contacto siguen ahí.
+   * Ver specs/009-modo-lectura/spec.md.
+   */
+  bookingEnabled?: boolean;
 };
 
 export function PublicBarbershopLanding({
   barbershop,
   reviews = [],
+  bookingEnabled = true,
 }: PublicBarbershopLandingProps) {
   return (
     <main className="min-h-screen bg-black text-white">
@@ -44,16 +52,18 @@ export function PublicBarbershopLanding({
           >
             <Logo size="sm" />
           </Link>
-          <Link
-            href={`/${barbershop.slug}/reservar`}
-            className="inline-flex min-h-9 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-gold-grad px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
-          >
-            Reservar
-          </Link>
+          {bookingEnabled ? (
+            <Link
+              href={`/${barbershop.slug}/reservar`}
+              className="inline-flex min-h-9 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-gold-grad px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
+            >
+              Reservar
+            </Link>
+          ) : null}
         </div>
       </nav>
 
-      <HeroSection barbershop={barbershop} />
+      <HeroSection barbershop={barbershop} bookingEnabled={bookingEnabled} />
 
       <BarbershopTeamSection
         barbershopSlug={barbershop.slug}
@@ -63,6 +73,7 @@ export function PublicBarbershopLanding({
       <ServicesSection
         services={getPublicServices(barbershop)}
         barbershopSlug={barbershop.slug}
+        bookingEnabled={bookingEnabled}
       />
 
       <BarbershopGallerySection barbershopSlug={barbershop.slug} />

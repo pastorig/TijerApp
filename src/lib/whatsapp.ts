@@ -51,6 +51,16 @@ function normalizeWhatsAppPhone(phone: string) {
 }
 
 /**
+ * Link wa.me genérico: un teléfono y un mensaje libre. Para los mensajes con
+ * estructura propia (reserva, confirmación, recordatorio) usar los builders
+ * específicos de más abajo, que arman el texto completo.
+ */
+export function whatsAppLinkWithMessage(phone: string, message: string) {
+  const normalizedPhone = normalizeWhatsAppPhone(phone);
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
+}
+
+/**
  * Construye la URL pública para que el cliente RESPONDA (confirme o
  * cancele) su turno desde un click. Apunta a `/r/[token]/responder`.
  *

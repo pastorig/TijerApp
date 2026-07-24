@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 import { Resend } from "resend";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { resolveEmailFrom } from "@/lib/email/from";
-import { assertPlanFeature } from "@/lib/api-plan-guard";
+import { assertPlanActive, assertPlanFeature } from "@/lib/api-plan-guard";
 
 export const runtime = "nodejs";
 
@@ -465,6 +465,15 @@ export async function DELETE(request: Request) {
     return NextResponse.json(
       { error: "Solo el owner puede remover admins." },
       { status: 403 },
+    );
+  }
+
+  // Plan vencido => modo lectura: la barbería se puede leer, no escribir.
+  const planGate = await assertPlanActive(barbershopSlug);
+  if (!planGate.ok) {
+    return NextResponse.json(
+      { error: planGate.error },
+      { status: planGate.status },
     );
   }
 
