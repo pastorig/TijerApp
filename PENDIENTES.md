@@ -57,18 +57,29 @@ Emails reales a clientes **funcionando en producción**. Dominio `tijerapp.com` 
 
 ---
 
-## ⏳ TAREA PENDIENTE 2 — Activar MercadoPago (botón "Conectar con MP")
+## ✅ TAREA 2 — Activar MercadoPago (botón "Conectar con MP") — HECHO (2026-07-21)
 
-**Por qué:** para que los barberos conecten su MP con un clic y cobren señas.
+App de plataforma creada en MP (Checkout Pro), redirect URI
+`https://tijerapp.com/api/mp/oauth/callback` registrado, `MP_CLIENT_ID` +
+`MP_CLIENT_SECRET` cargados en Vercel (Production) y redeploy hecho.
+**Verificado**: el OAuth completó en `/primebarber/admin/cobros` → MP devolvió
+"Autorizaste la conexión" y la barbería figura conectada.
 
-**Pasos:**
-1. Crear UNA app de plataforma en MercadoPago (developers panel), producto **Checkout Pro**, URL de tienda vacía.
-2. Registrar el redirect URI en esa app: `https://tijerapp.com/api/mp/oauth/callback`.
-3. En **Vercel → Environment Variables**, agregar:
-   - `MP_CLIENT_ID` = (Client ID de la app)
-   - `MP_CLIENT_SECRET` = (Client Secret de la app)
-4. Redeploy.
-5. Probar: en `/<barberia>/admin/cobros` → botón "Conectar con MercadoPago".
+El webhook NO requiere configuración en el panel de MP: la app setea el
+`notification_url` por preferencia, con el slug (`/api/mp/webhook?bs=<slug>`).
+
+### ⚠️ FALTA para cerrar el cobro de seña
+
+1. Correr la migración de `reminder_log` (ver TAREA 4) **antes** de la primera
+   seña real, si no el recordatorio de pago falla contra el check constraint.
+2. Activar el toggle **"Cobrar seña al reservar"** en `/<barberia>/admin/cobros`
+   y configurar monto (`deposit_percent` o `deposit_amount`).
+3. Prueba end-to-end con tarjeta de prueba de MP: reservar → pagar → el turno
+   debe pasar solo a "seña pagada" y confirmarse (eso lo hace el webhook).
+
+> Mejora anotada (no bloquea): el webhook no valida la firma de MercadoPago.
+> Está mitigado porque no confía en el payload — re-consulta el pago real contra
+> la API de MP antes de confirmar. Sumar validación de firma sería la capa que falta.
 
 ---
 
