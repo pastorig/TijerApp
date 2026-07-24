@@ -93,13 +93,28 @@ El webhook NO requiere configuración en el panel de MP: la app setea el
 
 **Qué hace:** el cron `/api/cron/deposits` ahora, además de expirar, manda un recordatorio de pago (push + email) cuando la seña pasó la mitad de su plazo y sigue impaga. Una sola vez por turno (`reminder_log` kind `deposit_reminder`), con link para pagar. Reusa `sendClientPushForAppointment` + Resend.
 
-**Falta (Bautista):** correr esta migración en Supabase **antes** de activar señas reales (mientras no haya señas activas, el cron no inserta nada, así que es inofensivo si tarda):
+**Migración de `reminder_log`: CORRIDA en Supabase (2026-07-21).** ✅
+
 ```sql
 alter table public.reminder_log drop constraint if exists reminder_log_kind_check;
 alter table public.reminder_log add constraint reminder_log_kind_check
   check (kind in ('reminder_24h', 'confirmation', 'deposit_reminder'));
 ```
-Después: **una prueba humana con pago real** (activar toggle seña + reservar + pagar) es lo único que queda para dar el cobro de seña por 100% cerrado.
+
+**Flujo de seña verificado (2026-07-21)** en primebarber con el simulador
+(`NEXT_PUBLIC_ALLOW_DEPOSIT_SIMULATION`): reservar → simular pago → el turno
+queda con chip **"Seña pagada"** y confirmado. La lógica interna funciona.
+
+> ⚠️ El simulador debe quedar APAGADO en producción (borrar la env var +
+> redeploy). Con la var activa, cualquiera puede marcar su seña como pagada.
+
+### Lo único que falta para dar el cobro de seña por 100% cerrado
+
+Probar el **camino real de MercadoPago** con **usuarios de prueba de MP**
+(vendedor + comprador), no con plata real. El simulador saltea MP por completo,
+así que todavía NO está verificado que el webhook de MP llegue y se procese.
+Hacerlo ANTES de prender la seña en un cliente que cobra de verdad: si el
+webhook falla en prod, el cliente paga y el turno le queda sin confirmar.
 
 ---
 
