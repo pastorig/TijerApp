@@ -38,6 +38,9 @@ export function CommercialNav() {
           <Button as="link" href="/login" variant="secondary" size="sm">
             Iniciar sesión
           </Button>
+          <Button as="link" href="/registro" size="sm">
+            Empezá gratis
+          </Button>
         </div>
       </div>
     </nav>

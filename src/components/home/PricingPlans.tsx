@@ -278,7 +278,7 @@ export function PricingPlans() {
                 <div className="mt-8 pt-2">
                   <Button
                     as="link"
-                    href="/#contacto"
+                    href="/registro"
                     variant={plan.highlight ? "primary" : "secondary"}
                     size="md"
                     fullWidth
@@ -385,7 +385,7 @@ export function FoundersProgram() {
 
         <div className="mt-10 flex justify-center sm:mt-12">
           <Link
-            href="/#contacto"
+            href="/registro"
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
           >
             Quiero ser Fundador

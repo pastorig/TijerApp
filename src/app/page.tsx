@@ -121,7 +121,7 @@ export default function Home() {
 
             <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row">
               <Link
-                href="/precios"
+                href="/registro"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
               >
                 Empezar prueba gratis

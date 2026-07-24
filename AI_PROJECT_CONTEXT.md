@@ -178,7 +178,7 @@ TijerApp **no es una app para una sola barbería**.
 
 - **Modelo**: SaaS por suscripción mensual, flat per-barbería (no por barbero, no por reserva)
 - **Moneda**: Precio fijo en ARS
-- **Trial**: 7 días gratis, sin tarjeta requerida, tier Pro activado
+- **Trial**: 14 días gratis, sin tarjeta requerida, tier Pro activado
 - **Anual**: 15% off pagando 12 meses upfront
 - **Cancelación**: libre en cualquier momento, sin reembolso, acceso continúa hasta fin del mes pagado
 - **Cobro**: MercadoPago suscripciones
@@ -239,7 +239,7 @@ Beneficios exclusivos para los primeros 10 que paguen el primer mes:
 
 ### Trial mechanics
 
-- 7 días gratis desde primer login
+- 14 días gratis desde primer login
 - Tier Pro activo (probás lo mejor desde el día 1)
 - **Sin tarjeta requerida** (lowers friction)
 - Día 7: pedimos cargar tarjeta MP. Si no carga → trial expirado, modo read-only por 30 días, después soft-delete
@@ -249,7 +249,7 @@ Beneficios exclusivos para los primeros 10 que paguen el primer mes:
 ✅ **Se puede decir**:
 - "Desde $22.000/mes" (entry point Solo)
 - "$41.000/mes para barberías con 2+ barberos" (Esencial)
-- "7 días gratis, sin tarjeta"
+- "14 días gratis, sin tarjeta"
 - "Cancelás cuando quieras"
 - "Programa Fundadores: precio congelado 3 meses para los primeros 10"
 
@@ -1014,7 +1014,7 @@ Similar a Meta pero con interés agregado:
 
 ### "¿Cuánto cuesta?"
 
-> Tenemos 3 planes: **Solo** ($22.000/mes, para barberos independientes), **Esencial** ($41.000/mes, para barberías con 2+ sillones) y **Pro** ($61.000/mes, para las que quieren crecer fuerte). También podés pagar anual con 15% off. Tenés 7 días gratis para probar sin cargar tarjeta.
+> Tenemos 3 planes: **Solo** ($22.000/mes, para barberos independientes), **Esencial** ($41.000/mes, para barberías con 2+ sillones) y **Pro** ($61.000/mes, para las que quieren crecer fuerte). También podés pagar anual con 15% off. Tenés 14 días gratis para probar sin cargar tarjeta.
 
 ### "¿Tiene app?"
 

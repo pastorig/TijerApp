@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { demoBarbershops } from "@/data/demo-barbershops";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import {
+  PASSWORD_MIN_LENGTH,
+  normalizeSlug,
+  provisionBarbershop,
+} from "@/lib/provision-barbershop";
 
 type InitialServiceInput = {
   name: string;
@@ -26,20 +31,7 @@ type CreateBarbershopPayload = {
   slotIntervalMinutes: number;
 };
 
-function createTemporaryPassword() {
-  return `TijerApp${Math.random().toString(36).slice(-8)}!9`;
-}
-
-function normalizeSlug(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
 const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
-const PASSWORD_MIN_LENGTH = 8;
 const ALLOWED_INTERVALS = [15, 20, 30, 45, 60] as const;
 
 function validatePayload(payload: CreateBarbershopPayload) {
@@ -163,176 +155,37 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: existingBarbershop } = await supabaseAdmin
-      .from("barbershops")
-      .select("slug")
-      .eq("slug", slug)
-      .maybeSingle();
-
-    if (existingBarbershop) {
-      return NextResponse.json(
-        { error: "Ese slug ya esta registrado." },
-        { status: 400 },
-      );
-    }
-
-    const usersResult = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 200,
+    // El alta en sí la hace el motor compartido con /api/registro. Acá arriba
+    // solo validamos el pedido y que quien llama sea owner de la plataforma.
+    const result = await provisionBarbershop({
+      name: payload.name,
+      slug,
+      description: payload.description,
+      whatsapp: payload.whatsapp,
+      instagram: payload.instagram,
+      adminEmail: payload.adminEmail,
+      adminPassword: payload.adminPassword,
+      firstBarberName: payload.firstBarberName,
+      initialServices: payload.initialServices,
+      workingHoursStart: payload.workingHoursStart,
+      workingHoursEnd: payload.workingHoursEnd,
+      slotIntervalMinutes: payload.slotIntervalMinutes,
+      // Sin trial: el owner asigna el plan a mano desde /owner/planes.
     });
 
-    let adminUser = usersResult.data.users.find(
-      (currentUser) =>
-        currentUser.email?.toLowerCase() ===
-        payload.adminEmail.trim().toLowerCase(),
-    );
-    let temporaryPassword: string | null = null;
-
-    if (!adminUser) {
-      const chosenPassword = payload.adminPassword?.trim();
-      const finalPassword =
-        chosenPassword && chosenPassword.length >= PASSWORD_MIN_LENGTH
-          ? chosenPassword
-          : createTemporaryPassword();
-
-      // Solo exponemos la password al cliente si fue generada automáticamente.
-      // Si el owner la eligió, ya la conoce y no la mostramos en la respuesta.
-      if (!chosenPassword) {
-        temporaryPassword = finalPassword;
-      }
-
-      const { data: createdUser, error: createUserError } =
-        await supabaseAdmin.auth.admin.createUser({
-          email: payload.adminEmail.trim().toLowerCase(),
-          password: finalPassword,
-          email_confirm: true,
-        });
-
-      if (createUserError || !createdUser.user) {
-        return NextResponse.json(
-          { error: "No pudimos crear el usuario admin en Auth." },
-          { status: 500 },
-        );
-      }
-
-      adminUser = createdUser.user;
-    }
-
-    const { data: barbershop, error: barbershopError } = await supabaseAdmin
-      .from("barbershops")
-      .insert({
-        slug,
-        name: payload.name.trim(),
-        description: payload.description.trim() || null,
-        whatsapp: payload.whatsapp.trim() || null,
-        instagram: payload.instagram.trim() || null,
-        working_hours_start: payload.workingHoursStart,
-        working_hours_end: payload.workingHoursEnd,
-        slot_interval_minutes: payload.slotIntervalMinutes,
-        is_active: true,
-      })
-      .select("id, slug, name")
-      .single();
-
-    if (barbershopError || !barbershop) {
+    if (!result.ok) {
       return NextResponse.json(
-        { error: "No pudimos crear la barberia." },
-        { status: 500 },
-      );
-    }
-
-    const { error: adminAccessError } = await supabaseAdmin
-      .from("barbershop_admins")
-      .insert({
-        user_id: adminUser.id,
-        barbershop_slug: slug,
-        role: "admin",
-        is_owner: true,
-      });
-
-    if (adminAccessError) {
-      return NextResponse.json(
-        { error: "La barberia se creo, pero fallo la asignacion del admin." },
-        { status: 500 },
-      );
-    }
-
-    const { data: barber, error: barberError } = await supabaseAdmin
-      .from("barbers")
-      .insert({
-        barbershop_slug: slug,
-        name: payload.firstBarberName.trim(),
-        display_name: payload.firstBarberName.trim(),
-        role: "Barbero",
-        whatsapp: null,
-        is_active: true,
-        is_owner: true,
-        deleted_at: null,
-      })
-      .select("id")
-      .single();
-
-    if (barberError || !barber) {
-      return NextResponse.json(
-        { error: "La barberia se creo, pero fallo el primer barbero." },
-        { status: 500 },
-      );
-    }
-
-    // Inicializar weekly_schedules del primer barbero con un default razonable:
-    // - Lunes a sábado working con los horarios de la barbería.
-    // - Domingo no working (típico de barberías).
-    // El admin puede modificar después desde BarberAvailabilityManager.
-    const weeklySchedulesPayload = [0, 1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({
-      barbershop_slug: slug,
-      barber_id: barber.id,
-      day_of_week: dayOfWeek,
-      start_time: payload.workingHoursStart,
-      end_time: payload.workingHoursEnd,
-      // 0 = domingo (no trabaja por default); 1-6 = lun-sáb (trabaja).
-      is_working: dayOfWeek !== 0,
-    }));
-
-    const { error: schedulesError } = await supabaseAdmin
-      .from("barber_weekly_schedules")
-      .insert(weeklySchedulesPayload);
-
-    if (schedulesError) {
-      // No es bloqueante — el admin puede setear los schedules desde el panel.
-      // Pero loggeamos para tracking.
-      console.warn(
-        `[create-barbershop] Falla al inicializar weekly_schedules para ${slug}:`,
-        schedulesError,
-      );
-    }
-
-    const { error: servicesError } = await supabaseAdmin
-      .from("barber_services")
-      .insert(
-        payload.initialServices.map((service) => ({
-          barbershop_slug: slug,
-          barber_id: barber.id,
-          name: service.name.trim(),
-          price: service.price,
-          duration_minutes: service.durationMinutes,
-          is_active: true,
-          deleted_at: null,
-        })),
-      );
-
-    if (servicesError) {
-      return NextResponse.json(
-        { error: "La barberia se creo, pero fallaron los servicios iniciales." },
-        { status: 500 },
+        { error: result.error },
+        { status: result.status },
       );
     }
 
     return NextResponse.json({
-      slug,
-      name: barbershop.name,
+      slug: result.slug,
+      name: result.name,
       message: "Barberia creada correctamente.",
-      adminEmail: adminUser.email ?? payload.adminEmail.trim().toLowerCase(),
-      temporaryPassword,
+      adminEmail: result.adminEmail,
+      temporaryPassword: result.temporaryPassword,
     });
   } catch {
     return NextResponse.json(
