@@ -3,15 +3,26 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { Eye, EyeOff } from "lucide-react";
-import { getDemoBarbershopBySlug } from "@/data/demo-barbershops";
+import { Eye, EyeOff, Store } from "lucide-react";
 import { getCurrentUserAdminBarbershops } from "@/lib/barbershop-access";
 import { signInWithEmailAndPassword } from "@/lib/auth";
-import type { BarbershopAdminRow } from "@/lib/supabase";
-import { Logo } from "@/components/ui";
+import { getSupabaseClient } from "@/lib/supabase";
+import {
+  AUTH_BUTTON_CLASS,
+  AUTH_FIELD_CLASS,
+  AUTH_LABEL_CLASS,
+  AuthShell,
+} from "@/components/auth/AuthShell";
 
 type GlobalLoginFormProps = {
   nextPath?: string;
+};
+
+/** Barbería que administra el usuario, ya con su nombre real para mostrar. */
+type BarbershopChoice = {
+  slug: string;
+  name: string;
+  role: string;
 };
 
 function getBarbershopSlugFromNextPath(nextPath?: string) {
@@ -30,9 +41,7 @@ export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [assignedBarbershops, setAssignedBarbershops] = useState<
-    BarbershopAdminRow[]
-  >([]);
+  const [choices, setChoices] = useState<BarbershopChoice[]>([]);
   const [hasCheckedAssignments, setHasCheckedAssignments] = useState(false);
   const requestedBarbershopSlug = getBarbershopSlugFromNextPath(nextPath);
 
@@ -40,13 +49,13 @@ export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
     event.preventDefault();
 
     if (!email.trim() || !password) {
-      setErrorMessage("Ingresa email y contrasena.");
+      setErrorMessage("Ingresá tu email y contraseña.");
       return;
     }
 
     setErrorMessage("");
     setHasCheckedAssignments(false);
-    setAssignedBarbershops([]);
+    setChoices([]);
     setIsSubmitting(true);
 
     try {
@@ -56,20 +65,20 @@ export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
       });
 
       if (error) {
-        setErrorMessage("Email o contrasena incorrectos.");
+        setErrorMessage("Email o contraseña incorrectos.");
         return;
       }
 
-      const {
-        data,
-        error: accessError,
-      } = await getCurrentUserAdminBarbershops();
+      const { data, error: accessError } =
+        await getCurrentUserAdminBarbershops();
 
       if (accessError) {
-        setErrorMessage("No pudimos cargar tus barberias asignadas.");
+        setErrorMessage("No pudimos cargar tus barberías.");
         return;
       }
 
+      // Si venía de una URL puntual de admin y tiene acceso, respetamos ese
+      // destino (ej. lo mandamos a /mi-barberia/admin/turnero, no al home).
       if (
         nextPath &&
         requestedBarbershopSlug &&
@@ -87,158 +96,171 @@ export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
         return;
       }
 
-      setAssignedBarbershops(data);
+      // Administra varias: hay que elegir. Buscamos los nombres reales — antes
+      // esto salía de los datos demo, así que a un cliente real le mostraba el
+      // slug ("leocuts") en vez del nombre ("Leo Cuts").
+      const slugs = data.map((adminAccess) => adminAccess.barbershop_slug);
+      const { data: shops } = await getSupabaseClient()
+        .from("barbershops")
+        .select("slug, name")
+        .in("slug", slugs);
+
+      const nameBySlug = new Map(
+        (shops ?? []).map((shop) => [shop.slug, shop.name]),
+      );
+
+      setChoices(
+        data.map((adminAccess) => ({
+          slug: adminAccess.barbershop_slug,
+          name:
+            nameBySlug.get(adminAccess.barbershop_slug) ??
+            adminAccess.barbershop_slug,
+          role: adminAccess.role,
+        })),
+      );
       setHasCheckedAssignments(true);
     } catch {
-      setErrorMessage("No pudimos iniciar sesion. Intenta nuevamente.");
+      setErrorMessage("No pudimos iniciar sesión. Probá de nuevo.");
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <header className="sticky top-0 z-10 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 py-3 backdrop-blur-md sm:px-6">
-        <Link href="/" aria-label="Ir al inicio" className="inline-flex">
-          <Logo size="sm" />
-        </Link>
-      </header>
-      <section className="mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-md flex-col justify-center px-6 py-10">
-        <div className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-6 shadow-2xl shadow-black/30">
-          <Logo size="md" />
-          <h1 className="mt-4 text-4xl font-black text-white">
-            Iniciar sesion
-          </h1>
-          <p className="mt-3 text-sm leading-6 text-[color:var(--text-secondary)]">
-            Accede al panel de administracion de tus barberias asignadas.
-          </p>
-          {requestedBarbershopSlug ? (
-            <p className="mt-3 rounded-md border border-[color:var(--border-default)] bg-black px-3 py-2 text-xs font-semibold text-[color:var(--text-secondary)]">
-              Destino solicitado: /{requestedBarbershopSlug}/admin
-            </p>
-          ) : null}
-
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            <div>
-              <label
-                htmlFor="global-email"
-                className="text-sm font-bold uppercase text-[color:var(--text-secondary)]"
-              >
-                Email
-              </label>
-              <input
-                id="global-email"
-                type="email"
-                value={email}
-                disabled={isSubmitting}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  setErrorMessage("");
-                }}
-                className="mt-2 min-h-12 w-full rounded-md border border-[color:var(--border-default)] bg-black px-4 text-base text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
-                placeholder="admin@barberia.com"
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="global-password"
-                className="text-sm font-bold uppercase text-[color:var(--text-secondary)]"
-              >
-                Contrasena
-              </label>
-              <div className="relative mt-2">
-                <input
-                  id="global-password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  disabled={isSubmitting}
-                  onChange={(event) => {
-                    setPassword(event.target.value);
-                    setErrorMessage("");
-                  }}
-                  className="min-h-12 w-full rounded-md border border-[color:var(--border-default)] bg-black px-4 pr-11 text-base text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
-                  placeholder="Tu contrasena"
-                  autoComplete="current-password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((current) => !current)}
-                  disabled={isSubmitting}
-                  aria-label={
-                    showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
-                  }
-                  className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--brand-gold)] disabled:opacity-50"
-                >
-                  {showPassword ? (
-                    <EyeOff className="size-4" />
-                  ) : (
-                    <Eye className="size-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {errorMessage ? (
-              <p
-                role="alert"
-                className="rounded-md border border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--danger)]"
-              >
-                {errorMessage}
-              </p>
-            ) : null}
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="inline-flex min-h-12 w-full items-center justify-center rounded-md bg-gold-grad px-6 py-3 text-sm font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSubmitting ? "Ingresando..." : "Ingresar"}
-            </button>
-          </form>
-
-          {hasCheckedAssignments && assignedBarbershops.length === 0 ? (
-            <div className="mt-5 rounded-md border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--brand-gold)]">
-              No tenes barberias asignadas.
-            </div>
-          ) : null}
-
-          {assignedBarbershops.length > 1 ? (
-            <section className="mt-5 rounded-md border border-[color:var(--border-default)] bg-black p-3">
-              <p className="text-xs font-bold uppercase text-[color:var(--brand-gold)]">
-                Elegi barberia
-              </p>
-              <div className="mt-3 grid gap-2">
-                {assignedBarbershops.map((admin) => {
-                  const barbershop = getDemoBarbershopBySlug(
-                    admin.barbershop_slug,
-                  );
-
-                  return (
-                    <Link
-                      key={admin.barbershop_slug}
-                      href={
-                        nextPath &&
-                        admin.barbershop_slug === requestedBarbershopSlug
-                          ? nextPath
-                          : `/${admin.barbershop_slug}/admin`
-                      }
-                      className="rounded-md border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 py-3 text-sm font-semibold text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
-                    >
-                      {barbershop?.name ?? admin.barbershop_slug}
-                      <span className="mt-1 block text-xs font-normal text-[color:var(--text-subtle)]">
-                        Rol: {admin.role}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
-          ) : null}
+    <AuthShell
+      title="Iniciar sesión"
+      subtitle="Entrá al panel de tu barbería."
+      footer={
+        <>
+          ¿Problemas para entrar?{" "}
+          <Link
+            href="/#contacto"
+            className="font-semibold text-[color:var(--brand-gold)] hover:brightness-125"
+          >
+            Escribinos
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <div>
+          <label htmlFor="global-email" className={AUTH_LABEL_CLASS}>
+            Email
+          </label>
+          <input
+            id="global-email"
+            type="email"
+            value={email}
+            disabled={isSubmitting}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setErrorMessage("");
+            }}
+            className={AUTH_FIELD_CLASS}
+            placeholder="tu@barberia.com"
+            autoComplete="email"
+            required
+          />
         </div>
-      </section>
-    </main>
+
+        <div>
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor="global-password" className={AUTH_LABEL_CLASS}>
+              Contraseña
+            </label>
+            <Link
+              href="/recuperar"
+              className="text-[11px] font-semibold text-[color:var(--brand-gold)] hover:brightness-125"
+            >
+              ¿La olvidaste?
+            </Link>
+          </div>
+          <div className="relative">
+            <input
+              id="global-password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              disabled={isSubmitting}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setErrorMessage("");
+              }}
+              className={`${AUTH_FIELD_CLASS} pr-11`}
+              placeholder="Tu contraseña"
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((current) => !current)}
+              disabled={isSubmitting}
+              aria-label={
+                showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+              }
+              className="absolute inset-y-0 right-0 top-2 inline-flex w-11 items-center justify-center text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--brand-gold)] disabled:opacity-50"
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {errorMessage ? (
+          <p
+            role="alert"
+            className="rounded-md border border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--danger)]"
+          >
+            {errorMessage}
+          </p>
+        ) : null}
+
+        <button type="submit" disabled={isSubmitting} className={AUTH_BUTTON_CLASS}>
+          {isSubmitting ? "Ingresando…" : "Ingresar"}
+        </button>
+      </form>
+
+      {hasCheckedAssignments && choices.length === 0 ? (
+        <div className="mt-5 rounded-md border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--brand-gold)]">
+          Tu cuenta todavía no tiene una barbería asignada. Escribinos y lo
+          resolvemos.
+        </div>
+      ) : null}
+
+      {choices.length > 1 ? (
+        <section className="mt-6 border-t border-[color:var(--border-subtle)] pt-5">
+          <p className="text-xs font-bold uppercase tracking-[0.1em] text-[color:var(--brand-gold)]">
+            Elegí tu barbería
+          </p>
+          <div className="mt-3 grid gap-2">
+            {choices.map((choice) => (
+              <Link
+                key={choice.slug}
+                href={
+                  nextPath && choice.slug === requestedBarbershopSlug
+                    ? nextPath
+                    : `/${choice.slug}/admin`
+                }
+                className="flex items-center gap-3 rounded-md border border-[color:var(--border-default)] bg-black px-3 py-3 transition hover:border-[color:var(--brand-gold)]"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-[color:var(--border-default)] text-[color:var(--text-muted)]">
+                  <Store aria-hidden="true" className="size-4" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold text-white">
+                    {choice.name}
+                  </span>
+                  <span className="block text-xs text-[color:var(--text-subtle)]">
+                    {choice.role}
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </AuthShell>
   );
 }
