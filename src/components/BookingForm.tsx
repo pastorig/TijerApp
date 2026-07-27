@@ -690,6 +690,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     const whatsappLink = createWhatsAppBookingLink({
       barbershopName: barbershop.name,
       barbershopWhatsapp: barbershop.whatsapp,
+      barberWhatsapp: selectedBarber?.whatsapp,
       clientName: appointment.customer_name,
       clientPhone: appointment.customer_phone,
       serviceName: selectedService.name,

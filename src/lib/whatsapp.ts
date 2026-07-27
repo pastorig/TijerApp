@@ -1,6 +1,14 @@
 type WhatsAppBookingLinkInput = {
   barbershopName: string;
   barbershopWhatsapp: string;
+  /**
+   * WhatsApp del barbero elegido, si tiene uno cargado. Cuando existe, el
+   * mensaje de reserva se manda a ESTE número — así, en una barbería con
+   * varios barberos, el pedido le llega directo al barbero elegido y no al
+   * número general de la barbería. Si el barbero no tiene número propio, se
+   * cae al de la barbería (`barbershopWhatsapp`).
+   */
+  barberWhatsapp?: string | null;
   clientName: string;
   clientPhone: string;
   serviceName: string;
@@ -67,6 +75,7 @@ function getResponderUrl(token: string) {
 export function createWhatsAppBookingLink({
   barbershopName,
   barbershopWhatsapp,
+  barberWhatsapp,
   clientName,
   clientPhone,
   serviceName,
@@ -76,7 +85,13 @@ export function createWhatsAppBookingLink({
   comment,
   confirmationToken,
 }: WhatsAppBookingLinkInput) {
-  const normalizedPhone = normalizeWhatsAppPhone(barbershopWhatsapp);
+  // El pedido va al WhatsApp del barbero elegido si tiene uno propio; si no,
+  // al número general de la barbería. `normalizeWhatsAppPhone` deja solo
+  // dígitos, así que un valor vacío o solo-espacios cuenta como "sin número".
+  const barberDigits = barberWhatsapp
+    ? normalizeWhatsAppPhone(barberWhatsapp)
+    : "";
+  const normalizedPhone = barberDigits || normalizeWhatsAppPhone(barbershopWhatsapp);
   const messageLines = [
     `Hola, quiero reservar un turno en ${barbershopName}.`,
     "",
