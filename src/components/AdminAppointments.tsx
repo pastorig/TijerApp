@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronRight,
   Search,
+  Users,
   X,
 } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
@@ -89,6 +90,7 @@ const FILTER_OPTIONS: Array<{ value: AppointmentFilter; label: string }> = [
 
 type AgendaViewMode = "list" | "calendar";
 const AGENDA_VIEW_MODE_KEY = "tijerapp:agendaViewMode";
+const GROUP_BY_BARBER_KEY = "tijerapp:agendaGroupByBarber";
 
 export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
@@ -106,6 +108,27 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(AGENDA_VIEW_MODE_KEY, mode);
     }
+  }
+
+  // Vista Lista: agrupar los turnos por barbero (secciones con el nombre de
+  // cada uno) en vez de una sola lista cronológica. Preferencia persistida
+  // igual que la vista Lista/Calendario. Decidido con Bautista 2026-07-26.
+  const [groupByBarber, setGroupByBarber] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(GROUP_BY_BARBER_KEY) === "true";
+  });
+
+  function toggleGroupByBarber() {
+    setGroupByBarber((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          GROUP_BY_BARBER_KEY,
+          next ? "true" : "false",
+        );
+      }
+      return next;
+    });
   }
 
   // Optimistic update tras un drag&drop exitoso en la vista Calendario.
@@ -429,6 +452,42 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
       [],
     );
   }, [barbers, appointments]);
+
+  // El toggle "Agrupar por barbero" solo aporta cuando hay más de un barbero
+  // Y no estamos ya filtrando a uno solo (ahí la lista es de un único barbero).
+  const canGroupByBarber =
+    barberFilterOptions.length > 1 && selectedBarberFilter === "all";
+  const effectiveGroupByBarber = groupByBarber && canGroupByBarber;
+
+  // Turnos partidos en secciones por barbero, preservando el orden original
+  // dentro de cada sección. Las secciones se ordenan como el dropdown de
+  // filtro (dueño primero); un barbero sin opción conocida queda al final.
+  const barberGroupsForList = useMemo(() => {
+    if (!effectiveGroupByBarber) return [];
+    const groups = new Map<string, AppointmentRow[]>();
+    for (const appointment of filteredAppointments) {
+      const bucket = groups.get(appointment.barber_id);
+      if (bucket) bucket.push(appointment);
+      else groups.set(appointment.barber_id, [appointment]);
+    }
+    const orderIndex = new Map(
+      barberFilterOptions.map((b, index) => [b.id, index] as const),
+    );
+    return Array.from(groups.entries())
+      .map(([barberId, items]) => ({
+        barberId,
+        barberName:
+          barberFilterOptions.find((b) => b.id === barberId)?.name ??
+          items[0]?.barber_name ??
+          "Barbero",
+        appointments: items,
+      }))
+      .sort(
+        (a, b) =>
+          (orderIndex.get(a.barberId) ?? Number.MAX_SAFE_INTEGER) -
+          (orderIndex.get(b.barberId) ?? Number.MAX_SAFE_INTEGER),
+      );
+  }, [effectiveGroupByBarber, filteredAppointments, barberFilterOptions]);
 
   const dayOptimizationAlerts = useMemo(() => {
     const activeFocusDateAppointments = focusDateAppointments
@@ -1427,6 +1486,32 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
               </div>
             ) : null}
 
+            {/* Toggle "Agrupar por barbero" — solo en vista Lista, con más de
+                un barbero y sin filtrar a uno solo. No aplica al Calendario
+                (que ya separa por barbero) ni a la búsqueda. */}
+            {appointments.length > 0 &&
+            !isSearching &&
+            canGroupByBarber &&
+            !(agendaViewMode === "calendar" && activeFilter === "day") ? (
+              <div className="flex items-center justify-end">
+                <button
+                  type="button"
+                  onClick={toggleGroupByBarber}
+                  role="switch"
+                  aria-checked={effectiveGroupByBarber}
+                  className={cn(
+                    "inline-flex min-h-8 items-center gap-2 rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
+                    effectiveGroupByBarber
+                      ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
+                      : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
+                  )}
+                >
+                  <Users className="size-3.5" aria-hidden="true" />
+                  Agrupar por barbero
+                </button>
+              </div>
+            ) : null}
+
             {/* Renderizado de turnos: vista Lista (actual) o Calendario nuevo */}
             {appointments.length === 0 ? (
               <EmptyState
@@ -1457,8 +1542,33 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                 onMoveComplete={handleAppointmentMoved}
               />
             ) : (
-              <ul className="grid gap-3 animate-stagger">
-                {filteredAppointments.flatMap((appointment, index, arr) => {
+              <div className={effectiveGroupByBarber ? "space-y-6" : undefined}>
+                {(effectiveGroupByBarber
+                  ? barberGroupsForList
+                  : [
+                      {
+                        barberId: "__all__",
+                        barberName: "",
+                        appointments: filteredAppointments,
+                      },
+                    ]
+                ).map((group) => (
+                  <section
+                    key={group.barberId}
+                    className={effectiveGroupByBarber ? "space-y-3" : undefined}
+                  >
+                    {effectiveGroupByBarber ? (
+                      <header className="flex items-center gap-2 border-b border-[color:var(--border-subtle)] pb-2">
+                        <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
+                          {group.barberName}
+                        </h3>
+                        <span className="rounded-[var(--radius-xs)] bg-[color:var(--surface-2)] px-1.5 font-mono text-[10px] tabular-nums text-[color:var(--text-subtle)]">
+                          {group.appointments.length}
+                        </span>
+                      </header>
+                    ) : null}
+                    <ul className="grid gap-3 animate-stagger">
+                      {group.appointments.flatMap((appointment, index, arr) => {
                   const appointmentDate = normalizeDateValue(
                     appointment.appointment_date,
                   );
@@ -1662,9 +1772,12 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                     }
                   }
 
-                  return nodes;
-                })}
-              </ul>
+                        return nodes;
+                      })}
+                    </ul>
+                  </section>
+                ))}
+              </div>
             )}
           </>
         ) : null}
