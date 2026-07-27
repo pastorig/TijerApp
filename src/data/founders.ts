@@ -37,7 +37,7 @@ export const FOUNDER_SPOTS = 10;
  * Es una lista APARTE de `founders` porque son dos permisos distintos: se
  * puede ser Fundador (badge) sin querer aparecer públicamente en el sitio.
  */
-export const FOUNDER_SLUGS: readonly string[] = ["leocuts"];
+export const FOUNDER_SLUGS: readonly string[] = ["leocuts", "sv-barber"];
 
 export function isFounder(barbershopSlug: string): boolean {
   return FOUNDER_SLUGS.includes(barbershopSlug);
