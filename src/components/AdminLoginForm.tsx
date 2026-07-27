@@ -3,10 +3,15 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { signInWithEmailAndPassword } from "@/lib/auth";
-import { Button, Field, Input, Logo } from "@/components/ui";
+import {
+  AUTH_BUTTON_CLASS,
+  AUTH_FIELD_CLASS,
+  AUTH_LABEL_CLASS,
+  AuthShell,
+} from "@/components/auth/AuthShell";
 
 type AdminLoginFormProps = {
   barbershop: DemoBarbershop;
@@ -51,104 +56,94 @@ export function AdminLoginForm({ barbershop }: AdminLoginFormProps) {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <nav className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-5 sm:px-8 sm:py-6 lg:px-12">
-        <Link
-          href={`/${barbershop.slug}`}
-          className="inline-flex min-w-0 items-center gap-1 truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:tracking-[0.2em]"
-        >
-          <ArrowLeft className="size-3.5 shrink-0" />
-          <span className="truncate">{barbershop.name}</span>
-        </Link>
-        <Logo variant="mark" size="sm" className="shrink-0" />
-      </nav>
-
-      <section className="mx-auto flex min-h-[calc(100vh-80px)] w-full max-w-md flex-col justify-center px-5 pb-20 pt-8 sm:px-8">
-        <div className="animate-fade-up">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
-            Acceso administrador
-          </p>
-          <h1 className="mt-4 text-3xl font-black uppercase leading-[0.95] tracking-tight text-balance sm:text-4xl">
-            Panel de {barbershop.name}
-          </h1>
-          <p className="mt-4 max-w-md text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
-            Iniciá sesión para gestionar turnos, confirmaciones y cancelaciones
-            de tu barbería.
-          </p>
-
-          <form onSubmit={handleSubmit} className="mt-10 space-y-5">
-            <Field label="Email" htmlFor="email" required>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                disabled={isSubmitting}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  setErrorMessage("");
-                }}
-                placeholder="admin@barberia.com"
-                autoComplete="email"
-                inputMode="email"
-                required
-              />
-            </Field>
-
-            <Field label="Contraseña" htmlFor="password" required>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  disabled={isSubmitting}
-                  onChange={(event) => {
-                    setPassword(event.target.value);
-                    setErrorMessage("");
-                  }}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  required
-                  className="pr-11"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((current) => !current)}
-                  disabled={isSubmitting}
-                  aria-label={
-                    showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
-                  }
-                  className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--brand-gold)] disabled:opacity-50"
-                >
-                  {showPassword ? (
-                    <EyeOff className="size-4" />
-                  ) : (
-                    <Eye className="size-4" />
-                  )}
-                </button>
-              </div>
-            </Field>
-
-            {errorMessage ? (
-              <div
-                role="alert"
-                className="border-l-2 border-[color:var(--danger)] pl-4 text-sm font-semibold text-[color:var(--danger)]"
-              >
-                {errorMessage}
-              </div>
-            ) : null}
-
-            <Button
-              type="submit"
-              size="lg"
-              fullWidth
-              loading={isSubmitting}
-              className="mt-2"
-            >
-              {isSubmitting ? "Ingresando…" : "Ingresar"}
-            </Button>
-          </form>
+    <AuthShell
+      eyebrow="Acceso administrador"
+      title={`Panel de ${barbershop.name}`}
+      subtitle="Iniciá sesión para gestionar turnos, confirmaciones y cancelaciones de tu barbería."
+      backLink={{ href: `/${barbershop.slug}`, label: barbershop.name }}
+      panelTitle="Tu barbería, en orden."
+      panelSubtitle="Agenda multi-barbero, reservas online y reportes en un solo lugar. Así se ve por dentro."
+    >
+      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <div>
+          <label htmlFor="admin-email" className={AUTH_LABEL_CLASS}>
+            Email
+          </label>
+          <input
+            id="admin-email"
+            type="email"
+            value={email}
+            disabled={isSubmitting}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setErrorMessage("");
+            }}
+            className={AUTH_FIELD_CLASS}
+            placeholder="admin@barberia.com"
+            autoComplete="email"
+            inputMode="email"
+            required
+          />
         </div>
-      </section>
-    </main>
+
+        <div>
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor="admin-password" className={AUTH_LABEL_CLASS}>
+              Contraseña
+            </label>
+            <Link
+              href="/recuperar"
+              className="text-[11px] font-semibold text-[color:var(--brand-gold)] hover:brightness-125"
+            >
+              ¿La olvidaste?
+            </Link>
+          </div>
+          <div className="relative">
+            <input
+              id="admin-password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              disabled={isSubmitting}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setErrorMessage("");
+              }}
+              className={`${AUTH_FIELD_CLASS} pr-11`}
+              placeholder="••••••••"
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((current) => !current)}
+              disabled={isSubmitting}
+              aria-label={
+                showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+              }
+              className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--brand-gold)] disabled:opacity-50"
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {errorMessage ? (
+          <p
+            role="alert"
+            className="rounded-md border border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--danger)]"
+          >
+            {errorMessage}
+          </p>
+        ) : null}
+
+        <button type="submit" disabled={isSubmitting} className={AUTH_BUTTON_CLASS}>
+          {isSubmitting ? "Ingresando…" : "Ingresar"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

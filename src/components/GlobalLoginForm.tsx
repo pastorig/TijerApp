@@ -128,8 +128,11 @@ export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
 
   return (
     <AuthShell
-      title="Iniciar sesión"
+      eyebrow="Bienvenido de nuevo"
+      title="Iniciá sesión"
       subtitle="Entrá al panel de tu barbería."
+      panelTitle="Tu barbería, en orden."
+      panelSubtitle="Agenda, reservas online y reportes en un solo lugar. Así se ve por dentro."
       footer={
         <>
           ¿Problemas para entrar?{" "}
