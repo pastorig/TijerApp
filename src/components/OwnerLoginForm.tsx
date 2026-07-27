@@ -10,7 +10,12 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "@/lib/auth";
-import { Logo } from "@/components/ui";
+import {
+  AUTH_BUTTON_CLASS,
+  AUTH_FIELD_CLASS,
+  AUTH_LABEL_CLASS,
+  AuthShell,
+} from "@/components/auth/AuthShell";
 
 type OwnerLoginFormProps = {
   errorCode?: string;
@@ -28,7 +33,7 @@ export function OwnerLoginForm({ errorCode = "" }: OwnerLoginFormProps) {
     event.preventDefault();
 
     if (!email.trim() || !password) {
-      setErrorMessage("Ingresa email y contrasena.");
+      setErrorMessage("Ingresá email y contraseña.");
       return;
     }
 
@@ -42,7 +47,7 @@ export function OwnerLoginForm({ errorCode = "" }: OwnerLoginFormProps) {
       });
 
       if (error) {
-        setErrorMessage("Email o contrasena incorrectos.");
+        setErrorMessage("Email o contraseña incorrectos.");
         return;
       }
 
@@ -68,136 +73,117 @@ export function OwnerLoginForm({ errorCode = "" }: OwnerLoginFormProps) {
 
         await signOut();
         setErrorMessage(
-          "Ese usuario no tiene acceso owner. Usa un owner real de TijerApp.",
+          "Ese usuario no tiene acceso owner. Usá un owner real de TijerApp.",
         );
         return;
       }
 
       router.replace("/owner");
     } catch {
-      setErrorMessage("No pudimos iniciar sesion. Intenta nuevamente.");
+      setErrorMessage("No pudimos iniciar sesión. Intentá nuevamente.");
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <header className="sticky top-0 z-10 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 py-3 backdrop-blur-md sm:px-6">
-        <Link href="/" aria-label="Ir al inicio" className="inline-flex">
-          <Logo size="sm" />
-        </Link>
-      </header>
-      <section className="mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-md flex-col justify-center px-6 py-10">
-        <div className="rounded-lg border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-6 shadow-2xl shadow-black/30">
-          <Logo size="md" />
-          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
-            Owner
-          </p>
-          <h1 className="mt-2 text-4xl font-black text-white">
-            Iniciar sesion
-          </h1>
-          <p className="mt-3 text-sm leading-6 text-[color:var(--text-secondary)]">
-            Accede al panel general de la plataforma. Cada barberia mantiene su
-            propio correo admin por separado.
-          </p>
-          {errorCode === "not-owner" ? (
-            <p className="mt-3 rounded-md border border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--danger)]">
-              Tu sesion es valida, pero no tiene permisos owner.
-            </p>
-          ) : null}
+    <AuthShell
+      eyebrow="Owner"
+      title="Panel de plataforma"
+      subtitle="Accedé al panel general de TijerApp. Cada barbería mantiene su propio correo admin por separado."
+      panelTitle="El control de toda la plataforma."
+      panelSubtitle="Barberías, planes, cobros y métricas del negocio, en una sola vista."
+      footer={
+        <>
+          ¿Querés entrar al panel de una barbería? Usá el{" "}
+          <Link
+            href="/login"
+            className="font-semibold text-[color:var(--brand-gold)] hover:brightness-125"
+          >
+            acceso admin
+          </Link>
+          .
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <div>
+          <label htmlFor="owner-email" className={AUTH_LABEL_CLASS}>
+            Email owner
+          </label>
+          <input
+            id="owner-email"
+            type="email"
+            value={email}
+            disabled={isSubmitting}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setErrorMessage("");
+            }}
+            className={AUTH_FIELD_CLASS}
+            placeholder="owner@tijerapp.com"
+            autoComplete="email"
+            inputMode="email"
+            required
+          />
+        </div>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            <div>
-              <label
-                htmlFor="owner-email"
-                className="text-sm font-bold uppercase text-[color:var(--text-secondary)]"
-              >
-                Email owner
-              </label>
-              <input
-                id="owner-email"
-                type="email"
-                value={email}
-                disabled={isSubmitting}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  setErrorMessage("");
-                }}
-                className="mt-2 min-h-12 w-full rounded-md border border-[color:var(--border-default)] bg-black px-4 text-base text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
-                placeholder="owner@tijerapp.com"
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="owner-password"
-                className="text-sm font-bold uppercase text-[color:var(--text-secondary)]"
-              >
-                Contrasena
-              </label>
-              <div className="relative mt-2">
-                <input
-                  id="owner-password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  disabled={isSubmitting}
-                  onChange={(event) => {
-                    setPassword(event.target.value);
-                    setErrorMessage("");
-                  }}
-                  className="min-h-12 w-full rounded-md border border-[color:var(--border-default)] bg-black px-4 pr-11 text-base text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
-                  placeholder="Tu contrasena"
-                  autoComplete="current-password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((current) => !current)}
-                  disabled={isSubmitting}
-                  aria-label={
-                    showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
-                  }
-                  className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--brand-gold)] disabled:opacity-50"
-                >
-                  {showPassword ? (
-                    <EyeOff className="size-4" />
-                  ) : (
-                    <Eye className="size-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {errorMessage ? (
-              <p
-                role="alert"
-                className="rounded-md border border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--danger)]"
-              >
-                {errorMessage}
-              </p>
-            ) : null}
-
-            <button
-              type="submit"
+        <div>
+          <label htmlFor="owner-password" className={AUTH_LABEL_CLASS}>
+            Contraseña
+          </label>
+          <div className="relative">
+            <input
+              id="owner-password"
+              type={showPassword ? "text" : "password"}
+              value={password}
               disabled={isSubmitting}
-              className="inline-flex min-h-12 w-full items-center justify-center rounded-md bg-gold-grad px-6 py-3 text-sm font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setErrorMessage("");
+              }}
+              className={`${AUTH_FIELD_CLASS} pr-11`}
+              placeholder="Tu contraseña"
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((current) => !current)}
+              disabled={isSubmitting}
+              aria-label={
+                showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+              }
+              className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--brand-gold)] disabled:opacity-50"
             >
-              {isSubmitting ? "Ingresando..." : "Ingresar al owner"}
+              {showPassword ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
             </button>
-          </form>
-
-          <div className="mt-5 rounded-md border border-[color:var(--border-default)] bg-black px-4 py-3 text-xs leading-5 text-[color:var(--text-muted)]">
-            Si queres entrar al panel de una barberia, usa el acceso admin
-            general desde{" "}
-            <Link href="/login" className="font-semibold text-[color:var(--brand-gold)]">
-              /login
-            </Link>
-            .
           </div>
         </div>
-      </section>
-    </main>
+
+        {errorCode === "not-owner" ? (
+          <p className="rounded-md border border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--danger)]">
+            Tu sesión es válida, pero no tiene permisos owner.
+          </p>
+        ) : null}
+
+        {errorMessage ? (
+          <p
+            role="alert"
+            className="rounded-md border border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--danger)]"
+          >
+            {errorMessage}
+          </p>
+        ) : null}
+
+        <button type="submit" disabled={isSubmitting} className={AUTH_BUTTON_CLASS}>
+          {isSubmitting ? "Ingresando…" : "Ingresar al owner"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }
