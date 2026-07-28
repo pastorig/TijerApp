@@ -37,6 +37,7 @@ export async function AdminShell({
     daysToPaidExpire: plan.daysToPaidExpire,
     isInGracePeriod: plan.isInGracePeriod,
     canAccessFeatures: plan.canAccessFeatures,
+    isReadOnly: plan.isReadOnly,
   };
 
   return (

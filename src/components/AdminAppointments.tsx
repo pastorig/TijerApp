@@ -64,6 +64,7 @@ import {
 } from "./admin/CancelAppointmentDialog";
 import { DuplicateAppointmentModal } from "./admin/DuplicateAppointmentModal";
 import { ManualAppointmentModal } from "./admin/ManualAppointmentModal";
+import { READ_ONLY_REASON, useIsReadOnly } from "./admin/PlanContext";
 import { QuickBlockTimeButton } from "./admin/QuickBlockTimeButton";
 import { getTodayYmd, normalizeTimeShort } from "./admin/date-utils";
 
@@ -93,6 +94,8 @@ const AGENDA_VIEW_MODE_KEY = "tijerapp:agendaViewMode";
 const GROUP_BY_BARBER_KEY = "tijerapp:agendaGroupByBarber";
 
 export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
+  // Plan vencido => modo lectura: la agenda se ve, no se toca.
+  const isReadOnly = useIsReadOnly();
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   // Lazy init: leemos localStorage al primer render (sin useEffect) para
   // evitar el flash de "list" → "calendar". Como AdminAppointments es
@@ -1210,8 +1213,10 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
             <button
               type="button"
               onClick={() => setIsManualModalOpen(true)}
+              disabled={isReadOnly}
+              title={isReadOnly ? READ_ONLY_REASON : undefined}
               aria-label="Agregar turno"
-              className="bg-gold-grad inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-bold uppercase tracking-[0.12em] text-black shadow-[0_8px_20px_-10px_var(--brand-gold-ring)] transition-all duration-[var(--duration-fast)] press-shrink hover:brightness-110"
+              className="bg-gold-grad inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-bold uppercase tracking-[0.12em] text-black shadow-[0_8px_20px_-10px_var(--brand-gold-ring)] transition-all duration-[var(--duration-fast)] press-shrink hover:brightness-110 disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none"
             >
               <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
               <span className="sm:hidden">Turno</span>

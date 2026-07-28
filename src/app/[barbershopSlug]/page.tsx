@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { PublicBarbershopLanding } from "@/components/PublicBarbershopLanding";
 import { listPublicReviewsByBarbershop } from "@/lib/appointment-reviews";
 import { resolveBarbershopBySlug } from "@/lib/barbershops";
+import { getBarbershopPlan } from "@/lib/plan-access";
 
 type BarbershopPageProps = {
   params: Promise<{
@@ -74,7 +75,15 @@ export default async function BarbershopPage({
     6,
   );
 
+  // Plan vencido => modo lectura: la landing se muestra entera, pero sin CTA
+  // de reserva online. Ver specs/009-modo-lectura/spec.md.
+  const plan = await getBarbershopPlan(barbershopSlug);
+
   return (
-    <PublicBarbershopLanding barbershop={barbershop} reviews={reviews} />
+    <PublicBarbershopLanding
+      barbershop={barbershop}
+      reviews={reviews}
+      bookingEnabled={!plan.isReadOnly}
+    />
   );
 }

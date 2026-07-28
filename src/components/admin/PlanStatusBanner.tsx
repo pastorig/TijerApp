@@ -114,8 +114,10 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
       <BannerBase tone="danger">
         <AlertTriangle className="size-4 shrink-0" />
         <p className="flex-1 text-xs sm:text-sm">
-          Terminó tu prueba gratis. Escribinos y activamos el plan que te sirva
-          para recuperar el acceso completo.
+          Terminó tu prueba gratis. Quedaste en{" "}
+          <strong>modo lectura</strong>: podés ver todo, pero no cargar ni
+          modificar turnos, y tus clientes no pueden reservar online. Escribinos
+          y activamos el plan que te sirva.
         </p>
         <ContactCta href={chooseWaLink} />
       </BannerBase>
@@ -124,8 +126,10 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
         <AlertTriangle className="size-4 shrink-0" />
         <p className="flex-1 text-xs sm:text-sm">
           Tu plan está{" "}
-          {plan.effectiveStatus === "expired" ? "expirado" : "cancelado"}.
-          Activalo ({precio}/mes) para recuperar el acceso completo.
+          {plan.effectiveStatus === "expired" ? "expirado" : "cancelado"} y la
+          barbería quedó en <strong>modo lectura</strong>: podés ver todo, pero
+          no cargar ni modificar turnos, y tus clientes no pueden reservar
+          online. Activalo ({precio}/mes) y vuelve todo.
         </p>
         <PayCta onClick={() => setPayOpen(true)} />
       </BannerBase>

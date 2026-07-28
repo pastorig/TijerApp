@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight, Lock } from "lucide-react";
 import { BookingForm } from "@/components/BookingForm";
+import { BookingUnavailableNotice } from "@/components/BookingUnavailableNotice";
+import { getBarbershopPlan } from "@/lib/plan-access";
 import { Logo } from "@/components/ui";
 import { resolveBarbershopBySlug } from "@/lib/barbershops";
 
@@ -36,6 +38,10 @@ export default async function BookingPage({ params }: BookingPageProps) {
 
   const isRealBarbershop = REAL_BARBERSHOP_SLUGS.has(barbershopSlug);
 
+  // Plan vencido => modo lectura: la reserva online se apaga y el cliente va
+  // por WhatsApp. Ver specs/009-modo-lectura/spec.md.
+  const plan = await getBarbershopPlan(barbershopSlug);
+
   return (
     <main className="min-h-screen bg-black text-white">
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-5 sm:px-8 sm:py-6 lg:px-12">
@@ -49,7 +55,13 @@ export default async function BookingPage({ params }: BookingPageProps) {
       </nav>
 
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 sm:py-10 lg:px-12 lg:py-16">
-        {isRealBarbershop ? (
+        {plan.isReadOnly ? (
+          <BookingUnavailableNotice
+            barbershopName={barbershop.name}
+            barbershopSlug={barbershopSlug}
+            whatsapp={barbershop.whatsapp}
+          />
+        ) : isRealBarbershop ? (
           <RealBarbershopBlocker barbershopName={barbershop.name} />
         ) : (
           <BookingForm barbershop={barbershop} />

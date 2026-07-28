@@ -4,6 +4,23 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## ✅ Modo lectura al vencer el plan (009) — IMPLEMENTADO en rama `009-modo-lectura`
+
+Cuando a una barbería se le vence el plan, ahora queda **congelada, no borrada**: el
+barbero ve todo (agenda, clientes, reportes, configuración) y no puede escribir nada,
+y la reserva online pública se apaga con CTA al WhatsApp de la barbería. Spec en
+`specs/009-modo-lectura/spec.md`. Sin migración y sin cron nuevo.
+
+Verificado contra `popesbarber` (vencida de verdad) en dev: landing entera sin CTA de
+reserva, `/reservar` con el aviso de WhatsApp, `POST /api/appointments/book` → 402.
+Control con `primebarber` (activa): sin ninguna regresión. lint + tsc + build + 75 tests
+unitarios verdes.
+
+**Falta (Bautista):** revisar el admin real en dev local con una barbería vencida
+(el admin no loguea headless) y mergear a `main`.
+
+---
+
 ## ✅ Cobro de barberos (Opción A) — IMPLEMENTADO en rama `007-cobro-barberos`
 
 **Decidido + implementado (2026-07-07):** los barberos le pagan el plan a Gino por transferencia; el owner registra el cobro desde `/owner/planes` (botón **"Registrar pago"**) y la barbería se reactiva +1 mes. El barbero vencido ve monto + **Alias `pastorinx` / CBU / Gino Pastori** en el paywall. Spec/plan/tasks en `specs/007-cobro-barberos/`. Build + tsc + lint verdes.

@@ -6,6 +6,7 @@ import {
   Check,
   Clock3,
   Copy,
+  Lock,
   MessageCircle,
   MessageSquare,
   MoreVertical,
@@ -23,6 +24,7 @@ import {
   getTagTone,
   tagClassesFor,
 } from "@/components/admin/ClientTagsEditor";
+import { READ_ONLY_REASON, useIsReadOnly } from "@/components/admin/PlanContext";
 import { cn } from "@/lib/cn";
 import {
   formatDateWithWeekday,
@@ -272,11 +274,16 @@ export function AppointmentRow({
   // Tick cada 60s para refrescar relative time
   useTickingMinute();
 
+  // Plan vencido => modo lectura: el turno se muestra entero, sin acciones.
+  const isReadOnly = useIsReadOnly();
+
   const status = appointment.status ?? "pending";
   const meta = getStatusMeta(status);
   const isConfirmed = status === "confirmed";
   const isCancelled = status === "cancelled";
   const isDeleted = status === "deleted";
+  // En modo lectura no se ofrece el borrado definitivo del turno eliminado.
+  const showHardDelete = isDeleted && !!onHardDelete && !isReadOnly;
   const isBusy =
     confirmingId === appointment.id ||
     cancellingId === appointment.id ||
@@ -356,7 +363,7 @@ export function AppointmentRow({
       )}
     >
       {/* X hard delete absoluta — solo en eliminados */}
-      {isDeleted && onHardDelete ? (
+      {showHardDelete ? (
         <button
           type="button"
           onClick={() => onHardDelete(appointment)}
@@ -391,7 +398,7 @@ export function AppointmentRow({
                 >
                   {appointment.customer_name}
                 </h3>
-                {isDeleted && onHardDelete ? null : (
+                {showHardDelete ? null : (
                   <div className="flex shrink-0 items-center">
                     <StatusPill
                       key={status}
@@ -423,7 +430,8 @@ export function AppointmentRow({
               ) : null}
             </div>
             <div className="flex shrink-0 items-center">
-              {!isDeleted &&
+              {!isReadOnly &&
+              !isDeleted &&
               !isCancelled &&
               (delayWhatsAppHref ||
                 reviewWhatsAppHref ||
@@ -625,7 +633,18 @@ export function AppointmentRow({
       </div>
 
       {/* ───── ZONA G: Footer de acciones — jerarquizado ───── */}
-      {isDeleted ? (
+      {isReadOnly ? (
+        /* Plan vencido: el turno se ve completo, pero no se puede tocar. */
+        <div className="flex items-center gap-2 border-t border-white/[0.04] bg-[color:var(--surface-0)]/40 p-3">
+          <Lock
+            className="size-3.5 shrink-0 text-[color:var(--text-subtle)]"
+            aria-hidden="true"
+          />
+          <p className="text-[11px] leading-snug text-[color:var(--text-subtle)]">
+            {READ_ONLY_REASON}
+          </p>
+        </div>
+      ) : isDeleted ? (
         <div className="border-t border-white/[0.04] bg-[color:var(--surface-0)]/40 p-3">
           <button
             type="button"

@@ -39,6 +39,12 @@ type HeroSectionProps = {
     DemoBarbershop,
     "name" | "description" | "slug" | "instagram" | "whatsapp" | "logoUrl"
   >;
+  /**
+   * False cuando la barbería quedó en modo lectura (plan vencido): se cae el
+   * CTA de reservar y WhatsApp pasa a ser la acción principal, que es el
+   * camino que le queda al cliente. Ver specs/009-modo-lectura/spec.md.
+   */
+  bookingEnabled?: boolean;
 };
 
 function buildWhatsAppLink(rawNumber: string): string | null {
@@ -46,7 +52,10 @@ function buildWhatsAppLink(rawNumber: string): string | null {
   return digits ? `https://wa.me/${digits}` : null;
 }
 
-export function HeroSection({ barbershop }: HeroSectionProps) {
+export function HeroSection({
+  barbershop,
+  bookingEnabled = true,
+}: HeroSectionProps) {
   const whatsappLink = barbershop.whatsapp
     ? buildWhatsAppLink(barbershop.whatsapp)
     : null;
@@ -96,16 +105,22 @@ export function HeroSection({ barbershop }: HeroSectionProps) {
           </p>
 
           <div className="mt-7 flex flex-col items-stretch gap-3 sm:mt-8 sm:flex-row sm:items-center sm:gap-4">
-            <BookingCTA barbershopSlug={barbershop.slug} />
+            {bookingEnabled ? (
+              <BookingCTA barbershopSlug={barbershop.slug} />
+            ) : null}
             {whatsappLink ? (
               <a
                 href={whatsappLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-5 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+                className={
+                  bookingEnabled
+                    ? "inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-5 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+                    : "inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-5 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
+                }
               >
                 <WhatsAppGlyph className="size-4" />
-                WhatsApp
+                {bookingEnabled ? "WhatsApp" : "Pedir turno por WhatsApp"}
               </a>
             ) : null}
             {barbershop.instagram ? (
