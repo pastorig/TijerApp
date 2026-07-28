@@ -256,7 +256,13 @@ function DraggableAppointmentBlock({
         "border-[color:var(--border-default)] bg-[color:var(--surface-2)]",
         "shadow-[0_1px_0_rgba(255,255,255,0.05)_inset,0_10px_26px_-16px_rgba(0,0,0,0.9)]",
         "transition-[transform,box-shadow,opacity] duration-150",
-        !isLocked && "touch-none select-none",
+        // touch-manipulation (no touch-none): el TouchSensor usa delay de
+        // 200ms para distinguir scroll de drag, así que el browser TIENE que
+        // poder scrollear sobre el turno en swipes rápidos. Con touch-none el
+        // dedo apoyado sobre un turno bloqueaba el scroll de la página en
+        // mobile (el barbero quedaba "trabado" y no podía subir/bajar la agenda).
+        // Al iniciarse el drag, dnd-kit frena el scroll con preventDefault.
+        !isLocked && "touch-manipulation select-none",
         isLocked
           ? "cursor-not-allowed opacity-60 [filter:saturate(0.55)]"
           : "cursor-grab hover:z-20 hover:shadow-elevated hover:-translate-y-px active:cursor-grabbing",
