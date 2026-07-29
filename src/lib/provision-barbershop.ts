@@ -1,4 +1,7 @@
 import { demoBarbershops } from "@/data/demo-barbershops";
+// `onboarding-defaults` importa de acá solo un TIPO (`import type`), que se borra
+// en runtime: no hay ciclo real entre los dos módulos.
+import { isDefaultWorkingDay } from "@/lib/onboarding-defaults";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 /**
@@ -231,14 +234,17 @@ export async function provisionBarbershop(
     };
   }
 
-  // Lunes a sábado trabajando con el horario de la barbería; domingo no.
+  // Qué días abre por defecto sale de `DEFAULT_CLOSED_DAYS` (hoy: domingo
+  // cerrado). La guía de primeros pasos lee la MISMA constante para detectar si
+  // el barbero ya configuró sus días y para el texto que le muestra — antes esto
+  // era un `!== 0` suelto acá y el texto decía lo contrario.
   const weeklySchedulesPayload = [0, 1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({
     barbershop_slug: slug,
     barber_id: barber.id,
     day_of_week: dayOfWeek,
     start_time: input.workingHoursStart,
     end_time: input.workingHoursEnd,
-    is_working: dayOfWeek !== 0,
+    is_working: isDefaultWorkingDay(dayOfWeek),
   }));
 
   const { error: schedulesError } = await supabaseAdmin

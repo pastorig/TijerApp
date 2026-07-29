@@ -32,6 +32,57 @@ export const DEFAULT_SERVICES: InitialServiceInput[] = [
 /** Días de trial. El sitio público promete 14 en todas sus páginas. */
 export const TRIAL_DAYS = 14;
 
+/**
+ * Días que el registro deja CERRADOS (0 = domingo).
+ *
+ * Existe como constante y no como un `!== 0` suelto porque tres lugares
+ * necesitan estar de acuerdo: el provisioning, la detección de "ya configuró sus
+ * horarios" y el texto que se le muestra al barbero. Cuando el texto repetía el
+ * dato a mano, decía "abierto todos los días, domingo incluido" — lo contrario
+ * de lo que hacía el registro.
+ */
+export const DEFAULT_CLOSED_DAYS: readonly number[] = [0];
+
+/** True si el registro deja ese día de la semana trabajando. */
+export function isDefaultWorkingDay(dayOfWeek: number): boolean {
+  return !DEFAULT_CLOSED_DAYS.includes(dayOfWeek);
+}
+
+const DAY_NAMES = [
+  "domingo",
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábado",
+];
+
+/** "de lunes a sábado" — derivado de `DEFAULT_CLOSED_DAYS`, no escrito a mano. */
+export function describeDefaultOpenDays(): string {
+  const open = [0, 1, 2, 3, 4, 5, 6].filter(isDefaultWorkingDay);
+  if (open.length === 7) return "todos los días";
+  if (open.length === 0) return "ningún día";
+  const contiguous = open.every((day, i) => i === 0 || day === open[i - 1] + 1);
+  if (contiguous && open.length > 2) {
+    return `de ${DAY_NAMES[open[0]]} a ${DAY_NAMES[open[open.length - 1]]}`;
+  }
+  return open.map((day) => DAY_NAMES[day]).join(", ");
+}
+
+/** "09:00 a 20:00, de lunes a sábado" — todo derivado de las constantes. */
+export function describeDefaultSchedule(): string {
+  return `${DEFAULT_WORKING_HOURS.start} a ${DEFAULT_WORKING_HOURS.end}, ${describeDefaultOpenDays()}`;
+}
+
+/** "un corte de ejemplo a $10.000" — el precio sale de `DEFAULT_SERVICES`. */
+export function describeDefaultService(): string {
+  const service = DEFAULT_SERVICES[0];
+  if (!service) return "un servicio de ejemplo";
+  const price = `$${service.price.toLocaleString("es-AR")}`;
+  return `un ${service.name.toLowerCase()} de ejemplo a ${price}`;
+}
+
 type ServiceLike = {
   name: string;
   price: number;
@@ -103,7 +154,7 @@ export function isDefaultWeeklySchedule(rows: WeeklyScheduleLike[]): boolean {
     (row) =>
       toHhMm(row.start_time) === DEFAULT_WORKING_HOURS.start &&
       toHhMm(row.end_time) === DEFAULT_WORKING_HOURS.end &&
-      row.is_working === (row.day_of_week !== 0) &&
+      row.is_working === isDefaultWorkingDay(row.day_of_week) &&
       !row.break_start &&
       !row.break_end,
   );

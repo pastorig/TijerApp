@@ -1,6 +1,8 @@
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { getActiveBarbers } from "@/data/demo-barbershops";
 import {
+  describeDefaultSchedule,
+  describeDefaultService,
   isDefaultService,
   isDefaultWeeklySchedule,
   isDefaultWorkingHours,
@@ -123,7 +125,10 @@ export function getOnboardingSteps(
     {
       id: "servicios",
       title: "Poné tus servicios y precios",
-      hint: "Arrancás con un corte de ejemplo a $10.000. Ponele tu precio y sumá los que hagas.",
+      // Los textos que describen lo que dejó el registro se DERIVAN de las
+      // constantes del registro. Escritos a mano se desincronizan sin que nadie
+      // se dé cuenta, y el barbero lee algo que no es cierto.
+      hint: `Arrancás con ${describeDefaultService()}. Ponele tu precio y sumá los que hagas.`,
       href: `${base}/barbers`,
       done: servicesDone,
       optional: false,
@@ -131,7 +136,7 @@ export function getOnboardingSteps(
     {
       id: "horarios",
       title: "Revisá tus días y horarios",
-      hint: "Seguís con el horario que te dejamos: 09:00 a 20:00, de lunes a sábado.",
+      hint: `Seguís con el horario que te dejamos: ${describeDefaultSchedule()}.`,
       href: `${base}/barbers`,
       done: hoursDone,
       optional: false,

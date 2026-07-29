@@ -14,6 +14,8 @@ import { getOnboardingSteps } from "../src/lib/onboarding-steps.ts";
 import {
   DEFAULT_SERVICES,
   DEFAULT_WORKING_HOURS,
+  describeDefaultOpenDays,
+  isDefaultWorkingDay,
 } from "../src/lib/onboarding-defaults.ts";
 
 let passed = 0;
@@ -253,10 +255,40 @@ check(
   stepHint(freshBarbershop(), "contacto"),
   "Te falta la dirección y el Instagram — se muestra en tu página.",
 );
-// El registro deja el domingo CERRADO: el texto no puede decir lo contrario.
+// ── 6c. Los textos DERIVAN de las constantes del registro ───────────────────
+// Esto es lo que evita que vuelva a pasar lo de kekasbarber: el texto decía
+// "abierto todos los días, domingo incluido" cuando el registro deja el domingo
+// cerrado. Si mañana cambian los defaults, estos asserts fallan y avisan.
 check(
-  "el texto de horarios no miente sobre el domingo",
-  stepHint(freshBarbershop(), "horarios").includes("lunes a sábado"),
+  "el registro deja el domingo cerrado",
+  isDefaultWorkingDay(0),
+  false,
+);
+check(
+  "el registro deja el lunes abierto",
+  isDefaultWorkingDay(1),
+  true,
+);
+check(
+  "los días abiertos se describen solos desde la constante",
+  describeDefaultOpenDays(),
+  "de lunes a sábado",
+);
+check(
+  "el texto de horarios usa el horario real del registro",
+  stepHint(freshBarbershop(), "horarios"),
+  `Seguís con el horario que te dejamos: ${DEFAULT_WORKING_HOURS.start} a ${DEFAULT_WORKING_HOURS.end}, ${describeDefaultOpenDays()}.`,
+);
+check(
+  "el texto de horarios NO dice que abre todos los días",
+  stepHint(freshBarbershop(), "horarios").includes("todos los días"),
+  false,
+);
+check(
+  "el texto de servicios usa el precio real del registro",
+  stepHint(freshBarbershop(), "servicios").includes(
+    `$${DEFAULT_SERVICES[0].price.toLocaleString("es-AR")}`,
+  ),
   true,
 );
 

@@ -154,8 +154,17 @@ export function OnboardingChecklist({
         onClick={() => persistHidden(false)}
         className="mb-4 inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] px-3 py-2 text-xs font-semibold text-[color:var(--text-muted)] transition-colors hover:border-[color:var(--brand-gold-ring)] hover:text-white"
       >
-        <Rocket aria-hidden="true" className="size-3.5" />
-        Ver primeros pasos
+        {progress.isComplete ? (
+          <>
+            <Share2 aria-hidden="true" className="size-3.5" />
+            Ver mi link
+          </>
+        ) : (
+          <>
+            <Rocket aria-hidden="true" className="size-3.5" />
+            Ver primeros pasos
+          </>
+        )}
       </button>
     );
   }
@@ -193,6 +202,16 @@ export function OnboardingChecklist({
             <Share2 aria-hidden="true" className="size-3.5" />
             Compartir
           </a>
+          {/* La barbería que ya está lista no tiene nada que hacer acá: si el
+              link le estorba todos los días, se lo saca de encima. */}
+          <button
+            type="button"
+            onClick={() => persistHidden(true)}
+            aria-label="Ocultar mi link"
+            className="rounded-full p-1.5 text-[color:var(--text-muted)] transition-colors hover:bg-[color:var(--surface-2)] hover:text-white"
+          >
+            <EyeOff aria-hidden="true" className="size-4" />
+          </button>
         </div>
       </section>
     );
