@@ -699,6 +699,50 @@ type Database = {
         Update: PlatformOwnerUpdate;
         Relationships: [];
       };
+      /**
+       * Historial de cobros a barberías (feature 007). Lo escribe la RPC
+       * `register_barbershop_payment` y lo lee `/api/owner/payments`. RLS sin
+       * políticas públicas: solo service_role detrás del gate de owner.
+       *
+       * `amount` es `numeric(12,2)`: PostgREST lo devuelve como string, así que
+       * el tipo lo refleja y hay que convertirlo antes de sumar.
+       */
+      barbershop_payments: {
+        Row: {
+          id: string;
+          barbershop_slug: string;
+          amount: string;
+          method: string;
+          period_start: string;
+          period_end: string;
+          note: string | null;
+          registered_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          barbershop_slug: string;
+          amount: number | string;
+          method: string;
+          period_start: string;
+          period_end: string;
+          note?: string | null;
+          registered_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          barbershop_slug?: string;
+          amount?: number | string;
+          method?: string;
+          period_start?: string;
+          period_end?: string;
+          note?: string | null;
+          registered_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       barbershop_subscriptions: {
         Row: {
           id: string;

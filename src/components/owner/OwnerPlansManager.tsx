@@ -64,6 +64,8 @@ export function OwnerPlansManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [editing, setEditing] = useState<PlanRow | null>(null);
   const [paying, setPaying] = useState<PlanRow | null>(null);
+  // Se incrementa al registrar un pago para que el historial se recargue.
+  const [paymentsKey, setPaymentsKey] = useState(0);
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -246,17 +248,145 @@ export function OwnerPlansManager() {
         />
       ) : null}
 
+      <PaymentsHistory
+        nameBySlug={Object.fromEntries(plans.map((p) => [p.slug, p.name]))}
+        reloadKey={paymentsKey}
+      />
+
       {paying ? (
         <RegisterPaymentModal
           row={paying}
           onClose={() => setPaying(null)}
           onSaved={() => {
             setPaying(null);
+            setPaymentsKey((key) => key + 1);
             void load();
           }}
         />
       ) : null}
     </div>
+  );
+}
+
+type PaymentRow = {
+  id: string;
+  barbershop_slug: string;
+  amount: string;
+  method: string;
+  period_start: string;
+  period_end: string;
+  note: string | null;
+  created_at: string;
+};
+
+/**
+ * Historial de cobros. La tabla `barbershop_payments` se venía llenando con cada
+ * "Registrar pago" desde la feature 007 y ninguna pantalla la mostraba: el dato
+ * estaba pero el owner no podía verlo.
+ *
+ * Va en tarjetas y no en `<table>` a propósito: esta pantalla se mira desde el
+ * celular y una tabla obliga a scrollear para el costado.
+ */
+function PaymentsHistory({
+  nameBySlug,
+  reloadKey,
+}: {
+  nameBySlug: Record<string, string>;
+  reloadKey: number;
+}) {
+  const toast = useToast();
+  const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { data: sessionData } = await getCurrentSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) return;
+      const res = await fetch("/api/owner/payments", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        toast.error("Error cargando el historial", { description: err.error });
+        return;
+      }
+      const data = (await res.json()) as {
+        payments: PaymentRow[];
+        totalAmount: number;
+      };
+      setPayments(data.payments);
+      setTotalAmount(data.totalAmount);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load();
+  }, [load, reloadKey]);
+
+  return (
+    <section className="card-premium p-4 sm:p-5">
+      <header className="flex flex-wrap items-baseline justify-between gap-2">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
+            Cobros registrados
+          </p>
+          <p className="mt-1 text-xs text-[color:var(--text-muted)]">
+            Cada pago que registrás queda acá.
+          </p>
+        </div>
+        {payments.length > 0 ? (
+          <p className="text-sm font-black text-gold-gradient">
+            ${totalAmount.toLocaleString("es-AR")} cobrados
+          </p>
+        ) : null}
+      </header>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="size-5 animate-spin text-[color:var(--brand-gold)]" />
+        </div>
+      ) : payments.length === 0 ? (
+        <p className="py-8 text-center text-sm text-[color:var(--text-muted)]">
+          Todavía no registraste ningún cobro.
+        </p>
+      ) : (
+        <ul className="mt-4 flex flex-col gap-2">
+          {payments.map((payment) => (
+            <li
+              key={payment.id}
+              className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] p-3"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-white">
+                  {nameBySlug[payment.barbershop_slug] ??
+                    payment.barbershop_slug}
+                </p>
+                <p className="text-[11px] text-[color:var(--text-muted)]">
+                  {formatShortDate(payment.created_at)} · {payment.method}
+                  {payment.period_end
+                    ? ` · cubre hasta ${formatShortDate(payment.period_end)}`
+                    : ""}
+                </p>
+                {payment.note ? (
+                  <p className="mt-0.5 text-[11px] italic text-[color:var(--text-subtle)]">
+                    {payment.note}
+                  </p>
+                ) : null}
+              </div>
+              <p className="text-sm font-black tabular-nums text-[color:var(--success)]">
+                ${Number(payment.amount).toLocaleString("es-AR")}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 
