@@ -79,6 +79,7 @@ export function PricingRoiCalculator() {
                 </div>
                 <input
                   type="range"
+                  aria-label="Ticket promedio por turno, en pesos"
                   min={2000}
                   max={25000}
                   step={500}
@@ -119,6 +120,7 @@ export function PricingRoiCalculator() {
                 </div>
                 <input
                   type="range"
+                  aria-label="Turnos que se pierden por mes"
                   min={0}
                   max={30}
                   step={1}

@@ -64,9 +64,11 @@ export function HomeStats() {
                 >
                   <Icon className="size-4 sm:size-5" />
                 </div>
-                <h3 className="mt-1 text-base font-black tracking-tight text-white sm:text-lg">
+                {/* h2 y no h3: esta sección va pegada al hero (h1) y no tiene
+                    título propio, así que un h3 se saltaba un nivel. */}
+                <h2 className="mt-1 text-base font-black tracking-tight text-white sm:text-lg">
                   {benefit.title}
-                </h3>
+                </h2>
                 <p className="text-xs leading-5 text-[color:var(--text-secondary)] sm:text-sm">
                   {benefit.caption}
                 </p>

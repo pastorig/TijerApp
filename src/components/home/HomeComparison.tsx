@@ -46,11 +46,18 @@ const TIJERAPP_FEATURES = [
   { label: "Lista de espera", available: "yes" as const },
 ];
 
-/** Punto de estado en la lista: ✓ dorado / ✕ rojo / ~ ámbar. */
+/**
+ * Punto de estado en la lista: ✓ dorado / ✕ rojo / ~ ámbar.
+ *
+ * `role="img"` no es decorativo: `aria-label` está prohibido en un `span` sin
+ * rol, así que sin él el lector de pantalla lee la fila sin saber si la función
+ * está o no — justo el dato de la tabla.
+ */
 function StatusDot({ status }: { status: "yes" | "no" | "limited" }) {
   if (status === "yes") {
     return (
       <span
+        role="img"
         aria-label="Sí"
         className="flex size-5 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)]"
         style={{ boxShadow: "0 0 12px -5px rgba(201,162,62,0.8)" }}
@@ -62,6 +69,7 @@ function StatusDot({ status }: { status: "yes" | "no" | "limited" }) {
   if (status === "limited") {
     return (
       <span
+        role="img"
         aria-label="Limitado"
         className="flex size-5 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-default)] bg-[color:var(--surface-2)] text-[11px] font-black text-[color:var(--text-muted)]"
       >
@@ -71,6 +79,7 @@ function StatusDot({ status }: { status: "yes" | "no" | "limited" }) {
   }
   return (
     <span
+      role="img"
       aria-label="No"
       className="flex size-5 shrink-0 items-center justify-center rounded-full border border-[color:var(--danger)]/30 bg-[color:var(--danger-soft)]"
     >

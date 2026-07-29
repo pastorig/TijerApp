@@ -159,7 +159,7 @@ export function HomeContact() {
               </div>
 
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-subtle)]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
                   Dejanos al menos un contacto *
                 </p>
               </div>
