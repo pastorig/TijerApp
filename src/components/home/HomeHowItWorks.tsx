@@ -1,5 +1,9 @@
 import { CalendarCheck, Settings2, Smartphone } from "lucide-react";
 import { Reveal } from "./ui/Reveal";
+import { StepsProgressLine } from "./ui/StepsProgressLine";
+
+/** Punto del trazado en el que se enciende cada paso (ver `.step-icon`). */
+const STEP_THRESHOLDS = [0.15, 0.5, 0.85];
 
 const STEPS = [
   {
@@ -35,18 +39,7 @@ export function HomeHowItWorks() {
           </h2>
         </header>
 
-        <ol className="relative mt-10 grid gap-6 sm:grid-cols-3 sm:gap-4 lg:gap-6">
-          {/* Línea de flujo que conecta los 3 pasos en desktop. Va detrás de
-              las cards (fondo sólido), así que solo asoma en los gaps entre
-              pasos, a la altura de los íconos → efecto de pasos encadenados. */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute left-[16.66%] right-[16.66%] top-[3.5rem] hidden h-px sm:block"
-            style={{
-              background:
-                "linear-gradient(to right, transparent, var(--brand-gold-ring) 15%, var(--brand-gold-ring) 85%, transparent)",
-            }}
-          />
+        <StepsProgressLine className="relative mt-10 grid gap-6 sm:grid-cols-3 sm:gap-4 lg:gap-6">
           {STEPS.map((step, index) => {
             const Icon = step.icon;
             return (
@@ -62,8 +55,13 @@ export function HomeHowItWorks() {
                   </span>
                   <span
                     aria-hidden="true"
-                    className="relative z-10 flex size-11 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105"
-                    style={{ boxShadow: "0 0 22px -8px rgba(201,162,62,0.6)" }}
+                    className="step-icon z-10 flex size-11 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
+                    style={
+                      {
+                        "--step-threshold": STEP_THRESHOLDS[index],
+                        boxShadow: "0 0 22px -8px rgba(201,162,62,0.6)",
+                      } as React.CSSProperties
+                    }
                   >
                     <Icon className="size-5" />
                   </span>
@@ -77,7 +75,7 @@ export function HomeHowItWorks() {
               </Reveal>
             );
           })}
-        </ol>
+        </StepsProgressLine>
       </div>
     </section>
   );

@@ -667,7 +667,11 @@ option:hover {
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    /* Los delays también: si no, con movimiento reducido el contenido igual
+       entra escalonado (invisible hasta que le toca su turno). */
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
     scroll-behavior: auto !important;
   }
 }
@@ -823,4 +827,114 @@ option:hover {
 .animate-bar-grow {
   transform-origin: bottom;
   animation: tijerapp-bar-grow 720ms var(--ease-out-soft) both;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Escena viva — movimiento de la home (hero / cómo funciona / stats).
+   Regla de oro: solo `transform` y `opacity` (compositor puro, cero
+   layout shift). El avance de scroll llega por `--progress` (0→1), que
+   escriben los hooks en el DOM sin pasar por React.
+   ───────────────────────────────────────────────────────────── */
+
+/* Capa con parallax: se desplaza `--parallax-depth` a lo largo del avance.
+   Profundidades chicas (≤ 24px) — la idea es profundidad, no espectáculo. */
+.parallax-layer {
+  transform: translate3d(
+    0,
+    calc(var(--progress, 0) * var(--parallax-depth, 0px)),
+    0
+  );
+  will-change: transform;
+  /* `.card-premium` transiciona `transform`: sobre una capa atada al scroll eso
+     agrega 0.22s de arrastre y reinicia la transición en cada frame. Acá el
+     movimiento tiene que seguir al dedo, así que se sacan las transiciones de
+     transform y se conservan las de color/sombra. */
+  transition-property: border-color, box-shadow;
+}
+
+/* Línea que se traza con el scroll (de izquierda a derecha).
+   Sin `--progress` definido se lee como 1 → línea completa. */
+.scroll-line {
+  transform: scaleX(var(--progress, 1));
+  transform-origin: left center;
+  will-change: transform;
+}
+
+/* Cascada de barras del mini gráfico: cada barra entra un pelo después. */
+.bar-cascade {
+  animation-delay: calc(var(--bar-index, 0) * 70ms);
+}
+
+/* Paso "encendido" de Cómo funciona: el círculo del ícono se enciende cuando el
+   trazado de la línea lo alcanza. `--step-lit` va de 0 a 1 apenas el avance pasa
+   el umbral del paso; el realce vive en un ::after cuya **opacidad** se anima
+   (nada de repintar borde y sombra en cada frame).
+   Sin `--progress` (sin JS) se lee como 1 → los tres pasos encendidos. */
+.step-icon {
+  --step-lit: clamp(
+    0,
+    (var(--progress, 1) - var(--step-threshold, 0)) * 14,
+    1
+  );
+  position: relative;
+  /* El clamp va escrito entero acá en vez de `var(--step-lit)`: anidar una
+     custom property que contiene una función matemática dentro de un calc()
+     tiene soporte despareja entre motores. Escrito así no depende de eso. */
+  transform: scale(
+    calc(
+      1 + 0.06 *
+        clamp(0, (var(--progress, 1) - var(--step-threshold, 0)) * 14, 1)
+    )
+  );
+  transition: transform var(--duration-base) var(--ease-out-soft);
+}
+.step-icon::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid var(--brand-gold);
+  box-shadow: 0 0 30px -6px rgba(201, 162, 62, 0.8);
+  opacity: var(--step-lit);
+  pointer-events: none;
+}
+.group:hover .step-icon {
+  transform: scale(
+    calc(
+      1.05 + 0.06 *
+        clamp(0, (var(--progress, 1) - var(--step-threshold, 0)) * 14, 1)
+    )
+  );
+}
+
+/* Pop breve del ícono al revelarse la tarjeta (Stats). Sin fill-mode a
+   propósito: al terminar, el hover recupera el control del transform. */
+@keyframes tijerapp-icon-pop {
+  0% {
+    transform: scale(0.72);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.reveal.is-visible .icon-pop {
+  animation: tijerapp-icon-pop 520ms var(--ease-out-soft) 120ms;
+}
+
+/* Notificación cíclica del hero: entra deslizándose, permanece y se retira.
+   Posición absoluta → no desplaza nada del cluster. */
+.hero-notif {
+  opacity: 0;
+  transform: translate3d(0, 10px, 0) scale(0.96);
+  transition:
+    opacity 420ms var(--ease-out-soft),
+    transform 420ms var(--ease-out-soft);
+  will-change: opacity, transform;
+}
+.hero-notif.is-in {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
 }
