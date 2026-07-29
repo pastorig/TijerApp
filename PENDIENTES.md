@@ -4,15 +4,15 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
-## 🔎 Landing con movimiento (012) — IMPLEMENTADA en rama `012-landing-motion`, falta mirarla
+## 🔎 Landing con movimiento (012) — MERGEADA a `main` (2026-07-29), falta MIRARLA
 
 Hero, Stats y "Cómo funciona" con movimiento atado al scroll. Sin dependencias nuevas
 (hooks propios + CSS). tsc + lint + build verdes; SSR y fallback sin JS verificados.
 
-**FALTA (Bautista): mirarla con ojos.** El navegador headless de la sesión no compone
-frames — ahí ni el `IntersectionObserver` ni los eventos de scroll funcionan (los
-`Reveal` que ya estaban en la home tampoco se activan), así que el movimiento no se
-pudo juzgar. Checklist de lo que hay que mirar, en
+**Se mergeó con la verificación visual pendiente** (decisión de Bautista, 2026-07-29). El
+navegador headless de la sesión no compone frames — ahí ni el `IntersectionObserver` ni los
+eventos de scroll funcionan (los `Reveal` que ya estaban en la home tampoco se activan), así
+que el movimiento no se pudo juzgar. Checklist en
 `specs/012-landing-motion/tasks.md` → "Estado de verificación". Resumen:
 
 1. Hero: barras en cascada, contadores, notificación cada ~6 s, tilt con mouse, parallax.
@@ -21,7 +21,27 @@ pudo juzgar. Checklist de lo que hay que mirar, en
 4. Con "reducir movimiento" activado: todo quieto y en estado final.
 5. **Celular real**: que el scroll de la home siga fluido.
 
-Recién después de eso, merge a `main`.
+Si algo no gusta, revertir es trivial: no hay migración y cada pieza (hero / línea / stats)
+se puede revertir sola.
+
+---
+
+## 🔎 Onboarding "Primeros pasos" (013) — MERGEADA a `main` (2026-07-29), falta MIRARLA
+
+Guía de primeros pasos en el Dashboard del admin: le dice al barbero recién registrado qué
+le falta (servicios con su precio, horarios, dirección + Instagram) y le da su link público
+listo para compartir. **Sin migración**: el avance se deriva del estado real de la barbería.
+
+Verde: tsc + lint + build + `test:unit` (104 casos, 29 nuevos). Verificado contra datos
+reales: `sv-barber` y `popesbarber` dan 3/3 (las barberías ya configuradas no ven pasos
+pendientes).
+
+**FALTA (Bautista): mirarla logueado.** El navegador headless no puede entrar al admin, así
+que el aspecto y las interacciones (tachado, colapso, copiar/compartir, ocultar, celular) no
+se pudieron verificar. Los 7 puntos a mirar están en
+`specs/013-onboarding-primeros-pasos/tasks.md` → "Estado de verificación". Incluye uno que
+no hice a propósito: **registrar una barbería de prueba de verdad** (la base de Supabase es
+compartida con producción y no quise dejar basura).
 
 ---
 
