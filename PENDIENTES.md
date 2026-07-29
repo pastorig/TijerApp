@@ -4,6 +4,36 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## 📊 Lighthouse — línea base de la home (2026-07-29)
+
+Medido con Lighthouse 12, mobile, sobre el **build de producción** local:
+
+| Categoría | Antes | Después de los arreglos |
+|---|---|---|
+| Performance | 94 | 93 (±1 es ruido entre corridas) |
+| Accesibilidad | 86 | **100** |
+| Best practices | 96 | 96 |
+| SEO | 100 | 100 |
+
+Métricas: FCP 1,2s · **LCP 3,0s** · TBT 20ms · **CLS 0** · Speed Index 1,2s.
+
+Los 4 defectos de accesibilidad ya están arreglados y en prod (commit `c0f4e9f`).
+
+**Lo que queda, y es una sola cosa: LCP 3,0s.** Es el punto flojo (score 77) contra un
+FCP de 1,2s — o sea, el elemento más grande aparece bastante después de que la página ya
+pintó. El elemento LCP es un `span` del hero. Todavía **no está diagnosticado**: hay que
+ver si es la fuente (Geist), el degradado dorado del título o el JS del hero. Ojo: se midió
+contra un server local, así que en Vercel con CDN el número puede dar distinto — conviene
+volver a medir contra prod antes de tocar nada.
+
+Secundario y chico: 26 KB de JS sin usar y 13 KB de JS legacy en un chunk.
+
+> Nota: los `errors-in-console` que reporta Lighthouse corriendo local (404 + MIME de
+> `_vercel/insights` y `_vercel/speed-insights`) son artefacto de no estar en Vercel. En
+> prod esos scripts existen. No es un bug.
+
+---
+
 ## 🔎 Landing con movimiento (012) — MERGEADA a `main` (2026-07-29), falta MIRARLA
 
 Hero, Stats y "Cómo funciona" con movimiento atado al scroll. Sin dependencias nuevas
