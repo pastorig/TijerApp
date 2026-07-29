@@ -1,3 +1,4 @@
+import { getUserFromLocalSession } from "@/lib/auth";
 import { getSupabaseClient, type PlatformOwnerRow } from "@/lib/supabase";
 
 type PlatformOwnerAccessResult = {
@@ -8,10 +9,11 @@ type PlatformOwnerAccessResult = {
 };
 
 export async function getCurrentPlatformOwnerAccess(): Promise<PlatformOwnerAccessResult> {
-  const {
-    data: { user },
-    error: userError,
-  } = await getSupabaseClient().auth.getUser();
+  // Sesión local, sin request de red: ver `getUserFromLocalSession`. El guard
+  // del admin llama a esto en paralelo con el chequeo de la barbería, así que
+  // eran DOS round-trips antes de mostrar nada, y cualquiera de los dos que
+  // fallara mandaba al login.
+  const { user, error: userError } = await getUserFromLocalSession();
 
   if (userError || !user) {
     return {

@@ -1,3 +1,4 @@
+import { getUserFromLocalSession } from "@/lib/auth";
 import { getSupabaseClient, type BarbershopAdminRow } from "@/lib/supabase";
 
 type BarbershopAccessResult = {
@@ -8,10 +9,10 @@ type BarbershopAccessResult = {
 };
 
 export async function getCurrentUserAdminBarbershops() {
-  const {
-    data: { user },
-    error: userError,
-  } = await getSupabaseClient().auth.getUser();
+  // Sesión local, sin request de red: ver `getUserFromLocalSession`. Con
+  // `getUser()` cualquier hipo de conexión se leía como "no logueado", y en la
+  // PWA eso pateaba al barbero al login con la sesión intacta en el storage.
+  const { user, error: userError } = await getUserFromLocalSession();
 
   if (userError || !user) {
     return {
@@ -37,10 +38,10 @@ export async function getCurrentUserAdminBarbershops() {
 export async function userHasAccessToBarbershop(
   barbershopSlug: string,
 ): Promise<BarbershopAccessResult> {
-  const {
-    data: { user },
-    error: userError,
-  } = await getSupabaseClient().auth.getUser();
+  // Sesión local, sin request de red: ver `getUserFromLocalSession`. Con
+  // `getUser()` cualquier hipo de conexión se leía como "no logueado", y en la
+  // PWA eso pateaba al barbero al login con la sesión intacta en el storage.
+  const { user, error: userError } = await getUserFromLocalSession();
 
   if (userError || !user) {
     return {

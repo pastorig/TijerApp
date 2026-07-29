@@ -13,6 +13,26 @@ export async function getCurrentUser() {
   return getSupabaseClient().auth.getUser();
 }
 
+/**
+ * Usuario de la sesión guardada localmente, sin pegarle a la red.
+ *
+ * `auth.getUser()` hace un request a Supabase para validar el token; si la red
+ * está lenta o caída, devuelve error y quien lo llame concluye "no está
+ * logueado". En la PWA eso pasaba seguido: al reabrir la app desde el ícono hay
+ * un instante de red mala y el barbero terminaba pateado al login con la sesión
+ * intacta en el storage.
+ *
+ * `auth.getSession()` lee del storage local (y refresca solo si hace falta y
+ * puede), así que sirve para decidir **qué UI mostrar**. Para autorizar de
+ * verdad no alcanza y no se usa para eso: los datos los protege RLS y los
+ * endpoints `/api/*` validan el token server-side con `getUser()`, que es donde
+ * corresponde no confiar en el cliente.
+ */
+export async function getUserFromLocalSession() {
+  const { data, error } = await getSupabaseClient().auth.getSession();
+  return { user: data.session?.user ?? null, error };
+}
+
 export async function signInWithEmailAndPassword({
   email,
   password,

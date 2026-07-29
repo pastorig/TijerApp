@@ -4,9 +4,14 @@ import type { MetadataRoute } from "next";
  * Manifest PWA TijerApp — declarativo via Next.js App Router.
  *
  * Estrategia multi-tenant: la PWA cubre TODA la plataforma con scope: "/".
- * El start_url incluye `?source=pwa` para que la página redirector pueda
- * distinguir "abierto desde el icon del home screen" vs "navegado desde
- * browser", y rediriga al último contexto guardado en localStorage.
+ * El start_url apunta a `/abrir`, una pantalla mínima que lee el último
+ * contexto guardado en localStorage y manda ahí (`/<slug>/admin`, `/<slug>` o
+ * la home). Antes apuntaba a `/?source=pwa`: eso cargaba TODA la landing
+ * comercial y recién después de hidratar redirigía, así que el barbero veía
+ * tijerapp.com unos segundos —o se quedaba ahí con red lenta— en vez de su
+ * agenda. Se mantiene `?source=pwa` para las instalaciones viejas, que siguen
+ * cayendo en `/` hasta que el browser actualice el manifest: el `PWARedirector`
+ * de la home las cubre.
  *
  * Theme color NEGRO, igual que el `themeColor` de `layout.tsx`. Antes acá
  * decía gold (#c9a23e): en el browser mandaba el meta negro del layout, pero
@@ -28,7 +33,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "TijerApp",
     description:
       "Turnos online para barberías modernas. Reservas, agenda y operación en un solo lugar.",
-    start_url: "/?source=pwa",
+    start_url: "/abrir?source=pwa",
     scope: "/",
     display: "standalone",
     background_color: "#0a0a0a",
