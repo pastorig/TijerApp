@@ -4,7 +4,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: "¿Cuánto cuesta usar TijerApp?",
     answer:
-      "Por ahora estamos en una etapa cerrada con barberías partner. Si querés sumarte, dejanos tu mensaje en el formulario de abajo y armamos un plan según el tamaño de tu local.",
+      "Hay tres planes por mes: Solo $22.000, Esencial $41.000 y Pro $61.000, con 15% off si pagás anual. Arrancás con 14 días de prueba con todo incluido y no te pedimos tarjeta. El detalle de qué trae cada plan está en la página de Precios.",
   },
   {
     question: "¿Necesito instalar algo?",
@@ -34,7 +34,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: "¿Tienen recordatorios automáticos?",
     answer:
-      "Los recordatorios automáticos por mail están en plan próximo. Hoy podés mandar el detalle del turno por WhatsApp desde el panel con un click, con un link de confirmación que el cliente puede tocar.",
+      "Sí. El día antes del turno le sale solo un recordatorio al cliente por mail, con el logo de tu barbería y un link para confirmar o cancelar. Si además tiene las notificaciones activadas, le llega al celular. Y desde el panel podés mandarle un WhatsApp con un click cuando quieras.",
   },
   {
     question: "¿Puedo ver reportes de mis ingresos y turnos?",
