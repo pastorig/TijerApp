@@ -8,7 +8,11 @@ import type { MetadataRoute } from "next";
  * distinguir "abierto desde el icon del home screen" vs "navegado desde
  * browser", y rediriga al último contexto guardado en localStorage.
  *
- * Theme color gold para que la status bar de mobile matchee el branding.
+ * Theme color NEGRO, igual que el `themeColor` de `layout.tsx`. Antes acá
+ * decía gold (#c9a23e): en el browser mandaba el meta negro del layout, pero
+ * con la PWA instalada mandaba este manifest y la status bar salía dorada,
+ * chocando contra la nav negra que queda justo debajo. Las dos fuentes tienen
+ * que decir lo mismo — el gold es color de acento, no de fondo.
  * Background color negro para coherencia con el dark mode default.
  */
 
@@ -28,7 +32,7 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     background_color: "#0a0a0a",
-    theme_color: "#c9a23e",
+    theme_color: "#000000",
     lang: "es-AR",
     dir: "ltr",
     orientation: "portrait-primary",
