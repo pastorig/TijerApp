@@ -59,7 +59,7 @@ export function HomeStats() {
               >
                 <div
                   aria-hidden="true"
-                  className="flex size-9 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105 sm:size-10"
+                  className="icon-pop flex size-9 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105 sm:size-10"
                   style={{ boxShadow: "0 0 20px -8px rgba(201,162,62,0.6)" }}
                 >
                   <Icon className="size-4 sm:size-5" />

@@ -4,6 +4,27 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## 🔎 Landing con movimiento (012) — IMPLEMENTADA en rama `012-landing-motion`, falta mirarla
+
+Hero, Stats y "Cómo funciona" con movimiento atado al scroll. Sin dependencias nuevas
+(hooks propios + CSS). tsc + lint + build verdes; SSR y fallback sin JS verificados.
+
+**FALTA (Bautista): mirarla con ojos.** El navegador headless de la sesión no compone
+frames — ahí ni el `IntersectionObserver` ni los eventos de scroll funcionan (los
+`Reveal` que ya estaban en la home tampoco se activan), así que el movimiento no se
+pudo juzgar. Checklist de lo que hay que mirar, en
+`specs/012-landing-motion/tasks.md` → "Estado de verificación". Resumen:
+
+1. Hero: barras en cascada, contadores, notificación cada ~6 s, tilt con mouse, parallax.
+2. "Cómo funciona": la línea se traza con el scroll y los pasos se encienden en orden.
+3. Stats: entrada escalonada + pop del ícono.
+4. Con "reducir movimiento" activado: todo quieto y en estado final.
+5. **Celular real**: que el scroll de la home siga fluido.
+
+Recién después de eso, merge a `main`.
+
+---
+
 ## ✅ Modo lectura al vencer el plan (009) — MERGEADO a `main` (2026-07-28)
 
 Cuando a una barbería se le vence el plan, ahora queda **congelada, no borrada**: el
