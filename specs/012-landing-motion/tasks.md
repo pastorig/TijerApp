@@ -114,7 +114,7 @@ después de otra y sus íconos hacen un realce breve al aparecer.
 - [x] T025 Comparar el "First Load JS" de la ruta `/` contra la línea base de T002: no debe subir de forma significativa. Si subió, revisar qué quedó del lado cliente (riesgo de LCP del plan)
 - [ ] T026 Probar en celular real (no solo DevTools): scroll de la home completa fluido, sin tirones perceptibles ni saltos de contenido (SC-002; el jank de rasterizado no se ve en DevTools)
 - [x] T027 Marcar los ítems del checklist `specs/012-landing-motion/checklists/requirements.md` que quedaron cubiertos y anotar cualquier desvío
-- [ ] T028 Commit de la implementación en `012-landing-motion` con mensaje `feat(012): landing con movimiento — escena viva`
+- [x] T028 Commit de la implementación en `012-landing-motion` con mensaje `feat(012): landing con movimiento — escena viva`
 
 ---
 
