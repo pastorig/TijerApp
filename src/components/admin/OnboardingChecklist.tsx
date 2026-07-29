@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -16,6 +16,7 @@ import {
   Clock3,
 } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
+import { listWeeklySchedulesByBarbershop } from "@/lib/barber-availability";
 import { cn } from "@/lib/cn";
 import {
   getOnboardingSteps,
@@ -80,9 +81,32 @@ export function OnboardingChecklist({
     readHidden(barbershop.slug),
   );
 
+  // Los días y horarios de verdad viven en `barber_weekly_schedules`, no en el
+  // horario base de la barbería. Sin esto, a un barbero que ya configuró sus
+  // días la guía le seguía pidiendo que los revise. `undefined` = todavía
+  // cargando: no se muestra nada hasta saberlo, así el paso no aparece pendiente
+  // y se corrige un segundo después.
+  const [schedules, setSchedules] = useState<
+    Awaited<ReturnType<typeof listWeeklySchedulesByBarbershop>>["data"] | undefined
+  >(undefined);
+
+  useEffect(() => {
+    let alive = true;
+    listWeeklySchedulesByBarbershop(barbershop.slug)
+      .then(({ data }) => {
+        if (alive) setSchedules(data ?? []);
+      })
+      .catch(() => {
+        if (alive) setSchedules([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [barbershop.slug]);
+
   const progress = useMemo(
-    () => getOnboardingSteps(barbershop, appointmentCount),
-    [barbershop, appointmentCount],
+    () => getOnboardingSteps(barbershop, appointmentCount, schedules ?? null),
+    [barbershop, appointmentCount, schedules],
   );
 
   const publicUrl = useMemo(() => {
@@ -118,6 +142,10 @@ export function OnboardingChecklist({
   const shareHref = whatsAppShareLink(
     `Reservá tu turno en ${barbershop.name}: ${publicUrl}`,
   );
+
+  // Hasta saber los horarios reales no mostramos nada: es menos molesto que
+  // mostrar un paso pendiente y corregirlo solo un segundo después.
+  if (schedules === undefined) return null;
 
   if (isHidden) {
     return (
@@ -187,11 +215,13 @@ export function OnboardingChecklist({
           </h2>
         </div>
         <div className="flex shrink-0 items-center gap-3">
-          <span className="text-sm font-black tabular-nums text-white">
-            {progress.requiredDone}
-            <span className="text-[color:var(--text-muted)]">
-              /{progress.requiredTotal}
+          {/* Con "2/3" pelado nadie sabe qué se está contando: lo dice entero. */}
+          <span className="text-right text-[11px] font-bold leading-tight text-[color:var(--text-muted)]">
+            <span className="text-sm font-black tabular-nums text-white">
+              {progress.requiredDone} de {progress.requiredTotal}
             </span>
+            <br />
+            listos
           </span>
           <button
             type="button"

@@ -2,6 +2,7 @@ import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { getActiveBarbers } from "@/data/demo-barbershops";
 import {
   isDefaultService,
+  isDefaultWeeklySchedule,
   isDefaultWorkingHours,
 } from "@/lib/onboarding-defaults";
 
@@ -76,16 +77,43 @@ function areServicesReviewed(barbershop: DemoBarbershop): boolean {
   return !isDefaultService(services[0]);
 }
 
+type WeeklyScheduleRow = {
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_working: boolean;
+  break_start?: string | null;
+  break_end?: string | null;
+};
+
 export function getOnboardingSteps(
   barbershop: DemoBarbershop,
   appointmentCount: number,
+  /**
+   * Horarios semanales de los barberos. Son la fuente real de los días y
+   * horarios: si no se pasan, el paso se decide solo con el horario base de la
+   * barbería y puede quedar pendiente aunque el barbero ya los haya configurado.
+   */
+  weeklySchedules: WeeklyScheduleRow[] | null = null,
 ): OnboardingProgress {
   const base = `/${barbershop.slug}/admin`;
 
   const servicesDone = areServicesReviewed(barbershop);
-  const hoursDone = !isDefaultWorkingHours(barbershop.workingHours);
-  const contactDone =
-    hasText(barbershop.address) && hasText(barbershop.instagram);
+  const hoursDone =
+    !isDefaultWorkingHours(barbershop.workingHours) ||
+    (weeklySchedules !== null && !isDefaultWeeklySchedule(weeklySchedules));
+  const hasAddress = hasText(barbershop.address);
+  const hasInstagram = hasText(barbershop.instagram);
+  const contactDone = hasAddress && hasInstagram;
+
+  // Los textos nombran lo que REALMENTE falta. Un texto genérico ("tu dirección
+  // y tu Instagram están vacíos") le miente al barbero que ya cargó uno de los
+  // dos, y le hace desconfiar del resto de la guía.
+  const contactHint = contactDone
+    ? "Tu dirección y tu Instagram ya están cargados."
+    : `Te falta ${[!hasAddress && "la dirección", !hasInstagram && "el Instagram"]
+        .filter(Boolean)
+        .join(" y ")} — se muestra en tu página.`;
 
   const requiredDone = [servicesDone, hoursDone, contactDone].filter(Boolean)
     .length;
@@ -95,7 +123,7 @@ export function getOnboardingSteps(
     {
       id: "servicios",
       title: "Poné tus servicios y precios",
-      hint: "Arrancás con un corte de ejemplo. Ponele tu precio y sumá los que hagas.",
+      hint: "Arrancás con un corte de ejemplo a $10.000. Ponele tu precio y sumá los que hagas.",
       href: `${base}/barbers`,
       done: servicesDone,
       optional: false,
@@ -103,7 +131,7 @@ export function getOnboardingSteps(
     {
       id: "horarios",
       title: "Revisá tus días y horarios",
-      hint: "Quedaste abierto de 09:00 a 20:00 todos los días, domingo incluido.",
+      hint: "Seguís con el horario que te dejamos: 09:00 a 20:00, de lunes a sábado.",
       href: `${base}/barbers`,
       done: hoursDone,
       optional: false,
@@ -111,7 +139,7 @@ export function getOnboardingSteps(
     {
       id: "contacto",
       title: "Completá los datos de tu barbería",
-      hint: "Tu dirección y tu Instagram se muestran en tu página. Hoy están vacíos.",
+      hint: contactHint,
       href: `${base}/settings`,
       done: contactDone,
       optional: false,

@@ -61,11 +61,50 @@ export function isDefaultService(service: ServiceLike): boolean {
   );
 }
 
-/** True si el horario sigue siendo, tal cual, el que dejó el registro. */
+/** True si el horario base sigue siendo, tal cual, el que dejó el registro. */
 export function isDefaultWorkingHours(hours: WorkingHoursLike): boolean {
   return (
     hours.start === DEFAULT_WORKING_HOURS.start &&
     hours.end === DEFAULT_WORKING_HOURS.end &&
     hours.intervalMinutes === DEFAULT_WORKING_HOURS.intervalMinutes
+  );
+}
+
+type WeeklyScheduleLike = {
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_working: boolean;
+  break_start?: string | null;
+  break_end?: string | null;
+};
+
+/** La base devuelve "09:00:00"; el horario por defecto está en "09:00". */
+function toHhMm(time: string): string {
+  return time.slice(0, 5);
+}
+
+/**
+ * True si el horario semanal de los barberos sigue siendo el que armó el
+ * registro: **lunes a sábado con el horario base y el domingo cerrado**, sin
+ * pausas.
+ *
+ * Esto existe porque los días y horarios de verdad viven en
+ * `barber_weekly_schedules`, no en el horario base de la barbería: un barbero
+ * puede cerrar el miércoles o abrir distinto los sábados sin tocar nunca el
+ * horario base. Mirando solo la barbería, la guía le pedía revisar horarios a
+ * alguien que ya los había configurado.
+ *
+ * Sin filas se considera "sin configurar" (el paso queda pendiente).
+ */
+export function isDefaultWeeklySchedule(rows: WeeklyScheduleLike[]): boolean {
+  if (rows.length === 0) return true;
+  return rows.every(
+    (row) =>
+      toHhMm(row.start_time) === DEFAULT_WORKING_HOURS.start &&
+      toHhMm(row.end_time) === DEFAULT_WORKING_HOURS.end &&
+      row.is_working === (row.day_of_week !== 0) &&
+      !row.break_start &&
+      !row.break_end,
   );
 }

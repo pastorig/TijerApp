@@ -65,12 +65,41 @@ function freshBarbershop(
   };
 }
 
-function stepDone(shop: DemoBarbershop, id: string, appointments = 0) {
-  const step = getOnboardingSteps(shop, appointments).steps.find(
+type ScheduleRow = {
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_working: boolean;
+  break_start?: string | null;
+  break_end?: string | null;
+};
+
+/** Horario semanal tal cual lo deja el registro: lun-sáb base, domingo cerrado. */
+function defaultSchedules(): ScheduleRow[] {
+  return [0, 1, 2, 3, 4, 5, 6].map((day) => ({
+    day_of_week: day,
+    // La base devuelve "HH:MM:SS": el predicado tiene que normalizar.
+    start_time: `${DEFAULT_WORKING_HOURS.start}:00`,
+    end_time: `${DEFAULT_WORKING_HOURS.end}:00`,
+    is_working: day !== 0,
+  }));
+}
+
+function stepDone(
+  shop: DemoBarbershop,
+  id: string,
+  appointments = 0,
+  schedules: ScheduleRow[] | null = null,
+) {
+  const step = getOnboardingSteps(shop, appointments, schedules).steps.find(
     (s) => s.id === id,
   );
   if (!step) throw new Error(`No existe el paso ${id}`);
   return step.done;
+}
+
+function stepHint(shop: DemoBarbershop, id: string) {
+  return getOnboardingSteps(shop, 0).steps.find((s) => s.id === id)?.hint ?? "";
 }
 
 // ── 1. Barbería recién provisionada: los 3 obligatorios pendientes ──────────
@@ -141,6 +170,51 @@ check(
   true,
 );
 
+// ── 5b. El horario REAL vive en barber_weekly_schedules (bug de kekasbarber) ─
+// Horario base intacto pero el barbero SÍ configuró sus días → cumplido.
+const cerroElMiercoles = defaultSchedules().map((row) =>
+  row.day_of_week === 3 ? { ...row, is_working: false } : row,
+);
+check(
+  "cerró el miércoles en su horario semanal → horarios cumplido",
+  stepDone(freshBarbershop(), "horarios", 0, cerroElMiercoles),
+  true,
+);
+const sabadoCorto = defaultSchedules().map((row) =>
+  row.day_of_week === 6 ? { ...row, end_time: "16:00:00" } : row,
+);
+check(
+  "sábado con otro cierre → horarios cumplido",
+  stepDone(freshBarbershop(), "horarios", 0, sabadoCorto),
+  true,
+);
+const conPausa = defaultSchedules().map((row) =>
+  row.day_of_week === 1
+    ? { ...row, break_start: "13:00:00", break_end: "14:00:00" }
+    : row,
+);
+check(
+  "puso pausa al mediodía → horarios cumplido",
+  stepDone(freshBarbershop(), "horarios", 0, conPausa),
+  true,
+);
+check(
+  "horario semanal igual al del registro → horarios PENDIENTE",
+  stepDone(freshBarbershop(), "horarios", 0, defaultSchedules()),
+  false,
+);
+check(
+  "sin filas de horario semanal → horarios PENDIENTE",
+  stepDone(freshBarbershop(), "horarios", 0, []),
+  false,
+);
+// El domingo cerrado es lo que deja el registro: NO cuenta como configurado.
+check(
+  "domingo cerrado (default del registro) → horarios PENDIENTE",
+  stepDone(freshBarbershop(), "horarios", 0, defaultSchedules()),
+  false,
+);
+
 // ── 6. Contacto: hace falta dirección E Instagram ───────────────────────────
 check(
   "dirección sí pero Instagram vacío → contacto pendiente",
@@ -161,6 +235,29 @@ check(
   "dirección con solo espacios → contacto pendiente",
   stepDone(freshBarbershop({ address: "   ", instagram: "@svbarber" }), "contacto"),
   false,
+);
+
+// ── 6b. El texto nombra lo que REALMENTE falta (caso leocuts) ───────────────
+check(
+  "con Instagram y sin dirección → el texto pide solo la dirección",
+  stepHint(freshBarbershop({ instagram: "@leocuts" }), "contacto"),
+  "Te falta la dirección — se muestra en tu página.",
+);
+check(
+  "con dirección y sin Instagram → el texto pide solo el Instagram",
+  stepHint(freshBarbershop({ address: "San Martín 123" }), "contacto"),
+  "Te falta el Instagram — se muestra en tu página.",
+);
+check(
+  "sin ninguno de los dos → el texto pide los dos",
+  stepHint(freshBarbershop(), "contacto"),
+  "Te falta la dirección y el Instagram — se muestra en tu página.",
+);
+// El registro deja el domingo CERRADO: el texto no puede decir lo contrario.
+check(
+  "el texto de horarios no miente sobre el domingo",
+  stepHint(freshBarbershop(), "horarios").includes("lunes a sábado"),
+  true,
 );
 
 // ── 7. Barbería vieja bien configurada → todo cumplido, guía terminada ──────

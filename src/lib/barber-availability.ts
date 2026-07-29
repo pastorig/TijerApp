@@ -85,6 +85,21 @@ export async function listWeeklySchedulesByBarber({
   return { data, error };
 }
 
+/**
+ * Todos los horarios semanales de la barbería, de todos sus barberos. Lo usa la
+ * guía de primeros pasos para saber si el barbero ya configuró sus días —dato
+ * que no vive en el horario base de la barbería sino acá.
+ */
+export async function listWeeklySchedulesByBarbershop(barbershopSlug: string) {
+  const { data, error } = await getSupabaseClient()
+    .from("barber_weekly_schedules")
+    .select(weeklySchedulesSelect)
+    .eq("barbershop_slug", barbershopSlug)
+    .order("day_of_week", { ascending: true });
+
+  return { data, error };
+}
+
 export async function upsertWeeklySchedulesForBarber({
   barbershopSlug,
   barberId,
