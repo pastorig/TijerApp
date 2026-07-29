@@ -4,6 +4,37 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## ✅ PWA: re-login al reabrir + arranque en tijerapp.com — ARREGLADO en prod (2026-07-29)
+
+Lo reportó Santi (SV Barber): abriendo la app 10 veces al día, en 7 tenía que iniciar sesión
+de nuevo. Eran dos causas:
+
+1. Los guards del admin resolvían el usuario con `auth.getUser()`, que **le pega a la red**.
+   Con red mala (justo lo que pasa al reabrir una app) devolvía error → se leía como "no
+   logueado" → al login, con la sesión intacta. Ahora usan `getSession()` vía
+   `getUserFromLocalSession()`. La seguridad no cambia: RLS + validación server-side siguen
+   igual.
+2. El `start_url` era `/?source=pwa` → cargaba toda la landing comercial y recién después
+   redirigía. Ahora es `/abrir`, una pantalla mínima que manda derecho al panel.
+
+**Para verificar (Bautista/Santi):** que al reabrir la app caiga directo en el panel y no
+pida sesión. Las instalaciones viejas pueden tardar en tomar el `start_url` nuevo (el browser
+actualiza el manifest cuando quiere); el `PWARedirector` de la home las cubre igual.
+
+---
+
+## ✅ Historial de cobros del owner — EN PROD (2026-07-29)
+
+`/owner/planes` ahora muestra "Cobros registrados" con el total. La tabla
+`barbershop_payments` se venía llenando desde la feature 007 y no había pantalla que la
+leyera. Nuevo endpoint `GET /api/owner/payments` (owner-gated).
+
+Pendiente decidido a propósito: **la tabla de planes sigue siendo un `<table>` que en el
+celular scrollea para el costado** — es la única pantalla del owner que no usa tarjetas.
+Quedó afuera de este cambio.
+
+---
+
 ## 📊 Lighthouse — línea base de la home (2026-07-29)
 
 Medido con Lighthouse 12, mobile, sobre el **build de producción** local:
