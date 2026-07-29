@@ -69,6 +69,15 @@ export function whatsAppLinkWithMessage(phone: string, message: string) {
 }
 
 /**
+ * Link wa.me **sin destinatario**: abre WhatsApp con el mensaje escrito y deja
+ * que la persona elija a quién mandárselo. Es lo que necesita el barbero para
+ * repartir el link de su barbería, donde no hay un teléfono fijo al que apuntar.
+ */
+export function whatsAppShareLink(message: string) {
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+}
+
+/**
  * Construye la URL pública para que el cliente RESPONDA (confirme o
  * cancele) su turno desde un click. Apunta a `/r/[token]/responder`.
  *

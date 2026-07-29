@@ -65,3 +65,31 @@ desincronice de la configuración real de la barbería.
 **A validar durante el plan (decisiones técnicas, no de producto):** de dónde salen los
 datos de cada paso sin sumar consultas caras al Dashboard, y cómo se detecta "sigue en el
 valor por defecto" sin quedar atado a constantes duplicadas entre el registro y la guía.
+
+---
+
+## Cobertura tras la implementación (2026-07-29)
+
+Las dos incógnitas que quedaban se resolvieron en `research.md` (R1 y R2) y se
+implementaron: los datos salen del prop que el Dashboard ya recibe (cero consultas nuevas) y
+los defaults se mudaron a `src/lib/onboarding-defaults.ts` como única fuente de verdad.
+
+| FR | Estado | Cómo se verificó |
+|---|---|---|
+| FR-001 guía visible sin buscarla | ✅ código | Montada arriba de las métricas en el Dashboard |
+| FR-002 avance del estado real | ✅ verificado | 29 tests + chequeo contra las 5 barberías vivas |
+| FR-003 los 4 pasos mínimos | ✅ código | 6 pasos: 3 obligatorios + logo, prueba, compartir |
+| FR-004 un toque a la pantalla | ✅ código | Cada paso pendiente es un `Link` |
+| FR-005 pendiente vs cumplido | ✅ código | Ícono/tachado + dorado vs `--success` |
+| FR-006 cambió ≠ existe | ✅ **verificado** | Caso trampa y variantes en los tests |
+| FR-007 link listo para compartir | ✅ código | Copiar + `whatsAppShareLink` |
+| FR-008 colapsa al terminar | ✅ código | Variante "terminada" del componente |
+| FR-009 ocultar y reabrir | ✅ código | `localStorage` por slug |
+| FR-010 barberías ya configuradas | ✅ **verificado** | `sv-barber` y `popesbarber` dan 3/3 |
+| FR-011 plan vencido sin accesos | ✅ código | `useIsReadOnly()` |
+| FR-012 cómoda en celular | ⏳ pendiente | No se pudo mirar: la guía está detrás del login |
+| SC-006 verde y sin migración | ✅ verificado | tsc + lint + build + 104 casos; cero migraciones |
+
+**Desvío registrado:** todo lo que es aspecto e interacción (FR-012 incluido) quedó sin
+verificar porque el navegador headless de la sesión no puede loguearse al admin. El detalle
+y los 7 puntos a mirar están en `tasks.md` → "Estado de verificación".

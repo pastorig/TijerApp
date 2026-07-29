@@ -38,6 +38,7 @@ import {
 import type { AppointmentRow } from "@/lib/supabase";
 import { createWhatsAppClientContactLink } from "@/lib/whatsapp";
 import { formatDayHeading, getTodayYmd } from "./date-utils";
+import { OnboardingChecklist } from "./OnboardingChecklist";
 import { DistributionBar, MetricCard, RadialGauge } from "./MetricCard";
 import { useCurrentPlan } from "./PlanContext";
 import { hasFeature } from "@/lib/plans";
@@ -160,6 +161,13 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
       isMounted = false;
     };
   }, [barbershop.slug]);
+
+  // Cuántos turnos tuvo la barbería alguna vez (sin eliminados). Lo usa la guía
+  // de primeros pasos para dar por hecha la "reserva de prueba".
+  const realAppointmentCount = useMemo(
+    () => appointments.filter((a) => a.status !== "deleted").length,
+    [appointments],
+  );
 
   // Turnos del día (sin eliminados)
   const todayAppointments = useMemo(
@@ -482,6 +490,14 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
           ) : null}
         </div>
       </header>
+
+      {/* Guía de primeros pasos: arriba de las métricas a propósito. El primer
+          día no hay métricas que mirar, así que no tapa nada útil. Se calcula
+          del estado real de la barbería y desaparece sola al completarse. */}
+      <OnboardingChecklist
+        barbershop={barbershop}
+        appointmentCount={realAppointmentCount}
+      />
 
       {isLoading ? <DashboardSkeleton /> : null}
 

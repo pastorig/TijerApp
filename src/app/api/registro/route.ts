@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import {
+  DEFAULT_SERVICES,
+  DEFAULT_WORKING_HOURS,
+  TRIAL_DAYS,
+} from "@/lib/onboarding-defaults";
+import {
   PASSWORD_MIN_LENGTH,
   findAvailableSlug,
   provisionBarbershop,
@@ -19,24 +24,10 @@ import {
  * El service-role solo se usa server-side, dentro de provisionBarbershop.
  */
 
-/** Días de trial. El sitio público promete 14 en todas sus páginas. */
-const TRIAL_DAYS = 14;
-
-/** Horario base con el que arranca la barbería; se edita luego en Config. */
-const DEFAULT_WORKING_HOURS = {
-  start: "09:00",
-  end: "20:00",
-  intervalMinutes: 30,
-};
-
-/**
- * Servicio inicial para que la barbería sea usable desde el minuto cero (sin
- * al menos un servicio no se puede reservar). El barbero ajusta precio y
- * duración en su panel — se lo indicamos al terminar el registro.
- */
-const DEFAULT_SERVICES = [
-  { name: "Corte", price: 10000, durationMinutes: 30 },
-];
+// TRIAL_DAYS, DEFAULT_WORKING_HOURS y DEFAULT_SERVICES viven en
+// `@/lib/onboarding-defaults`: la guía de primeros pasos del panel necesita los
+// mismos valores para saber si el barbero ya los revisó, y duplicarlos haría que
+// se desincronicen sin que nadie se dé cuenta.
 
 /** Slugs que no puede tomar una barbería porque son rutas de la plataforma. */
 const RESERVED_SLUGS = new Set([

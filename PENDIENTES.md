@@ -4,6 +4,25 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## 🔎 Onboarding "Primeros pasos" (013) — IMPLEMENTADA en rama `013-onboarding-primeros-pasos`
+
+Guía de primeros pasos en el Dashboard del admin: le dice al barbero recién registrado qué
+le falta (servicios con su precio, horarios, dirección + Instagram) y le da su link público
+listo para compartir. **Sin migración**: el avance se deriva del estado real de la barbería.
+
+Verde: tsc + lint + build + `test:unit` (104 casos, 29 nuevos). Verificado contra datos
+reales: `sv-barber` y `popesbarber` dan 3/3 (las barberías ya configuradas no ven pasos
+pendientes).
+
+**FALTA (Bautista): mirarla logueado.** El navegador headless no puede entrar al admin, así
+que el aspecto y las interacciones (tachado, colapso, copiar/compartir, ocultar, celular) no
+se pudieron verificar. Los 7 puntos a mirar están en
+`specs/013-onboarding-primeros-pasos/tasks.md` → "Estado de verificación". Incluye uno que
+no hice a propósito: **registrar una barbería de prueba de verdad** (la base de Supabase es
+compartida con producción y no quise dejar basura).
+
+---
+
 ## ✅ Modo lectura al vencer el plan (009) — MERGEADO a `main` (2026-07-28)
 
 Cuando a una barbería se le vence el plan, ahora queda **congelada, no borrada**: el
