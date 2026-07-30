@@ -144,7 +144,7 @@ Después de la Opción A, se puede sumar cobro automático con MP (preapproval +
 - Tabla `barbershop_subscriptions` (`plan_tier`, `status`, `trial_expires_at`, `grace_expires_at`).
 - Panel `/owner/planes` (`OwnerPlansManager`) para setear tier/status a mano.
 - Gating por plan + paywall (`RequirePlan`) + banner (`PlanStatusBanner`) + resolución de estado (`resolvePlanStatus`: trial/active/grace/expired/cancelled).
-- Contacto de pago = WhatsApp a Gino (3571 624511), ya en el paywall/banner.
+- Contacto de pago = WhatsApp del founder (3571 566221, `FOUNDER.whatsapp`), ya en el paywall/banner.
 
 **Piezas que faltan (Opción A):**
 1. **`pagado_hasta` (date) en `barbershop_subscriptions`** + que `resolvePlanStatus` derive "vencido" cuando esa fecha pasa (igual que ya hace con `trial_expires_at`). Migración aditiva.

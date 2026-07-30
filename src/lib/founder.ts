@@ -14,8 +14,8 @@ export const FOUNDER = {
    * Se usa solo en TransferDetailsCard (paywall de plan vencido + modal Pagar).
    */
   titular: "Gino Pastori",
-  /** WhatsApp en formato internacional (54 9 3571 624511). */
-  whatsapp: "5493571624511",
+  /** WhatsApp Business en formato internacional (54 9 3571 566221). */
+  whatsapp: "5493571566221",
   /** Alias de la cuenta (Naranja X). */
   alias: "pastorinx",
   /** CBU/CVU para transferencias. */

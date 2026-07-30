@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui";
+import { FOUNDER } from "@/lib/founder";
 
 export function CommercialFooter() {
   const year = new Date().getFullYear();
@@ -70,7 +71,7 @@ export function CommercialFooter() {
               </li>
               <li>
                 <a
-                  href="https://wa.me/5493571624511"
+                  href={`https://wa.me/${FOUNDER.whatsapp}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"

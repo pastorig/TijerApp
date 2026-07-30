@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { CheckCircle2, MessageCircle } from "lucide-react";
+import { FOUNDER } from "@/lib/founder";
 
 export function HomeContact() {
   const [name, setName] = useState("");
@@ -123,7 +124,7 @@ export function HomeContact() {
               48 hs con la mejor forma de empezar.
             </p>
             <a
-              href="https://wa.me/5493571624511"
+              href={`https://wa.me/${FOUNDER.whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--success-soft)]/80"
