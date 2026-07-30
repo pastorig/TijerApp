@@ -105,6 +105,17 @@ export const demoBarbershops: DemoBarbershop[] = [
   },
 ];
 
+/**
+ * Barberías de vitrina: existen en la base como cualquier otra, pero no son
+ * clientes. Sirven para mostrar el producto (el link "Ver demo" de la landing).
+ *
+ * Se declaran acá porque no hay forma de deducirlo del dato: el panel del owner
+ * las separa del resto para que no ensucien la lista de barberías reales.
+ * `demoBarbershops` de arriba NO sirve para esto — es el fallback para cuando la
+ * base no responde, e incluye a SV Barber, que es un cliente real.
+ */
+export const DEMO_BARBERSHOP_SLUGS: readonly string[] = ["primebarber"];
+
 export function getDemoBarbershopBySlug(slug: string) {
   return demoBarbershops.find((barbershop) => barbershop.slug === slug);
 }
