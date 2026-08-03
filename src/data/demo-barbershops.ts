@@ -68,7 +68,7 @@ export type DemoBarbershop = {
 export const demoBarbershops: DemoBarbershop[] = [
   {
     id: "barbershop_sv_barber",
-    slug: "sv-barber",
+    slug: "barber",
     name: "SV Barber",
     description: "Reserva tu turno online",
     instagram: "https://instagram.com/svbarber",

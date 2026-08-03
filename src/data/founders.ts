@@ -37,7 +37,7 @@ export const FOUNDER_SPOTS = 10;
  * Es una lista APARTE de `founders` porque son dos permisos distintos: se
  * puede ser Fundador (badge) sin querer aparecer públicamente en el sitio.
  */
-export const FOUNDER_SLUGS: readonly string[] = ["leocuts", "sv-barber"];
+export const FOUNDER_SLUGS: readonly string[] = ["leocuts", "barber"];
 
 export function isFounder(barbershopSlug: string): boolean {
   return FOUNDER_SLUGS.includes(barbershopSlug);
@@ -54,7 +54,10 @@ export const founders: Founder[] = [
     location: null,
   },
   {
-    slug: "sv-barber",
+    // Renombrada de `sv-barber` a `barber` (2026-07-30): sumó un empleado y no
+    // quería sus iniciales en el link. El nombre público y el archivo del logo
+    // quedan como estaban — solo cambió el slug.
+    slug: "barber",
     name: "SV Barber",
     logoSrc: "/fundadores/sv-barber.jpg",
     instagram: "https://www.instagram.com/santiivargaas_/",

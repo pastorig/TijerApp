@@ -20,9 +20,40 @@ const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
 ];
 
+/**
+ * Slugs que cambiaron de nombre. La clave es el slug viejo, el valor el nuevo.
+ *
+ * Cuando una barbería se renombra, su link viejo ya está repartido: en la bio
+ * de Instagram, en WhatsApp, en los mensajes que le mandó a cada cliente y en
+ * el celular de todos los que lo guardaron. Sin esto, todo eso pasa a dar 404
+ * de un día para el otro.
+ *
+ * También cubre a la PWA: el ícono del barbero abre el último contexto
+ * guardado, que puede seguir siendo el slug viejo hasta que navegue de nuevo.
+ *
+ * Se usa 307 (temporal) a propósito: un 308 lo cachea el browser para siempre y
+ * volver atrás se vuelve un dolor de cabeza. Cuando el cambio esté asentado se
+ * puede pasar a permanente.
+ */
+const RENAMED_BARBERSHOP_SLUGS: Record<string, string> = {
+  // SV Barber sumó un empleado y no quería sus iniciales en el link (2026-07-30).
+  "sv-barber": "barber",
+};
+
 const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
+  },
+  async redirects() {
+    return Object.entries(RENAMED_BARBERSHOP_SLUGS).flatMap(([from, to]) => [
+      { source: `/${from}`, destination: `/${to}`, permanent: false },
+      {
+        // Cubre /reservar, /admin, /admin/login y todo lo que cuelgue.
+        source: `/${from}/:path*`,
+        destination: `/${to}/:path*`,
+        permanent: false,
+      },
+    ]);
   },
   async headers() {
     return [
