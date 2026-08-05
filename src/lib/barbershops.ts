@@ -18,11 +18,38 @@ const defaultWorkingHours = {
   intervalMinutes: 30,
 };
 
+/**
+ * Columnas que se leen con el cliente público (anon / sesión del barbero).
+ *
+ * **Sin los secretos de MercadoPago.** Antes esto incluía `mp_access_token`,
+ * `mp_refresh_token` y `mp_user_id`: el código no los mapeaba a la respuesta,
+ * pero igual viajaban desde Supabase, y —peor— la policy RLS los dejaba leer a
+ * cualquiera con la anon key, que es pública porque va en el bundle del browser.
+ * Se verificó en producción que un cliente anónimo podía leer el token real de
+ * cobros de una barbería.
+ *
+ * `mp_public_key` sí queda: es la clave pública del checkout, pensada para el
+ * browser. Los secretos los lee únicamente el server con service-role
+ * (`/api/appointments/book` y `/api/admin/mp`), que es donde se necesitan.
+ *
+ * Ojo: la migración `20260730_lock_mp_secrets.sql` revoca esas columnas a nivel
+ * de Postgres. Si alguien las vuelve a agregar acá, la query falla.
+ */
 const barbershopSelectFields =
-  "id, created_at, slug, name, description, whatsapp, instagram, address, logo_url, google_reviews_url, working_hours_start, working_hours_end, slot_interval_minutes, is_active, auto_confirm_appointments, waitlist_enabled, require_client_email, min_booking_notice_minutes, whatsapp_message_template, mp_enabled, mp_access_token, mp_public_key, mp_user_id, deposit_percent, deposit_min_amount, deposit_auto_cancel_hours";
+  "id, created_at, slug, name, description, whatsapp, instagram, address, logo_url, google_reviews_url, working_hours_start, working_hours_end, slot_interval_minutes, is_active, auto_confirm_appointments, waitlist_enabled, require_client_email, min_booking_notice_minutes, whatsapp_message_template, mp_enabled, mp_public_key, deposit_percent, deposit_min_amount, deposit_auto_cancel_hours";
+
+/**
+ * La fila como la ve el cliente público: `BarbershopRow` menos los secretos de
+ * MercadoPago. Tiparlo así hace que el compilador corte si alguien vuelve a
+ * pedir esas columnas por este camino.
+ */
+type PublicBarbershopRow = Omit<
+  BarbershopRow,
+  "mp_access_token" | "mp_refresh_token" | "mp_user_id" | "mp_token_expires_at"
+>;
 
 function mapBarbershopRowToDemoBarbershop(
-  barbershop: BarbershopRow,
+  barbershop: PublicBarbershopRow,
   dbBarbers?: Barber[],
 ): DemoBarbershop {
   const fallbackDemo = getDemoBarbershopBySlug(barbershop.slug);
