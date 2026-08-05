@@ -18,7 +18,7 @@ export async function listBarbersByBarbershop(barbershopSlug: string) {
   const { data, error } = await getSupabaseClient()
     .from("barbers")
     .select(
-      "id, created_at, barbershop_slug, name, display_name, role, whatsapp, is_active, is_owner, deleted_at",
+      "id, created_at, barbershop_slug, name, display_name, role, whatsapp, is_active, is_owner, deleted_at, commission_percent",
     )
     .eq("barbershop_slug", barbershopSlug)
     .is("deleted_at", null)
@@ -32,7 +32,7 @@ export async function listActiveBarbersByBarbershop(barbershopSlug: string) {
   const { data, error } = await getSupabaseClient()
     .from("barbers")
     .select(
-      "id, created_at, barbershop_slug, name, display_name, role, whatsapp, is_active, is_owner, deleted_at",
+      "id, created_at, barbershop_slug, name, display_name, role, whatsapp, is_active, is_owner, deleted_at, commission_percent",
     )
     .eq("barbershop_slug", barbershopSlug)
     .eq("is_active", true)
@@ -105,7 +105,7 @@ export async function setBarberAsOwner({
     .update({ is_owner: true })
     .eq("id", barberId)
     .select(
-      "id, created_at, barbershop_slug, name, display_name, role, whatsapp, is_active, is_owner, deleted_at",
+      "id, created_at, barbershop_slug, name, display_name, role, whatsapp, is_active, is_owner, deleted_at, commission_percent",
     )
     .single();
 }

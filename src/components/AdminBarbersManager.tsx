@@ -43,6 +43,8 @@ type BarberFormValues = {
   displayName: string;
   role: string;
   whatsapp: string;
+  /** Vacío = sin configurar, que NO es lo mismo que 0%. */
+  commissionPercent: string;
 };
 
 type ServiceFormValues = {
@@ -50,6 +52,21 @@ type ServiceFormValues = {
   price: string;
   durationMinutes: string;
 };
+
+/**
+ * Texto del campo → valor para la base.
+ *
+ * Vacío devuelve `null` = **sin configurar**, que no es 0%: un barbero sin
+ * configurar queda fuera de la liquidación en vez de aparecer con $0.
+ * Acepta coma como separador decimal, que es como se escribe acá.
+ */
+function parseCommission(value: string): number | null {
+  const trimmed = value.trim().replace(",", ".");
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) return null;
+  return parsed;
+}
 
 function getDisplayName(barber: BarberRow) {
   return barber.display_name?.trim() || barber.name;
@@ -61,6 +78,11 @@ function getInitialEditValues(barber: BarberRow): BarberFormValues {
     displayName: barber.display_name ?? "",
     role: barber.role ?? "",
     whatsapp: barber.whatsapp ?? "",
+    commissionPercent:
+      barber.commission_percent === null ||
+      barber.commission_percent === undefined
+        ? ""
+        : String(barber.commission_percent),
   };
 }
 
@@ -103,6 +125,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
     displayName: "",
     role: "",
     whatsapp: "",
+    commissionPercent: "",
   });
   const [serviceValues, setServiceValues] = useState<ServiceFormValues>(
     getInitialServiceValues(),
@@ -112,6 +135,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [commissionPercent, setCommissionPercent] = useState("");
   // Redesign master-detail: barbero seleccionado + pestaña + modal de alta.
   const [selectedBarberId, setSelectedBarberId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<BarberTab>("servicios");
@@ -196,6 +220,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
         display_name: displayName.trim() || null,
         role: role.trim() || null,
         whatsapp: whatsapp.trim() || null,
+        commission_percent: parseCommission(commissionPercent),
         is_active: true,
         is_owner: shouldMarkAsOwner,
       });
@@ -210,6 +235,8 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
       setDisplayName("");
       setRole("");
       setWhatsapp("");
+      // Sin esto, el próximo barbero arrancaría con la comisión del anterior.
+      setCommissionPercent("");
       // Redesign: seleccionar el barbero recién creado y cerrar el modal.
       setSelectedBarberId(data.id);
       setActiveTab("servicios");
@@ -307,6 +334,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
       displayName: "",
       role: "",
       whatsapp: "",
+      commissionPercent: "",
     });
   }
 
@@ -333,6 +361,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
           display_name: editValues.displayName.trim() || null,
           role: editValues.role.trim() || null,
           whatsapp: editValues.whatsapp.trim() || null,
+          commission_percent: parseCommission(editValues.commissionPercent),
         },
       });
 
@@ -841,6 +870,26 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                           className="min-h-10 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                           placeholder="WhatsApp"
                         />
+                        {/* Vacío = sin configurar. No se asume 0%: un barbero
+                            sin configurar queda fuera de la liquidación. */}
+                        <input
+                          aria-label="Comisión del barbero, en porcentaje"
+                          type="number"
+                          min={0}
+                          max={100}
+                          step="0.5"
+                          inputMode="decimal"
+                          value={editValues.commissionPercent}
+                          disabled={updatingBarberId === selectedBarber.id}
+                          onChange={(event) =>
+                            setEditValues((currentValues) => ({
+                              ...currentValues,
+                              commissionPercent: event.target.value,
+                            }))
+                          }
+                          className="min-h-10 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
+                          placeholder="Comisión %"
+                        />
                       </div>
                       <div className="mt-3 grid grid-cols-2 gap-2">
                         <button
@@ -1261,6 +1310,27 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                     onChange={(event) => setWhatsapp(event.target.value)}
                     className="mt-1 min-h-10 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                     placeholder="+54..."
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="barber-commission"
+                    className="text-[11px] font-bold uppercase text-[color:var(--text-muted)]"
+                  >
+                    Comisión %
+                  </label>
+                  <input
+                    id="barber-commission"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step="0.5"
+                    inputMode="decimal"
+                    value={commissionPercent}
+                    disabled={isCreating}
+                    onChange={(event) => setCommissionPercent(event.target.value)}
+                    className="mt-1 min-h-10 w-full rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
+                    placeholder="Opcional"
                   />
                 </div>
               </div>

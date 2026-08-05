@@ -1,10 +1,12 @@
 "use client";
+import Link from "next/link";
 
 import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Minus } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { listAppointmentsByBarbershop } from "@/lib/appointments";
 import { listBarbersByBarbershop } from "@/lib/barbers";
+import { calculateCommissions } from "@/lib/commissions";
 import { cn } from "@/lib/cn";
 import {
   formatPrice,
@@ -255,6 +257,28 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
       });
     return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
   }, [currentAppointments]);
+
+  /**
+   * Liquidación del período. Cruza la producción que ya se calcula arriba con el
+   * porcentaje que tiene cargado cada barbero.
+   *
+   * El porcentaje sale de `barbers`, no de los turnos: se aplica el vigente, no
+   * el que estaba cuando se hizo cada turno (se avisa en pantalla).
+   */
+  const commissions = useMemo(() => {
+    const percentByBarberId = new Map(
+      barbers.map((barber) => [barber.id, barber.commission_percent ?? null]),
+    );
+    return calculateCommissions(
+      byBarber.map((row) => ({
+        barberId: row.id,
+        name: row.name,
+        revenue: row.revenue,
+        commissionPercent: percentByBarberId.get(row.id) ?? null,
+      })),
+    );
+  }, [byBarber, barbers]);
+
 
   // Top servicios
   const topServices = useMemo(() => {
@@ -625,6 +649,110 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                   </tbody>
                 </table>
               </div>
+            </section>
+          ) : null}
+
+          {/* Comisiones del período */}
+          {commissions.rows.length > 0 || commissions.unconfigured.length > 0 ? (
+            <section>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+                Comisiones del período
+              </p>
+              {/* El porcentaje que se aplica es el que está cargado HOY, no el
+                  que estaba cuando se hizo cada turno. Decirlo evita que el
+                  dueño descubra solo que le cerró distinto. */}
+              <p className="mt-2 text-xs text-[color:var(--text-subtle)]">
+                Se aplica el porcentaje que tiene cargado hoy cada barbero.
+              </p>
+
+              {commissions.rows.length > 0 ? (
+                <div className="mt-4 overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)]">
+                  <table className="w-full text-left text-xs sm:text-sm">
+                    <thead className="bg-[color:var(--surface-1)]">
+                      <tr className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
+                        <th className="px-3 py-2 sm:px-4">Barbero</th>
+                        <th className="px-3 py-2 text-right sm:px-4">Produjo</th>
+                        <th className="px-3 py-2 text-right sm:px-4">%</th>
+                        <th className="px-3 py-2 text-right sm:px-4">
+                          Le corresponde
+                        </th>
+                        <th className="hidden px-3 py-2 text-right sm:table-cell sm:px-4">
+                          Queda en la barbería
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {commissions.rows.map((row) => (
+                        <tr
+                          key={row.barberId}
+                          className="border-t border-[color:var(--border-subtle)]"
+                        >
+                          <td className="px-3 py-2 font-semibold text-white sm:px-4">
+                            {row.name}
+                          </td>
+                          <td className="px-3 py-2 text-right tabular-nums text-[color:var(--text-secondary)] sm:px-4">
+                            {formatPrice(row.revenue)}
+                          </td>
+                          <td className="px-3 py-2 text-right tabular-nums text-[color:var(--text-muted)] sm:px-4">
+                            {row.commissionPercent}%
+                          </td>
+                          <td className="px-3 py-2 text-right font-black tabular-nums text-[color:var(--brand-gold)] sm:px-4">
+                            {formatPrice(row.commission)}
+                          </td>
+                          <td className="hidden px-3 py-2 text-right tabular-nums text-[color:var(--text-secondary)] sm:table-cell sm:px-4">
+                            {formatPrice(row.barbershopShare)}
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="border-t-2 border-[color:var(--border-default)] bg-[color:var(--surface-1)]">
+                        <td className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)] sm:px-4">
+                          Total
+                        </td>
+                        <td className="px-3 py-2 text-right font-black tabular-nums text-white sm:px-4">
+                          {formatPrice(commissions.totalRevenue)}
+                        </td>
+                        <td className="px-3 py-2 sm:px-4" />
+                        <td className="px-3 py-2 text-right font-black tabular-nums text-[color:var(--brand-gold)] sm:px-4">
+                          {formatPrice(commissions.totalCommission)}
+                        </td>
+                        <td className="hidden px-3 py-2 text-right font-black tabular-nums text-white sm:table-cell sm:px-4">
+                          {formatPrice(commissions.totalBarbershopShare)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+
+              {/* Sin comisión cargada NO es 0%: se listan aparte para que el
+                  dueño note que le falta configurarlos, en vez de ver $0 y
+                  creer que no les debe nada. */}
+              {commissions.unconfigured.length > 0 ? (
+                <div className="mt-3 rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+                    Sin comisión configurada
+                  </p>
+                  <ul className="mt-2 flex flex-col gap-1">
+                    {commissions.unconfigured.map((barber) => (
+                      <li
+                        key={barber.barberId}
+                        className="flex items-center justify-between gap-3 text-xs text-[color:var(--text-subtle)]"
+                      >
+                        <span>{barber.name}</span>
+                        <span className="tabular-nums">
+                          produjo {formatPrice(barber.revenue)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href={`/${barbershop.slug}/admin/barbers`}
+                    className="mt-3 inline-flex text-xs font-semibold text-[color:var(--brand-gold)] hover:underline"
+                  >
+                    Cargar sus comisiones →
+                  </Link>
+                </div>
+              ) : null}
             </section>
           ) : null}
 

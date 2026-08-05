@@ -89,6 +89,12 @@ type BarberInsert = {
   is_active: boolean;
   is_owner?: boolean;
   deleted_at?: string | null;
+  /**
+   * Porcentaje que cobra el barbero de lo que produce (feature 014).
+   * `null` = **sin configurar**, que NO es lo mismo que 0%: un barbero sin
+   * configurar queda fuera de la liquidación en vez de aparecer con $0.
+   */
+  commission_percent?: number | null;
 };
 
 type BarberRow = BarberInsert & {
