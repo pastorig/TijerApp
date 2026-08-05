@@ -707,6 +707,33 @@ type Database = {
        * `amount` es `numeric(12,2)`: PostgREST lo devuelve como string, así que
        * el tipo lo refleja y hay que convertirlo antes de sumar.
        */
+      /**
+       * Contador de rate limiting (ver `src/lib/rate-limit.ts`). RLS prendida y
+       * sin políticas: solo `service_role`. `identifier` es un hash con sal del
+       * origen, nunca la IP en claro.
+       */
+      rate_limit_hits: {
+        Row: {
+          id: number;
+          bucket: string;
+          identifier: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          bucket: string;
+          identifier: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          bucket?: string;
+          identifier?: string;
+          created_at?: string;
+        };
+        // Sin esto, TODAS las tablas del type caen a `never`.
+        Relationships: [];
+      };
       barbershop_payments: {
         Row: {
           id: string;

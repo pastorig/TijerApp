@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import {
+  RATE_LIMIT_MESSAGE,
+  checkRateLimit,
+  getRequestIdentifier,
+} from "@/lib/rate-limit";
 import { resolveEmailFrom } from "@/lib/email/from";
 import { assertPublicBookingEnabled } from "@/lib/api-plan-guard";
 
@@ -172,6 +177,15 @@ function buildWaitlistEmailHtml(params: {
  * Para el flow desde /reservar cuando el cliente no encuentra slot.
  */
 export async function POST(request: Request) {
+  // Anotarse en la lista de espera es público: se limita para que no la inunden.
+  const limit = await checkRateLimit("waitlist", getRequestIdentifier(request));
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: RATE_LIMIT_MESSAGE },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
+    );
+  }
+
   let payload: Record<string, unknown>;
   try {
     payload = (await request.json()) as Record<string, unknown>;
