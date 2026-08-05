@@ -5,6 +5,11 @@ import {
   TRIAL_DAYS,
 } from "@/lib/onboarding-defaults";
 import {
+  RATE_LIMIT_MESSAGE,
+  checkRateLimit,
+  getRequestIdentifier,
+} from "@/lib/rate-limit";
+import {
   PASSWORD_MIN_LENGTH,
   findAvailableSlug,
   provisionBarbershop,
@@ -80,6 +85,20 @@ function validate(payload: RegistroPayload): string {
 
 export async function POST(request: Request) {
   try {
+    // El honeypot solo para a los bots torpes. Sin esto, uno que no lo complete
+    // puede crear barberías en masa (cada alta provisiona ~30 filas + un usuario
+    // en Auth).
+    const limit = await checkRateLimit("registro", getRequestIdentifier(request));
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: RATE_LIMIT_MESSAGE },
+        {
+          status: 429,
+          headers: { "Retry-After": String(limit.retryAfterSeconds) },
+        },
+      );
+    }
+
     const payload = (await request.json()) as RegistroPayload;
 
     // Honeypot: respondemos ok para no darle señal al bot, pero no creamos nada.

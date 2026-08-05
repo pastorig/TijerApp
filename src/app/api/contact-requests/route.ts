@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import {
+  RATE_LIMIT_MESSAGE,
+  checkRateLimit,
+  getRequestIdentifier,
+} from "@/lib/rate-limit";
 import { resolveEmailFrom } from "@/lib/email/from";
 
 export const runtime = "nodejs";
@@ -28,6 +33,15 @@ function escapeHtml(value: string): string {
 }
 
 export async function POST(request: Request) {
+  // Formulario público: sin freno, un bot llena la bandeja del owner.
+  const limit = await checkRateLimit("contacto", getRequestIdentifier(request));
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: RATE_LIMIT_MESSAGE },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } },
+    );
+  }
+
   let payload: ContactPayload;
   try {
     payload = (await request.json()) as ContactPayload;
