@@ -7,6 +7,7 @@ import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { listAppointmentsByBarbershop } from "@/lib/appointments";
 import { listBarbersByBarbershop } from "@/lib/barbers";
 import { calculateCommissions } from "@/lib/commissions";
+import { whatsAppLinkWithMessage } from "@/lib/whatsapp";
 import { cn } from "@/lib/cn";
 import {
   formatPrice,
@@ -257,6 +258,19 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
       });
     return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
   }, [currentAppointments]);
+
+  /**
+   * Link de WhatsApp con el detalle de la liquidación para un barbero.
+   *
+   * Devuelve null si el barbero no tiene número cargado: mejor no mostrar el
+   * botón que abrir un WhatsApp vacío.
+   */
+  function getLiquidationLink(barberId: string, detail: string): string | null {
+    const barber = barbers.find((b) => b.id === barberId);
+    const phone = barber?.whatsapp?.trim();
+    if (!phone) return null;
+    return whatsAppLinkWithMessage(phone, detail);
+  }
 
   /**
    * Liquidación del período. Cruza la producción que ya se calcula arriba con el
@@ -679,6 +693,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                         <th className="hidden px-3 py-2 text-right sm:table-cell sm:px-4">
                           Queda en la barbería
                         </th>
+                        <th className="px-3 py-2 sm:px-4" />
                       </tr>
                     </thead>
                     <tbody>
@@ -702,6 +717,28 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                           <td className="hidden px-3 py-2 text-right tabular-nums text-[color:var(--text-secondary)] sm:table-cell sm:px-4">
                             {formatPrice(row.barbershopShare)}
                           </td>
+                          <td className="px-3 py-2 text-right sm:px-4">
+                            {(() => {
+                              const detalle = `Hola ${row.name}! Tu liquidación de ${PERIOD_OPTIONS.find((p) => p.value === period)?.label.toLowerCase() ?? "el período"} en ${barbershop.name}:
+
+Produjiste: ${formatPrice(row.revenue)}
+Tu comisión: ${row.commissionPercent}%
+Te corresponde: ${formatPrice(row.commission)}`;
+                              const href = getLiquidationLink(row.barberId, detalle);
+                              if (!href) return null;
+                              return (
+                                <a
+                                  href={href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  aria-label={`Mandarle la liquidación a ${row.name}`}
+                                  className="inline-flex min-h-8 items-center rounded-[var(--radius-xs)] border border-[color:var(--border-subtle)] px-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--text-secondary)] transition-colors hover:border-[color:var(--brand-gold-ring)] hover:text-white"
+                                >
+                                  Enviar
+                                </a>
+                              );
+                            })()}
+                          </td>
                         </tr>
                       ))}
                       <tr className="border-t-2 border-[color:var(--border-default)] bg-[color:var(--surface-1)]">
@@ -718,6 +755,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                         <td className="hidden px-3 py-2 text-right font-black tabular-nums text-white sm:table-cell sm:px-4">
                           {formatPrice(commissions.totalBarbershopShare)}
                         </td>
+                        <td className="px-3 py-2 sm:px-4" />
                       </tr>
                     </tbody>
                   </table>
