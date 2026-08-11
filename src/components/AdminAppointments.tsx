@@ -1841,10 +1841,13 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         preselectedBarberId={
           selectedBarberFilter !== "all" ? selectedBarberFilter : undefined
         }
+        autoConfirmAppointments={barbershop.autoConfirmAppointments}
         onClose={() => setIsManualModalOpen(false)}
         onCreated={() => {
           toast.success("Turno agregado", {
-            description: "Aparece confirmado en la agenda.",
+            description: barbershop.autoConfirmAppointments
+              ? "Aparece confirmado en la agenda."
+              : "Queda pendiente hasta que lo confirmes.",
           });
           void (async () => {
             const { data } = await listAppointmentsByBarbershop(

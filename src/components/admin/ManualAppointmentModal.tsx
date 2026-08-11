@@ -18,6 +18,11 @@ type ManualAppointmentModalProps = {
   defaultDate: string;
   /** Barbero pre-seleccionado si hay un filtro activo. */
   preselectedBarberId?: string;
+  /**
+   * Config de la barbería. El turno manual la respeta igual que una reserva
+   * pública; antes se creaba SIEMPRE confirmado, ignorándola.
+   */
+  autoConfirmAppointments?: boolean;
   onClose: () => void;
   onCreated: () => void;
 };
@@ -27,7 +32,13 @@ type ManualAppointmentModalProps = {
  * de su horario de atención o fuera de él. El campo de hora es libre y no se
  * valida contra el horario laboral — si el turno cae antes de abrir o después
  * de cerrar, igual se crea y en el turnero aparece la advertencia de "fuera de
- * horario" que ya existe. El turno entra confirmado (autoConfirm).
+ * horario" que ya existe.
+ *
+ * **El turno entra PENDIENTE**, salvo que la barbería tenga la
+ * auto-confirmación prendida. Antes se creaba siempre confirmado, ignorando esa
+ * config: el barbero cargaba el turno y le aparecía dado por confirmado sin
+ * haber hablado con el cliente. El teléfono es obligatorio justamente por eso —
+ * sin número no hay forma de confirmarlo después.
  *
  * Cubre tanto "encajar un corte fuera del horario" como "cargar a mano un
  * turno de alguien que vino sin reservar por la app".
@@ -39,6 +50,7 @@ export function ManualAppointmentModal({
   services,
   defaultDate,
   preselectedBarberId,
+  autoConfirmAppointments,
   onClose,
   onCreated,
 }: ManualAppointmentModalProps) {
@@ -115,6 +127,12 @@ export function ManualAppointmentModal({
       setErrorMessage("Poné el nombre del cliente.");
       return;
     }
+    // Obligatorio: el turno queda pendiente y sin número no se le puede
+    // escribir para confirmarlo.
+    if (!customerPhone.trim()) {
+      setErrorMessage("Poné el teléfono del cliente para poder confirmarle.");
+      return;
+    }
     if (!date || !time) {
       setErrorMessage("Completá fecha y horario.");
       return;
@@ -142,7 +160,8 @@ export function ManualAppointmentModal({
           comment: comment.trim(),
         },
         // El barbero lo agrega a mano: entra confirmado directamente.
-        { autoConfirm: true },
+        // Respeta la config de la barbería, igual que una reserva pública.
+        { autoConfirm: autoConfirmAppointments === true },
       );
 
       if (error || !data?.id) {
@@ -264,7 +283,7 @@ export function ManualAppointmentModal({
             </div>
             <div>
               <label htmlFor="manual-phone" className={labelClass}>
-                Teléfono (opcional)
+                Teléfono
               </label>
               <input
                 id="manual-phone"
@@ -275,6 +294,7 @@ export function ManualAppointmentModal({
                 disabled={isSaving}
                 placeholder="11..."
                 className={inputClass}
+                required
               />
             </div>
           </div>
