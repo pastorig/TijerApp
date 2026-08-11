@@ -18,11 +18,6 @@ type ManualAppointmentModalProps = {
   defaultDate: string;
   /** Barbero pre-seleccionado si hay un filtro activo. */
   preselectedBarberId?: string;
-  /**
-   * Config de la barbería. El turno manual la respeta igual que una reserva
-   * pública; antes se creaba SIEMPRE confirmado, ignorándola.
-   */
-  autoConfirmAppointments?: boolean;
   onClose: () => void;
   onCreated: () => void;
 };
@@ -34,11 +29,15 @@ type ManualAppointmentModalProps = {
  * de cerrar, igual se crea y en el turnero aparece la advertencia de "fuera de
  * horario" que ya existe.
  *
- * **El turno entra PENDIENTE**, salvo que la barbería tenga la
- * auto-confirmación prendida. Antes se creaba siempre confirmado, ignorando esa
- * config: el barbero cargaba el turno y le aparecía dado por confirmado sin
- * haber hablado con el cliente. El teléfono es obligatorio justamente por eso —
- * sin número no hay forma de confirmarlo después.
+ * **El turno entra SIEMPRE pendiente**, incluso en barberías con la
+ * auto-confirmación prendida. Es a propósito y es distinto de una reserva
+ * pública: acá el turno lo carga el barbero *antes* de hablar con el cliente
+ * —se lo anota al pasar, lo agenda de memoria— así que darlo por confirmado
+ * sería afirmar algo que todavía no pasó. La auto-confirmación existe para las
+ * reservas que hace el cliente, que sí son una confirmación de su parte.
+ *
+ * Por lo mismo el teléfono es obligatorio: sin número no hay forma de
+ * escribirle después para confirmarlo.
  *
  * Cubre tanto "encajar un corte fuera del horario" como "cargar a mano un
  * turno de alguien que vino sin reservar por la app".
@@ -50,7 +49,6 @@ export function ManualAppointmentModal({
   services,
   defaultDate,
   preselectedBarberId,
-  autoConfirmAppointments,
   onClose,
   onCreated,
 }: ManualAppointmentModalProps) {
@@ -160,8 +158,10 @@ export function ManualAppointmentModal({
           comment: comment.trim(),
         },
         // El barbero lo agrega a mano: entra confirmado directamente.
-        // Respeta la config de la barbería, igual que una reserva pública.
-        { autoConfirm: autoConfirmAppointments === true },
+        // Sin `autoConfirm`: el turno manual queda pendiente SIEMPRE, aunque la
+        // barbería tenga la auto-confirmación prendida (ver el comentario de
+        // arriba). No es un descuido.
+        undefined,
       );
 
       if (error || !data?.id) {
