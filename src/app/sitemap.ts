@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { listKnownBarbershops } from "@/lib/barbershops";
+import { guias } from "@/data/guias";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://tijerapp.com";
 
@@ -40,11 +41,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${siteUrl}/guias`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
       url: `${siteUrl}/registro`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.5,
     },
+    // Cada guía es una página indexable propia: son las que pueden rankear por
+    // las búsquedas que hace el barbero ANTES de saber que existimos.
+    ...guias.map((guia) => ({
+      url: `${siteUrl}/guias/${guia.slug}`,
+      lastModified: new Date(`${guia.updatedAt ?? guia.publishedAt}T12:00:00`),
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
   ];
 
   try {
