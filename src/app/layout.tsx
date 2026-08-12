@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ConfirmProvider, ToastProvider } from "@/components/ui";
 import { PWAInstallProvider } from "@/components/pwa/PWAInstallProvider";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
+import { StructuredData } from "@/components/seo/StructuredData";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,8 +29,31 @@ export const metadata: Metadata = {
     template: "%s · TijerApp",
   },
   description:
-    "Sistema SaaS de turnos online: reservas, barberos, servicios y agenda para barberías modernas. Pensado para trabajar rápido desde el celular.",
+    "Software de turnos online para barberías en Argentina. Tus clientes reservan solos desde el celular, sin descargar nada. Agenda, barberos, clientes y caja en un panel. Desde $22.000/mes, 14 días gratis.",
   applicationName: "TijerApp",
+  // Términos por los que buscaría un barbero argentino. No pesan para el
+  // ranking de Google desde hace años, pero los buscadores con IA sí los leen
+  // como señal de qué ofrece la página.
+  keywords: [
+    "software para barberías",
+    "sistema de turnos para barbería",
+    "app de turnos para barberos",
+    "turnos online barbería Argentina",
+    "agenda para barbería",
+    "reservas online barbería",
+    "software barbería en pesos",
+    "alternativa a Booksy Argentina",
+    "cobrar seña MercadoPago turnos",
+    "gestión de barbería multi barbero",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-snippet": -1, "max-image-preview": "large" },
+  },
   icons: {
     icon: [
       { url: "/brand/favicon.svg", type: "image/svg+xml" },
@@ -106,6 +130,8 @@ export default function RootLayout({
           </ToastProvider>
         </PWAInstallProvider>
         <ServiceWorkerRegister />
+        {/* JSON-LD: va en el HTML servido para que lo lean los crawlers. */}
+        <StructuredData />
         <Analytics />
         <SpeedInsights />
       </body>

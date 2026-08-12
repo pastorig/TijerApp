@@ -82,9 +82,10 @@ const HomeContact = dynamic(
 
 export const metadata: Metadata = {
   // El template de layout.tsx agrega "· TijerApp" automáticamente.
-  title: "Precios",
+  title: "Precios en pesos, sin comisión por reserva",
   description:
-    "Planes claros para barberías argentinas. Desde $22.000/mes. 14 días gratis sin tarjeta. Cancelás cuando quieras.",
+    "Tres planes para barberías argentinas: Solo $22.000, Esencial $41.000 y Pro $61.000 por mes. En pesos, sin comisión por turno, 14 días gratis sin tarjeta y sin permanencia.",
+  alternates: { canonical: "/precios" },
 };
 
 export default function PricingPage() {

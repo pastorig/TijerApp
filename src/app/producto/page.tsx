@@ -29,9 +29,13 @@ const HomeContact = dynamic(
 
 export const metadata: Metadata = {
   // El template de layout.tsx agrega "· TijerApp" automáticamente.
-  title: "Producto",
+  // El título dice de qué se trata en vez de solo "Producto": es lo que se lee
+  // en el resultado de búsqueda y lo que usa la IA para saber si esta página
+  // responde la pregunta.
+  title: "Software para barberías: turnero, reservas y reportes",
   description:
-    "Todo lo que tu barbería necesita: turnero, reservas públicas, multi-barbero, reportes y WhatsApp.",
+    "Turnero con arrastrar y soltar, reservas online sin que el cliente cree cuenta, varios barberos con horarios propios, recordatorios automáticos, cobro de seña con MercadoPago y reportes por barbero.",
+  alternates: { canonical: "/producto" },
 };
 
 export default function ProductPage() {
