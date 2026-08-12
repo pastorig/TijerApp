@@ -52,10 +52,10 @@ const PLANS: Plan[] = [
     annualArs: 336000,
     highlight: true,
     description:
-      "Para barberías con 2 sillones. Sumás cobro de seña, cupones y reportes por barbero para operar de forma profesional.",
+      "Para barberías de 2 o 3 sillones. Sumás cobro de seña, cupones y reportes por barbero para operar de forma profesional.",
     features: [
       "Todo lo de Solo, más:",
-      "Hasta 2 barberos",
+      "Hasta 3 barberos",
       "Cobro de seña online (Mercado Pago)",
       "Cupones de descuento",
       "Reportes por barbero",
@@ -75,7 +75,7 @@ const PLANS: Plan[] = [
       "Para barberías establecidas con varios barberos. Fidelización, equipo multi-admin y reportes mensuales para escalar.",
     features: [
       "Todo lo de Esencial, más:",
-      "Barberos ilimitados (3 o más)",
+      "Barberos ilimitados (4 o más)",
       "Sistema de fidelización (sellos)",
       "Equipo: hasta 5 admins",
       "Reportes mensuales por email",

@@ -201,7 +201,7 @@ Barbero independiente, sin barbería física, alquila sillón o trabaja a domici
 - Soporte por email (48-72h)
 
 #### 🔵 Esencial — $33.000/mes
-Barbería establecida con 2+ sillones. El **plan default**.
+Barbería establecida de 2 o 3 sillones. El **plan default**.
 
 - Todo lo de Solo +
 - Multi-barbero ilimitado
@@ -248,7 +248,7 @@ Beneficios exclusivos para los primeros 10 que paguen el primer mes:
 
 ✅ **Se puede decir**:
 - "Desde $22.000/mes" (entry point Solo)
-- "$33.000/mes para barberías con 2+ barberos" (Esencial)
+- "$33.000/mes para barberías de hasta 3 barberos" (Esencial)
 - "14 días gratis, sin tarjeta"
 - "Cancelás cuando quieras"
 - "Programa Fundadores: precio congelado 3 meses para los primeros 10"
@@ -1014,7 +1014,7 @@ Similar a Meta pero con interés agregado:
 
 ### "¿Cuánto cuesta?"
 
-> Tenemos 3 planes: **Solo** ($22.000/mes, para barberos independientes), **Esencial** ($33.000/mes, para barberías con 2+ sillones) y **Pro** ($46.000/mes, para las que quieren crecer fuerte). También podés pagar anual con 15% off. Tenés 14 días gratis para probar sin cargar tarjeta.
+> Tenemos 3 planes: **Solo** ($22.000/mes, para barberos independientes), **Esencial** ($33.000/mes, para barberías de hasta 3 sillones) y **Pro** ($46.000/mes, para las que quieren crecer fuerte). También podés pagar anual con 15% off. Tenés 14 días gratis para probar sin cargar tarjeta.
 
 ### "¿Tiene app?"
 

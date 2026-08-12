@@ -24,11 +24,11 @@ const TEASER_PLANS: TeaserPlan[] = [
   },
   {
     name: "Esencial",
-    tagline: "Barbería con 2 sillones",
+    tagline: "Barbería de hasta 3 sillones",
     monthlyArs: 33000,
     highlight: true,
     features: [
-      "Hasta 2 barberos",
+      "Hasta 3 barberos",
       "Cobro de seña + cupones",
       "Reportes por barbero + PDF",
     ],

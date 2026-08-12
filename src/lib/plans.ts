@@ -61,7 +61,7 @@ export const PLAN_FEATURES: Record<Feature, ReadonlyArray<PlanTier>> = {
  */
 export const PLAN_LIMITS = {
   solo: { maxBarbers: 1, maxAdmins: 1 },
-  esencial: { maxBarbers: 2, maxAdmins: 1 },
+  esencial: { maxBarbers: 3, maxAdmins: 1 },
   pro: { maxBarbers: Number.POSITIVE_INFINITY, maxAdmins: 5 },
 } as const satisfies Record<PlanTier, { maxBarbers: number; maxAdmins: number }>;
 
@@ -88,7 +88,7 @@ export const PLAN_META = {
   esencial: {
     name: "Esencial",
     priceArs: 33000,
-    tagline: "Barbería con 2 sillas",
+    tagline: "Barbería de hasta 3 sillas",
   },
   pro: {
     name: "Pro",

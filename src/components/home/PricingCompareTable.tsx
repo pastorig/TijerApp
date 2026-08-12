@@ -14,7 +14,7 @@ const ROWS: Row[] = [
   {
     category: "Operación",
     features: [
-      { label: "Barberos incluidos", solo: "1", esencial: "Hasta 2", pro: "Ilimitado" },
+      { label: "Barberos incluidos", solo: "1", esencial: "Hasta 3", pro: "Ilimitado" },
       { label: "Reservas online", solo: "Ilimitadas", esencial: "Ilimitadas", pro: "Ilimitadas" },
       { label: "URL pública con marca", solo: true, esencial: true, pro: true },
       { label: "PWA instalable", solo: true, esencial: true, pro: true },
