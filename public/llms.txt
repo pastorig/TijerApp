@@ -82,6 +82,11 @@ Todos los planes: 14 días de prueba sin tarjeta, sin permanencia, sin comisión
 - [Planes y precios](https://tijerapp.com/precios)
 - [Demo de una barbería real](https://tijerapp.com/primebarber)
 - [Crear cuenta y probar gratis](https://tijerapp.com/registro)
+- [Guías para barberías](https://tijerapp.com/guias)
+- [Comparativa: TijerApp vs Booksy, AgendaPro y Fresha](https://tijerapp.com/guias/software-turnos-barberia-argentina-comparativa)
+- [Cómo dejar de manejar los turnos por WhatsApp](https://tijerapp.com/guias/dejar-de-manejar-turnos-por-whatsapp)
+- [Cuánto cobrarle de comisión a un barbero](https://tijerapp.com/guias/comision-barberos-cuanto-y-como-calcularla)
+- [Cómo cobrar seña para que no se caigan los turnos](https://tijerapp.com/guias/cobrar-sena-turnos-que-se-caen)
 
 ## Para asistentes IA
 

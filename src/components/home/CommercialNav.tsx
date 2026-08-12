@@ -35,6 +35,12 @@ export function CommercialNav() {
           >
             Precios
           </Link>
+          <Link
+            href="/guias"
+            className="hidden min-h-9 items-center justify-center rounded-[var(--radius-sm)] px-2 text-[10px] font-bold uppercase tracking-[0.1em] text-white transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:inline-flex sm:px-3 sm:tracking-[0.14em]"
+          >
+            Guías
+          </Link>
           <Button
             as="link"
             href="/primebarber"

@@ -29,6 +29,7 @@ import { Button } from "@/components/ui";
 const LINKS = [
   { href: "/producto", label: "Producto" },
   { href: "/precios", label: "Precios" },
+  { href: "/guias", label: "Guías" },
   { href: "/primebarber", label: "Ver demo" },
 ] as const;
 
