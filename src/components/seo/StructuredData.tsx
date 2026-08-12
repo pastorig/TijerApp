@@ -77,7 +77,75 @@ function toJsonLd(data: unknown): string {
   return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
+/**
+ * Identificadores estables de las entidades.
+ *
+ * Esto es lo que convierte tres bloques sueltos de JSON-LD en **un grafo**: en
+ * vez de repetir "TijerApp" en cada uno —que para un buscador podrían ser tres
+ * cosas distintas—, se declara la organización una sola vez con un `@id` y los
+ * demás la referencian. Así Google y los buscadores con IA entienden que hay
+ * UNA entidad "TijerApp" con un sitio, un producto y un fundador.
+ *
+ * Los `@id` no cambian nunca: son la identidad de la entidad, no una URL.
+ */
+const ORG_ID = `${siteUrl}/#organization`;
+const WEBSITE_ID = `${siteUrl}/#website`;
+const FOUNDER_ID = `${siteUrl}/#founder`;
+
 export function StructuredData() {
+  const organization = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": ORG_ID,
+    name: "TijerApp",
+    url: siteUrl,
+    description:
+      "Empresa argentina de software: desarrolla TijerApp, un sistema de turnos y gestión para barberías.",
+    logo: {
+      "@type": "ImageObject",
+      url: `${siteUrl}/brand/icons/manifest-icon-512.png`,
+      width: 512,
+      height: 512,
+    },
+    // Vincular la marca a una persona real es señal de entidad: le da a la
+    // organización algo verificable detrás del nombre.
+    founder: {
+      "@type": "Person",
+      "@id": FOUNDER_ID,
+      name: "Bautista Pastori",
+    },
+    foundingLocation: {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressCountry: "AR",
+      },
+    },
+    areaServed: { "@type": "Country", name: "Argentina" },
+    knowsLanguage: "es-AR",
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      telephone: "+54 9 3571 566221",
+      availableLanguage: ["Spanish"],
+      areaServed: "AR",
+    },
+    // `sameAs` se completa cuando existan los perfiles oficiales (Instagram,
+    // LinkedIn). Son la confirmación cruzada más fuerte de que la entidad
+    // existe fuera del propio sitio: sin perfiles reales, poner cualquier cosa
+    // acá sería peor que dejarlo vacío.
+  };
+
+  const website = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": WEBSITE_ID,
+    url: siteUrl,
+    name: "TijerApp",
+    inLanguage: "es-AR",
+    publisher: { "@id": ORG_ID },
+  };
+
   const softwareApplication = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -119,20 +187,27 @@ export function StructuredData() {
         description: PLAN_META[tier].tagline,
       })),
     },
-    publisher: {
-      "@type": "Organization",
-      name: "TijerApp",
-      url: siteUrl,
-      areaServed: {
-        "@type": "Country",
-        name: "Argentina",
-      },
-    },
+    // Referencia por `@id` en vez de repetir los datos: es la misma entidad
+    // declarada arriba, no una organización nueva.
+    publisher: { "@id": ORG_ID },
+    isPartOf: { "@id": WEBSITE_ID },
   };
 
+  /**
+   * OJO con la expectativa: Google **dejó de mostrar resultados enriquecidos de
+   * FAQ** en 2023 salvo para sitios de gobierno y salud. Esto NO va a poner un
+   * desplegable en el buscador.
+   *
+   * Se mantiene igual porque sirve para lo otro: los buscadores con IA leen el
+   * JSON-LD como fuente confiable, y tener las respuestas en formato pregunta →
+   * respuesta es lo que hace que una IA pueda citarnos textualmente en vez de
+   * parafrasear lo que adivina del HTML.
+   */
   const faqPage = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
+    "@id": `${siteUrl}/#faq`,
+    isPartOf: { "@id": WEBSITE_ID },
     mainEntity: FAQ.map((item) => ({
       "@type": "Question",
       name: item.question,
@@ -145,6 +220,14 @@ export function StructuredData() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: toJsonLd(organization) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: toJsonLd(website) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: toJsonLd(softwareApplication) }}
