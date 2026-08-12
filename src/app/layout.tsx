@@ -49,6 +49,13 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  // Verificación de propiedad en Google Search Console. Es un token público
+  // (va en el HTML de todas las páginas), no un secreto: sirve para probarle a
+  // Google que el dominio es nuestro. No se borra aunque ya esté verificado —
+  // Google revalida cada tanto y si desaparece pierde la propiedad.
+  verification: {
+    google: "1re-lRg0LFjJpqloGTrWLn2xD9buDXeFuiodxl4eoC4",
+  },
   robots: {
     index: true,
     follow: true,
