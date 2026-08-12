@@ -1,5 +1,6 @@
 import { Check, MessageCircle, Sparkles, Table, X } from "lucide-react";
 import { Reveal } from "./ui/Reveal";
+import { monthlyPriceLabel } from "@/lib/plans";
 
 type Competitor = {
   icon: typeof MessageCircle;
@@ -165,7 +166,7 @@ export function HomeComparison() {
               }}
             >
               <p className="text-[11px] font-black uppercase tracking-wider text-gold-gradient">
-                Desde $22.000/mes
+                Desde {monthlyPriceLabel("solo")}/mes
               </p>
               <p className="mt-1 text-sm leading-5 text-[color:var(--text-secondary)]">
                 Cobra en pesos. 14 días gratis. Cancelás cuando quieras.

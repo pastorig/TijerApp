@@ -1,20 +1,22 @@
 import Link from "next/link";
 import { ArrowUpRight, Check, Crown } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { PLAN_META, formatArs, type PlanTier } from "@/lib/plans";
 
+// El precio sale de PLAN_META vía el `tier`, no se escribe acá. Ver plans.ts.
 type TeaserPlan = {
+  tier: PlanTier;
   name: string;
   tagline: string;
-  monthlyArs: number;
   highlight: boolean;
   features: string[];
 };
 
 const TEASER_PLANS: TeaserPlan[] = [
   {
+    tier: "solo",
     name: "Solo",
     tagline: "Barbero independiente",
-    monthlyArs: 22000,
     highlight: false,
     features: [
       "1 barbero",
@@ -23,9 +25,9 @@ const TEASER_PLANS: TeaserPlan[] = [
     ],
   },
   {
+    tier: "esencial",
     name: "Esencial",
     tagline: "Barbería de hasta 3 sillones",
-    monthlyArs: 33000,
     highlight: true,
     features: [
       "Hasta 3 barberos",
@@ -34,9 +36,9 @@ const TEASER_PLANS: TeaserPlan[] = [
     ],
   },
   {
+    tier: "pro",
     name: "Pro",
     tagline: "Para crecer en serio",
-    monthlyArs: 46000,
     highlight: false,
     features: [
       "Barberos ilimitados",
@@ -115,7 +117,7 @@ export function PricingTeaser() {
 
               <div className="mt-4 flex items-baseline gap-1.5">
                 <span className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-                  ${plan.monthlyArs.toLocaleString("es-AR")}
+                  {formatArs(PLAN_META[plan.tier].priceArs)}
                 </span>
                 <span className="text-xs text-[color:var(--text-secondary)]">
                   / mes

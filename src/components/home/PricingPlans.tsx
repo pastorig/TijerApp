@@ -5,15 +5,21 @@ import Link from "next/link";
 import { ArrowUpRight, Check, Crown, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import {
+  ANNUAL_DISCOUNT_PERCENT,
+  PLAN_META,
+  annualPriceArs,
+  formatArs,
+  type PlanTier,
+} from "@/lib/plans";
 
 type BillingCycle = "monthly" | "annual";
 
+// Los precios NO se declaran acá: salen de PLAN_META vía el `id`. Ver plans.ts.
 type Plan = {
-  id: "solo" | "esencial" | "pro";
+  id: PlanTier;
   name: string;
   tagline: string;
-  monthlyArs: number;
-  annualArs: number;
   highlight: boolean;
   description: string;
   features: string[];
@@ -24,8 +30,6 @@ const PLANS: Plan[] = [
     id: "solo",
     name: "Solo",
     tagline: "Para barberos independientes",
-    monthlyArs: 22000,
-    annualArs: 224000,
     highlight: false,
     description:
       "Para el barbero que alquila sillón o trabaja a domicilio. Tu agenda online en menos de 10 minutos.",
@@ -48,8 +52,6 @@ const PLANS: Plan[] = [
     id: "esencial",
     name: "Esencial",
     tagline: "El plan que la mayoría elige",
-    monthlyArs: 33000,
-    annualArs: 336000,
     highlight: true,
     description:
       "Para barberías de 2 o 3 sillones. Sumás cobro de seña, cupones y reportes por barbero para operar de forma profesional.",
@@ -68,8 +70,6 @@ const PLANS: Plan[] = [
     id: "pro",
     name: "Pro",
     tagline: "Para crecer en serio",
-    monthlyArs: 46000,
-    annualArs: 469000,
     highlight: false,
     description:
       "Para barberías establecidas con varios barberos. Fidelización, equipo multi-admin y reportes mensuales para escalar.",
@@ -86,24 +86,20 @@ const PLANS: Plan[] = [
   },
 ];
 
-function formatArs(value: number): string {
-  return `$${Math.round(value).toLocaleString("es-AR")}`;
-}
-
 export function PricingPlans() {
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
 
   function getPrice(plan: Plan): { display: string; perPeriod: string } {
     if (cycle === "monthly") {
       return {
-        display: formatArs(plan.monthlyArs),
+        display: formatArs(PLAN_META[plan.id].priceArs),
         perPeriod: "/ mes",
       };
     }
-    const monthlyEquiv = plan.annualArs / 12;
+    const annual = annualPriceArs(plan.id);
     return {
-      display: formatArs(monthlyEquiv),
-      perPeriod: `/ mes · ${formatArs(plan.annualArs)} al año`,
+      display: formatArs(Math.round(annual / 12)),
+      perPeriod: `/ mes · ${formatArs(annual)} al año`,
     };
   }
 
@@ -154,7 +150,7 @@ export function PricingPlans() {
                       "bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]",
                 )}
               >
-                -15%
+                -{ANNUAL_DISCOUNT_PERCENT}%
               </span>
             </button>
           </div>

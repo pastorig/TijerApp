@@ -226,7 +226,10 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
       });
 
       if (error || !data) {
-        setErrorMessage("No pudimos crear el barbero.");
+        // El endpoint devuelve el motivo real (ej. el tope de barberos del
+        // plan). Mostrarlo tal cual: un "no pudimos" genérico deja al barbero
+        // sin saber que lo que le falta es subir de plan.
+        setErrorMessage(error?.message || "No pudimos crear el barbero.");
         return;
       }
 

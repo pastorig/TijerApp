@@ -109,6 +109,36 @@ export function formatArs(value: number): string {
 }
 
 /**
+ * Descuento por pagar 12 meses upfront.
+ *
+ * Vive acá y no en la landing: los precios anuales de /precios y de la home
+ * se derivan de esto, no se escriben a mano. Antes estaban hardcodeados en
+ * cada componente y un cambio de precio obligaba a grepear ~12 archivos.
+ */
+export const ANNUAL_DISCOUNT_PERCENT = 15;
+
+/**
+ * Precio anual de un plan: 12 meses con el descuento aplicado, redondeado
+ * hacia abajo al millar para que quede un número comercial limpio.
+ * Ej: 33000 → 33000 × 12 × 0,85 = 336.600 → $336.000.
+ */
+export function annualPriceArs(tier: PlanTier): number {
+  const raw =
+    PLAN_META[tier].priceArs * 12 * (1 - ANNUAL_DISCOUNT_PERCENT / 100);
+  return Math.floor(raw / 1000) * 1000;
+}
+
+/** Precio mensual ya formateado. Ej: "$33.000". */
+export function monthlyPriceLabel(tier: PlanTier): string {
+  return formatArs(PLAN_META[tier].priceArs);
+}
+
+/** Precio anual ya formateado. Ej: "$336.000". */
+export function annualPriceLabel(tier: PlanTier): string {
+  return formatArs(annualPriceArs(tier));
+}
+
+/**
  * Chequea si un plan incluye una feature. Si la feature no existe en la
  * matriz, devuelve true (defensivo: features sin definir son universales).
  */

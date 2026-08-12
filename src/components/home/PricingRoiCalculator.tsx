@@ -4,7 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Calculator, TrendingDown, TrendingUp } from "lucide-react";
 
-const TIJERAPP_PRO_ARS = 46000;
+import { PLAN_META } from "@/lib/plans";
+
+const TIJERAPP_PRO_ARS = PLAN_META.pro.priceArs;
 
 function formatArs(value: number): string {
   return new Intl.NumberFormat("es-AR", {

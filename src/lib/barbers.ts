@@ -1,6 +1,7 @@
 import {
   getSupabaseClient,
   type BarberInsert,
+  type BarberRow,
   type BarberUpdate,
 } from "@/lib/supabase";
 
@@ -43,8 +44,58 @@ export async function listActiveBarbersByBarbershop(barbershopSlug: string) {
   return { data, error };
 }
 
+/**
+ * Crea un barbero vía `POST /api/admin/barbers`.
+ *
+ * NO escribe directo a la tabla como el resto de este módulo: el límite de
+ * barberos por plan tiene que chequearse server-side, porque con la anon key
+ * cualquiera podría saltárselo. Mismo patrón que cupones / fidelización / MP.
+ *
+ * Devuelve `{ data, error }` como los demás helpers para no cambiar el
+ * contrato con AdminBarbersManager; `error.message` trae el motivo real
+ * (ej. el paywall de "tu plan incluye N barberos") para mostrarlo tal cual.
+ */
 export async function createBarber(barber: CreateBarberInput) {
-  return getSupabaseClient().from("barbers").insert(barber).select().single();
+  const { data: sessionData } = await getSupabaseClient().auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) {
+    return {
+      data: null,
+      error: { message: "Tu sesión venció. Volvé a iniciar sesión." },
+    };
+  }
+
+  const response = await fetch("/api/admin/barbers", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      barbershopSlug: barber.barbershop_slug,
+      name: barber.name,
+      display_name: barber.display_name,
+      role: barber.role,
+      whatsapp: barber.whatsapp,
+      commission_percent: barber.commission_percent,
+      is_active: barber.is_active,
+      is_owner: barber.is_owner,
+    }),
+  });
+
+  const payload = (await response.json().catch(() => ({}))) as {
+    barber?: BarberRow;
+    error?: string;
+  };
+
+  if (!response.ok || !payload.barber) {
+    return {
+      data: null,
+      error: { message: payload.error ?? "No pudimos crear el barbero." },
+    };
+  }
+
+  return { data: payload.barber, error: null };
 }
 
 export async function updateBarber({ barberId, values }: UpdateBarberInput) {

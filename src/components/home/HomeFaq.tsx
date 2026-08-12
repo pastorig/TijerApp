@@ -1,10 +1,10 @@
 import { FaqAccordion, type FaqItem } from "./FaqAccordion";
+import { ANNUAL_DISCOUNT_PERCENT, monthlyPriceLabel } from "@/lib/plans";
 
 const FAQ_ITEMS: FaqItem[] = [
   {
     question: "¿Cuánto cuesta usar TijerApp?",
-    answer:
-      "Hay tres planes por mes: Solo $22.000, Esencial $33.000 y Pro $46.000, con 15% off si pagás anual. Arrancás con 14 días de prueba con todo incluido y no te pedimos tarjeta. El detalle de qué trae cada plan está en la página de Precios.",
+    answer: `Hay tres planes por mes: Solo ${monthlyPriceLabel("solo")}, Esencial ${monthlyPriceLabel("esencial")} y Pro ${monthlyPriceLabel("pro")}, con ${ANNUAL_DISCOUNT_PERCENT}% off si pagás anual. Arrancás con 14 días de prueba con todo incluido y no te pedimos tarjeta. El detalle de qué trae cada plan está en la página de Precios.`,
   },
   {
     question: "¿Necesito instalar algo?",

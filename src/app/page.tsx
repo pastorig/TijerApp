@@ -7,6 +7,7 @@ import { CommercialFooter } from "@/components/home/CommercialFooter";
 import { CommercialNav } from "@/components/home/CommercialNav";
 import { HeroShowcase } from "@/components/home/ui/HeroShowcase";
 import { PWARedirector } from "@/components/pwa/PWARedirector";
+import { monthlyPriceLabel } from "@/lib/plans";
 
 // Below-the-fold: dynamic con ssr:true mantiene SEO y reduce el chunk
 // inicial. Cada uno carga su propio JS bundle al hidratarse cuando es
@@ -118,7 +119,10 @@ export default function Home() {
               La plataforma argentina que tu barbería necesita: agenda
               multi-barbero, reservas online sin app, recordatorios y reportes.
               Desde{" "}
-              <span className="font-bold text-white">$22.000/mes</span>.
+              <span className="font-bold text-white">
+                {monthlyPriceLabel("solo")}/mes
+              </span>
+              .
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row">

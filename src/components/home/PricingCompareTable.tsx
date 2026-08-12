@@ -1,5 +1,7 @@
 import { Check, Minus } from "lucide-react";
 
+import { PLAN_META, formatArs } from "@/lib/plans";
+
 type Row = {
   category: string;
   features: {
@@ -108,19 +110,19 @@ export function PricingCompareTable() {
             <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)] sm:text-xs sm:tracking-[0.18em]">
               Feature
             </div>
-            {["Solo", "Esencial", "Pro"].map((name) => (
-              <div key={name} className="text-center">
+            {(["solo", "esencial", "pro"] as const).map((tier) => (
+              <div key={tier} className="text-center">
                 <div
                   className={`text-[11px] font-black uppercase tracking-tight sm:text-sm ${
-                    name === "Esencial"
+                    tier === "esencial"
                       ? "text-[color:var(--brand-gold)]"
                       : "text-white"
                   }`}
                 >
-                  {name}
+                  {PLAN_META[tier].name}
                 </div>
                 <div className="text-[9px] text-[color:var(--text-muted)] sm:text-[10px]">
-                  ${name === "Solo" ? "22.000" : name === "Esencial" ? "33.000" : "46.000"}
+                  {formatArs(PLAN_META[tier].priceArs)}
                 </div>
               </div>
             ))}

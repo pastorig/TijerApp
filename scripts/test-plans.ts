@@ -7,9 +7,15 @@
  * Correr: node --experimental-strip-types scripts/test-plans.ts
  */
 import {
+  ANNUAL_DISCOUNT_PERCENT,
+  PLAN_LIMITS,
+  PLAN_META,
   addMonths,
+  annualPriceArs,
+  annualPriceLabel,
   computeNextPaidUntil,
   hasFeature,
+  monthlyPriceLabel,
   resolvePlanStatus,
 } from "../src/lib/plans.ts";
 
@@ -169,6 +175,47 @@ for (const [label, input] of readOnlyCases) {
     !plan.canAccessFeatures,
   );
 }
+
+// ─── Precios: PLAN_META es la única fuente ─────────────────────────────
+// La landing dejó de tener los números escritos a mano, así que si estos
+// tests pasan, la home / /precios / el JSON-LD muestran lo mismo.
+check("Solo cuesta $22.000", PLAN_META.solo.priceArs, 22000);
+check("Esencial cuesta $33.000", PLAN_META.esencial.priceArs, 33000);
+check("Pro cuesta $46.000", PLAN_META.pro.priceArs, 46000);
+
+check("la escalera de precios es creciente", PLAN_META.solo.priceArs < PLAN_META.esencial.priceArs && PLAN_META.esencial.priceArs < PLAN_META.pro.priceArs, true);
+
+// annualPriceArs: 12 meses con el descuento, redondeado hacia abajo al millar.
+check("anual Solo = $224.000", annualPriceArs("solo"), 224000);
+check("anual Esencial = $336.000", annualPriceArs("esencial"), 336000);
+check("anual Pro = $469.000", annualPriceArs("pro"), 469000);
+
+check("el anual siempre redondea al millar", annualPriceArs("esencial") % 1000, 0);
+check(
+  "el anual es más barato que 12 meses sueltos",
+  annualPriceArs("pro") < PLAN_META.pro.priceArs * 12,
+  true,
+);
+check(
+  `el descuento anual real ≈ ${ANNUAL_DISCOUNT_PERCENT}%`,
+  Math.round((1 - annualPriceArs("solo") / (PLAN_META.solo.priceArs * 12)) * 100),
+  ANNUAL_DISCOUNT_PERCENT,
+);
+
+// Formato es-AR: punto como separador de miles, sin decimales.
+check("monthlyPriceLabel formatea es-AR", monthlyPriceLabel("esencial"), "$33.000");
+check("annualPriceLabel formatea es-AR", annualPriceLabel("pro"), "$469.000");
+
+// ─── Límites de barberos (los enforcea POST /api/admin/barbers) ────────
+check("Solo = 1 barbero", PLAN_LIMITS.solo.maxBarbers, 1);
+check("Esencial = 3 barberos", PLAN_LIMITS.esencial.maxBarbers, 3);
+check("Pro = barberos ilimitados", PLAN_LIMITS.pro.maxBarbers, Number.POSITIVE_INFINITY);
+check(
+  "el tope de barberos nunca baja al subir de plan",
+  PLAN_LIMITS.solo.maxBarbers <= PLAN_LIMITS.esencial.maxBarbers &&
+    PLAN_LIMITS.esencial.maxBarbers <= PLAN_LIMITS.pro.maxBarbers,
+  true,
+);
 
 console.log(`\n${passed}/${passed + failed} OK${failed ? ` · ${failed} FALLARON` : ""}`);
 if (failed) process.exit(1);
