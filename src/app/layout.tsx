@@ -24,12 +24,16 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  // Título y descripción medidos contra lo que Google muestra: el título entre
+  // 50-60 caracteres y la descripción entre 150-160. La anterior tenía 202 y se
+  // cortaba justo donde estaba el precio.
   title: {
-    default: "TijerApp — Turnos online para barberías modernas",
+    default: "TijerApp — Turnos online para barberías en Argentina", // 52
     template: "%s · TijerApp",
   },
   description:
-    "Software de turnos online para barberías en Argentina. Tus clientes reservan solos desde el celular, sin descargar nada. Agenda, barberos, clientes y caja en un panel. Desde $22.000/mes, 14 días gratis.",
+    // 157 caracteres.
+    "Turnos online para barberías argentinas. El cliente reserva solo desde el celular, sin apps. Agenda, comisiones y caja en un panel. 14 días gratis, en pesos.",
   applicationName: "TijerApp",
   // Términos por los que buscaría un barbero argentino. No pesan para el
   // ranking de Google desde hace años, pero los buscadores con IA sí los leen
@@ -77,11 +81,16 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
   },
   openGraph: {
-    title: "TijerApp — Turnos online para barberías modernas",
+    title: "TijerApp — Turnos online para barberías en Argentina",
     description:
       "Reservas, barberos, servicios y agenda en una plataforma operativa. Pensado para usar mientras se trabaja.",
     type: "website",
     siteName: "TijerApp",
+    // Faltaba: sin `og:url` el que comparte el link no tiene una URL canónica
+    // declarada para la tarjeta, y las redes pueden atribuirla a la URL con la
+    // que llegaron (con parámetros de campaña, por ejemplo).
+    url: siteUrl,
+    locale: "es_AR",
     // La imagen se genera automáticamente desde src/app/opengraph-image.tsx
     // (Next auto-detecta el archivo y lo expone como /opengraph-image en PNG).
   },
