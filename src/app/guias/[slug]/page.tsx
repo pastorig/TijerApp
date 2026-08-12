@@ -103,8 +103,15 @@ export default async function GuiaPage({ params }: Props) {
               <span className="chip-gold !px-2 !py-1 !text-[9px]">
                 {guia.category}
               </span>
+              {/* Si la guía se actualizó, mostramos ESA fecha y no la de
+                  publicación: en una comparativa con precios de terceros, la
+                  fecha visible es lo que le dice al lector si el dato sigue
+                  vigente. El JSON-LD ya usaba updatedAt, el texto no. */}
               <span className="text-[11px] text-[color:var(--text-muted)]">
-                {guia.readingMinutes} min · {formatFecha(guia.publishedAt)}
+                {guia.readingMinutes} min ·{" "}
+                {guia.updatedAt
+                  ? `Actualizada el ${formatFecha(guia.updatedAt)}`
+                  : formatFecha(guia.publishedAt)}
               </span>
             </div>
 

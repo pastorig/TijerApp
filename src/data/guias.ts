@@ -54,6 +54,10 @@ export type Guia = {
 
 export const guias: Guia[] = [
   {
+    // Única guía con `updatedAt`: es la que tiene precios de la competencia,
+    // así que la fecha de revisión es parte del contenido. Cuando se vuelvan a
+    // relevar los precios, mover esta fecha Y la del párrafo del relevamiento.
+    updatedAt: "2026-08-12",
     slug: "software-turnos-barberia-argentina-comparativa",
     title:
       "Software de turnos para barberías en Argentina: comparativa honesta (2026)",

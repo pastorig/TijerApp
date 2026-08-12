@@ -4,6 +4,26 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## 📅 OCTUBRE 2026 — dos cosas con fecha, sin recordatorio automático
+
+**21/10/2026 — se le termina el programa Fundador a Leo Cuts.** Ese día pasa de
+Esencial (que tiene gratis desde el 21/07) a Solo, **pagando lo mismo: $22.000**.
+Menos producto por igual precio es el momento típico en que un cliente se va, así
+que no dejarlo caer solo: llegar con una oferta armada, tipo Esencial a precio de
+Fundador (~$26–28k), antes de esa fecha y no después.
+
+**Recién ahí decidir el precio de Solo.** Quedó sobre la mesa bajarlo de $22.000 a
+$19.000 (relevamiento del 12/08/2026: la mediana del mercado argentino en el tramo
+"1 barbero" es ~$14.500, o sea Solo está ~50% arriba). No se hizo ahora **a
+propósito**: $22.000 es el precio congelado de Leo Cuts, y bajar el público por
+debajo dejaría su "precio de Fundador" peor que el de cualquiera.
+
+Con el -15% anual, $19.000 queda en $16.150/mes — prácticamente la mediana, lo que
+convierte al plan anual en argumento de venta. Si se cambia, se toca **solo**
+`src/lib/plans.ts`: desde el commit `6f2c445` toda la landing deriva de ahí.
+
+---
+
 ## ✅ PWA: re-login al reabrir + arranque en tijerapp.com — ARREGLADO en prod (2026-07-29)
 
 Lo reportó Santi (SV Barber): abriendo la app 10 veces al día, en 7 tenía que iniciar sesión
@@ -65,7 +85,7 @@ Secundario y chico: 26 KB de JS sin usar y 13 KB de JS legacy en un chunk.
 
 ---
 
-## 🔎 Landing con movimiento (012) — MERGEADA a `main` (2026-07-29), falta MIRARLA
+## ✅ Landing con movimiento (012) — REVISADA por Bautista (2026-08-12)
 
 Hero, Stats y "Cómo funciona" con movimiento atado al scroll. Sin dependencias nuevas
 (hooks propios + CSS). tsc + lint + build verdes; SSR y fallback sin JS verificados.
@@ -87,7 +107,7 @@ se puede revertir sola.
 
 ---
 
-## 🔎 Onboarding "Primeros pasos" (013) — MERGEADA a `main` (2026-07-29), falta MIRARLA
+## ✅ Onboarding "Primeros pasos" (013) — REVISADA por Bautista (2026-08-12)
 
 Guía de primeros pasos en el Dashboard del admin: le dice al barbero recién registrado qué
 le falta (servicios con su precio, horarios, dirección + Instagram) y le da su link público
