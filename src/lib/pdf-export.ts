@@ -41,6 +41,29 @@ type ReportInput = {
     cancellationRate: number; // 0-100
   }>;
   byDay?: Array<{ date: string; count: number; revenue: number }>;
+  /**
+   * Liquidación de comisiones del período (feature 014). Opcional: solo se
+   * dibuja si hay al menos un barbero con comisión configurada.
+   *
+   * Los números llegan YA calculados por `calculateCommissions`. El PDF no
+   * rehace la cuenta a propósito: si la hiciera por su lado, podría mostrar un
+   * número distinto al de la pantalla, y ahí el barbero deja de confiar en los
+   * dos.
+   */
+  commissions?: {
+    rows: Array<{
+      name: string;
+      revenue: number;
+      commissionPercent: number;
+      commission: number;
+      barbershopShare: number;
+    }>;
+    totalRevenue: number;
+    totalCommission: number;
+    totalBarbershopShare: number;
+    /** Barberos sin porcentaje cargado: se nombran para que no pasen inadvertidos. */
+    unconfiguredNames: string[];
+  };
 };
 
 function formatARS(amount: number): string {
@@ -248,6 +271,91 @@ export function generateBarbershopReportPDF(input: ReportInput): void {
 
     cursorY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? cursorY;
     cursorY += 20;
+  }
+
+  // ─── COMISIONES ───────────────────────────────────────────────────
+  // Va después de la comparativa por barbero porque es su consecuencia: primero
+  // cuánto produjo cada uno, después cuánto le toca.
+  if (input.commissions && input.commissions.rows.length > 0) {
+    const c = input.commissions;
+
+    if (cursorY > 640) {
+      doc.addPage();
+      cursorY = 56;
+    }
+    doc.setTextColor(...DARK);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("COMISIONES DEL PERÍODO", margin, cursorY);
+    cursorY += 8;
+
+    autoTable(doc, {
+      startY: cursorY,
+      head: [["Barbero", "Produjo", "%", "Le corresponde", "Queda en la barbería"]],
+      body: [
+        ...c.rows.map((row) => [
+          row.name,
+          formatARS(row.revenue),
+          `${row.commissionPercent}%`,
+          formatARS(row.commission),
+          formatARS(row.barbershopShare),
+        ]),
+        // Fila de totales: la suma de las filas ya redondeadas, igual que en
+        // pantalla. Comisiones + barbería = producido, exacto.
+        [
+          "TOTAL",
+          formatARS(c.totalRevenue),
+          "",
+          formatARS(c.totalCommission),
+          formatARS(c.totalBarbershopShare),
+        ],
+      ],
+      theme: "grid",
+      headStyles: { fillColor: GOLD, textColor: DARK, fontStyle: "bold" },
+      styles: { fontSize: 9, cellPadding: 6 },
+      columnStyles: {
+        1: { halign: "right" },
+        2: { halign: "right" },
+        3: { halign: "right" },
+        4: { halign: "right" },
+      },
+      // La última fila (totales) en negrita.
+      didParseCell: (data) => {
+        if (data.section === "body" && data.row.index === c.rows.length) {
+          data.cell.styles.fontStyle = "bold";
+        }
+      },
+      margin: { left: margin, right: margin },
+    });
+
+    cursorY =
+      (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable
+        ?.finalY ?? cursorY;
+    cursorY += 12;
+
+    // El porcentaje que se aplica es el vigente, no el que estaba cuando se
+    // hizo cada turno. Un PDF se guarda y se imprime: si no lo aclara acá, el
+    // dato viaja sin su advertencia.
+    doc.setTextColor(...MUTED);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(
+      "Se aplica el porcentaje que tiene cargado hoy cada barbero.",
+      margin,
+      cursorY,
+    );
+    cursorY += 12;
+
+    if (c.unconfiguredNames.length > 0) {
+      doc.text(
+        `Sin comisión configurada: ${c.unconfiguredNames.join(", ")}. No suman al total.`,
+        margin,
+        cursorY,
+      );
+      cursorY += 12;
+    }
+
+    cursorY += 10;
   }
 
   // ─── POR DÍA ──────────────────────────────────────────────────────

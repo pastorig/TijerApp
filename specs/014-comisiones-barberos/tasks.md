@@ -60,8 +60,8 @@ comisiones + barbería cierre exacto, y que "sin configurar" no se lea como 0%.
 
 ## Phase 5: US3 — Se lo mando (P2)
 
-- [ ] T016 [US3] Botón por fila para mandar el detalle por WhatsApp, reusando el helper de `src/lib/whatsapp.ts`
-- [ ] T017 [US3] Sumar el detalle de comisiones al PDF de `ExportReportPdfButton.tsx`
+- [x] T016 [US3] Botón por fila para mandar el detalle por WhatsApp, reusando el helper de `src/lib/whatsapp.ts`
+- [x] T017 [US3] Sumar el detalle de comisiones al PDF de `ExportReportPdfButton.tsx`
 
 ---
 

@@ -5,6 +5,7 @@ import { Download, FileText, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui";
 import type { AppointmentRow, BarberRow } from "@/lib/supabase";
 import { generateBarbershopReportPDF } from "@/lib/pdf-export";
+import { calculateCommissions } from "@/lib/commissions";
 
 type Props = {
   barbershopName: string;
@@ -132,6 +133,56 @@ export function ExportReportPdfButton({
       .sort((a, b) => a.date.localeCompare(b.date));
   }
 
+  /**
+   * Liquidación del período para el PDF.
+   *
+   * Usa `calculateCommissions`, la MISMA función que la pantalla de Reportes:
+   * si el PDF hiciera su propia cuenta podría mostrar un número distinto, y un
+   * número distinto en la liquidación de un empleado es una discusión con plata
+   * de por medio.
+   *
+   * Devuelve `undefined` si nadie tiene comisión configurada, y así la sección
+   * directamente no se dibuja.
+   */
+  function aggregateCommissions() {
+    const revenueByBarberId = new Map<string, { name: string; revenue: number }>();
+    for (const a of appointments) {
+      if (a.status !== "confirmed" && a.status !== "pending") continue;
+      const barber = barbers.find((b) => b.id === a.barber_id);
+      const name =
+        barber?.display_name?.trim() || barber?.name || a.barber_name;
+      const entry = revenueByBarberId.get(a.barber_id) ?? { name, revenue: 0 };
+      entry.revenue += Number(a.service_price) || 0;
+      revenueByBarberId.set(a.barber_id, entry);
+    }
+
+    const summary = calculateCommissions(
+      [...revenueByBarberId.entries()].map(([barberId, v]) => ({
+        barberId,
+        name: v.name,
+        revenue: v.revenue,
+        commissionPercent:
+          barbers.find((b) => b.id === barberId)?.commission_percent ?? null,
+      })),
+    );
+
+    if (summary.rows.length === 0) return undefined;
+
+    return {
+      rows: summary.rows.map((r) => ({
+        name: r.name,
+        revenue: r.revenue,
+        commissionPercent: r.commissionPercent,
+        commission: r.commission,
+        barbershopShare: r.barbershopShare,
+      })),
+      totalRevenue: summary.totalRevenue,
+      totalCommission: summary.totalCommission,
+      totalBarbershopShare: summary.totalBarbershopShare,
+      unconfiguredNames: summary.unconfigured.map((u) => u.name),
+    };
+  }
+
   function handleExport() {
     setIsGenerating(true);
     try {
@@ -143,6 +194,7 @@ export function ExportReportPdfButton({
         topServices: aggregateTopServices(),
         topBarbers: aggregateTopBarbers(),
         byDay: aggregateByDay(),
+        commissions: aggregateCommissions(),
       });
       toast.success("PDF generado", {
         description: "Se descargó al dispositivo.",
