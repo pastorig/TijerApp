@@ -70,9 +70,14 @@ export const PLAN_LIMITS = {
  * descripción corta.
  *
  * Precio en ARS por decisión del founder (post research mercado argentino):
- * el barbero argentino piensa en pesos, no en dólares. Precios fijados al
- * MEP del día del cambio (~$1.450 ARS/USD) sobre USD 15/28/42 originales,
- * redondeados a números limpios.
+ * el barbero argentino piensa en pesos, no en dólares.
+ *
+ * Recalibrados 2026-08-12 contra la competencia que vende en Argentina
+ * (AgendaPro $13.900/$33.900/$44.900, Turnix $9.900, turnoapp $14.999,
+ * Fresha $8.000, Turnito $24.500/$42.000). El escalón Esencial/Pro estaba
+ * muy por encima de la banda del mercado: bajó de $41.000 a $33.000 y de
+ * $61.000 a $46.000. Solo se mantiene en $22.000 (arriba de la mediana a
+ * propósito, y además es el precio congelado del Fundador #1).
  */
 export const PLAN_META = {
   solo: {
@@ -82,12 +87,12 @@ export const PLAN_META = {
   },
   esencial: {
     name: "Esencial",
-    priceArs: 41000,
+    priceArs: 33000,
     tagline: "Barbería con 2 sillas",
   },
   pro: {
     name: "Pro",
-    priceArs: 61000,
+    priceArs: 46000,
     tagline: "Barbería establecida",
   },
 } as const satisfies Record<

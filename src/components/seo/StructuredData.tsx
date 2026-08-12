@@ -31,7 +31,7 @@ const FAQ: Array<{ question: string; answer: string }> = [
   {
     question: "¿Cuánto cuesta TijerApp?",
     answer:
-      "Hay tres planes por mes en pesos argentinos: Solo $22.000, Esencial $41.000 y Pro $61.000, con 15% de descuento pagando anual. Incluye 14 días de prueba sin tarjeta.",
+      "Hay tres planes por mes en pesos argentinos: Solo $22.000, Esencial $33.000 y Pro $46.000, con 15% de descuento pagando anual. Incluye 14 días de prueba sin tarjeta.",
   },
   {
     question: "¿Cobra comisión por cada turno reservado?",

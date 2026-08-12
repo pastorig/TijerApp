@@ -4,7 +4,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: "¿Cuánto cuesta usar TijerApp?",
     answer:
-      "Hay tres planes por mes: Solo $22.000, Esencial $41.000 y Pro $61.000, con 15% off si pagás anual. Arrancás con 14 días de prueba con todo incluido y no te pedimos tarjeta. El detalle de qué trae cada plan está en la página de Precios.",
+      "Hay tres planes por mes: Solo $22.000, Esencial $33.000 y Pro $46.000, con 15% off si pagás anual. Arrancás con 14 días de prueba con todo incluido y no te pedimos tarjeta. El detalle de qué trae cada plan está en la página de Precios.",
   },
   {
     question: "¿Necesito instalar algo?",

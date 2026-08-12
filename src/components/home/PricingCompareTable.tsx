@@ -120,7 +120,7 @@ export function PricingCompareTable() {
                   {name}
                 </div>
                 <div className="text-[9px] text-[color:var(--text-muted)] sm:text-[10px]">
-                  ${name === "Solo" ? "22.000" : name === "Esencial" ? "41.000" : "61.000"}
+                  ${name === "Solo" ? "22.000" : name === "Esencial" ? "33.000" : "46.000"}
                 </div>
               </div>
             ))}

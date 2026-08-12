@@ -200,7 +200,7 @@ Barbero independiente, sin barbería física, alquila sillón o trabaja a domici
 - 1 user admin
 - Soporte por email (48-72h)
 
-#### 🔵 Esencial — $41.000/mes
+#### 🔵 Esencial — $33.000/mes
 Barbería establecida con 2+ sillones. El **plan default**.
 
 - Todo lo de Solo +
@@ -212,7 +212,7 @@ Barbería establecida con 2+ sillones. El **plan default**.
 - Reportes operativos completos (ingresos, top servicios, horarios pico)
 - Soporte por email (24-48h)
 
-#### 🟡 Pro — $61.000/mes
+#### 🟡 Pro — $46.000/mes
 Barberías que quieren crecer en serio o tienen socios/managers.
 
 - Todo lo de Esencial +
@@ -248,7 +248,7 @@ Beneficios exclusivos para los primeros 10 que paguen el primer mes:
 
 ✅ **Se puede decir**:
 - "Desde $22.000/mes" (entry point Solo)
-- "$41.000/mes para barberías con 2+ barberos" (Esencial)
+- "$33.000/mes para barberías con 2+ barberos" (Esencial)
 - "14 días gratis, sin tarjeta"
 - "Cancelás cuando quieras"
 - "Programa Fundadores: precio congelado 3 meses para los primeros 10"
@@ -730,7 +730,7 @@ T estilizada con dos "alas" arriba (pequeñas formas en gold sobre fondo negro).
 - ❌ "Cientos de barberías ya lo usan" → estamos pre-launch
 - ❌ Testimoniales reales con nombres → no tenemos clientes reales aún
 - ❌ "Reportes con IA" → los reportes son SQL/datos reales, no LLM
-- ❌ Promesas de pricing distintas a las definidas en sección 1.7 (Solo $22.000, Esencial $41.000, Pro $61.000)
+- ❌ Promesas de pricing distintas a las definidas en sección 1.7 (Solo $22.000, Esencial $33.000, Pro $46.000)
 
 ---
 
@@ -998,7 +998,7 @@ Similar a Meta pero con interés agregado:
 - ❌ "Sabemos que es difícil..." — condescendiente
 - ❌ "Solo nosotros podemos..." — arrogante
 - ❌ "Como en cualquier negocio..." — no, somos vertical-específico
-- ❌ "Por solo $X al mes" donde $X no coincide con los precios oficiales en ARS definidos en 1.7 (Solo $22.000 / Esencial $41.000 / Pro $61.000)
+- ❌ "Por solo $X al mes" donde $X no coincide con los precios oficiales en ARS definidos en 1.7 (Solo $22.000 / Esencial $33.000 / Pro $46.000)
 - ❌ Tutearse con el lector (en AR rioplatense usamos "vos")
 
 ### Sobre el visual
@@ -1014,7 +1014,7 @@ Similar a Meta pero con interés agregado:
 
 ### "¿Cuánto cuesta?"
 
-> Tenemos 3 planes: **Solo** ($22.000/mes, para barberos independientes), **Esencial** ($41.000/mes, para barberías con 2+ sillones) y **Pro** ($61.000/mes, para las que quieren crecer fuerte). También podés pagar anual con 15% off. Tenés 14 días gratis para probar sin cargar tarjeta.
+> Tenemos 3 planes: **Solo** ($22.000/mes, para barberos independientes), **Esencial** ($33.000/mes, para barberías con 2+ sillones) y **Pro** ($46.000/mes, para las que quieren crecer fuerte). También podés pagar anual con 15% off. Tenés 14 días gratis para probar sin cargar tarjeta.
 
 ### "¿Tiene app?"
 
@@ -1095,7 +1095,7 @@ Estas viven en `data/demo-barbershops.ts` y se usan para testing y como ejemplos
 | 2026-06-04 | US3 PWA completa (botón install + iOS tooltip + banner mobile) |
 | 2026-06-04 | Spec + plan + tasks de push notifications listos para implementar |
 | 2026-06-05 | Este doc reescrito a versión max-quality |
-| 2026-06-13 | **Pricing actualizado**: 3 tiers en ARS (Solo $22.000, Esencial $41.000, Pro $61.000) + anual 15% off + trial 14d + programa Fundadores |
+| 2026-06-13 | **Pricing actualizado**: 3 tiers en ARS (Solo $22.000, Esencial $33.000, Pro $46.000) + anual 15% off + trial 14d + programa Fundadores |
 | 2026-07-06 | **Doc sincronizado con el código real** (auditoría): seña MercadoPago (OAuth) + push + cupones + fidelización + multi-admin + plan gating + reportes mensuales + anticipación mínima + mensaje WhatsApp personalizable = todos IMPLEMENTADOS (el doc los marcaba como conceptuales). Dominio tijerapp.com comprado + activo, Resend verificado. Seña MP conectada en prod (sin activar comercialmente aún). US3 (recordatorio de pago de seña) implementado |
 
 ## 5.4 Cómo extender este documento
@@ -1139,6 +1139,6 @@ Cualquier IA que trabaje sobre marketing, contenido o comunicación de TijerApp 
 7. El producto está pensado **mobile-first** para uso desde el celular del barbero
 8. Foco inicial **Argentina**, arquitectura LATAM-ready
 9. Canal principal de marketing: **Instagram**
-10. Pricing **definido** (ver 1.7): Solo $22.000 / Esencial $41.000 / Pro $61.000 en ARS — no inventar precios distintos ni decir que se convierten desde USD
+10. Pricing **definido** (ver 1.7): Solo $22.000 / Esencial $33.000 / Pro $46.000 en ARS — no inventar precios distintos ni decir que se convierten desde USD
 
 Para detalles técnicos profundos, ver `AGENTS.md` y los specs en `specs/<NNN>-<feature>/`.

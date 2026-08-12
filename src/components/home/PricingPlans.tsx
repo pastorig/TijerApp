@@ -48,8 +48,8 @@ const PLANS: Plan[] = [
     id: "esencial",
     name: "Esencial",
     tagline: "El plan que la mayoría elige",
-    monthlyArs: 41000,
-    annualArs: 418000,
+    monthlyArs: 33000,
+    annualArs: 336000,
     highlight: true,
     description:
       "Para barberías con 2 sillones. Sumás cobro de seña, cupones y reportes por barbero para operar de forma profesional.",
@@ -68,8 +68,8 @@ const PLANS: Plan[] = [
     id: "pro",
     name: "Pro",
     tagline: "Para crecer en serio",
-    monthlyArs: 61000,
-    annualArs: 622000,
+    monthlyArs: 46000,
+    annualArs: 469000,
     highlight: false,
     description:
       "Para barberías establecidas con varios barberos. Fidelización, equipo multi-admin y reportes mensuales para escalar.",

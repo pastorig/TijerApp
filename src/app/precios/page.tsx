@@ -39,7 +39,7 @@ const BILLING_FAQ: FaqItem[] = [
   {
     question: "¿Hay descuento por pago anual?",
     answer:
-      "Sí: 15% off pagando 12 meses upfront. Te queda en $224.000/año para Solo, $418.000/año para Esencial y $622.000/año para Pro.",
+      "Sí: 15% off pagando 12 meses upfront. Te queda en $224.000/año para Solo, $336.000/año para Esencial y $469.000/año para Pro.",
   },
   {
     question: "¿Cómo sé si soy uno de los 10 Fundadores?",
@@ -84,7 +84,7 @@ export const metadata: Metadata = {
   // El template de layout.tsx agrega "· TijerApp" automáticamente.
   title: "Precios en pesos, sin comisión por reserva",
   description:
-    "Tres planes para barberías argentinas: Solo $22.000, Esencial $41.000 y Pro $61.000 por mes. En pesos, sin comisión por turno, 14 días gratis sin tarjeta y sin permanencia.",
+    "Tres planes para barberías argentinas: Solo $22.000, Esencial $33.000 y Pro $46.000 por mes. En pesos, sin comisión por turno, 14 días gratis sin tarjeta y sin permanencia.",
   alternates: { canonical: "/precios" },
 };
 

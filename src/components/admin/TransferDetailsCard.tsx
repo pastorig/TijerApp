@@ -12,7 +12,7 @@ export function TransferDetailsCard({
   precio,
   className,
 }: {
-  /** Precio ya formateado, ej. "$61.000". */
+  /** Precio ya formateado, ej. "$46.000". */
   precio: string;
   className?: string;
 }) {
