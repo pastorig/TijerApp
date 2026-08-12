@@ -96,7 +96,9 @@ export default function Home() {
           }}
         />
         <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-14 pt-10 sm:px-8 sm:pb-20 sm:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10 lg:px-12 lg:pb-24 lg:pt-20">
-          <div className="animate-fade-up">
+          {/* `animate-rise` y no `animate-fade-up`: acá arriba del pliegue no
+              se puede arrancar en opacity 0 sin retrasar el LCP. Ver globals.css. */}
+          <div className="animate-rise">
             <div className="chip-gold">
               <span className="dot-gold-pulse" />
               Programa Fundadores abierto · Primeros 10
@@ -171,7 +173,7 @@ export default function Home() {
             </ul>
           </div>
 
-          <div className="animate-fade-up mb-8 sm:mb-10 lg:mb-0 lg:pl-4">
+          <div className="animate-rise mb-8 sm:mb-10 lg:mb-0 lg:pl-4">
             <HeroShowcase />
           </div>
         </div>

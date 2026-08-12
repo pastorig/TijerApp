@@ -556,6 +556,27 @@ option:hover {
 .animate-fade-up {
   animation: tijerapp-fade-in var(--duration-slow) var(--ease-out-soft) both;
 }
+
+/* Entrada SIN opacidad, solo desplazamiento. Para lo que está arriba del
+   pliegue.
+
+   Por qué existe: `animate-fade-up` arranca en `opacity: 0`, y un elemento
+   invisible no cuenta como "pintado" para el navegador. Usarla en el hero
+   —que es el bloque más grande de la pantalla inicial— empujaba el LCP unos
+   360ms, castigando la métrica a cambio de un fundido que casi no se percibe.
+   Animando solo el transform, el texto es visible desde el primer frame y el
+   movimiento se mantiene igual. */
+@keyframes tijerapp-rise {
+  from {
+    transform: translateY(6px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.animate-rise {
+  animation: tijerapp-rise var(--duration-slow) var(--ease-out-soft) both;
+}
 .animate-fade-in {
   animation: tijerapp-fade-in-soft var(--duration-base) var(--ease-out-soft)
     both;
