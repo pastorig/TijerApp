@@ -24,7 +24,7 @@ const BILLING_FAQ: FaqItem[] = [
   {
     question: "¿Por qué cobran en pesos?",
     answer:
-      "Porque pensamos que el barbero argentino piensa en pesos, no en dólares. Precios fijos en ARS, sin conversión, sin sorpresas. Los actualizamos cada 3 meses según evolución del MEP para mantener el valor real.",
+      "Porque el barbero argentino piensa en pesos, no en dólares. Tu cuota es un número fijo en pesos: no se recalcula contra el dólar ni te cambia el importe porque se movió el tipo de cambio. Cada tanto revisamos los precios, como todo en Argentina, pero eso es una decisión nuestra y avisada — no un número que se mueve solo todos los meses. Y si entrás al programa Fundadores, lo tenés congelado.",
   },
   {
     question: "¿Puedo cancelar cuando quiera?",

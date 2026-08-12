@@ -15,7 +15,16 @@
  * **Regla de contenido:** cada guía tiene que servirle a alguien que NO compre.
  * Un texto que solo existe para meter palabras clave se nota, no convierte, y
  * Google lo trata como contenido pobre.
+ *
+ * **Datos de la competencia:** los precios ajenos que aparecen en la
+ * comparativa se relevaron el 12/08/2026 sobre la página de precios oficial de
+ * cada producto, no sobre blogs (los "mejores apps de turnos 2026" que salen
+ * primero en Google son de los propios competidores y se contradicen entre sí).
+ * Si un dato no está publicado por la fuente, no se pone: ver la regla de no
+ * inventar cifras en la guía de SEO/GEO.
  */
+
+import { monthlyPriceLabel } from "@/lib/plans";
 
 export type GuiaBlock =
   | { type: "p"; text: string }
@@ -57,7 +66,7 @@ export const guias: Guia[] = [
     blocks: [
       {
         type: "p",
-        text: "Si tenés una barbería en Argentina y estás buscando con qué manejar los turnos, la lista de opciones se arma rápido: Booksy, AgendaPro, Fresha y TijerApp. Lo que no se arma tan rápido es entender cuál te conviene, porque los precios están en monedas distintas y algunos cobran de formas que no se ven a primera vista.",
+        text: "Si tenés una barbería en Argentina y estás buscando con qué manejar los turnos, la lista de opciones se arma rápido: Booksy, AgendaPro, Fresha y TijerApp. Lo que no se arma tan rápido es entender cuál te conviene, porque el precio de la lista no siempre es lo que terminás pagando: hay cargos por empleado, cargos por cliente nuevo y al menos una que todavía cobra en dólares.",
       },
       {
         type: "p",
@@ -71,8 +80,9 @@ export const guias: Guia[] = [
       {
         type: "ol",
         items: [
-          "¿En qué moneda te cobran? Un software en dólares te cambia el costo todos los meses sin que nadie toque nada.",
-          "¿Se queda con una parte de tus clientes? Algunos cobran comisión por cada cliente nuevo que llega por su plataforma.",
+          "¿En qué moneda te cobran? Un software en dólares te cambia el costo todos los meses sin que nadie toque nada. Hoy la mayoría ya publica precios en pesos, pero no todas.",
+          "¿El precio es por local o por persona? Varias cobran por cada integrante del equipo, así que el número de la publicidad es el de una sola silla.",
+          "¿Se queda con una parte de tus clientes? Algunas cobran un cargo por cada cliente nuevo que llega por su plataforma.",
           "¿Podés cobrar con MercadoPago? Es la forma en que efectivamente cobra una barbería acá.",
         ],
       },
@@ -81,20 +91,26 @@ export const guias: Guia[] = [
         type: "table",
         headers: ["", "TijerApp", "Booksy", "AgendaPro", "Fresha"],
         rows: [
-          ["Moneda", "Pesos argentinos", "Dólares", "Dólares", "Dólares"],
+          [
+            "Moneda",
+            "Pesos argentinos",
+            "Dólares",
+            "Pesos argentinos",
+            "Pesos argentinos",
+          ],
           [
             "Desde",
-            "$22.000 ARS/mes",
-            "~USD 30/mes",
-            "~USD 40/mes",
-            "Plan base gratis",
+            `${monthlyPriceLabel("solo")} ARS/mes`,
+            "USD 29,99/mes + USD 20 por empleado",
+            "$13.900 ARS/mes (1 profesional)",
+            "$8.000 ARS/mes (1 persona)",
           ],
           [
             "Comisión por cliente nuevo",
             "No",
+            "Solo si activás Boost: 30% de la primera visita",
             "No",
-            "No",
-            "Sí, 20% de cada cliente que llega por su marketplace",
+            "Sí, un cargo único por cliente nuevo que llega por su marketplace",
           ],
           ["Integra MercadoPago", "Sí", "No", "Parcial según país", "No"],
           ["Idioma y soporte", "Argentino", "Global", "Latam", "Global"],
@@ -109,23 +125,23 @@ export const guias: Guia[] = [
       },
       {
         type: "p",
-        text: "Los precios de la competencia son los publicados al momento de escribir esto y pueden haber cambiado — sobre todo los que están en dólares, que además se mueven solos con el tipo de cambio. Conviene verificarlos antes de decidir.",
+        text: "Los precios de la competencia son los que cada una publicaba en su propia página el 12 de agosto de 2026 y pueden haber cambiado — sobre todo los de Booksy, que al estar en dólares se mueven solos con el tipo de cambio. Conviene verificarlos antes de decidir. Fresha no publica en su página cuánto cobra por cliente nuevo del marketplace, así que no lo ponemos: preferimos dejar el dato incompleto antes que inventar un número.",
       },
       { type: "h2", text: "Cuándo conviene cada uno" },
       { type: "h3", text: "Fresha" },
       {
         type: "p",
-        text: "Su plan base es gratis, y para alguien que recién arranca y no quiere gastar nada, eso es real. El costo aparece después: cobran un porcentaje de cada cliente nuevo que te llega por su marketplace. Si tu barbería crece gracias a esa vitrina, terminás pagando bastante más que una cuota fija. Si tus clientes llegan por recomendación o por Instagram, esa vitrina no te sirve y estás en un marketplace donde también aparece la barbería de la otra cuadra.",
+        text: "Es la más barata de la lista y cobra en pesos: $8.000 por mes para una persona, $5.300 por cada integrante si son varios. Ojo con una cosa: durante años fue gratis y mucha gente todavía la recomienda así, pero el plan gratuito lo discontinuaron en 2025. El otro costo aparece después: cobran un cargo por cada cliente nuevo que te llega por su marketplace (los que ya son tuyos no pagan nada). Si tu barbería crece gracias a esa vitrina, ese cargo se suma a la cuota. Si tus clientes llegan por recomendación o por Instagram, la vitrina no te sirve y estás igual en un marketplace donde también aparece la barbería de la otra cuadra.",
       },
       { type: "h3", text: "Booksy" },
       {
         type: "p",
-        text: "Es la más conocida a nivel mundial y el producto está muy pulido. Los dos problemas para Argentina son el precio en dólares y que no integra MercadoPago, así que si querés cobrar una seña tenés que resolverlo por afuera.",
+        text: "Es la más conocida a nivel mundial y el producto está muy pulido. Es también la única de esta lista que sigue cobrando en dólares: USD 29,99 por mes más USD 20 por cada empleado extra, así que una barbería de dos personas arranca en USD 50 y el costo en pesos te cambia solo cada vez que se mueve el tipo de cambio. Sumale que no integra MercadoPago: si querés cobrar una seña, lo tenés que resolver por afuera.",
       },
       { type: "h3", text: "AgendaPro" },
       {
         type: "p",
-        text: "Es la más completa de la lista: maneja stock de productos, comisiones y marketing. Si tenés una cadena con varias sucursales y vendés productos, es una opción seria. Para una barbería de uno a cinco sillones, es pagar en dólares por un montón de cosas que no vas a usar.",
+        text: "Es la más completa de la lista: maneja stock de productos, comisiones y marketing. Cobra en pesos y su plan de entrada ($13.900 para un profesional) es más barato que el nuestro, así que si el precio es lo único que mirás, es una opción honesta. Donde se nota que no está pensada para una barbería es en el salto: el plan que habilita trabajar con equipo cuesta $33.900 y viene con inventario, encuestas y campañas de mail. Si tenés una cadena con varias sucursales y vendés productos, eso vale la pena. Si sos tres personas cortando el pelo, estás pagando por un módulo de stock que no vas a abrir nunca.",
       },
       { type: "h3", text: "TijerApp" },
       {

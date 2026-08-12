@@ -119,8 +119,8 @@ TijerApp **no es una app para una sola barbería**.
 
 | Competidor | Fortaleza | Debilidad para nuestro target |
 |---|---|---|
-| **Booksy** | Marca conocida internacional, marketplace de barberos | Pesado, muchas features que el barbero AR no necesita, comisión por reserva, soporte limitado en AR |
-| **Fresha** | Free tier generoso, look moderno | Setup complejo, pensado más para spa/peluquería que barbería, push de procesamiento de pagos propio |
+| **Booksy** | Marca conocida internacional, marketplace de barberos | Cobra en dólares (USD 29,99 + USD 20 por empleado), no integra MercadoPago, 30% de la primera visita si activás Boost, soporte limitado en AR |
+| **Fresha** | El más barato de la lista ($8.000 ARS, $5.300 por integrante), look moderno | Ya NO tiene plan gratis (lo discontinuaron en 2025), cargo por cliente nuevo del marketplace, pensado más para spa/peluquería que barbería |
 | **Vagaro** | Robusto en US | Casi inexistente en AR, en inglés |
 | **Squire** | Excelente UX para barbería | US-only, no LATAM |
 | **Setmore** | Free, multi-uso | Genérico, no específico de barbería |
