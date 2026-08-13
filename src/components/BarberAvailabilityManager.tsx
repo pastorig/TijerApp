@@ -19,6 +19,7 @@ import {
 import { listActiveServicesByBarber } from "@/lib/barber-services";
 import { useConfirm } from "@/components/ui";
 import { formatDateForDisplay, timeValueToMinutes } from "@/lib/format";
+import { getTodayYmd } from "@/components/admin/date-utils";
 import type { BarberRow, BarberServiceRow } from "@/lib/supabase";
 
 type BarberAvailabilityManagerProps = {
@@ -176,17 +177,36 @@ export function BarberAvailabilityManager({
     return analyses;
   }, [weeklySchedules, services]);
 
-  const sortedBlocks = useMemo(
-    () =>
-      [...timeBlocks].sort((firstBlock, secondBlock) => {
-        if (firstBlock.block_date === secondBlock.block_date) {
-          return firstBlock.start_time.localeCompare(secondBlock.start_time);
-        }
+  /**
+   * Bloqueos separados en próximos y pasados.
+   *
+   * Antes era una sola lista ascendente por fecha, así que los bloqueos ya
+   * vencidos —que no se pueden accionar, solo mirar— quedaban ARRIBA de todo
+   * y empujaban los próximos hacia abajo. Con el uso normal la pantalla se
+   * llena de basura vieja.
+   *
+   * No se borran: el bloqueo es la explicación de por qué ese día hubo un
+   * hueco sin turnos, y el calendario de un día pasado lo sigue mostrando.
+   * Acá simplemente se colapsan.
+   */
+  const { upcomingBlocks, pastBlocks } = useMemo(() => {
+    const today = getTodayYmd();
+    const byDateThenTime = (a: (typeof timeBlocks)[number], b: typeof a) =>
+      a.block_date === b.block_date
+        ? a.start_time.localeCompare(b.start_time)
+        : a.block_date.localeCompare(b.block_date);
 
-        return firstBlock.block_date.localeCompare(secondBlock.block_date);
-      }),
-    [timeBlocks],
-  );
+    const upcoming = timeBlocks
+      .filter((block) => block.block_date >= today)
+      .sort(byDateThenTime);
+    // Los pasados van al revés: el más reciente primero, que es el único que
+    // alguien va a querer mirar.
+    const past = timeBlocks
+      .filter((block) => block.block_date < today)
+      .sort((a, b) => byDateThenTime(b, a));
+
+    return { upcomingBlocks: upcoming, pastBlocks: past };
+  }, [timeBlocks]);
 
   useEffect(() => {
     let isMounted = true;
@@ -475,6 +495,40 @@ export function BarberAvailabilityManager({
     } finally {
       setDeletingBlockId(null);
     }
+  }
+
+  /** Tarjeta de un bloqueo. `isPast` la atenúa: ya no se puede accionar. */
+  function renderBlockCard(
+    block: (typeof timeBlocks)[number],
+    isPast = false,
+  ) {
+    return (
+      <div
+        key={block.id}
+        className={cn(
+          "flex flex-col gap-2 rounded-md border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 py-3 sm:flex-row sm:items-center sm:justify-between",
+          isPast && "opacity-60",
+        )}
+      >
+        <div>
+          <p className="text-sm font-semibold text-white">
+            {formatDateForDisplay(block.block_date)} · {block.start_time} a{" "}
+            {block.end_time}
+          </p>
+          <p className="mt-1 text-xs text-[color:var(--text-muted)]">
+            {block.reason || "Bloqueo manual"}
+          </p>
+        </div>
+        <button
+          type="button"
+          disabled={deletingBlockId === block.id}
+          onClick={() => handleDeleteBlock(block.id)}
+          className="inline-flex min-h-8 items-center justify-center rounded-md border border-[color:var(--danger)]/40 px-3 py-2 text-[11px] font-bold uppercase text-[color:var(--danger)] transition hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {deletingBlockId === block.id ? "Eliminando..." : "Eliminar"}
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -912,36 +966,29 @@ export function BarberAvailabilityManager({
             </form>
 
             <div className="mt-3 grid gap-2">
-              {sortedBlocks.length === 0 ? (
+              {upcomingBlocks.length === 0 ? (
                 <p className="text-sm text-[color:var(--text-muted)]">
-                  Sin bloqueos manuales cargados.
+                  {pastBlocks.length === 0
+                    ? "Sin bloqueos manuales cargados."
+                    : "Sin bloqueos próximos."}
                 </p>
               ) : (
-                sortedBlocks.map((block) => (
-                  <div
-                    key={block.id}
-                    className="flex flex-col gap-2 rounded-md border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        {formatDateForDisplay(block.block_date)} · {block.start_time} a{" "}
-                        {block.end_time}
-                      </p>
-                      <p className="mt-1 text-xs text-[color:var(--text-muted)]">
-                        {block.reason || "Bloqueo manual"}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={deletingBlockId === block.id}
-                      onClick={() => handleDeleteBlock(block.id)}
-                      className="inline-flex min-h-8 items-center justify-center rounded-md border border-[color:var(--danger)]/40 px-3 py-2 text-[11px] font-bold uppercase text-[color:var(--danger)] transition hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {deletingBlockId === block.id ? "Eliminando..." : "Eliminar"}
-                    </button>
-                  </div>
-                ))
+                upcomingBlocks.map((block) => renderBlockCard(block))
               )}
+
+              {/* Los pasados, colapsados: están para consultar, no para
+                  accionar. `<details>` nativo — no hace falta estado ni una
+                  librería para un acordeón de una sección. */}
+              {pastBlocks.length > 0 ? (
+                <details className="group mt-1 rounded-md border border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]">
+                  <summary className="cursor-pointer list-none px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)] transition-colors hover:text-white">
+                    Anteriores ({pastBlocks.length})
+                  </summary>
+                  <div className="grid gap-2 px-3 pb-3">
+                    {pastBlocks.map((block) => renderBlockCard(block, true))}
+                  </div>
+                </details>
+              ) : null}
             </div>
           </div>
         </>
