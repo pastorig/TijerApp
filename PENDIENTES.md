@@ -49,9 +49,8 @@ actualiza el manifest cuando quiere); el `PWARedirector` de la home las cubre ig
 `barbershop_payments` se venía llenando desde la feature 007 y no había pantalla que la
 leyera. Nuevo endpoint `GET /api/owner/payments` (owner-gated).
 
-Pendiente decidido a propósito: **la tabla de planes sigue siendo un `<table>` que en el
-celular scrollea para el costado** — es la única pantalla del owner que no usa tarjetas.
-Quedó afuera de este cambio.
+✅ **Cerrado el 2026-08-12:** la tabla de planes pasó a tarjetas, igual que el historial de
+cobros. Era la única pantalla del owner que scrolleaba para el costado en el celular.
 
 ---
 
@@ -70,12 +69,28 @@ Métricas: FCP 1,2s · **LCP 3,0s** · TBT 20ms · **CLS 0** · Speed Index 1,2s
 
 Los 4 defectos de accesibilidad ya están arreglados y en prod (commit `c0f4e9f`).
 
-**Lo que queda, y es una sola cosa: LCP 3,0s.** Es el punto flojo (score 77) contra un
-FCP de 1,2s — o sea, el elemento más grande aparece bastante después de que la página ya
-pintó. El elemento LCP es un `span` del hero. Todavía **no está diagnosticado**: hay que
-ver si es la fuente (Geist), el degradado dorado del título o el JS del hero. Ojo: se midió
-contra un server local, así que en Vercel con CDN el número puede dar distinto — conviene
-volver a medir contra prod antes de tocar nada.
+### ✅ CERRADO — el LCP ya está arreglado y medido contra prod (2026-08-12)
+
+Los números de arriba salieron de un `next start` **local**, sin CDN y en frío, así que
+exageraban. Medido con Lighthouse 12 contra `https://tijerapp.com`:
+
+| | Mobile | Desktop |
+|---|---|---|
+| Performance | **97** | **100** |
+| LCP | **2,6 s** (score 88) | **0,6 s** |
+| FCP | 1,3 s | 0,4 s |
+| TBT | 40 ms | 0 ms |
+| CLS | **0** | **0** |
+
+La causa del LCP alto era el hero arrancando en `opacity: 0` por `animate-fade-up`: un
+elemento invisible no cuenta como pintado, así que el bloque más grande de la pantalla no
+podía registrar LCP hasta que la animación avanzaba. Arreglado en el commit `73b7a6d` con
+la utilidad `animate-rise`, que hace el mismo movimiento animando solo el transform.
+
+El elemento LCP es el `<h1>` del hero y el 75% restante es "render delay", que a esta
+altura es el costo del CPU simulado de mobile, no un defecto del sitio. **2,6 s contra el
+umbral de 2,5 s de Google no vale la pena perseguirlo** con dos clientes pagando: no hay
+nada roto, hay un décimo de segundo de diferencia contra un umbral arbitrario.
 
 Secundario y chico: 26 KB de JS sin usar y 13 KB de JS legacy en un chunk.
 

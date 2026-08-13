@@ -178,64 +178,53 @@ export function OwnerPlansManager() {
             No hay barberías cargadas.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b border-[color:var(--border-subtle)] text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
-                <tr>
-                  <th className="px-4 py-3 text-left">Barbería</th>
-                  <th className="px-4 py-3 text-left">Plan</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-left">Trial</th>
-                  <th className="px-4 py-3 text-right">Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {GROUP_ORDER.map((group) => {
-                  const rows = grouped[group.key];
-                  if (rows.length === 0) return null;
-                  const isCollapsed = group.collapsible && !showDemo;
-                  return (
-                    <Fragment key={group.key}>
-                      <tr className="border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]/60">
-                        <td colSpan={5} className="px-4 py-2">
-                          {group.collapsible ? (
-                            <button
-                              type="button"
-                              onClick={() => setShowDemo((v) => !v)}
-                              className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)] transition-colors hover:text-white"
-                            >
-                              {isCollapsed ? (
-                                <ChevronRight className="size-3" />
-                              ) : (
-                                <ChevronDown className="size-3" />
-                              )}
-                              {group.label} ({rows.length})
-                            </button>
-                          ) : (
-                            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
-                              {group.label}{" "}
-                              <span className="text-[color:var(--text-muted)]">
-                                ({rows.length})
-                              </span>
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                      {isCollapsed
-                        ? null
-                        : rows.map((p) => (
-                            <PlanTableRow
-                              key={p.slug}
-                              p={p}
-                              onEdit={() => setEditing(p)}
-                              onPay={() => setPaying(p)}
-                            />
-                          ))}
-                    </Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
+          /* Tarjetas y no `<table>`, igual que el historial de cobros de más
+             abajo: esta pantalla se mira desde el celular y una tabla de 5
+             columnas obliga a scrollear para el costado. Era la única
+             pantalla del owner que quedaba con ese problema. */
+          <div className="grid gap-3 px-3 pb-3 sm:px-4 sm:pb-4">
+            {GROUP_ORDER.map((group) => {
+              const rows = grouped[group.key];
+              if (rows.length === 0) return null;
+              const isCollapsed = group.collapsible && !showDemo;
+              return (
+                <Fragment key={group.key}>
+                  <div className="pt-1">
+                    {group.collapsible ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowDemo((v) => !v)}
+                        className="inline-flex min-h-8 items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)] transition-colors hover:text-white"
+                      >
+                        {isCollapsed ? (
+                          <ChevronRight className="size-3" />
+                        ) : (
+                          <ChevronDown className="size-3" />
+                        )}
+                        {group.label} ({rows.length})
+                      </button>
+                    ) : (
+                      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
+                        {group.label}{" "}
+                        <span className="text-[color:var(--text-muted)]">
+                          ({rows.length})
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                  {isCollapsed
+                    ? null
+                    : rows.map((p) => (
+                        <PlanCard
+                          key={p.slug}
+                          p={p}
+                          onEdit={() => setEditing(p)}
+                          onPay={() => setPaying(p)}
+                        />
+                      ))}
+                </Fragment>
+              );
+            })}
           </div>
         )}
       </section>
@@ -276,7 +265,7 @@ export function OwnerPlansManager() {
  * grupos (activas / en prueba / dadas de baja / demo) y el markup se repetía en
  * cada uno.
  */
-function PlanTableRow({
+function PlanCard({
   p,
   onEdit,
   onPay,
@@ -285,100 +274,82 @@ function PlanTableRow({
   onEdit: () => void;
   onPay: () => void;
 }) {
+  const trialDays = daysRemaining(p.trial_expires_at);
+  const graceDays = daysRemaining(p.grace_expires_at);
+  const statusMeta = p.status ? STATUS_LABEL[p.status] : null;
+  const tierMeta = p.plan_tier ? PLAN_META[p.plan_tier] : null;
 
-      const trialDays = daysRemaining(p.trial_expires_at);
-      const graceDays = daysRemaining(p.grace_expires_at);
-      const statusMeta = p.status ? STATUS_LABEL[p.status] : null;
-      const tierMeta = p.plan_tier ? PLAN_META[p.plan_tier] : null;
-      return (
-        <tr
-          key={p.slug}
-          className="border-b border-[color:var(--border-subtle)] last:border-b-0 hover:bg-[color:var(--surface-0)]/40"
+  return (
+    <div className="rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-3.5 transition-colors hover:border-[color:var(--border-strong)] sm:p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate font-bold text-white">{p.name}</p>
+          <code className="text-[10px] text-[color:var(--text-muted)]">
+            {p.slug}
+          </code>
+        </div>
+        {statusMeta ? (
+          <span
+            className={cn(
+              "shrink-0 rounded-[var(--radius-xs)] border bg-[color:var(--surface-0)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]",
+              statusMeta.classes,
+            )}
+          >
+            {statusMeta.label}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[11px]">
+        {tierMeta ? (
+          <span className="inline-flex items-center rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
+            {tierMeta.name} · ${tierMeta.priceArs.toLocaleString("es-AR")}
+          </span>
+        ) : (
+          <span className="text-[10px] text-[color:var(--text-muted)]">
+            sin plan
+          </span>
+        )}
+        {/* Prioridad: si tiene período pago vigente, lo mostramos.
+            Sino, el countdown de trial/gracia. */}
+        {p.current_period_ends_at ? (
+          <span className="font-semibold text-[color:var(--success)]">
+            Pagado hasta {formatShortDate(p.current_period_ends_at)}
+          </span>
+        ) : p.status === "active" ? (
+          <span className="text-[color:var(--text-muted)]">activo</span>
+        ) : p.status === "trial" && trialDays !== null && trialDays > 0 ? (
+          <span className="text-[color:var(--text-secondary)]">
+            {trialDays}d restantes
+          </span>
+        ) : (p.status === "grace" || p.status === "trial") &&
+          graceDays !== null &&
+          graceDays > 0 ? (
+          <span className="text-amber-300">gracia: {graceDays}d</span>
+        ) : null}
+      </div>
+
+      {/* En el celular los botones ocupan toda la fila: son el objetivo táctil
+          principal de la pantalla. */}
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          onClick={() => onPay()}
+          className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-[var(--radius-xs)] border border-[color:var(--success)]/50 bg-[color:var(--success-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors hover:bg-[color:var(--success)] hover:text-black sm:min-h-9"
         >
-          <td className="px-4 py-3">
-            <div>
-              <p className="font-bold text-white">{p.name}</p>
-              <code className="text-[10px] text-[color:var(--text-muted)]">
-                {p.slug}
-              </code>
-            </div>
-          </td>
-          <td className="px-4 py-3">
-            {tierMeta ? (
-              <span className="inline-flex items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
-                {tierMeta.name} · ${tierMeta.priceArs.toLocaleString("es-AR")}
-              </span>
-            ) : (
-              <span className="text-[10px] text-[color:var(--text-muted)]">
-                sin plan
-              </span>
-            )}
-          </td>
-          <td className="px-4 py-3">
-            {statusMeta ? (
-              <span
-                className={cn(
-                  "inline-flex items-center rounded-[var(--radius-xs)] border bg-[color:var(--surface-0)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]",
-                  statusMeta.classes,
-                )}
-              >
-                {statusMeta.label}
-              </span>
-            ) : (
-              <span className="text-[10px] text-[color:var(--text-muted)]">
-                —
-              </span>
-            )}
-          </td>
-          <td className="px-4 py-3 text-[11px] text-[color:var(--text-secondary)]">
-            {/* Prioridad: si tiene período pago vigente, lo mostramos.
-                Sino, el countdown de trial/gracia. */}
-            {p.current_period_ends_at ? (
-              <span className="font-semibold text-[color:var(--success)]">
-                Pagado hasta{" "}
-                {formatShortDate(p.current_period_ends_at)}
-              </span>
-            ) : p.status === "active" ? (
-              <span className="text-[color:var(--text-muted)]">
-                activo
-              </span>
-            ) : p.status === "trial" &&
-              trialDays !== null &&
-              trialDays > 0 ? (
-              <span>{trialDays}d restantes</span>
-            ) : (p.status === "grace" || p.status === "trial") &&
-              graceDays !== null &&
-              graceDays > 0 ? (
-              <span className="text-amber-300">
-                gracia: {graceDays}d
-              </span>
-            ) : (
-              <span className="text-[color:var(--text-muted)]">
-                —
-              </span>
-            )}
-          </td>
-          <td className="px-4 py-3 text-right">
-            <div className="inline-flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => onPay()}
-                className="inline-flex min-h-8 items-center justify-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--success)]/50 bg-[color:var(--success-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors hover:bg-[color:var(--success)] hover:text-black"
-              >
-                <Wallet className="size-3" />
-                Registrar pago
-              </button>
-              <button
-                type="button"
-                onClick={() => onEdit()}
-                className="inline-flex min-h-8 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-gold-grad hover:text-black"
-              >
-                Editar
-              </button>
-            </div>
-          </td>
-        </tr>
-      );
+          <Wallet className="size-3" />
+          Registrar pago
+        </button>
+        <button
+          type="button"
+          onClick={() => onEdit()}
+          className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-gold-grad hover:text-black sm:min-h-9"
+        >
+          Editar
+        </button>
+      </div>
+    </div>
+  );
 }
 
 type PaymentRow = {
