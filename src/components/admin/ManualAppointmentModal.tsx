@@ -36,8 +36,12 @@ type ManualAppointmentModalProps = {
  * sería afirmar algo que todavía no pasó. La auto-confirmación existe para las
  * reservas que hace el cliente, que sí son una confirmación de su parte.
  *
- * Por lo mismo el teléfono es obligatorio: sin número no hay forma de
- * escribirle después para confirmarlo.
+ * El teléfono es **opcional**. Sin número no se le puede escribir por WhatsApp
+ * para confirmarle, pero el barbero igual puede confirmar el turno a mano desde
+ * el turnero — y el caso real de "se me sentó uno sin turno y no le voy a pedir
+ * el celular" es más común que el de anotarlo para avisarle después. El turnero
+ * ya contempla el turno sin teléfono: no muestra el chip ni arma el link de
+ * WhatsApp.
  *
  * Cubre tanto "encajar un corte fuera del horario" como "cargar a mano un
  * turno de alguien que vino sin reservar por la app".
@@ -123,12 +127,6 @@ export function ManualAppointmentModal({
     }
     if (!customerName.trim()) {
       setErrorMessage("Poné el nombre del cliente.");
-      return;
-    }
-    // Obligatorio: el turno queda pendiente y sin número no se le puede
-    // escribir para confirmarlo.
-    if (!customerPhone.trim()) {
-      setErrorMessage("Poné el teléfono del cliente para poder confirmarle.");
       return;
     }
     if (!date || !time) {
@@ -283,7 +281,7 @@ export function ManualAppointmentModal({
             </div>
             <div>
               <label htmlFor="manual-phone" className={labelClass}>
-                Teléfono
+                Teléfono (opcional)
               </label>
               <input
                 id="manual-phone"
@@ -294,7 +292,6 @@ export function ManualAppointmentModal({
                 disabled={isSaving}
                 placeholder="11..."
                 className={inputClass}
-                required
               />
             </div>
           </div>

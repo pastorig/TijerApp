@@ -1079,10 +1079,11 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
             <p className="mt-1 text-xs text-[color:var(--text-secondary)] sm:text-sm">
               Hay{" "}
               <strong className="text-white">{orphanAppointments.length}</strong>{" "}
-              turno{orphanAppointments.length === 1 ? "" : "s"} con teléfono
-              inválido (menos de 8 dígitos). No aparece
+              turno{orphanAppointments.length === 1 ? "" : "s"} sin teléfono o
+              con un número incompleto (menos de 8 dígitos). No aparece
               {orphanAppointments.length === 1 ? "" : "n"} acá porque el sistema
-              identifica clientes por número.
+              identifica clientes por número. Si querés que cuenten como
+              cliente, agregales el número desde el turnero.
             </p>
             <ul className="mt-2 grid gap-1">
               {orphanNames.map((n) => (
