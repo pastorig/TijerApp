@@ -148,11 +148,15 @@ nivel server + unit.
 
 **Decidido + implementado (2026-07-07):** los barberos le pagan el plan a Gino por transferencia; el owner registra el cobro desde `/owner/planes` (botón **"Registrar pago"**) y la barbería se reactiva +1 mes. El barbero vencido ve monto + **Alias `pastorinx` / CBU / Gino Pastori** en el paywall. Spec/plan/tasks en `specs/007-cobro-barberos/`. Build + tsc + lint verdes.
 
-### ⚠️ FALTA (Bautista): aplicar la migración en Supabase (SQL Editor)
+### ✅ Migración aplicada y loop probado (verificado contra la base el 2026-08-12)
 
-Correr **`supabase/migrations/20260707120000_barber_billing.sql`** — crea la tabla `barbershop_payments` + la RPC `register_barbershop_payment` (reusa la columna existente `current_period_ends_at` como "pagado hasta"). Es **aditiva** (no toca datos). Pegá el archivo completo en el SQL Editor y ejecutá. Sin esto el botón "Registrar pago" del owner da error; el resto (paywall/banner con monto + datos de transferencia) ya funciona igual.
+`20260707120000_barber_billing.sql` está corrida: la tabla `barbershop_payments`
+y la RPC `register_barbershop_payment` existen y funcionan. Hay **$44.000
+cobrados** en 2 pagos (`leocuts` 21/07 y `barber` 12/08).
 
-Después: probar el loop (registrar pago a una barbería vencida → queda activa; barbero vencido ve los datos de transferencia + monto).
+⚠️ **Al cargar un pago, revisá el monto.** El 12/08 el de `barber` entró como
+**$22** en vez de $22.000 (un cero de menos) y quedó así hasta que se corrigió a
+mano. La RPC no valida el monto ni que el slug exista.
 
 ---
 
@@ -210,12 +214,21 @@ El webhook NO requiere configuración en el panel de MP: la app setea el
 
 ### ⚠️ FALTA para cerrar el cobro de seña
 
-1. Correr la migración de `reminder_log` (ver TAREA 4) **antes** de la primera
-   seña real, si no el recordatorio de pago falla contra el check constraint.
-2. Activar el toggle **"Cobrar seña al reservar"** en `/<barberia>/admin/cobros`
-   y configurar monto (`deposit_percent` o `deposit_amount`).
-3. Prueba end-to-end con tarjeta de prueba de MP: reservar → pagar → el turno
-   debe pasar solo a "seña pagada" y confirmarse (eso lo hace el webhook).
+~~1. Correr la migración de `reminder_log`.~~ **YA ESTÁ** (verificado contra la
+base el 2026-08-12: el CHECK de `kind` acepta `deposit_reminder`).
+
+Queda, y las dos son de Bautista:
+
+1. **Activar el toggle "Cobrar seña al reservar"** en `/<barberia>/admin/cobros`
+   y configurar el porcentaje. Estado real al 12/08: la única con la seña
+   prendida y MercadoPago conectado es `primebarber` (la demo), al 1%. Las
+   reales — `barber`, `leocuts`, `kekasbarber`, `grado-barber`, `popesbarber` —
+   están todas en `mp_enabled: false` y **sin cuenta de MP conectada**, así que
+   primero hay que hacer el OAuth ("Conectar con MercadoPago") en cada una.
+2. **Prueba end-to-end con tarjeta de prueba de MP**: reservar → pagar → el
+   turno debe pasar solo a "seña pagada" y confirmarse (lo hace el webhook).
+   Ojo con el gotcha de MP: con OAuth por comercio, las dos puntas tienen que
+   ser cuentas de prueba.
 
 > Mejora anotada (no bloquea): el webhook no valida la firma de MercadoPago.
 > Está mitigado porque no confía en el payload — re-consulta el pago real contra
