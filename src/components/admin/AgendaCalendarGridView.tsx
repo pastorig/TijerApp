@@ -578,7 +578,43 @@ export function AgendaCalendarGridView({
 
   const isToday = useMemo(() => focusDate === getTodayYmd(), [focusDate]);
 
-  // 1. Calcular barberos del día activos (con horario válido)
+  // 0. Rango que ocupan los turnos del día, por barbero.
+  //    Se calcula ANTES que las columnas porque un barbero que hoy no trabaja
+  //    igual tiene que tener columna si tiene turnos cargados (ver punto 1).
+  //    No se puede derivar de `blocksByBarber`: ese depende de gridStartMin,
+  //    que a su vez sale de las columnas.
+  const dayApptSpanByBarber = useMemo(() => {
+    const span = new Map<string, { startMin: number; endMin: number }>();
+    for (const appointment of appointments) {
+      if (appointment.appointment_date !== focusDate) continue;
+      if (
+        appointment.status !== "pending" &&
+        appointment.status !== "confirmed"
+      ) {
+        continue;
+      }
+      const start = timeToMinutes(appointment.appointment_time.slice(0, 5));
+      const end =
+        start +
+        (appointment.service_duration_minutes || workingHours.intervalMinutes);
+      const current = span.get(appointment.barber_id);
+      span.set(appointment.barber_id, {
+        startMin: Math.min(current?.startMin ?? start, start),
+        endMin: Math.max(current?.endMin ?? end, end),
+      });
+    }
+    return span;
+  }, [appointments, focusDate, workingHours.intervalMinutes]);
+
+  // 1. Columnas del día: los barberos que trabajan hoy, MÁS los que no
+  //    trabajan pero tienen turnos cargados igual.
+  //
+  //    Ese segundo caso es el turno manual fuera de horario (o el barbero al
+  //    que le movieron un turno a su día franco). Antes la columna se filtraba
+  //    solo por `isWorking`, así que esos turnos EXISTÍAN pero no se dibujaban:
+  //    en Lista aparecían y en Calendario no, que se lee como "se me perdió un
+  //    turno". Al barbero de franco le damos como rango el de sus propios
+  //    turnos, para que la grilla los cubra.
   const activeBarbersWithSchedule = useMemo(() => {
     return barbers
       .map((barber) => {
@@ -590,11 +626,29 @@ export function AgendaCalendarGridView({
           workingHours,
           focusDate,
         });
-        return { barber, schedule };
+        if (schedule?.isWorking) {
+          return { barber, schedule, isOffDay: false };
+        }
+        const span = dayApptSpanByBarber.get(barber.id);
+        if (!span) return null;
+        return {
+          barber,
+          schedule: {
+            startTime: minutesToTimeLabel(span.startMin),
+            endTime: minutesToTimeLabel(span.endMin),
+            isWorking: false,
+          } satisfies BarberDaySchedule,
+          isOffDay: true,
+        };
       })
       .filter(
-        (entry): entry is { barber: BarberRow; schedule: BarberDaySchedule } =>
-          Boolean(entry.schedule?.isWorking),
+        (
+          entry,
+        ): entry is {
+          barber: BarberRow;
+          schedule: BarberDaySchedule;
+          isOffDay: boolean;
+        } => entry !== null,
       );
   }, [
     barbers,
@@ -602,6 +656,7 @@ export function AgendaCalendarGridView({
     weeklySchedulesByBarber,
     dayOverridesByBarber,
     workingHours,
+    dayApptSpanByBarber,
   ]);
 
   // 2. Calcular el rango total de horas a mostrar (min start, max end de
@@ -1024,7 +1079,7 @@ export function AgendaCalendarGridView({
             >
               Hora
             </div>
-            {activeBarbersWithSchedule.map(({ barber, schedule }) => {
+            {activeBarbersWithSchedule.map(({ barber, schedule, isOffDay }) => {
               const stats = statsByBarber.get(barber.id);
               const name = barber.display_name?.trim() || barber.name;
               return (
@@ -1047,6 +1102,13 @@ export function AgendaCalendarGridView({
                       <span className="font-semibold text-[color:var(--brand-gold)]">
                         {stats?.total ?? 0} turno{(stats?.total ?? 0) === 1 ? "" : "s"}
                       </span>
+                      {/* Sin esto, el barbero de franco con turnos parece uno
+                          más del día y su rango se lee como horario laboral. */}
+                      {isOffDay ? (
+                        <span className="font-semibold uppercase tracking-wide text-[color:var(--text-subtle)]">
+                          · franco
+                        </span>
+                      ) : null}
                       {stats?.nextTime ? (
                         <span className="font-mono">· próx {stats.nextTime}</span>
                       ) : (
