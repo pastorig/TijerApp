@@ -6,8 +6,10 @@ import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { cn } from "@/lib/cn";
 import {
   buildDefaultWeeklySchedules,
+  computeDayCapacity,
   mergeWeeklySchedulesWithDefaults,
   WEEKDAY_LABELS,
+  type CapacitySegment,
 } from "@/lib/availability";
 import {
   createTimeBlock,
@@ -87,7 +89,11 @@ export function BarberAvailabilityManager({
       daysLabel: string;
       startTime: string;
       endTime: string;
+      breakStart: string | null;
+      breakEnd: string | null;
+      /** Minutos TRABAJABLES: la pausa no cuenta. */
       windowMinutes: number;
+      segments: CapacitySegment[];
       cutsFitting: number;
       leftoverMinutes: number;
       suggestedEndTime: string | null;
@@ -120,14 +126,23 @@ export function BarberAvailabilityManager({
       return sorted.map((d) => short[d]).join("·");
     }
 
-    // Agrupamos días activos por (start, end) para un solo análisis por horario.
+    // Agrupamos días activos por (start, end, pausa) para un solo análisis por
+    // horario. La pausa va en la clave a propósito: dos días con el mismo
+    // horario pero distinta pausa NO entran la misma cantidad de cortes, y
+    // antes se mezclaban en una sola fila.
     const groups = new Map<
       string,
-      { startTime: string; endTime: string; days: number[] }
+      {
+        startTime: string;
+        endTime: string;
+        breakStart: string | null;
+        breakEnd: string | null;
+        days: number[];
+      }
     >();
     for (const schedule of weeklySchedules) {
       if (!schedule.isWorking) continue;
-      const key = `${schedule.startTime}-${schedule.endTime}`;
+      const key = `${schedule.startTime}-${schedule.endTime}-${schedule.breakStart ?? ""}-${schedule.breakEnd ?? ""}`;
       const existing = groups.get(key);
       if (existing) {
         existing.days.push(schedule.dayOfWeek);
@@ -135,6 +150,8 @@ export function BarberAvailabilityManager({
         groups.set(key, {
           startTime: schedule.startTime,
           endTime: schedule.endTime,
+          breakStart: schedule.breakStart,
+          breakEnd: schedule.breakEnd,
           days: [schedule.dayOfWeek],
         });
       }
@@ -147,27 +164,39 @@ export function BarberAvailabilityManager({
 
       const rows: ScheduleRow[] = [];
       for (const group of groups.values()) {
-        const startMinutes = timeValueToMinutes(group.startTime);
-        const endMinutes = timeValueToMinutes(group.endTime);
-        const windowMinutes = endMinutes - startMinutes;
-        if (windowMinutes <= 0) continue;
+        const capacity = computeDayCapacity({
+          startTime: group.startTime,
+          endTime: group.endTime,
+          breakStart: group.breakStart,
+          breakEnd: group.breakEnd,
+          serviceDurationMinutes: duration,
+        });
+        if (!capacity) continue;
 
-        const cutsFitting = Math.floor(windowMinutes / duration);
-        const leftoverMinutes = windowMinutes - cutsFitting * duration;
-        let suggestedEndTime: string | null = null;
-        if (leftoverMinutes > 0) {
-          const missingMinutes = duration - leftoverMinutes;
-          suggestedEndTime = formatMinutes(endMinutes + missingMinutes);
-        }
+        // La sugerencia mueve el CIERRE, así que solo puede recuperar los
+        // minutos sueltos del último tramo. Los que sobran antes de la pausa
+        // no se arreglan cerrando más tarde.
+        const suggestedEndTime =
+          capacity.lastSegmentLeftover > 0
+            ? formatMinutes(
+                timeValueToMinutes(group.endTime) +
+                  (duration - capacity.lastSegmentLeftover),
+              )
+            : null;
+
+        const hasBreak = capacity.segments.length > 1;
 
         rows.push({
           days: group.days,
           daysLabel: daysLabel(group.days),
           startTime: group.startTime,
           endTime: group.endTime,
-          windowMinutes,
-          cutsFitting,
-          leftoverMinutes,
+          breakStart: hasBreak ? group.breakStart : null,
+          breakEnd: hasBreak ? group.breakEnd : null,
+          windowMinutes: capacity.windowMinutes,
+          segments: capacity.segments,
+          cutsFitting: capacity.cutsFitting,
+          leftoverMinutes: capacity.leftoverMinutes,
           suggestedEndTime,
         });
       }
@@ -790,10 +819,6 @@ export function BarberAvailabilityManager({
 
                     <ul className="mt-3 grid gap-2.5">
                       {rows.map((row) => {
-                        const cutWidth =
-                          (service.duration_minutes / row.windowMinutes) * 100;
-                        const leftoverWidth =
-                          (row.leftoverMinutes / row.windowMinutes) * 100;
                         const isExact = row.leftoverMinutes === 0;
                         return (
                           <li
@@ -807,6 +832,13 @@ export function BarberAvailabilityManager({
                               <span className="font-mono text-[10px] text-[color:var(--text-muted)]">
                                 {row.startTime}–{row.endTime}
                               </span>
+                              {/* Sin esto, "19 cortes" para una jornada de 13
+                                  horas se lee como un error de cuenta. */}
+                              {row.breakStart && row.breakEnd ? (
+                                <span className="font-mono text-[10px] text-[color:var(--text-subtle)]">
+                                  pausa {row.breakStart}–{row.breakEnd}
+                                </span>
+                              ) : null}
                               <span className="ml-auto font-mono text-xs tabular-nums text-white">
                                 <span className="font-bold">
                                   {row.cutsFitting}
@@ -825,24 +857,41 @@ export function BarberAvailabilityManager({
                               </span>
                             </div>
 
-                            {/* Barra de aprovechamiento */}
-                            <div className="flex h-2 w-full gap-[2px] overflow-hidden rounded-full bg-black/40">
-                              {Array.from({ length: row.cutsFitting }).map(
-                                (_, idx) => (
-                                  <span
-                                    key={idx}
-                                    style={{ width: `${cutWidth}%` }}
-                                    className="h-full bg-gold-grad"
-                                  />
-                                ),
-                              )}
-                              {row.leftoverMinutes > 0 ? (
-                                <span
-                                  style={{ width: `${leftoverWidth}%` }}
-                                  className="h-full bg-[color:var(--border-strong)]"
-                                  title={`${row.leftoverMinutes} min sin usar`}
-                                />
-                              ) : null}
+                            {/* Barra de aprovechamiento, un bloque por tramo.
+                                Con pausa son dos, separados: así se ve que los
+                                minutos sueltos de la mañana no se recuperan
+                                cerrando más tarde. */}
+                            <div className="flex h-2 w-full items-stretch gap-[6px]">
+                              {row.segments.map((segment, segmentIdx) => (
+                                <div
+                                  key={segmentIdx}
+                                  style={{
+                                    width: `${(segment.minutes / row.windowMinutes) * 100}%`,
+                                  }}
+                                  className="flex gap-[2px] overflow-hidden rounded-full bg-black/40"
+                                >
+                                  {Array.from({ length: segment.cuts }).map(
+                                    (_, idx) => (
+                                      <span
+                                        key={idx}
+                                        style={{
+                                          width: `${(service.duration_minutes / segment.minutes) * 100}%`,
+                                        }}
+                                        className="h-full bg-gold-grad"
+                                      />
+                                    ),
+                                  )}
+                                  {segment.leftover > 0 ? (
+                                    <span
+                                      style={{
+                                        width: `${(segment.leftover / segment.minutes) * 100}%`,
+                                      }}
+                                      className="h-full bg-[color:var(--border-strong)]"
+                                      title={`${segment.leftover} min sin usar`}
+                                    />
+                                  ) : null}
+                                </div>
+                              ))}
                             </div>
 
                             {row.suggestedEndTime ? (

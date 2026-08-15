@@ -6,7 +6,10 @@
  *
  * Correr: node --experimental-strip-types scripts/test-availability.ts
  */
-import { buildAvailabilitySlots } from "../src/lib/availability.ts";
+import {
+  buildAvailabilitySlots,
+  computeDayCapacity,
+} from "../src/lib/availability.ts";
 import type {
   BarberDayOverrideRow,
   BarberTimeBlockRow,
@@ -148,6 +151,82 @@ const times = (slots: { time: string }[]) => slots.map((s) => s.time).join(",");
   check("Hoy → 16:00 no disponible", byTime["16:00"]?.isAvailable, false);
   check("Hoy → 17:00 disponible", byTime["17:00"]?.isAvailable, true);
 }
+
+
+// ─── computeDayCapacity: cuántos cortes entran, con y sin pausa ─────────
+// El bug original: se calculaba `fin - inicio` sin descontar la pausa, así que
+// un viernes 08:00–21:00 con pausa larga a la tarde decía 19 cortes.
+{
+  const cap = (
+    p: Parameters<typeof computeDayCapacity>[0],
+  ) => computeDayCapacity(p);
+
+  // Sin pausa: 08:00–21:00 = 780min / 40 = 19 cortes, sobran 20.
+  const sinPausa = cap({
+    startTime: "08:00",
+    endTime: "21:00",
+    serviceDurationMinutes: 40,
+  })!;
+  check("sin pausa: 19 cortes", sinPausa.cutsFitting, 19);
+  check("sin pausa: sobran 20min", sinPausa.leftoverMinutes, 20);
+  check("sin pausa: un solo tramo", sinPausa.segments.length, 1);
+
+  // El caso reportado: misma jornada con pausa 13:00–17:00.
+  // Mañana 08:00–13:00 = 300min → 7 cortes, sobran 20.
+  // Tarde  17:00–21:00 = 240min → 6 cortes, sobran 0.
+  const conPausa = cap({
+    startTime: "08:00",
+    endTime: "21:00",
+    breakStart: "13:00",
+    breakEnd: "17:00",
+    serviceDurationMinutes: 40,
+  })!;
+  check("con pausa: 13 cortes (7 + 6), no 19", conPausa.cutsFitting, 13);
+  check("con pausa: dos tramos", conPausa.segments.length, 2);
+  check("con pausa: la pausa no cuenta como jornada", conPausa.windowMinutes, 540);
+  check("con pausa: sobran 20min (solo de la mañana)", conPausa.leftoverMinutes, 20);
+  // Clave: cerrar más tarde NO recupera los 20min sueltos de la mañana.
+  check("con pausa: el último tramo cierra justo", conPausa.lastSegmentLeftover, 0);
+
+  // Una pausa fuera de la jornada se ignora en vez de romper la cuenta.
+  const pausaInvalida = cap({
+    startTime: "08:00",
+    endTime: "21:00",
+    breakStart: "22:00",
+    breakEnd: "23:00",
+    serviceDurationMinutes: 40,
+  })!;
+  check("pausa fuera de la jornada: se ignora", pausaInvalida.cutsFitting, 19);
+
+  const pausaInvertida = cap({
+    startTime: "08:00",
+    endTime: "21:00",
+    breakStart: "17:00",
+    breakEnd: "13:00",
+    serviceDurationMinutes: 40,
+  })!;
+  check("pausa invertida: se ignora", pausaInvertida.cutsFitting, 19);
+
+  // Guardas.
+  check(
+    "duración 0 → null",
+    cap({ startTime: "08:00", endTime: "21:00", serviceDurationMinutes: 0 }),
+    null,
+  );
+  check(
+    "fin antes que inicio → null",
+    cap({ startTime: "21:00", endTime: "08:00", serviceDurationMinutes: 40 }),
+    null,
+  );
+
+  // La suma de los tramos nunca puede superar la jornada sin pausa.
+  check(
+    "con pausa entran menos cortes que sin pausa",
+    conPausa.cutsFitting < sinPausa.cutsFitting,
+    true,
+  );
+}
+
 
 console.log(`\n${passed}/${passed + failed} OK${failed ? ` · ${failed} FALLARON` : ""}`);
 if (failed) process.exit(1);

@@ -330,3 +330,83 @@ export function buildAvailabilitySlots(params: {
 
   return slots;
 }
+
+/** Tramo continuo de trabajo. Con pausa al medio hay dos; sin pausa, uno. */
+export type CapacitySegment = {
+  minutes: number;
+  cuts: number;
+  leftover: number;
+};
+
+export type DayCapacity = {
+  /** Minutos TRABAJABLES del día: la pausa no cuenta. */
+  windowMinutes: number;
+  segments: CapacitySegment[];
+  cutsFitting: number;
+  leftoverMinutes: number;
+  /** Minutos sueltos del ÚLTIMO tramo — los únicos que se recuperan cerrando más tarde. */
+  lastSegmentLeftover: number;
+};
+
+/**
+ * Cuántos cortes entran en una jornada, respetando la pausa al medio.
+ *
+ * Vive acá y no en el componente porque es aritmética pura y ya se equivocó
+ * una vez: el cálculo hacía `fin - inicio` sin descontar la pausa, así que un
+ * viernes 08:00–21:00 con pausa de 13:00 a 17:00 decía "19 cortes" cuando en
+ * realidad entran los de la mañana más los de la tarde, contados por separado
+ * (un corte no puede cruzar la pausa).
+ *
+ * Devuelve `null` si la jornada no es válida (fin antes que inicio, duración
+ * de servicio no positiva).
+ */
+export function computeDayCapacity(params: {
+  startTime: string;
+  endTime: string;
+  breakStart?: string | null;
+  breakEnd?: string | null;
+  serviceDurationMinutes: number;
+}): DayCapacity | null {
+  const { startTime, endTime, breakStart, breakEnd } = params;
+  const duration = params.serviceDurationMinutes;
+  if (!Number.isFinite(duration) || duration <= 0) return null;
+
+  const startMinutes = timeValueToMinutes(startTime);
+  const endMinutes = timeValueToMinutes(endTime);
+  if (endMinutes - startMinutes <= 0) return null;
+
+  const breakStartMin = breakStart ? timeValueToMinutes(breakStart) : null;
+  const breakEndMin = breakEnd ? timeValueToMinutes(breakEnd) : null;
+  // Una pausa que se sale de la jornada o está invertida se ignora en vez de
+  // romper la cuenta.
+  const hasUsableBreak =
+    breakStartMin !== null &&
+    breakEndMin !== null &&
+    breakEndMin > breakStartMin &&
+    breakStartMin > startMinutes &&
+    breakEndMin < endMinutes;
+
+  const spans: Array<[number, number]> = hasUsableBreak
+    ? [
+        [startMinutes, breakStartMin],
+        [breakEndMin, endMinutes],
+      ]
+    : [[startMinutes, endMinutes]];
+
+  const segments: CapacitySegment[] = spans
+    .map(([from, to]) => {
+      const minutes = to - from;
+      const cuts = Math.floor(minutes / duration);
+      return { minutes, cuts, leftover: minutes - cuts * duration };
+    })
+    .filter((segment) => segment.minutes > 0);
+  if (segments.length === 0) return null;
+
+  return {
+    windowMinutes: segments.reduce((total, s) => total + s.minutes, 0),
+    segments,
+    cutsFitting: segments.reduce((total, s) => total + s.cuts, 0),
+    leftoverMinutes: segments.reduce((total, s) => total + s.leftover, 0),
+    lastSegmentLeftover: segments[segments.length - 1].leftover,
+  };
+}
