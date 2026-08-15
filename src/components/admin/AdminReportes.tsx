@@ -770,21 +770,29 @@ Te corresponde: ${formatPrice(row.commission)}`;
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
                     Sin comisión configurada
                   </p>
+                  {/* Cada barbero linkea a SU perfil: el % de comisión vive en
+                      la pestaña Perfil, no en Servicios, que es la que abre por
+                      defecto. Sin `tab=perfil` el link caía en la pantalla
+                      equivocada. */}
                   <ul className="mt-2 flex flex-col gap-1">
                     {commissions.unconfigured.map((barber) => (
-                      <li
-                        key={barber.barberId}
-                        className="flex items-center justify-between gap-3 text-xs text-[color:var(--text-subtle)]"
-                      >
-                        <span>{barber.name}</span>
-                        <span className="tabular-nums">
-                          produjo {formatPrice(barber.revenue)}
-                        </span>
+                      <li key={barber.barberId}>
+                        <Link
+                          href={`/${barbershop.slug}/admin/barbers?tab=perfil&barbero=${barber.barberId}`}
+                          className="flex items-center justify-between gap-3 rounded-[var(--radius-xs)] py-1 text-xs text-[color:var(--text-subtle)] transition-colors hover:text-[color:var(--brand-gold)]"
+                        >
+                          <span className="underline-offset-2 hover:underline">
+                            {barber.name}
+                          </span>
+                          <span className="tabular-nums">
+                            produjo {formatPrice(barber.revenue)}
+                          </span>
+                        </Link>
                       </li>
                     ))}
                   </ul>
                   <Link
-                    href={`/${barbershop.slug}/admin/barbers`}
+                    href={`/${barbershop.slug}/admin/barbers?tab=perfil`}
                     className="mt-3 inline-flex text-xs font-semibold text-[color:var(--brand-gold)] hover:underline"
                   >
                     Cargar sus comisiones →

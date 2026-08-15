@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   CalendarClock,
   Crown,
@@ -136,9 +137,32 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
   const [role, setRole] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [commissionPercent, setCommissionPercent] = useState("");
+  /**
+   * Se puede entrar apuntando a una pestaña y a un barbero por querystring:
+   * `?tab=perfil&barbero=<id>`.
+   *
+   * Lo usa el link "Cargar sus comisiones" de Reportes. La pestaña por defecto
+   * es Servicios, pero el % de comisión vive en Perfil, así que sin esto el
+   * link te dejaba en la pantalla equivocada y había que buscar el campo.
+   *
+   * Va como valor inicial del estado y no en un efecto: así no hay un primer
+   * render con la pestaña equivocada. La ruta es dinámica (`ƒ`), por eso
+   * `useSearchParams` no necesita <Suspense>.
+   */
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+
   // Redesign master-detail: barbero seleccionado + pestaña + modal de alta.
-  const [selectedBarberId, setSelectedBarberId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<BarberTab>("servicios");
+  // El barbero del querystring se resuelve con `find` sobre la lista, así que
+  // aplica igual aunque los barberos todavía no hayan cargado.
+  const [selectedBarberId, setSelectedBarberId] = useState<string | null>(
+    () => searchParams.get("barbero"),
+  );
+  const [activeTab, setActiveTab] = useState<BarberTab>(() =>
+    tabParam === "perfil" || tabParam === "servicios" || tabParam === "horarios"
+      ? tabParam
+      : "servicios",
+  );
   const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
