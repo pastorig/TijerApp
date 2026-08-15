@@ -83,3 +83,52 @@ export async function barbershopHasFeature(
   const { hasFeature } = await import("@/lib/plans");
   return hasFeature(plan.tier, feature);
 }
+
+/**
+ * Slugs de barberías cuyo plan está vencido (modo lectura).
+ *
+ * Una sola query para todas, en vez de `getBarbershopPlan` por barbería: lo usa
+ * el sitemap, que las recorre todas.
+ *
+ * A diferencia de `getBarbershopPlan`, **no llama a `noStore()`**: el sitemap
+ * se revalida por tiempo y un `noStore()` le rompería el cacheo.
+ *
+ * Una barbería sin fila de suscripción NO entra acá — mismo default seguro que
+ * el resto del sistema (Pro trial), así que una barbería nueva se indexa.
+ */
+export async function listReadOnlyBarbershopSlugs(): Promise<Set<string>> {
+  const supabase = getSupabaseAdminClient();
+
+  const { data, error } = await supabase
+    .from("barbershop_subscriptions")
+    .select(
+      "barbershop_slug, plan_tier, status, trial_expires_at, grace_expires_at, current_period_ends_at",
+    );
+
+  if (error || !data) return new Set();
+
+  type Row = {
+    barbershop_slug: string;
+    plan_tier: PlanTier;
+    status: SubscriptionStatus;
+    trial_expires_at: string | null;
+    grace_expires_at: string | null;
+    current_period_ends_at: string | null;
+  };
+
+  const readOnly = new Set<string>();
+  for (const row of data as Row[]) {
+    const plan = resolvePlanStatus({
+      tier: row.plan_tier,
+      rawStatus: row.status,
+      trialExpiresAt: row.trial_expires_at ? new Date(row.trial_expires_at) : null,
+      graceExpiresAt: row.grace_expires_at ? new Date(row.grace_expires_at) : null,
+      currentPeriodEndsAt: row.current_period_ends_at
+        ? new Date(row.current_period_ends_at)
+        : null,
+    });
+    if (plan.isReadOnly) readOnly.add(row.barbershop_slug);
+  }
+
+  return readOnly;
+}

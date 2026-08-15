@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { PublicBarbershopLanding } from "@/components/PublicBarbershopLanding";
 import { listPublicReviewsByBarbershop } from "@/lib/appointment-reviews";
 import { resolveBarbershopBySlug } from "@/lib/barbershops";
+import { DEMO_BARBERSHOP_SLUGS } from "@/data/demo-barbershops";
 import { getBarbershopPlan } from "@/lib/plan-access";
 
 type BarbershopPageProps = {
@@ -41,9 +42,18 @@ export async function generateMetadata({
     ? [{ url: barbershop.logoUrl, alt: barbershop.name }]
     : undefined;
 
+  // La barbería DEMO es ficticia: se comparte a propósito (el botón "Ver demo"
+  // de la landing) pero NO tiene que entrar al índice. Un negocio inventado
+  // indexado le baja la confianza al dominio entero frente a Google y a los
+  // buscadores con IA — incluida la comparativa de /guias, que es la página que
+  // sí queremos que citen. El link sigue funcionando y el preview de WhatsApp
+  // también; solo se le pide a los buscadores que no la listen.
+  const isDemo = DEMO_BARBERSHOP_SLUGS.includes(barbershop.slug);
+
   return {
     title,
     description,
+    ...(isDemo ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       title,
       description,
