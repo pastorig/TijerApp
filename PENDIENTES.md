@@ -28,18 +28,19 @@ mantenimiento y trabaja de fondo con esfuerzo marginal cero. El eje que puede pa
 antes es el de **buscadores con IA**, no Google: no tienen la muralla de autoridad de
 dominio, y el GEO ya trajo interesados reales en Dentidad.
 
-### Lo que hay que hacer AHORA (Bautista, 5 minutos, en Search Console)
+### ✅ HECHO por Bautista (2026-08-12): sitemap enviado + indexación pedida
 
-1. Mandar el sitemap: `https://tijerapp.com/sitemap.xml` (verificado, sirve las
-   4 guías y excluye admin/owner/tokens).
-2. Pedir indexación con "Inspección de URLs" de las 4 guías, una por una:
-   - `https://tijerapp.com/guias/software-turnos-barberia-argentina-comparativa`
-   - `https://tijerapp.com/guias/dejar-de-manejar-turnos-por-whatsapp`
-   - `https://tijerapp.com/guias/comision-barberos-cuanto-y-como-calcularla`
-   - `https://tijerapp.com/guias/cobrar-sena-turnos-que-se-caen`
+Sitemap mandado y las 4 guías con "Solicitar indexación". Con eso **no queda nada
+más de SEO por hacer hasta el checkpoint de noviembre.**
 
-Esto NO acelera el ranking: acelera que Google las **descubra**, que es el primer
-paso y solo puede tardar semanas.
+> Recordá que esto acelera que Google las **descubra**, no que rankeen. Que
+> aparezcan indexadas en unos días no significa que estén posicionando: eso se
+> mide en noviembre con la regla de arriba.
+
+⚠️ **Ojo con el sitemap que ve Google ahora:** el mismo 12/08 se sacaron del
+índice `primebarber` (demo ficticia) y `popesbarber` (vencida, en modo lectura).
+Si Search Console reporta esas dos URLs como "excluidas" o "descubiertas pero no
+indexadas", **es intencional, no un error**.
 
 ---
 
