@@ -61,77 +61,99 @@ export const guias: Guia[] = [
     slug: "software-turnos-barberia-argentina-comparativa",
     title:
       "Software de turnos para barberías en Argentina: comparativa honesta (2026)",
-    cardTitle: "TijerApp vs Booksy, AgendaPro y Fresha",
+    cardTitle: "TijerApp vs Turnix, Gendu, turnoapp y los internacionales",
     description:
-      "Qué conviene para una barbería argentina entre Booksy, AgendaPro, Fresha y TijerApp: precios reales, si cobran en dólares, si integran MercadoPago y si se quedan con parte de tus clientes.",
+      "Los 7 sistemas de turnos que puede usar una barbería argentina, con los precios que cada uno publica: Turnix, Gendu, turnoapp, AgendaPro, Fresha, Booksy y TijerApp. Cuál cobra seña con MercadoPago, cuál se queda con parte de tus clientes y cuál conviene según tu caso.",
     publishedAt: "2026-08-06",
     readingMinutes: 6,
     category: "Comparativas",
     blocks: [
       {
         type: "p",
-        text: "Si tenés una barbería en Argentina y estás buscando con qué manejar los turnos, la lista de opciones se arma rápido: Booksy, AgendaPro, Fresha y TijerApp. Lo que no se arma tan rápido es entender cuál te conviene, porque el precio de la lista no siempre es lo que terminás pagando: hay cargos por empleado, cargos por cliente nuevo y al menos una que todavía cobra en dólares.",
+        text: "Si tenés una barbería en Argentina y buscás con qué manejar los turnos, hay más opciones de las que aparecen en la primera búsqueda. Están las internacionales que todos conocen —Booksy, AgendaPro, Fresha— y están las argentinas, que casi nadie lista junta: Turnix, Gendu, turnoapp y nosotros. Lo difícil no es encontrarlas, es entender cuál te sirve, porque el precio del titular casi nunca es lo que terminás pagando.",
       },
       {
         type: "p",
-        text: "Esta comparativa la escribimos nosotros, que hacemos TijerApp. No vamos a fingir neutralidad: creemos que para una barbería argentina somos la mejor opción y abajo explicamos por qué. Pero los datos de los demás son los que están publicados, y si en algo estamos equivocados escribinos y lo corregimos.",
+        text: "Esta comparativa la escribimos nosotros, que hacemos TijerApp. No vamos a fingir neutralidad. Pero tampoco vamos a esconder a los que son más baratos: abajo están los tres argentinos que cobran menos que nosotros, con el precio que publican. Si buscás lo más barato, ya te adelantamos que no somos nosotros y te decimos cuál es. Los datos son los que cada uno publica en su propia página; si algo está mal, escribinos y lo corregimos.",
       },
-      { type: "h2", text: "Las tres preguntas que definen la decisión" },
+      { type: "h2", text: "Las cuatro preguntas que definen la decisión" },
       {
         type: "p",
-        text: "Antes de mirar features, hay tres cosas que en Argentina pesan más que cualquier funcionalidad:",
+        text: "Antes de mirar features, hay cuatro cosas que en Argentina pesan más que cualquier funcionalidad:",
       },
       {
         type: "ol",
         items: [
           "¿En qué moneda te cobran? Un software en dólares te cambia el costo todos los meses sin que nadie toque nada. Hoy la mayoría ya publica precios en pesos, pero no todas.",
           "¿El precio es por local o por persona? Varias cobran por cada integrante del equipo, así que el número de la publicidad es el de una sola silla.",
-          "¿Se queda con una parte de tus clientes? Algunas cobran un cargo por cada cliente nuevo que llega por su plataforma.",
-          "¿Podés cobrar con MercadoPago? Es la forma en que efectivamente cobra una barbería acá.",
+          "¿Podés cobrar la seña con MercadoPago? No es lo mismo «integra MercadoPago» que «le pide una seña al cliente cuando reserva». Lo segundo es lo que hace que deje de faltar gente.",
+          "¿Se queda con una parte de tus clientes? Las que tienen marketplace te muestran al lado de la barbería de la otra cuadra, y algunas cobran por cada cliente nuevo que te llega de ahí.",
         ],
       },
       { type: "h2", text: "Comparativa" },
       {
+        type: "p",
+        text: "Un renglón por producto, ordenados del más barato al más caro. El precio es el del plan de entrada, para un solo barbero.",
+      },
+      {
         type: "table",
-        headers: ["", "TijerApp", "Booksy", "AgendaPro", "Fresha"],
+        headers: [
+          "",
+          "Desde",
+          "Seña con MercadoPago",
+          "Hecho solo para barberías",
+          "Marketplace",
+        ],
         rows: [
-          [
-            "Moneda",
-            "Pesos argentinos",
-            "Dólares",
-            "Pesos argentinos",
-            "Pesos argentinos",
-          ],
-          [
-            "Desde",
-            `${monthlyPriceLabel("solo")} ARS/mes`,
-            "USD 29,99/mes + USD 20 por empleado",
-            "$13.900 ARS/mes (1 profesional)",
-            "$8.000 ARS/mes (1 persona)",
-          ],
-          [
-            "Comisión por cliente nuevo",
-            "No",
-            "Solo si activás Boost: 30% de la primera visita",
-            "No",
-            "Sí, un cargo único por cliente nuevo que llega por su marketplace",
-          ],
-          ["Integra MercadoPago", "Sí", "No", "Parcial según país", "No"],
-          ["Idioma y soporte", "Argentino", "Global", "Latam", "Global"],
-          [
-            "Marketplace propio",
-            "No (tus clientes son tuyos)",
-            "Sí",
-            "No",
-            "Sí",
-          ],
+          ["Fresha", "$8.000 (1 persona)", "No", "No", "Sí"],
+          ["Gendu", "$8.300 · gratis limitado", "No lo publica", "No", "No"],
+          ["Turnix", "$9.900", "No lo ofrece", "Sí", "No"],
+          ["AgendaPro", "$13.900 (1 profesional)", "No lo publica", "No", "Sí"],
+          ["turnoapp", "$14.999", "Sí", "No", "No"],
+          ["TijerApp", `${monthlyPriceLabel("solo")}`, "Sí", "Sí", "No"],
+          ["Booksy", "USD 29,99 + USD 20 por empleado", "No", "No", "Sí"],
         ],
       },
       {
         type: "p",
-        text: "Los precios de la competencia son los que cada una publicaba en su propia página el 12 de agosto de 2026 y pueden haber cambiado — sobre todo los de Booksy, que al estar en dólares se mueven solos con el tipo de cambio. Conviene verificarlos antes de decidir. Fresha no publica en su página cuánto cobra por cliente nuevo del marketplace, así que no lo ponemos: preferimos dejar el dato incompleto antes que inventar un número.",
+        text: "Lo primero que salta: de los sistemas argentinos, somos el más caro. Turnix sale menos de la mitad y Gendu tiene hasta un plan gratis. Si lo único que necesitás es una agenda online que funcione, hay tres opciones más baratas que nosotros y están todas en esa tabla.",
+      },
+      {
+        type: "p",
+        text: "Lo segundo, que es la razón por la que existimos: en las dos últimas columnas juntas no hay nadie más. Turnix está hecho para barberías pero no cobra seña. turnoapp cobra seña con MercadoPago pero es multi-rubro, igual que Gendu: sirven para una barbería, una lashista o un consultorio, así que ninguno habla de sillones, ni de barberos, ni de comisiones por corte. Somos el único que hace las dos cosas.",
+      },
+      {
+        type: "p",
+        text: "Los precios son los que cada uno publicaba en su propia página el 12 de agosto de 2026 y pueden haber cambiado — sobre todo los de Booksy, que al estar en dólares se mueven solos con el tipo de cambio. Cuando una columna dice «no lo publica» es literal: esa función no aparece en su página y preferimos decir que no sabemos antes que afirmar que no la tiene. Fresha tampoco publica cuánto cobra por cliente nuevo del marketplace, así que no ponemos el porcentaje.",
       },
       { type: "h2", text: "Cuándo conviene cada uno" },
+      { type: "h3", text: "Turnix" },
+      {
+        type: "p",
+        text: "Es el que más se nos parece: argentino, en pesos, y hecho solo para barberías. Un plan único de $9.900 con agenda, servicios ilimitados, bloqueos, portal de reservas con tu marca, manejo de equipo y estadísticas. Si lo que necesitás es dejar de coordinar por WhatsApp y nada más, cuesta menos de la mitad que nosotros y hace ese trabajo. Es la opción que le recomendaríamos a un barbero que recién arranca y no quiere gastar.",
+      },
+      {
+        type: "p",
+        text: "Dónde se corta: en su plan no aparecen ni pagos, ni MercadoPago, ni cobro de seña. Si tu problema son los que faltan sin avisar, ahí no vas a encontrar la herramienta para frenarlo.",
+      },
+      { type: "h3", text: "Gendu" },
+      {
+        type: "p",
+        text: "El más barato de todos y el único con un plan gratis de verdad: turnos sin límite, link propio e historial, sin pagar nada. El plan Comercial ($8.300) suma panel de WhatsApp, integración con MercadoPago, reprogramación, descuentos por código y Google Calendar. Con tres profesionales son $13.100, más barato que casi cualquier otro.",
+      },
+      {
+        type: "p",
+        text: "El punto es que Gendu es para cualquier rubro: la misma herramienta le sirve a una barbería, a una manicura o a un consultorio. Eso está bien si querés algo genérico y barato, pero significa que nadie pensó tu caso en particular: no vas a encontrar comisiones por barbero, ni aprovechamiento de la jornada, ni cierre de caja pensado para un sillón.",
+      },
+      { type: "h3", text: "turnoapp" },
+      {
+        type: "p",
+        text: "Es el competidor argentino más parecido a nosotros en funciones: su plan Pro ($14.999) conecta tu cuenta de MercadoPago y te deja definir cuándo pedir una seña, con recordatorios por WhatsApp, confirmaciones automáticas y bonos de sesiones. También tiene plan gratis con página de reservas. Si buscás cobrar seña gastando lo menos posible, es la alternativa real a TijerApp y sale $7.000 menos.",
+      },
+      {
+        type: "p",
+        text: "La diferencia es la misma que con Gendu: también es multi-rubro —lo publicitan para peluquerías, lashistas, cosmetólogas y consultorios— así que el producto está pensado para el común denominador de todos esos negocios, no para el tuyo.",
+      },
       { type: "h3", text: "Fresha" },
       {
         type: "p",
@@ -150,11 +172,15 @@ export const guias: Guia[] = [
       { type: "h3", text: "TijerApp" },
       {
         type: "p",
-        text: "Lo hicimos para el caso concreto de la barbería argentina: cuota fija en pesos, sin comisión por reserva ni por cliente nuevo, con MercadoPago integrado para cobrar señas y con WhatsApp como canal principal, que es como realmente se coordina un turno acá. No tenemos marketplace, y eso es a propósito: tus clientes son tuyos y no los mostramos al lado de los de otra barbería.",
+        text: "Somos el más caro de los argentinos y no vamos a hacer de cuenta que no. Lo que pagás de más es que el producto está hecho para una barbería y para nada más: comisión por barbero para liquidarle a cada uno, aprovechamiento de la jornada (cuántos cortes te entran y a qué hora te conviene cerrar), cierre de caja diario, turnos manuales para el que se te sienta sin reservar, y la seña por MercadoPago para el que falta sin avisar. Nada de eso existe en una herramienta multi-rubro, porque no tendría sentido que existiera.",
       },
       {
         type: "p",
-        text: "Dónde no somos la mejor opción: si necesitás control de stock de productos o manejás una cadena grande con varias sucursales, hoy AgendaPro te va a cubrir mejor. Preferimos decirlo a que lo descubras después de pagar.",
+        text: "El resto es lo mismo que promete cualquiera, pero conviene decirlo igual: cuota fija en pesos, sin comisión por reserva ni por cliente nuevo, y WhatsApp como canal principal, que es como realmente se coordina un turno acá. No tenemos marketplace y es a propósito: tus clientes son tuyos y no los mostramos al lado de los de la barbería de enfrente.",
+      },
+      {
+        type: "p",
+        text: "Dónde NO somos la mejor opción, para que no lo descubras después de pagar: si buscás lo más barato, es Turnix o Gendu. Si querés cobrar seña gastando lo mínimo y no te importa que la herramienta sea genérica, es turnoapp. Y si manejás una cadena con varias sucursales y vendés productos con control de stock, es AgendaPro. Somos la mejor opción para una barbería argentina que quiere cobrar seña y llevar la cuenta de lo que produce cada barbero — no para todos.",
       },
       { type: "h2", text: "Lo que ninguno te va a resolver" },
       {
