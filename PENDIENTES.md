@@ -4,6 +4,45 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## 🔎 NOVIEMBRE 2026 — checkpoint de SEO (decidir si se sigue o se abandona)
+
+**Contexto:** toda la fundación de SEO (sitemap, robots, JSON-LD, `llms.txt`, grafo
+de entidades, crawlers de IA, las 4 guías) se subió entre el **11 y el 12 de agosto
+de 2026**. En los 30 días previos hubo **cero tráfico de Google**, pero eso no dice
+nada: durante 29 de esos 30 días el SEO no existía. **No hay nada que medir hasta
+noviembre.**
+
+### La regla de decisión, escrita de antemano para no discutirla por intuición
+
+Mirar Search Console → Rendimiento, filtrando páginas que contengan `/guias`:
+
+- **Impresiones creciendo** (aunque los clicks sean pocos) → está agarrando. Dejarlo
+  correr y recién ahí evaluar escribir más guías.
+- **Impresiones planas en cero** → confirmado que no arrancó. Dejar de pensar en
+  Google, no escribir más contenido, y todo el esfuerzo a Instagram.
+
+### Por qué NO se apaga mientras tanto
+
+El trabajo técnico ya está hecho y es costo hundido: no se pudre, no pide
+mantenimiento y trabaja de fondo con esfuerzo marginal cero. El eje que puede pagar
+antes es el de **buscadores con IA**, no Google: no tienen la muralla de autoridad de
+dominio, y el GEO ya trajo interesados reales en Dentidad.
+
+### Lo que hay que hacer AHORA (Bautista, 5 minutos, en Search Console)
+
+1. Mandar el sitemap: `https://tijerapp.com/sitemap.xml` (verificado, sirve las
+   4 guías y excluye admin/owner/tokens).
+2. Pedir indexación con "Inspección de URLs" de las 4 guías, una por una:
+   - `https://tijerapp.com/guias/software-turnos-barberia-argentina-comparativa`
+   - `https://tijerapp.com/guias/dejar-de-manejar-turnos-por-whatsapp`
+   - `https://tijerapp.com/guias/comision-barberos-cuanto-y-como-calcularla`
+   - `https://tijerapp.com/guias/cobrar-sena-turnos-que-se-caen`
+
+Esto NO acelera el ranking: acelera que Google las **descubra**, que es el primer
+paso y solo puede tardar semanas.
+
+---
+
 ## 📅 OCTUBRE 2026 — dos cosas con fecha, sin recordatorio automático
 
 **21/10/2026 — se le termina el programa Fundador a Leo Cuts.** Ese día pasa de
