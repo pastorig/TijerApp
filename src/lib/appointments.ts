@@ -188,3 +188,37 @@ export async function validateAppointmentTimeIsAvailable({
     error: null,
   };
 }
+
+/**
+ * Le avisa al cliente que el barbero le confirmó o le canceló el turno.
+ *
+ * Best-effort a propósito: se llama DESPUÉS de que el cambio de estado ya se
+ * guardó, y si falla no se le muestra nada al barbero — el turno ya cambió y
+ * una notificación que no salió no es un error que él pueda resolver. Por eso
+ * no devuelve nada y el turnero la dispara sin esperarla.
+ *
+ * El sentido inverso (el cliente responde el link y le llega al barbero) no
+ * pasa por acá: vive en las RPC del token, dentro de la base.
+ */
+export async function notifyClientOfStatusChange(params: {
+  barbershopSlug: string;
+  appointmentId: string;
+  status: "confirmed" | "cancelled";
+}): Promise<void> {
+  try {
+    const { data } = await getSupabaseClient().auth.getSession();
+    const accessToken = data.session?.access_token;
+    if (!accessToken) return;
+
+    await fetch("/api/appointments/notify-client", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(params),
+    });
+  } catch {
+    // Silencio deliberado.
+  }
+}

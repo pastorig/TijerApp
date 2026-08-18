@@ -15,6 +15,7 @@ import {
   confirmAppointment,
   deleteAppointment,
   listAppointmentsByBarbershop,
+  notifyClientOfStatusChange,
   restoreDeletedAppointment,
   updateAppointmentActualDuration,
 } from "@/lib/appointments";
@@ -730,6 +731,13 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           a.id === appointment.id ? { ...a, status: "confirmed" } : a,
         ),
       );
+      // Sin await: el push al cliente no puede demorar el toast ni voltear la
+      // operación. Si no sale, el turno ya quedó confirmado igual.
+      void notifyClientOfStatusChange({
+        barbershopSlug: barbershop.slug,
+        appointmentId: appointment.id,
+        status: "confirmed",
+      });
       toast.success(`Turno confirmado`, {
         description: `${appointment.customer_name} · ${normalizeTimeShort(appointment.appointment_time)}`,
       });
@@ -796,6 +804,11 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
             : a,
         ),
       );
+      void notifyClientOfStatusChange({
+        barbershopSlug: barbershop.slug,
+        appointmentId: appointment.id,
+        status: "cancelled",
+      });
       toast.success("Turno cancelado", {
         description: cancellationReason
           ? `${appointment.customer_name} — motivo registrado`
