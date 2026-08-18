@@ -17,7 +17,7 @@
  * Google lo trata como contenido pobre.
  *
  * **Datos de la competencia:** los precios ajenos que aparecen en la
- * comparativa se relevaron el 12/08/2026 sobre la página de precios oficial de
+ * comparativa se relevaron entre el 12 y el 15/08/2026 sobre la página de precios oficial de
  * cada producto, no sobre blogs (los "mejores apps de turnos 2026" que salen
  * primero en Google son de los propios competidores y se contradicen entre sí).
  * Si un dato no está publicado por la fuente, no se pone: ver la regla de no
@@ -57,7 +57,7 @@ export const guias: Guia[] = [
     // Única guía con `updatedAt`: es la que tiene precios de la competencia,
     // así que la fecha de revisión es parte del contenido. Cuando se vuelvan a
     // relevar los precios, mover esta fecha Y la del párrafo del relevamiento.
-    updatedAt: "2026-08-12",
+    updatedAt: "2026-08-15",
     slug: "software-turnos-barberia-argentina-comparativa",
     title:
       "Software de turnos para barberías en Argentina: comparativa honesta (2026)",
@@ -124,7 +124,7 @@ export const guias: Guia[] = [
       },
       {
         type: "p",
-        text: "Los precios son los que cada uno publicaba en su propia página el 12 de agosto de 2026 y pueden haber cambiado — sobre todo los de Booksy, que al estar en dólares se mueven solos con el tipo de cambio. Cuando una columna dice «no lo publica» es literal: esa función no aparece en su página y preferimos decir que no sabemos antes que afirmar que no la tiene. Fresha tampoco publica cuánto cobra por cliente nuevo del marketplace, así que no ponemos el porcentaje.",
+        text: "Los precios son los que cada uno publicaba en su propia página entre el 12 y el 15 de agosto de 2026 y pueden haber cambiado — sobre todo los de Booksy, que al estar en dólares se mueven solos con el tipo de cambio. Cuando una columna dice «no lo publica» es literal: esa función no aparece en su página y preferimos decir que no sabemos antes que afirmar que no la tiene. Fresha tampoco publica cuánto cobra por cliente nuevo del marketplace, así que no ponemos el porcentaje.",
       },
       { type: "h2", text: "Cuándo conviene cada uno" },
       { type: "h3", text: "Turnix" },

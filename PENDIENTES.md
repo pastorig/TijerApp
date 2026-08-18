@@ -28,7 +28,7 @@ mantenimiento y trabaja de fondo con esfuerzo marginal cero. El eje que puede pa
 antes es el de **buscadores con IA**, no Google: no tienen la muralla de autoridad de
 dominio, y el GEO ya trajo interesados reales en Dentidad.
 
-### ✅ HECHO por Bautista (2026-08-12): sitemap enviado + indexación pedida
+### ✅ HECHO por Bautista (2026-08-14): sitemap enviado + indexación pedida
 
 Sitemap mandado y las 4 guías con "Solicitar indexación". Con eso **no queda nada
 más de SEO por hacer hasta el checkpoint de noviembre.**
@@ -37,7 +37,7 @@ más de SEO por hacer hasta el checkpoint de noviembre.**
 > aparezcan indexadas en unos días no significa que estén posicionando: eso se
 > mide en noviembre con la regla de arriba.
 
-⚠️ **Ojo con el sitemap que ve Google ahora:** el mismo 12/08 se sacaron del
+⚠️ **Ojo con el sitemap que ve Google ahora:** el mismo 14/08 se sacaron del
 índice `primebarber` (demo ficticia) y `popesbarber` (vencida, en modo lectura).
 Si Search Console reporta esas dos URLs como "excluidas" o "descubiertas pero no
 indexadas", **es intencional, no un error**.
@@ -89,7 +89,7 @@ actualiza el manifest cuando quiere); el `PWARedirector` de la home las cubre ig
 `barbershop_payments` se venía llenando desde la feature 007 y no había pantalla que la
 leyera. Nuevo endpoint `GET /api/owner/payments` (owner-gated).
 
-✅ **Cerrado el 2026-08-12:** la tabla de planes pasó a tarjetas, igual que el historial de
+✅ **Cerrado el 2026-08-13:** la tabla de planes pasó a tarjetas, igual que el historial de
 cobros. Era la única pantalla del owner que scrolleaba para el costado en el celular.
 
 ---
@@ -109,7 +109,7 @@ Métricas: FCP 1,2s · **LCP 3,0s** · TBT 20ms · **CLS 0** · Speed Index 1,2s
 
 Los 4 defectos de accesibilidad ya están arreglados y en prod (commit `c0f4e9f`).
 
-### ✅ CERRADO — el LCP ya está arreglado y medido contra prod (2026-08-12)
+### ✅ CERRADO — el LCP ya está arreglado y medido contra prod (2026-08-13)
 
 Los números de arriba salieron de un `next start` **local**, sin CDN y en frío, así que
 exageraban. Medido con Lighthouse 12 contra `https://tijerapp.com`:
@@ -140,7 +140,7 @@ Secundario y chico: 26 KB de JS sin usar y 13 KB de JS legacy en un chunk.
 
 ---
 
-## ✅ Landing con movimiento (012) — REVISADA por Bautista (2026-08-12)
+## ✅ Landing con movimiento (012) — REVISADA por Bautista (2026-08-13)
 
 Hero, Stats y "Cómo funciona" con movimiento atado al scroll. Sin dependencias nuevas
 (hooks propios + CSS). tsc + lint + build verdes; SSR y fallback sin JS verificados.
@@ -162,7 +162,7 @@ se puede revertir sola.
 
 ---
 
-## ✅ Onboarding "Primeros pasos" (013) — REVISADA por Bautista (2026-08-12)
+## ✅ Onboarding "Primeros pasos" (013) — REVISADA por Bautista (2026-08-13)
 
 Guía de primeros pasos en el Dashboard del admin: le dice al barbero recién registrado qué
 le falta (servicios con su precio, horarios, dirección + Instagram) y le da su link público
@@ -203,7 +203,7 @@ nivel server + unit.
 
 **Decidido + implementado (2026-07-07):** los barberos le pagan el plan a Gino por transferencia; el owner registra el cobro desde `/owner/planes` (botón **"Registrar pago"**) y la barbería se reactiva +1 mes. El barbero vencido ve monto + **Alias `pastorinx` / CBU / Gino Pastori** en el paywall. Spec/plan/tasks en `specs/007-cobro-barberos/`. Build + tsc + lint verdes.
 
-### ✅ Migración aplicada y loop probado (verificado contra la base el 2026-08-12)
+### ✅ Migración aplicada y loop probado (verificado contra la base el 2026-08-13)
 
 `20260707120000_barber_billing.sql` está corrida: la tabla `barbershop_payments`
 y la RPC `register_barbershop_payment` existen y funcionan. Hay **$44.000
@@ -270,7 +270,7 @@ El webhook NO requiere configuración en el panel de MP: la app setea el
 ### ⚠️ FALTA para cerrar el cobro de seña
 
 ~~1. Correr la migración de `reminder_log`.~~ **YA ESTÁ** (verificado contra la
-base el 2026-08-12: el CHECK de `kind` acepta `deposit_reminder`).
+base el 2026-08-13: el CHECK de `kind` acepta `deposit_reminder`).
 
 Queda, y las dos son de Bautista:
 
