@@ -86,10 +86,14 @@ async function handle(request: Request) {
     raw_payload: payment as unknown as Record<string, unknown>,
   });
 
+  // El turno tiene que pertenecer a la barbería del ?bs=. Sin este filtro el
+  // external_reference del pago mandaba solo: una barbería podía generar en su
+  // propia cuenta de MP un pago apuntando al turno de OTRA y marcárselo pagado.
   const { data: appt } = await supabase
     .from("appointments")
     .select("id, status, deposit_status, mp_payment_id")
     .eq("id", appointmentId)
+    .eq("barbershop_slug", slug)
     .maybeSingle();
   const apptRow = appt as {
     id: string;
@@ -120,7 +124,11 @@ async function handle(request: Request) {
       return NextResponse.json({ ok: true, lateApproval: true });
     }
 
-    await supabase
+    // La guarda deposit_status='pending' va DENTRO del update, no solo en el
+    // if de arriba: MP reintenta y las entregas pueden solaparse. Con el
+    // chequeo suelto, dos requests del mismo pago pasaban el if antes de que
+    // cualquiera escribiera y el cobro quedaba registrado dos veces.
+    const { data: updatedRows } = await supabase
       .from("appointments")
       .update({
         status: "confirmed",
@@ -128,7 +136,14 @@ async function handle(request: Request) {
         deposit_paid_at: new Date().toISOString(),
         mp_payment_id: String(payment.id),
       })
-      .eq("id", appointmentId);
+      .eq("id", appointmentId)
+      .eq("deposit_status", "pending")
+      .select("id");
+
+    // 0 filas = otra entrega concurrente ganó la carrera. No es error.
+    if (!updatedRows || updatedRows.length === 0) {
+      return NextResponse.json({ ok: true, alreadyProcessed: true });
+    }
     await supabase.from("payment_events").insert({
       appointment_id: appointmentId,
       event_type: "payment_approved",

@@ -16,6 +16,19 @@ export const runtime = "nodejs";
  * activa, responde 403. En producción real debe quedar SIN setear.
  */
 export async function POST(request: Request) {
+  // Doble llave, y la de producción no se puede abrir por accidente.
+  //
+  // Antes alcanzaba con la env var: prender NEXT_PUBLIC_ALLOW_DEPOSIT_SIMULATION
+  // en Vercel para probar algo —y olvidarse de apagarla— habilitaba marcar
+  // señas como pagadas sin cobrar, a cualquiera que tuviera un token. El
+  // prefijo NEXT_PUBLIC_ encima sugiere "config de cliente" cuando en realidad
+  // gobierna un endpoint de servidor que escribe plata.
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { error: "No encontrado." },
+      { status: 404 },
+    );
+  }
   if (process.env.NEXT_PUBLIC_ALLOW_DEPOSIT_SIMULATION !== "true") {
     return NextResponse.json(
       { error: "Simulación de pago deshabilitada." },

@@ -16,7 +16,6 @@ import {
   type DemoBarbershop,
 } from "@/data/demo-barbershops";
 import {
-  createPendingAppointment,
   validateAppointmentTimeIsAvailable,
 } from "@/lib/appointments";
 import { getBarberDayAvailability } from "@/lib/barber-availability";
@@ -643,9 +642,40 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     let confirmationToken: string | undefined;
 
     try {
-      const { data, error } = await createPendingAppointment(appointment, {
-        autoConfirm: barbershop.autoConfirmAppointments ?? false,
+      // La reserva la crea el SERVER, no el browser. Antes esto era un insert
+      // directo con la anon key: el precio, el descuento y hasta el horario
+      // llegaban del cliente sin que nadie los validara. Ahora el endpoint
+      // resuelve todo contra la base (precio y duración del servicio, cupón,
+      // disponibilidad real del barbero) y el status sale de la config de la
+      // barbería, no de acá.
+      const res = await fetch("/api/appointments/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          barbershopSlug: barbershop.slug,
+          barberId: selectedBarber.id,
+          barberName: selectedBarberName,
+          serviceId: selectedService.id,
+          customerName: appointment.customer_name,
+          customerPhone: appointment.customer_phone,
+          customerEmail: appointment.customer_email,
+          appointmentDate: selectedDate,
+          appointmentTime: selectedTime,
+          comment,
+          couponCode: appliedCoupon?.code ?? null,
+        }),
       });
+      const payload = (await res.json()) as {
+        ok?: boolean;
+        token?: string;
+        error?: string;
+      };
+      const data = payload.ok && payload.token
+        ? { confirmation_token: payload.token }
+        : null;
+      const error = data
+        ? null
+        : { code: res.status === 409 ? "23505" : "", message: payload.error ?? "" };
 
       if (error) {
         // 23505 = unique_violation de Postgres. El índice parcial

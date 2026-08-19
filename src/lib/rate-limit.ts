@@ -17,7 +17,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
  * alta o a un cliente reservar; el costo de dejar pasar algún bot es menor.
  */
 
-export type RateLimitBucket = "registro" | "contacto" | "waitlist";
+export type RateLimitBucket = "registro" | "contacto" | "waitlist" | "reserva";
 
 type RateLimitResult = {
   allowed: boolean;
@@ -32,6 +32,10 @@ const LIMITS: Record<RateLimitBucket, { max: number; windowMinutes: number }> = 
   registro: { max: 3, windowMinutes: 60 },
   contacto: { max: 5, windowMinutes: 60 },
   waitlist: { max: 10, windowMinutes: 60 },
+  // Reservar es la acción pública más frecuente y la que más duele si se
+  // automatiza: llenar la agenda de una barbería con turnos basura. 8 por hora
+  // por IP deja pasar a una familia reservando desde el mismo wifi.
+  reserva: { max: 8, windowMinutes: 60 },
 };
 
 /**

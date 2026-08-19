@@ -3,6 +3,8 @@ import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { assertPublicBookingEnabled } from "@/lib/api-plan-guard";
 import { computeDepositAmount } from "@/lib/mercadopago/deposit";
+import { assertSlotBookable } from "@/lib/server/slot-availability";
+import { checkRateLimit, getRequestIdentifier } from "@/lib/rate-limit";
 import { createDepositPreference } from "@/lib/mercadopago/client";
 import { refreshAccessToken, expiresAtFrom } from "@/lib/mercadopago/oauth";
 
@@ -37,6 +39,12 @@ type BookBody = {
   appointmentDate?: string;
   appointmentTime?: string;
   comment?: string;
+  /**
+   * Solo el CÓDIGO. El id del cupón y el monto del descuento los resuelve el
+   * server contra la RPC validate_coupon_for_booking: si vinieran del cliente,
+   * cualquiera se autoasigna el descuento que quiera.
+   */
+  couponCode?: string | null;
 };
 
 /**
@@ -96,6 +104,19 @@ export async function POST(request: Request) {
     );
   }
 
+  // Rate limit por IP: sin esto un script llena la agenda de una barbería con
+  // turnos basura, y no hay nada que lo frene porque reservar no pide cuenta.
+  const limit = await checkRateLimit("reserva", getRequestIdentifier(request));
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Demasiados intentos. Probá de nuevo en un rato." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSeconds) },
+      },
+    );
+  }
+
   // Plan vencido => la barbería queda en modo lectura y la reserva online se
   // apaga. El cliente final va por WhatsApp.
   const bookingGate = await assertPublicBookingEnabled(slug);
@@ -112,7 +133,7 @@ export async function POST(request: Request) {
   const { data: shop, error: shopError } = await supabase
     .from("barbershops")
     .select(
-      "slug, name, mp_enabled, mp_access_token, mp_refresh_token, mp_token_expires_at, deposit_percent, deposit_min_amount, deposit_auto_cancel_hours, require_client_email",
+      "slug, name, mp_enabled, mp_access_token, mp_refresh_token, mp_token_expires_at, deposit_percent, deposit_min_amount, deposit_auto_cancel_hours, require_client_email, auto_confirm_appointments",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -136,6 +157,7 @@ export async function POST(request: Request) {
     deposit_min_amount: number | null;
     deposit_auto_cancel_hours: number;
     require_client_email: boolean;
+    auto_confirm_appointments: boolean | null;
   } | null;
 
   // Modo simulación (solo testing): permite reservar con seña SIN token real
@@ -143,12 +165,18 @@ export async function POST(request: Request) {
   const simMode =
     process.env.NEXT_PUBLIC_ALLOW_DEPOSIT_SIMULATION === "true";
 
-  if (!shopRow || !shopRow.mp_enabled) {
+  if (!shopRow) {
     return NextResponse.json(
-      { error: "Esta barbería no tiene el cobro de seña activo." },
-      { status: 400 },
+      { error: "Barbería no encontrada." },
+      { status: 404 },
     );
   }
+
+  // Con seña o sin seña, TODA reserva pública pasa por acá. Antes, cuando la
+  // barbería no tenía MercadoPago, el formulario insertaba directo contra la
+  // tabla con la anon key: el precio, el descuento y el horario llegaban del
+  // browser sin que nadie los revisara.
+  const wantsDeposit = Boolean(shopRow.mp_enabled);
 
   // Email obligatorio si la barbería lo configuró (defensa server-side; el
   // form ya lo valida antes de enviar).
@@ -158,7 +186,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  if (!shopRow.mp_access_token && !simMode) {
+  if (wantsDeposit && !shopRow.mp_access_token && !simMode) {
     return NextResponse.json(
       { error: "Esta barbería no tiene el cobro de seña activo." },
       { status: 400 },
@@ -190,7 +218,116 @@ export async function POST(request: Request) {
     );
   }
 
-  // 3. Monto de la seña.
+  // 2b. El horario tiene que existir de verdad en la grilla del barbero:
+  // horario semanal, pausa al medio, excepción del día, bloqueos, anticipación
+  // mínima y tope de 180 días. Es la misma función que arma la lista que ve el
+  // cliente, así que no pueden discrepar.
+  const slotCheck = await assertSlotBookable({
+    barbershopSlug: slug,
+    barberId,
+    date: appointmentDate,
+    time: appointmentTime,
+    durationMinutes: serviceRow.duration_minutes,
+  });
+  if (!slotCheck.ok) {
+    return NextResponse.json(
+      { error: slotCheck.error },
+      { status: slotCheck.status },
+    );
+  }
+
+  // 2c. Cupón: se valida y se calcula acá, nunca se acepta el monto del
+  // cliente. La RPC chequea vigencia, activo y tope de usos.
+  let couponId: string | null = null;
+  let discountAmount: number | null = null;
+  const couponCode =
+    typeof body.couponCode === "string" && body.couponCode.trim()
+      ? body.couponCode.trim().toUpperCase()
+      : null;
+
+  if (couponCode) {
+    const { data: couponRows } = await supabase.rpc(
+      "validate_coupon_for_booking",
+      {
+        p_barbershop_slug: slug,
+        p_code: couponCode,
+        p_service_price: serviceRow.price,
+      },
+    );
+    const row = (couponRows as Array<{
+      is_valid: boolean;
+      coupon_id: string | null;
+      discount_amount: number | null;
+    }> | null)?.[0];
+
+    if (!row || !row.is_valid) {
+      return NextResponse.json(
+        { error: "El cupón no es válido." },
+        { status: 400 },
+      );
+    }
+    couponId = row.coupon_id;
+    discountAmount = row.discount_amount;
+  }
+
+  const barberName =
+    typeof body.barberName === "string" && body.barberName.trim()
+      ? body.barberName.trim()
+      : "Barbero";
+
+  // ── Camino SIN seña: la mayoría de las barberías ────────────────────────
+  // Inserta y termina. El status sale de la config de la barbería, no del
+  // cliente. Todos los campos con valor (precio, duración, descuento) ya
+  // fueron resueltos server-side arriba.
+  if (!wantsDeposit) {
+    const { data: simple, error: simpleError } = await supabase
+      .from("appointments")
+      .insert({
+        barbershop_slug: slug,
+        barber_id: barberId,
+        barber_name: barberName,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        customer_email: customerEmail,
+        service_name: serviceRow.name,
+        service_price: serviceRow.price,
+        service_duration_minutes: serviceRow.duration_minutes,
+        appointment_date: appointmentDate,
+        appointment_time: appointmentTime,
+        comment,
+        status: shopRow.auto_confirm_appointments ? "confirmed" : "pending",
+        coupon_id: couponId,
+        discount_amount: discountAmount,
+      })
+      .select("id, confirmation_token")
+      .single();
+
+    if (simpleError || !simple) {
+      if (simpleError?.code === "23505") {
+        return NextResponse.json(
+          { error: "Ese horario acaba de ocuparse. Elegí otro." },
+          { status: 409 },
+        );
+      }
+      Sentry.captureException(simpleError, {
+        tags: { route: "appointments/book", step: "insert-simple" },
+      });
+      return NextResponse.json(
+        { error: "No pudimos guardar la reserva." },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      appointmentId: (simple as { id: string }).id,
+      token: (simple as { confirmation_token: string }).confirmation_token,
+      initPoint: null,
+      depositAmount: null,
+    });
+  }
+
+  // 3. Monto de la seña (solo el camino con MercadoPago).
   const depositAmount = computeDepositAmount({
     servicePrice: serviceRow.price,
     depositPercent: shopRow.deposit_percent,
@@ -207,11 +344,6 @@ export async function POST(request: Request) {
   const expiresAt = new Date(
     Date.now() + shopRow.deposit_auto_cancel_hours * 60 * 60 * 1000,
   ).toISOString();
-
-  const barberName =
-    typeof body.barberName === "string" && body.barberName.trim()
-      ? body.barberName.trim()
-      : "Barbero";
 
   // 4. Insert del turno (pending → retiene el slot).
   const { data: inserted, error: insertError } = await supabase
@@ -230,6 +362,8 @@ export async function POST(request: Request) {
       appointment_time: appointmentTime,
       comment,
       status: "pending",
+      coupon_id: couponId,
+      discount_amount: discountAmount,
       deposit_required: true,
       deposit_amount: depositAmount,
       deposit_status: "pending",

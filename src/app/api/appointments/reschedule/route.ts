@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { assertPublicBookingEnabled } from "@/lib/api-plan-guard";
+import { assertSlotBookable } from "@/lib/server/slot-availability";
 
 export const runtime = "nodejs";
 
@@ -160,6 +161,27 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Elegí un horario distinto al actual." },
       { status: 400 },
+    );
+  }
+
+  // El slot pedido tiene que existir DE VERDAD en la grilla del barbero.
+  // Antes solo se validaba que no chocara con otro turno, así que se podía
+  // reagendar a las 03:17 de un domingo, o al año 2099: el índice único no
+  // choca con nada y el update pasaba. Ahora se valida contra el mismo motor
+  // de disponibilidad que ve el cliente (horario semanal, pausa, excepciones
+  // del día, bloqueos y anticipación mínima).
+  const slotCheck = await assertSlotBookable({
+    barbershopSlug: appointment.barbershop_slug,
+    barberId: appointment.barber_id,
+    date: newDate,
+    time: newTimeNormalized,
+    durationMinutes: appointment.service_duration_minutes ?? 0,
+    excludeAppointmentId: appointment.id,
+  });
+  if (!slotCheck.ok) {
+    return NextResponse.json(
+      { error: slotCheck.error },
+      { status: slotCheck.status },
     );
   }
 
