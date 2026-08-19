@@ -16,8 +16,8 @@ export const FOUNDER = {
   titular: "Gino Pastori",
   /** WhatsApp Business en formato internacional (54 9 3571 566221). */
   whatsapp: "5493571566221",
-  /** Alias de la cuenta (Naranja X). */
-  alias: "pastorinx",
+  /** Alias de la cuenta para transferencias. */
+  alias: "pastori22",
   /** CBU/CVU para transferencias. */
   cbu: "4530000800016883827535",
 } as const;
