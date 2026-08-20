@@ -14,6 +14,8 @@ import { TransferDetailsCard } from "./TransferDetailsCard";
  *
  *  - trial activo, > 3 días restantes → no muestra nada (silencio)
  *  - trial activo, <= 3 días → banner gold con countdown
+ *  - **plan PAGO por vencer, <= 3 días → banner gold con los días y Pagar**
+ *  - **plan pago que vence HOY → el mismo banner, con otro texto**
  *  - en grace period → banner ámbar con "pagá ahora o se cancela"
  *  - expirado/cancelado → no debería llegar acá porque RequirePlan ya
  *    rinde paywall, pero por las dudas mostramos banner danger
@@ -54,8 +56,49 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
 
   let banner: React.ReactNode = null;
 
-  // Silencio: active y sin countdown cercano
-  if (
+  /**
+   * Plan pago a punto de vencer. `daysToPaidExpire` ya lo calculaba
+   * `resolvePlanStatus` y ya llegaba hasta acá — no lo mostraba nadie, así
+   * que el barbero se enteraba de que se le venció cuando ya estaba en modo
+   * lectura y sus clientes no podían reservar.
+   *
+   * Va antes que el silencio porque el silencio corta con
+   * `effectiveStatus === "active"`, que es exactamente el estado de una
+   * barbería al día a la que le faltan tres días.
+   */
+  const paidExpiringSoon =
+    !isTrial &&
+    plan.effectiveStatus === "active" &&
+    plan.daysToPaidExpire !== null &&
+    plan.daysToPaidExpire >= 0 &&
+    plan.daysToPaidExpire <= 3;
+
+  if (paidExpiringSoon) {
+    const dias = plan.daysToPaidExpire as number;
+    banner = (
+      <BannerBase tone="gold">
+        <Clock className="size-4 shrink-0" />
+        <p className="flex-1 text-xs sm:text-sm">
+          {dias === 0 ? (
+            <>
+              Tu plan <strong>vence hoy</strong>. Renovalo ({precio}/mes) para
+              que tus clientes puedan seguir reservando online.
+            </>
+          ) : (
+            <>
+              Te quedan{" "}
+              <strong>
+                {dias} día{dias !== 1 ? "s" : ""}
+              </strong>{" "}
+              de plan. Renovalo ({precio}/mes) así no se te corta la reserva
+              online.
+            </>
+          )}
+        </p>
+        <PayCta onClick={() => setPayOpen(true)} />
+      </BannerBase>
+    );
+  } else if (
     plan.effectiveStatus === "active" &&
     (plan.daysToTrialExpire === null || plan.daysToTrialExpire > 3)
   ) {
