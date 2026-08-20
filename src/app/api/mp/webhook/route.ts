@@ -131,12 +131,28 @@ async function handle(request: Request) {
   const accessToken = (shop as { mp_access_token?: string | null } | null)
     ?.mp_access_token;
   if (!accessToken) {
+    // Llegó una notificación de pago para una barbería sin token: o nunca
+    // conectó MercadoPago, o el token del OAuth venció (dura 180 días). Si
+    // esto pasa, hay un cliente que pagó y un turno que no se va a confirmar.
+    Sentry.captureMessage("Webhook de MP sin token de la barbería", {
+      level: "error",
+      tags: { route: "mp/webhook", motivo: "sin-token" },
+      extra: { slug, paymentId },
+    });
     return NextResponse.json({ ok: true, skipped: "no token", modoFirma });
   }
 
   // Fuente de verdad: el estado real del pago en MP.
   const result = await getPayment(accessToken, paymentId);
   if (!result.ok) {
+    // Ojo: esto también pasa cuando el pago no existe (una simulación, por
+    // ejemplo), así que es warning y no error. Pero si aparece seguido con
+    // pagos reales, el token de esa barbería dejó de servir.
+    Sentry.captureMessage("Webhook de MP: no se pudo consultar el pago", {
+      level: "warning",
+      tags: { route: "mp/webhook", motivo: "consulta-fallida" },
+      extra: { slug, paymentId },
+    });
     // No pudimos validar: 200 igual (MP reintentará por su cuenta).
     return NextResponse.json({
       ok: true,
@@ -147,6 +163,11 @@ async function handle(request: Request) {
   const payment = result.payment;
   const appointmentId = payment.external_reference;
   if (!appointmentId) {
+    Sentry.captureMessage("Webhook de MP: pago sin external_reference", {
+      level: "warning",
+      tags: { route: "mp/webhook", motivo: "sin-referencia" },
+      extra: { slug, paymentId },
+    });
     return NextResponse.json({ ok: true, skipped: "no external_reference" });
   }
 
@@ -176,6 +197,14 @@ async function handle(request: Request) {
   } | null;
 
   if (!apptRow) {
+    // El pago apunta a un turno que no es de esta barbería. Puede ser un
+    // intento de cruzar barberías (por eso existe el filtro) o un turno
+    // borrado. En los dos casos hay plata sin turno asociado.
+    Sentry.captureMessage("Webhook de MP: el turno del pago no es de esa barbería", {
+      level: "error",
+      tags: { route: "mp/webhook", motivo: "turno-no-encontrado" },
+      extra: { slug, paymentId, appointmentId },
+    });
     return NextResponse.json({ ok: true, skipped: "appointment not found" });
   }
 
@@ -193,6 +222,20 @@ async function handle(request: Request) {
         amount: payment.transaction_amount,
         mp_payment_id: String(payment.id),
         raw_payload: { note: "pago aprobado sobre turno ya expirado/cancelado — revisar manual" },
+      });
+      // Lo más caro que puede pasar acá: el cliente PAGÓ y el turno ya no
+      // existe. La nota de arriba se guardaba desde siempre y no la leía
+      // nadie. Esto necesita una persona: devolver la plata o reubicarlo.
+      Sentry.captureMessage("Pago de MP aprobado sobre un turno cancelado o vencido", {
+        level: "error",
+        tags: { route: "mp/webhook", motivo: "pago-tardio" },
+        extra: {
+          slug,
+          paymentId,
+          appointmentId,
+          monto: payment.transaction_amount,
+          estadoTurno: apptRow.status,
+        },
       });
       return NextResponse.json({ ok: true, lateApproval: true });
     }
