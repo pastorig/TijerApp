@@ -36,6 +36,33 @@ type WebhookBody = {
   data?: { id?: string | number };
 };
 
+/**
+ * ── Por qué la URL del panel de MP lleva `?bs=primebarber` ──────────────────
+ *
+ * Los pagos reales NO dependen de esa URL: cada preferencia se crea con su
+ * propio `notification_url` y el slug de su barbería (ver appointments/book).
+ * La del panel es la de nivel aplicación, y sirve para eventos sueltos y para
+ * el simulador.
+ *
+ * El slug de la demo está puesto a propósito y **no hay que sacarlo**: sin
+ * `bs`, el handler corta más abajo en "missing bs or paymentId" ANTES de
+ * validar la firma, así que el simulador devolvería 200 aunque el secreto
+ * estuviera mal. Sería un 200 que no prueba nada — justo lo contrario de para
+ * qué existe esa prueba.
+ *
+ * Si algún día llega ahí una notificación real de otra barbería: se busca el
+ * token de la demo, la consulta del pago falla y se responde 200 sin tocar
+ * nada. Y si llegara a resolver, el chequeo de `external_reference` de más
+ * abajo la rechaza. La notificación buena llega igual por la URL de su propia
+ * preferencia.
+ *
+ * Resolver la barbería sin el slug NO es simple: haría falta leer el
+ * `external_reference` del pago, que está adentro del pago, que no se puede
+ * consultar sin el token de la barbería. Es circular. La salida sería
+ * escuchar también `merchant_order` (que trae el `preference_id`, y el
+ * `mp_preference_id` ya se guarda en el turno), pero es un camino de
+ * notificación nuevo entero y hoy no arregla ningún problema real.
+ */
 async function handle(request: Request) {
   const url = new URL(request.url);
   const slug = url.searchParams.get("bs") ?? "";
