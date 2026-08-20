@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
-import { computeNextPaidUntil } from "@/lib/plans";
+import {
+  computeNextPaidUntil,
+  expectedPaymentAmounts,
+  formatArs,
+  isExpectedPaymentAmount,
+} from "@/lib/plans";
 
 export const runtime = "nodejs";
 
@@ -12,7 +17,13 @@ export const runtime = "nodejs";
  * extiende su período pago (current_period_ends_at) +1 mes desde max(hoy,
  * vencimiento vigente) y la pone en 'active'. Ver spec 007-cobro-barberos.
  *
- * Body: { slug, amount, method, note? }
+ * Body: { slug, amount, method, note?, confirmUnusualAmount? }
+ *
+ * Un monto que no coincide con ningún precio de lista se rechaza con
+ * `code: "monto-inusual"` hasta que llegue con `confirmUnusualAmount: true`.
+ * No es que esos montos estén prohibidos --hay precios congelados de
+ * Fundador-- es que un cero de menos no se puede distinguir de una decisión
+ * salvo preguntando.
  */
 
 const VALID_METHODS = ["transferencia", "efectivo", "otro"] as const;
@@ -72,6 +83,16 @@ export async function POST(request: Request) {
   }
   if (!Number.isFinite(amount) || amount < 0) {
     return NextResponse.json({ error: "Monto inválido." }, { status: 400 });
+  }
+  if (!isExpectedPaymentAmount(amount) && body.confirmUnusualAmount !== true) {
+    return NextResponse.json(
+      {
+        error: `${formatArs(amount)} no coincide con ningún precio de lista.`,
+        code: "monto-inusual",
+        expected: expectedPaymentAmounts(),
+      },
+      { status: 400 },
+    );
   }
   if (!(VALID_METHODS as readonly string[]).includes(method)) {
     return NextResponse.json({ error: "Método inválido." }, { status: 400 });

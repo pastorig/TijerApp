@@ -742,8 +742,10 @@ function RegisterPaymentModal({
   );
   const [note, setNote] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  // El monto que el server marcó como raro y todavía no se confirmó.
+  const [unusualAmount, setUnusualAmount] = useState<string | null>(null);
 
-  async function handleSave() {
+  async function handleSave(confirmUnusualAmount = false) {
     const amountNum = Number(amount);
     if (!Number.isFinite(amountNum) || amountNum < 0) {
       toast.error("Monto inválido");
@@ -768,13 +770,21 @@ function RegisterPaymentModal({
           amount: amountNum,
           method,
           note: note.trim() || null,
+          confirmUnusualAmount,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         error?: string;
+        code?: string;
         pagadoHasta?: string;
       };
+      // Monto fuera de lista: se pregunta acá mismo, no con un toast que se
+      // va solo. El que carga tiene que ver el número y decidir.
+      if (data.code === "monto-inusual") {
+        setUnusualAmount(data.error ?? "El monto no coincide con ningún plan.");
+        return;
+      }
       if (!res.ok || !data.ok) {
         toast.error("No se registró el pago", { description: data.error });
         return;
@@ -844,13 +854,25 @@ function RegisterPaymentModal({
               type="number"
               min={0}
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                setAmount(e.target.value);
+                setUnusualAmount(null);
+              }}
               className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 font-mono text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
             />
             <p className="mt-1 text-[10px] text-[color:var(--text-muted)]">
               Prefill: precio del plan{" "}
               {row.plan_tier ? PLAN_META[row.plan_tier].name : "—"}.
             </p>
+            {unusualAmount ? (
+              <p
+                role="alert"
+                className="mt-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold-ring)] bg-[color:var(--brand-gold-soft)] px-3 py-2 text-[11px] leading-4 text-[color:var(--brand-gold)]"
+              >
+                {unusualAmount} Fijate que no falte un cero — si el monto es
+                correcto, tocá &ldquo;Registrar igual&rdquo;.
+              </p>
+            ) : null}
           </div>
 
           <div>
@@ -905,7 +927,7 @@ function RegisterPaymentModal({
             </button>
             <button
               type="button"
-              onClick={() => void handleSave()}
+              onClick={() => void handleSave(unusualAmount !== null)}
               disabled={isSaving}
               className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--success)] px-4 text-xs font-bold uppercase tracking-[0.14em] text-black hover:brightness-110 disabled:opacity-50"
             >
@@ -914,7 +936,11 @@ function RegisterPaymentModal({
               ) : (
                 <Wallet className="size-3.5" />
               )}
-              {isSaving ? "Registrando…" : "Registrar pago"}
+              {isSaving
+                ? "Registrando…"
+                : unusualAmount
+                  ? "Registrar igual"
+                  : "Registrar pago"}
             </button>
           </div>
         </div>

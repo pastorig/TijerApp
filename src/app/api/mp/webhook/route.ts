@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { getPayment } from "@/lib/mercadopago/client";
+import { verifyWebhookSignature } from "@/lib/mercadopago/webhook-signature";
 
 export const runtime = "nodejs";
 
@@ -12,6 +13,13 @@ export const runtime = "nodejs";
  * barbería es (para usar su access_token). NO confiamos en el payload: re-
  * consultamos el pago real contra MP. Es idempotente: notificaciones repetidas
  * no confirman el turno ni registran el pago más de una vez.
+ *
+ * Además se valida la firma (`x-signature`) cuando hay `MP_WEBHOOK_SECRET`
+ * cargado. **Mientras esa variable no exista, la validación no hace nada**:
+ * prenderla a medias cortaría el cobro de seña de cualquier barbería que ya
+ * esté cobrando. Al cargarla hay que rehacer la prueba de punta a punta: un
+ * secreto equivocado rechaza notificaciones buenas, y eso se ve como "el
+ * cliente pagó y el turno no se confirmó".
  *
  * Responde 200 salvo error interno real (MP reintenta ante respuestas no-2xx).
  */
@@ -50,6 +58,26 @@ async function handle(request: Request) {
   if (!slug || !paymentId) {
     // Sin datos suficientes: 200 para que MP no reintente infinito.
     return NextResponse.json({ ok: true, skipped: "missing bs or paymentId" });
+  }
+
+  // La firma se chequea antes de cualquier consulta: es la diferencia entre
+  // ignorar a un tercero y salir a preguntarle a MP por datos que nos mandó él.
+  const signature = verifyWebhookSignature({
+    signatureHeader: request.headers.get("x-signature"),
+    requestIdHeader: request.headers.get("x-request-id"),
+    dataId: paymentId,
+    secret: process.env.MP_WEBHOOK_SECRET,
+  });
+  if (!signature.ok) {
+    Sentry.captureMessage("Webhook de MP con firma inválida", {
+      level: "warning",
+      tags: { route: "mp/webhook", motivo: signature.reason },
+      extra: { slug, paymentId },
+    });
+    // 401 y no 200: que MP lo reintente y que quede registrado. Si esto
+    // aparece para TODAS las notificaciones, el secreto cargado no es el que
+    // corresponde a la aplicación.
+    return NextResponse.json({ error: "Firma inválida." }, { status: 401 });
   }
 
   const supabase = getSupabaseAdminClient();

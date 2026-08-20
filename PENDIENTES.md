@@ -285,9 +285,25 @@ Queda, y las dos son de Bautista:
    Ojo con el gotcha de MP: con OAuth por comercio, las dos puntas tienen que
    ser cuentas de prueba.
 
-> Mejora anotada (no bloquea): el webhook no valida la firma de MercadoPago.
-> Está mitigado porque no confía en el payload — re-consulta el pago real contra
-> la API de MP antes de confirmar. Sumar validación de firma sería la capa que falta.
+### ✅ La firma del webhook YA SE VALIDA — falta cargar el secreto (2026-08-19)
+
+El código está en prod: `src/lib/mercadopago/webhook-signature.ts` valida el HMAC
+de `x-signature` y el webhook rechaza con 401 lo que no cierre.
+
+**Mientras no exista la env var `MP_WEBHOOK_SECRET`, la validación no hace nada**
+— a propósito: prenderla a medias cortaría el cobro de seña de cualquier
+barbería que ya esté cobrando.
+
+Para activarla (Bautista):
+
+1. Panel de MP → la aplicación de TijerApp → Webhooks → generar la **clave
+   secreta**.
+2. Cargarla en Vercel (Production) como `MP_WEBHOOK_SECRET` + redeploy.
+3. **Rehacer la prueba de punta a punta.** Un secreto equivocado rechaza
+   notificaciones buenas, y eso se ve exactamente como el problema que se
+   quiere evitar: el cliente paga y el turno no se confirma. Si en Sentry
+   aparece "Webhook de MP con firma inválida" para TODAS las notificaciones,
+   el secreto no es el que corresponde a la aplicación.
 
 ---
 

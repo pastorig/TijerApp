@@ -14,7 +14,9 @@ import {
   annualPriceArs,
   annualPriceLabel,
   computeNextPaidUntil,
+  expectedPaymentAmounts,
   hasFeature,
+  isExpectedPaymentAmount,
   monthlyPriceLabel,
   resolvePlanStatus,
 } from "../src/lib/plans.ts";
@@ -215,6 +217,47 @@ check(
   PLAN_LIMITS.solo.maxBarbers <= PLAN_LIMITS.esencial.maxBarbers &&
     PLAN_LIMITS.esencial.maxBarbers <= PLAN_LIMITS.pro.maxBarbers,
   true,
+);
+
+// ── Monto de un cobro: el aviso por el cero de menos ─────────────────────────
+// El 12/08/2026 un pago de $22.000 entró como $22 y nadie lo frenó.
+check(
+  "el precio de Solo se acepta sin preguntar",
+  isExpectedPaymentAmount(PLAN_META.solo.priceArs),
+  true,
+);
+check(
+  "el precio de Pro se acepta sin preguntar",
+  isExpectedPaymentAmount(PLAN_META.pro.priceArs),
+  true,
+);
+check(
+  "el precio anual también está en la lista",
+  isExpectedPaymentAmount(annualPriceArs("esencial")),
+  true,
+);
+check(
+  "$22 (a Solo le falta un cero) pide confirmación",
+  isExpectedPaymentAmount(22),
+  false,
+);
+check(
+  "$220.000 (a Solo le sobra un cero) pide confirmación",
+  isExpectedPaymentAmount(PLAN_META.solo.priceArs * 10),
+  false,
+);
+check("0 pide confirmación", isExpectedPaymentAmount(0), false);
+check(
+  "un precio a mitad de camino entre dos planes pide confirmación",
+  isExpectedPaymentAmount(
+    (PLAN_META.solo.priceArs + PLAN_META.esencial.priceArs) / 2,
+  ),
+  false,
+);
+check(
+  "la lista tiene los 3 mensuales + los 3 anuales",
+  expectedPaymentAmounts().length,
+  6,
 );
 
 console.log(`\n${passed}/${passed + failed} OK${failed ? ` · ${failed} FALLARON` : ""}`);

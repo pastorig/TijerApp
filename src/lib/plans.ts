@@ -128,6 +128,28 @@ export function annualPriceArs(tier: PlanTier): number {
   return Math.floor(raw / 1000) * 1000;
 }
 
+/**
+ * Montos que se esperan en un cobro: los tres planes mensuales y sus anuales.
+ *
+ * NO es la lista de lo que se puede cobrar --hay precios de Fundador
+ * congelados y arreglos puntuales-- sino la lista contra la que se AVISA.
+ * Existe porque el 12/08/2026 un pago de $22.000 se cargó como **$22** (un
+ * cero de menos) y quedó así hasta que alguien lo miró: el único chequeo
+ * era `amount < 0`.
+ */
+export function expectedPaymentAmounts(): number[] {
+  const tiers = Object.keys(PLAN_META) as PlanTier[];
+  return [
+    ...tiers.map((tier) => PLAN_META[tier].priceArs),
+    ...tiers.map((tier) => annualPriceArs(tier)),
+  ];
+}
+
+/** ¿El monto coincide con algún precio de lista? Si no, hay que confirmarlo. */
+export function isExpectedPaymentAmount(amount: number): boolean {
+  return expectedPaymentAmounts().includes(amount);
+}
+
 /** Precio mensual ya formateado. Ej: "$33.000". */
 export function monthlyPriceLabel(tier: PlanTier): string {
   return formatArs(PLAN_META[tier].priceArs);
