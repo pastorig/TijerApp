@@ -4,7 +4,11 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { assertPublicBookingEnabled } from "@/lib/api-plan-guard";
 import { computeDepositAmount } from "@/lib/mercadopago/deposit";
 import { assertSlotBookable } from "@/lib/server/slot-availability";
-import { checkRateLimit, getRequestIdentifier } from "@/lib/rate-limit";
+import {
+  checkRateLimit,
+  getRequestIdentifier,
+  getValueIdentifier,
+} from "@/lib/rate-limit";
 import { createDepositPreference } from "@/lib/mercadopago/client";
 import { refreshAccessToken, expiresAtFrom } from "@/lib/mercadopago/oauth";
 
@@ -104,9 +108,24 @@ export async function POST(request: Request) {
     );
   }
 
-  // Rate limit por IP: sin esto un script llena la agenda de una barbería con
-  // turnos basura, y no hay nada que lo frene porque reservar no pide cuenta.
-  const limit = await checkRateLimit("reserva", getRequestIdentifier(request));
+  // Rate limit: sin esto un script llena la agenda de una barbería con turnos
+  // basura, y no hay nada que lo frene porque reservar no pide cuenta.
+  //
+  // Dos frenos que se complementan. El de IP va POR BARBERÍA: la IP sola es
+  // mal identificador acá porque los celulares argentinos salen por CGNAT y
+  // clientes distintos comparten IP pública. El de teléfono es el que
+  // realmente distingue a una persona de un script.
+  const ipLimit = await checkRateLimit(
+    "reserva",
+    getRequestIdentifier(request, slug),
+  );
+  const phoneLimit = ipLimit.allowed
+    ? await checkRateLimit(
+        "reserva-telefono",
+        getValueIdentifier(customerPhone.replace(/D/g, "")),
+      )
+    : ipLimit;
+  const limit = ipLimit.allowed ? phoneLimit : ipLimit;
   if (!limit.allowed) {
     return NextResponse.json(
       { error: "Demasiados intentos. Probá de nuevo en un rato." },

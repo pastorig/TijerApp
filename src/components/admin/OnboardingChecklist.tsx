@@ -154,7 +154,7 @@ export function OnboardingChecklist({
         onClick={() => persistHidden(false)}
         className="mb-4 inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] px-3 py-2 text-xs font-semibold text-[color:var(--text-muted)] transition-colors hover:border-[color:var(--brand-gold-ring)] hover:text-white"
       >
-        {progress.isComplete ? (
+        {progress.isComplete || isReadOnly ? (
           <>
             <Share2 aria-hidden="true" className="size-3.5" />
             Ver mi link
@@ -169,8 +169,11 @@ export function OnboardingChecklist({
     );
   }
 
-  // ── Terminada: bloque bajo con el link, sin reclamar atención ─────────────
-  if (progress.isComplete) {
+  // ── Terminada (o plan vencido): bloque bajo con el link ───────────────────
+  // Vencida la barbería, el panel es de lectura: los pasos no llevan a ningún
+  // lado y pedirle que "complete los datos" es señalarle una puerta cerrada.
+  // El link sí le sirve — la landing sigue en pie — así que queda solo eso.
+  if (progress.isComplete || isReadOnly) {
     return (
       <section
         aria-label="Tu link público"
@@ -322,6 +325,14 @@ function StepRow({
             {step.hint}
           </span>
         ) : null}
+        {/* El link se ESCRIBE, no solo se copia: si el portapapeles falla
+            (pasa en iOS y en cualquier navegador sin permiso), el aviso dice
+            "copialo a mano" y tiene que haber algo a mano que copiar. */}
+        {step.id === "compartir" ? (
+          <span className="mt-1 block truncate text-[11px] font-semibold text-[color:var(--text-secondary)] select-all">
+            {publicUrl}
+          </span>
+        ) : null}
       </span>
     </>
   );
@@ -355,7 +366,6 @@ function StepRow({
             WhatsApp
           </a>
         </span>
-        <span className="sr-only">{publicUrl}</span>
       </li>
     );
   }

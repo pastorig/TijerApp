@@ -1,5 +1,8 @@
-import { createHash } from "node:crypto";
 import * as Sentry from "@sentry/nextjs";
+import {
+  getRequestIdentifier,
+  getValueIdentifier,
+} from "@/lib/rate-limit-identity";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 /**
@@ -17,7 +20,14 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
  * alta o a un cliente reservar; el costo de dejar pasar algún bot es menor.
  */
 
-export type RateLimitBucket = "registro" | "contacto" | "waitlist" | "reserva";
+export { getRequestIdentifier, getValueIdentifier };
+
+export type RateLimitBucket =
+  | "registro"
+  | "contacto"
+  | "waitlist"
+  | "reserva"
+  | "reserva-telefono";
 
 type RateLimitResult = {
   allowed: boolean;
@@ -33,25 +43,19 @@ const LIMITS: Record<RateLimitBucket, { max: number; windowMinutes: number }> = 
   contacto: { max: 5, windowMinutes: 60 },
   waitlist: { max: 10, windowMinutes: 60 },
   // Reservar es la acción pública más frecuente y la que más duele si se
-  // automatiza: llenar la agenda de una barbería con turnos basura. 8 por hora
-  // por IP deja pasar a una familia reservando desde el mismo wifi.
-  reserva: { max: 8, windowMinutes: 60 },
+  // automatiza: llenar la agenda de una barbería con turnos basura.
+  //
+  // El contador va por IP **y barbería** (ver el `scope` de abajo), y el
+  // máximo es alto a propósito: en Argentina los celulares salen por CGNAT,
+  // así que miles de clientes de una misma operadora comparten una sola IP
+  // pública. Un límite bajo por IP a secas no frena a un bot —que rota IP— y
+  // sí le corta la reserva a clientes reales un sábado a la tarde. El freno
+  // fino lo pone `reserva-telefono`.
+  reserva: { max: 20, windowMinutes: 60 },
+  // Mismo teléfono, muchas reservas: 5 por hora deja al padre que saca turno
+  // para él y los dos hijos, y corta al script que repite el mismo dato.
+  "reserva-telefono": { max: 5, windowMinutes: 60 },
 };
-
-/**
- * Origen del request. En Vercel la IP real viene en `x-forwarded-for` (el
- * primero de la lista; los siguientes son proxies).
- */
-export function getRequestIdentifier(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  const ip =
-    forwarded?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip")?.trim() ||
-    "desconocida";
-
-  const salt = process.env.RATE_LIMIT_SALT ?? "tijerapp-sin-sal";
-  return createHash("sha256").update(`${salt}:${ip}`).digest("hex").slice(0, 32);
-}
 
 export async function checkRateLimit(
   bucket: RateLimitBucket,
