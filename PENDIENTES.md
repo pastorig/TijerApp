@@ -44,7 +44,31 @@ indexadas", **es intencional, no un error**.
 
 ---
 
+## ✅ Aviso de vencimiento del plan — EN PROD (2026-08-19)
+
+El barbero ya no se entera de que se le venció el plan cuando la barbería
+quedó en modo lectura. En los últimos 3 días del período pago ve un cartel con
+los días que le quedan y el botón Pagar (alias/CBU/titular), y le llegan dos
+notificaciones al celular: una al entrar en la ventana y otra el día que vence.
+
+- Se envían entre las 10 y las 13, una sola vez cada una por vencimiento.
+- Solo a quienes administran la barbería, no a los barberos empleados.
+- El monto que dice es **el que la barbería paga**, no el del tier asignado:
+  un fundador tiene el tier de arriba de regalo y paga el de abajo.
+- Migración `plan_notice_log` aplicada y verificada el 20/08.
+
+Spec en `specs/015-aviso-vencimiento-plan/`.
+
+---
+
 ## 📅 OCTUBRE 2026 — dos cosas con fecha, sin recordatorio automático
+
+> Ojo al llegar esa fecha: el precio que ve el barbero sale de
+> `billedMonthlyArs(tier, isFounder)`, que baja un escalón si la barbería es
+> fundadora. Cuando a Leo se le termine el upgrade y vuelva a Solo, ya no hay
+> escalón para abajo y pasa a ver el precio de Solo, que es lo correcto. Si
+> además se baja Solo a $19.000, va a ver $19.000 — revisar que eso sea lo que
+> se le quiere cobrar.
 
 **21/10/2026 — se le termina el programa Fundador a Leo Cuts.** Ese día pasa de
 Esencial (que tiene gratis desde el 21/07) a Solo, **pagando lo mismo: $22.000**.
