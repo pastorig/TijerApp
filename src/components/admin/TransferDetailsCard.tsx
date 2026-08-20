@@ -40,7 +40,7 @@ export function TransferDetailsCard({
           <dd className="font-mono font-semibold text-white">{FOUNDER.alias}</dd>
         </div>
         <div className="flex items-baseline justify-between gap-3">
-          <dt className="shrink-0 text-[color:var(--text-muted)]">CBU</dt>
+          <dt className="shrink-0 text-[color:var(--text-muted)]">CBU/CVU</dt>
           <dd className="break-all text-right font-mono font-semibold text-white">
             {FOUNDER.cbu}
           </dd>

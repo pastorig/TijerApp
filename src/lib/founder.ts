@@ -18,8 +18,8 @@ export const FOUNDER = {
   whatsapp: "5493571566221",
   /** Alias de la cuenta para transferencias. */
   alias: "pastori22",
-  /** CBU/CVU para transferencias. */
-  cbu: "4530000800016883827535",
+  /** CVU de Mercado Pago para transferencias (misma cuenta que el alias). */
+  cbu: "0000003100038109952009",
 } as const;
 
 /** Link de WhatsApp al founder con un mensaje pre-cargado. */
