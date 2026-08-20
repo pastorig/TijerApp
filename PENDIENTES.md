@@ -309,7 +309,23 @@ Queda, y las dos son de Bautista:
    Ojo con el gotcha de MP: con OAuth por comercio, las dos puntas tienen que
    ser cuentas de prueba.
 
-### ✅ La firma del webhook YA SE VALIDA — falta cargar el secreto (2026-08-19)
+### ✅ La firma del webhook SE VALIDA Y ESTÁ ACTIVA (2026-08-20) — CERRADO
+
+**Los dos secretos ya están cargados en Vercel y verificados.** El simulador de
+MercadoPago devolvió `200 - OK` tanto en Modo productivo como en Modo de
+prueba, o sea que cada clave valida las notificaciones de su modo. Verificado
+también desde afuera: una llamada sin firma al webhook responde `401`, y una
+notificación que no es de pago sigue respondiendo `200 · ignored` (si diera
+401, MP la reintentaría para siempre).
+
+La respuesta del webhook incluye `modoFirma` (`produccion` | `prueba`): sirve
+para la prueba con usuarios de prueba, donde una notificación real que validara
+con el secreto de prueba sería señal de que algo quedó cruzado.
+
+Lo de abajo es el histórico de cómo se activó.
+
+<details>
+<summary>Pasos que se siguieron</summary>
 
 El código está en prod: `src/lib/mercadopago/webhook-signature.ts` valida el HMAC
 de `x-signature` y el webhook rechaza con 401 lo que no cierre.
@@ -349,6 +365,8 @@ Para activarla (Bautista):
 
 Si en Sentry aparece "Webhook de MP con firma inválida" para TODAS las
 notificaciones, el secreto no corresponde a esa aplicación.
+
+</details>
 
 ---
 

@@ -88,6 +88,12 @@ async function handle(request: Request) {
     return NextResponse.json({ error: "Firma inválida." }, { status: 401 });
   }
 
+  // Con qué secreto cerró la firma. Se devuelve para poder verlo desde el
+  // simulador de MP y, sobre todo, en la prueba con usuarios de prueba: si una
+  // notificación REAL validara con el secreto de prueba, algo está cruzado y
+  // conviene enterarse ahí y no cuando un cliente reclame el turno.
+  const modoFirma = signature.reason === "firma-valida" ? signature.modo : null;
+
   const supabase = getSupabaseAdminClient();
 
   const { data: shop } = await supabase
@@ -98,14 +104,18 @@ async function handle(request: Request) {
   const accessToken = (shop as { mp_access_token?: string | null } | null)
     ?.mp_access_token;
   if (!accessToken) {
-    return NextResponse.json({ ok: true, skipped: "no token" });
+    return NextResponse.json({ ok: true, skipped: "no token", modoFirma });
   }
 
   // Fuente de verdad: el estado real del pago en MP.
   const result = await getPayment(accessToken, paymentId);
   if (!result.ok) {
     // No pudimos validar: 200 igual (MP reintentará por su cuenta).
-    return NextResponse.json({ ok: true, skipped: "payment fetch failed" });
+    return NextResponse.json({
+      ok: true,
+      skipped: "payment fetch failed",
+      modoFirma,
+    });
   }
   const payment = result.payment;
   const appointmentId = payment.external_reference;
