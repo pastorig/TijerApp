@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { sendPlanNotices, type PlanNoticeResult } from "@/lib/plan-notices-sender";
 import { sendClientPushForAppointment } from "@/lib/push/sendClientPush";
 import { resolveEmailFrom } from "@/lib/email/from";
 
@@ -206,6 +207,11 @@ export async function GET(request: Request) {
   // ?force=true → ignora la ventana horaria (útil para testing).
   const url = new URL(request.url);
   const forceMode = url.searchParams.get("force") === "true";
+  // Calcula a quién le avisaría del vencimiento del plan, sin registrar ni
+  // encolar nada. Sirve para probar contra la base real sin mandarle un push
+  // a un barbero de verdad.
+  const planNoticesDryRun =
+    url.searchParams.get("planNoticesDryRun") === "true";
 
   const argParts = getArgParts();
   const currentHour = argParts.hour;
@@ -506,6 +512,34 @@ export async function GET(request: Request) {
     };
   }
 
+  // ── Avisos de vencimiento de plan ──────────────────────────────────────
+  // En su propio try/catch: que falle avisarle a un barbero que le vence el
+  // plan no puede impedir que a los clientes les lleguen los recordatorios de
+  // sus turnos, que es lo que este cron viene haciendo hace meses.
+  //
+  // Ventana 10-13 ART: el cron corre cada hora, pero el aviso sale una sola
+  // vez (lo garantiza el índice único de plan_notice_log) y a una hora en la
+  // que despertar a alguien no es un problema.
+  let planNotices: PlanNoticeResult[] = [];
+  let planNoticesError: string | undefined;
+  const planNoticesInWindow =
+    forceMode || (currentHour >= 10 && currentHour <= 13);
+
+  if (planNoticesInWindow) {
+    try {
+      planNotices = await sendPlanNotices({
+        supabase,
+        todayYmd,
+        dryRun: planNoticesDryRun,
+      });
+    } catch (err) {
+      planNoticesError = err instanceof Error ? err.message : String(err);
+      Sentry.captureException(err, {
+        tags: { route: "cron/reminders", step: "plan-notices" },
+      });
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     runAtUtc: argParts.isoUtc,
@@ -515,5 +549,8 @@ export async function GET(request: Request) {
     forceMode,
     scanned: appointments?.length ?? 0,
     decisions,
+    planNotices: planNoticesInWindow ? planNotices : "fuera de la ventana 10-13",
+    planNoticesDryRun: planNoticesDryRun || undefined,
+    planNoticesError,
   });
 }
