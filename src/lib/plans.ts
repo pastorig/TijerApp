@@ -128,6 +128,36 @@ export function annualPriceArs(tier: PlanTier): number {
   return Math.floor(raw / 1000) * 1000;
 }
 
+/** Los tiers de menor a mayor. El orden ES la escalera del upgrade. */
+export const PLAN_ORDER = ["solo", "esencial", "pro"] as const;
+
+/** El tier inmediatamente inferior, o null si ya es el más bajo. */
+export function tierBelow(tier: PlanTier): PlanTier | null {
+  const i = PLAN_ORDER.indexOf(tier);
+  return i > 0 ? PLAN_ORDER[i - 1] : null;
+}
+
+/**
+ * El tier que la barbería **paga**, que no siempre es el que tiene asignado.
+ *
+ * El programa Fundadores regala el tier de arriba: Leo Cuts y Santi tienen
+ * `esencial` asignado y pagan Solo. Mostrarles el precio del tier asignado les
+ * dice que tienen que pagar $33.000 cuando en realidad pagan $22.000 — y del
+ * lado del owner infla el MRR con plata que nadie facturó.
+ *
+ * Si un fundador ya está en el tier más bajo (porque se le terminó el
+ * upgrade), no hay escalón para abajo: paga el suyo.
+ */
+export function billedTier(tier: PlanTier, isFounder: boolean): PlanTier {
+  if (!isFounder) return tier;
+  return tierBelow(tier) ?? tier;
+}
+
+/** Lo que la barbería paga por mes, en pesos. */
+export function billedMonthlyArs(tier: PlanTier, isFounder: boolean): number {
+  return PLAN_META[billedTier(tier, isFounder)].priceArs;
+}
+
 /**
  * Montos que se esperan en un cobro: los tres planes mensuales y sus anuales.
  *

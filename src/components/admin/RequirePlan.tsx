@@ -9,7 +9,9 @@ import {
   minTierForFeature,
   PLAN_META,
   type Feature,
+  billedMonthlyArs,
 } from "@/lib/plans";
+import { isFounder } from "@/data/founders";
 import { founderWaLink } from "@/lib/founder";
 import { TransferDetailsCard } from "./TransferDetailsCard";
 
@@ -130,7 +132,9 @@ function ExpiredPaywall({
   barbershopSlug: string;
   tier: ReturnType<typeof useCurrentPlan>["tier"];
 }) {
-  const precio = formatArs(PLAN_META[tier].priceArs);
+  // Mismo criterio que el banner: el precio que se le muestra es el que
+  // paga, no el del tier que tiene asignado.
+  const precio = formatArs(billedMonthlyArs(tier, isFounder(barbershopSlug)));
   const waLink = founderWaLink(
     `¡Hola! Soy admin de ${barbershopSlug} y mi plan venció. Quiero activarlo (${precio}/mes).`,
   );

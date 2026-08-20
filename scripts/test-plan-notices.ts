@@ -71,5 +71,22 @@ check("el título dice cuántos días faltan", planNoticeMessage("vence_3d", 3).
 check("un solo día va en singular", planNoticeMessage("vence_3d", 1).title, "Tu plan vence en 1 día");
 check("el día del vencimiento cambia el título", planNoticeMessage("vence_hoy", 0).title, "Tu plan vence hoy");
 
+// El push tiene que decir el monto que el barbero realmente paga.
+check(
+  "el push incluye el monto cuando se le pasa",
+  planNoticeMessage("vence_3d", 2, "$22.000").body.includes("($22.000/mes)"),
+  true,
+);
+check(
+  "el aviso del día también lo incluye",
+  planNoticeMessage("vence_hoy", 0, "$22.000").body.includes("($22.000/mes)"),
+  true,
+);
+check(
+  "sin monto no queda un paréntesis vacío",
+  planNoticeMessage("vence_3d", 2).body.includes("("),
+  false,
+);
+
 console.log(`\n${passed}/${passed + failed} OK${failed ? ` · ${failed} FALLARON` : ""}`);
 if (failed) process.exit(1);

@@ -84,21 +84,30 @@ export function planNoticeDue({
   return null;
 }
 
-/** Texto del push, según el aviso y cuántos días falten. */
+/**
+ * Texto del push.
+ *
+ * `priceLabel` tiene que ser lo que la barbería **paga** (ver `billedMonthlyArs`
+ * en plans.ts), no el precio del tier que tiene asignado: a un fundador con
+ * Esencial de regalo decirle que renueve por $33.000 cuando transfiere $22.000
+ * es mandarle mal el número al bolsillo.
+ */
 export function planNoticeMessage(
   kind: PlanNoticeKind,
   daysLeft: number,
+  priceLabel?: string,
 ): { title: string; body: string } {
+  const monto = priceLabel ? ` (${priceLabel}/mes)` : "";
   if (kind === "vence_hoy") {
     return {
       title: "Tu plan vence hoy",
-      body: "Renovalo para que tus clientes puedan seguir reservando online.",
+      body: `Renovalo${monto} para que tus clientes puedan seguir reservando online.`,
     };
   }
   const dias = daysLeft === 1 ? "1 día" : `${daysLeft} días`;
   return {
     title: `Tu plan vence en ${dias}`,
-    body: "Entrá al panel y renovalo así no se te corta la reserva online.",
+    body: `Entrá al panel y renovalo${monto} así no se te corta la reserva online.`,
   };
 }
 

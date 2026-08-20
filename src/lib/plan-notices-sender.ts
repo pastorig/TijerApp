@@ -6,6 +6,8 @@ import {
   toArgYmd,
   type PlanNoticeKind,
 } from "@/lib/plan-notices";
+import { billedMonthlyArs, formatArs, type PlanTier } from "@/lib/plans";
+import { isFounder } from "@/data/founders";
 
 /**
  * Envío de los avisos de vencimiento de plan.
@@ -38,6 +40,7 @@ type Subscription = {
   barbershop_slug: string;
   current_period_ends_at: string | null;
   status: string;
+  plan_tier: PlanTier | null;
 };
 
 export async function sendPlanNotices({
@@ -53,7 +56,7 @@ export async function sendPlanNotices({
 
   const { data: subs, error } = await supabase
     .from("barbershop_subscriptions")
-    .select("barbershop_slug, current_period_ends_at, status")
+    .select("barbershop_slug, current_period_ends_at, status, plan_tier")
     .eq("status", "active")
     .not("current_period_ends_at", "is", null);
 
@@ -103,6 +106,10 @@ export async function sendPlanNotices({
         slug,
         kind,
         daysLeft: daysUntil(periodEndsAt, todayYmd),
+        // Lo que paga, no el precio del tier asignado.
+        priceLabel: sub.plan_tier
+          ? formatArs(billedMonthlyArs(sub.plan_tier, isFounder(slug)))
+          : undefined,
       });
 
       await supabase
@@ -144,11 +151,13 @@ async function enqueueForAdmins({
   slug,
   kind,
   daysLeft,
+  priceLabel,
 }: {
   supabase: SupabaseClient;
   slug: string;
   kind: PlanNoticeKind;
   daysLeft: number;
+  priceLabel?: string;
 }): Promise<number> {
   const { data: admins, error: adminsError } = await supabase
     .from("barbershop_admins")
@@ -172,7 +181,7 @@ async function enqueueForAdmins({
   const rows = (devices ?? []) as Array<{ id: string }>;
   if (rows.length === 0) return 0;
 
-  const { title, body } = planNoticeMessage(kind, daysLeft);
+  const { title, body } = planNoticeMessage(kind, daysLeft, priceLabel);
   const payload = {
     title,
     body,

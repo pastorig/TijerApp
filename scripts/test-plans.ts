@@ -13,12 +13,15 @@ import {
   addMonths,
   annualPriceArs,
   annualPriceLabel,
+  billedMonthlyArs,
+  billedTier,
   computeNextPaidUntil,
   expectedPaymentAmounts,
   hasFeature,
   isExpectedPaymentAmount,
   monthlyPriceLabel,
   resolvePlanStatus,
+  tierBelow,
 } from "../src/lib/plans.ts";
 
 let passed = 0;
@@ -258,6 +261,48 @@ check(
   "la lista tiene los 3 mensuales + los 3 anuales",
   expectedPaymentAmounts().length,
   6,
+);
+
+// ── Lo que la barbería PAGA no es el tier que TIENE ────────────────────────
+// El programa Fundadores regala el tier de arriba: Leo Cuts tiene 'esencial'
+// asignado y paga Solo. Cobrarle (o avisarle) el precio del tier asignado le
+// pide $33.000 cuando transfiere $22.000, e infla el MRR del owner.
+check("el tier de abajo de esencial es solo", tierBelow("esencial"), "solo");
+check("el tier de abajo de pro es esencial", tierBelow("pro"), "esencial");
+check("solo no tiene tier abajo", tierBelow("solo"), null);
+
+check(
+  "fundador con esencial paga solo",
+  billedTier("esencial", true),
+  "solo",
+);
+check(
+  "fundador con pro paga esencial",
+  billedTier("pro", true),
+  "esencial",
+);
+check(
+  "sin fundador, paga lo que tiene",
+  billedTier("esencial", false),
+  "esencial",
+);
+// Cuando al fundador se le termina el upgrade y vuelve al tier más bajo, no
+// hay escalón para abajo: paga el suyo. Sin esto quedaría en cero o rompiendo.
+check(
+  "fundador ya en el tier más bajo paga el suyo",
+  billedTier("solo", true),
+  "solo",
+);
+
+check(
+  "el monto del fundador con esencial es el de Solo",
+  billedMonthlyArs("esencial", true),
+  PLAN_META.solo.priceArs,
+);
+check(
+  "el monto sin fundador es el de su tier",
+  billedMonthlyArs("esencial", false),
+  PLAN_META.esencial.priceArs,
 );
 
 console.log(`\n${passed}/${passed + failed} OK${failed ? ` · ${failed} FALLARON` : ""}`);

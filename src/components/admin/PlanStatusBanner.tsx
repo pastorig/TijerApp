@@ -5,7 +5,8 @@ import { AlertTriangle, Clock, MessageCircle, X } from "lucide-react";
 import { useCurrentPlan } from "./PlanContext";
 import { cn } from "@/lib/cn";
 import { founderWaLink } from "@/lib/founder";
-import { PLAN_META, formatArs } from "@/lib/plans";
+import { billedMonthlyArs, formatArs } from "@/lib/plans";
+import { isFounder } from "@/data/founders";
 import { TransferDetailsCard } from "./TransferDetailsCard";
 
 /**
@@ -33,7 +34,11 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
   const plan = useCurrentPlan();
   const [payOpen, setPayOpen] = useState(false);
 
-  const precio = formatArs(PLAN_META[plan.tier].priceArs);
+  // Lo que paga, no lo que tiene: un fundador tiene el tier de arriba de
+  // regalo y paga el de abajo.
+  const precio = formatArs(
+    billedMonthlyArs(plan.tier, isFounder(barbershopSlug)),
+  );
   const waLink = founderWaLink(
     `¡Hola! Soy admin de ${barbershopSlug}. Quiero activar mi plan pago (${precio}/mes).`,
   );

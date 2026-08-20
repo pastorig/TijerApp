@@ -13,7 +13,13 @@ import { DEMO_BARBERSHOP_SLUGS } from "@/data/demo-barbershops";
 import { useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
-import { PLAN_META, type PlanTier, type SubscriptionStatus } from "@/lib/plans";
+import {
+  billedMonthlyArs,
+  PLAN_META,
+  type PlanTier,
+  type SubscriptionStatus,
+} from "@/lib/plans";
+import { isFounder } from "@/data/founders";
 
 type PlanRow = {
   slug: string;
@@ -735,7 +741,12 @@ function RegisterPaymentModal({
   onSaved: () => void;
 }) {
   const toast = useToast();
-  const defaultAmount = row.plan_tier ? PLAN_META[row.plan_tier].priceArs : 0;
+  // Prefill con lo que la barbería paga de verdad. Si acá apareciera el
+  // precio del tier asignado, el fundador quedaría cargado a $33.000 cuando
+  // transfirió $22.000.
+  const defaultAmount = row.plan_tier
+    ? billedMonthlyArs(row.plan_tier, isFounder(row.slug))
+    : 0;
   const [amount, setAmount] = useState<string>(String(defaultAmount));
   const [method, setMethod] = useState<"transferencia" | "efectivo" | "otro">(
     "transferencia",
