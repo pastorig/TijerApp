@@ -14,8 +14,13 @@ export const runtime = "nodejs";
  * consultamos el pago real contra MP. Es idempotente: notificaciones repetidas
  * no confirman el turno ni registran el pago más de una vez.
  *
- * Además se valida la firma (`x-signature`) cuando hay `MP_WEBHOOK_SECRET`
- * cargado. **Mientras esa variable no exista, la validación no hace nada**:
+ * Además se valida la firma (`x-signature`) cuando hay al menos uno de los
+ * dos secretos cargados: `MP_WEBHOOK_SECRET` (pagos reales) y
+ * `MP_WEBHOOK_SECRET_TEST` (usuarios de prueba de MP). MP firma cada
+ * notificación con el secreto del modo que la generó, así que con uno solo
+ * cargado el otro modo se rechazaría con 401.
+ *
+ * **Mientras no exista ninguno de los dos, la validación no hace nada**:
  * prenderla a medias cortaría el cobro de seña de cualquier barbería que ya
  * esté cobrando. Al cargarla hay que rehacer la prueba de punta a punta: un
  * secreto equivocado rechaza notificaciones buenas, y eso se ve como "el
@@ -66,7 +71,10 @@ async function handle(request: Request) {
     signatureHeader: request.headers.get("x-signature"),
     requestIdHeader: request.headers.get("x-request-id"),
     dataId: paymentId,
-    secret: process.env.MP_WEBHOOK_SECRET,
+    secrets: {
+      produccion: process.env.MP_WEBHOOK_SECRET,
+      prueba: process.env.MP_WEBHOOK_SECRET_TEST,
+    },
   });
   if (!signature.ok) {
     Sentry.captureMessage("Webhook de MP con firma inválida", {

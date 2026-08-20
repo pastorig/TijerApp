@@ -314,20 +314,41 @@ Queda, y las dos son de Bautista:
 El código está en prod: `src/lib/mercadopago/webhook-signature.ts` valida el HMAC
 de `x-signature` y el webhook rechaza con 401 lo que no cierre.
 
-**Mientras no exista la env var `MP_WEBHOOK_SECRET`, la validación no hace nada**
+**Mientras no exista ninguno de los dos secretos, la validación no hace nada**
 — a propósito: prenderla a medias cortaría el cobro de seña de cualquier
 barbería que ya esté cobrando.
 
+**Son DOS secretos, no uno.** MP firma cada notificación con el secreto del
+modo que la generó: los pagos reales con el productivo, los de usuarios de
+prueba con el de prueba. Con uno solo cargado, el otro modo se rechaza con
+401 — y eso se ve idéntico a "el cliente pagó y el turno no se confirmó".
+
 Para activarla (Bautista):
 
-1. Panel de MP → la aplicación de TijerApp → Webhooks → generar la **clave
-   secreta**.
-2. Cargarla en Vercel (Production) como `MP_WEBHOOK_SECRET` + redeploy.
-3. **Rehacer la prueba de punta a punta.** Un secreto equivocado rechaza
-   notificaciones buenas, y eso se ve exactamente como el problema que se
-   quiere evitar: el cliente paga y el turno no se confirma. Si en Sentry
-   aparece "Webhook de MP con firma inválida" para TODAS las notificaciones,
-   el secreto no es el que corresponde a la aplicación.
+1. Panel de MP → *Tus integraciones* → la aplicación de TijerApp (la del
+   `MP_CLIENT_ID`: comparar el Client ID, es el error más fácil de cometer)
+   → **Webhooks**.
+2. En la pestaña **Modo productivo**:
+   - URL: `https://tijerapp.com/api/mp/webhook?bs=primebarber`
+   - Evento: **solo "Pagos (legacy)"**. Es el único que el código entiende
+     (`type: "payment"`); "Order (Mercado Pago)" es el formato nuevo y hoy se
+     ignora.
+   - Guardar y recién ahí se habilita generar la **clave secreta**.
+3. Repetir en la pestaña **Modo de prueba** para el segundo secreto.
+4. Cargar en Vercel (scope Production las dos):
+   - `MP_WEBHOOK_SECRET` ← modo productivo
+   - `MP_WEBHOOK_SECRET_TEST` ← modo de prueba
+5. **Redeploy**, o la variable no se toma.
+6. Probar con el simulador de MP apuntando a esa URL: **200** = el secreto es
+   el correcto; **401 "Firma inválida"** = es de otra aplicación o del otro
+   modo. Que la respuesta diga `payment fetch failed` está bien: el pago
+   simulado no existe.
+
+> Hacer la simulación DESPUÉS del redeploy. Antes da 200 igual, porque sin
+> secretos la validación está inerte, y te hace creer que funciona.
+
+Si en Sentry aparece "Webhook de MP con firma inválida" para TODAS las
+notificaciones, el secreto no corresponde a esa aplicación.
 
 ---
 

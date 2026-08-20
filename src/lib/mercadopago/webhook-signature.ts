@@ -11,8 +11,16 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  * Vive aparte del route handler porque es lógica pura: así se puede testear
  * sin levantar Next ni pegarle a MercadoPago.
  *
+ * ── Dos secretos, no uno ────────────────────────────────────────────────────
+ * MP firma cada notificación con el secreto del modo que la generó. Los pagos
+ * reales vienen firmados con el secreto **productivo**; los que se hacen con
+ * usuarios de prueba, con el de **prueba**. Con un solo secreto cargado, la
+ * prueba de punta a punta con usuarios de prueba se rechazaría con 401 — y
+ * desde afuera eso se ve idéntico a "el cliente pagó y el turno no se
+ * confirmó", que es justo el problema que esta validación viene a evitar.
+ *
  * ── Por qué esto es una segunda capa y no la principal ──────────────────────
- * El webhook nunca le cree al payload: vuelva a consultar el pago real contra
+ * El webhook nunca le cree al payload: vuelve a consultar el pago real contra
  * la API de MP antes de tocar nada. O sea que una notificación falsa ya no
  * lograba confirmar un turno. La firma agrega que ni siquiera lleguemos a
  * hacer esa consulta con datos de un tercero.
@@ -24,10 +32,12 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  * es idempotente y re-consulta el estado real.
  */
 
+export type SignatureMode = "produccion" | "prueba";
+
 export type SignatureVerdict =
-  /** No hay secreto configurado: no se valida nada (ver `MP_WEBHOOK_SECRET`). */
+  /** No hay ningún secreto configurado: no se valida nada. */
   | { ok: true; reason: "sin-secreto" }
-  | { ok: true; reason: "firma-valida" }
+  | { ok: true; reason: "firma-valida"; modo: SignatureMode }
   | { ok: false; reason: "faltan-cabeceras" }
   | { ok: false; reason: "firma-no-coincide" };
 
@@ -57,16 +67,25 @@ export function verifyWebhookSignature({
   signatureHeader,
   requestIdHeader,
   dataId,
-  secret,
+  secrets,
 }: {
   signatureHeader: string | null;
   requestIdHeader: string | null;
   dataId: string;
-  secret: string | undefined;
+  /** El productivo es el que valida los pagos reales. */
+  secrets: { produccion?: string; prueba?: string };
 }): SignatureVerdict {
-  // Sin secreto la validación queda inerte a propósito: prenderla a medias
+  const candidatos: Array<{ modo: SignatureMode; secret: string }> = [];
+  if (secrets.produccion) {
+    candidatos.push({ modo: "produccion", secret: secrets.produccion });
+  }
+  if (secrets.prueba) {
+    candidatos.push({ modo: "prueba", secret: secrets.prueba });
+  }
+
+  // Sin secretos la validación queda inerte a propósito: prenderla a medias
   // rompería el cobro de seña de toda barbería que ya esté cobrando.
-  if (!secret) return { ok: true, reason: "sin-secreto" };
+  if (candidatos.length === 0) return { ok: true, reason: "sin-secreto" };
 
   if (!signatureHeader || !dataId) return { ok: false, reason: "faltan-cabeceras" };
 
@@ -77,9 +96,12 @@ export function verifyWebhookSignature({
   const id = /^[0-9]+$/.test(dataId) ? dataId : dataId.toLowerCase();
   const manifest = `id:${id};request-id:${requestIdHeader ?? ""};ts:${ts};`;
 
-  const expected = createHmac("sha256", secret).update(manifest).digest("hex");
+  for (const { modo, secret } of candidatos) {
+    const expected = createHmac("sha256", secret).update(manifest).digest("hex");
+    if (equalsConstantTime(expected, v1)) {
+      return { ok: true, reason: "firma-valida", modo };
+    }
+  }
 
-  return equalsConstantTime(expected, v1)
-    ? { ok: true, reason: "firma-valida" }
-    : { ok: false, reason: "firma-no-coincide" };
+  return { ok: false, reason: "firma-no-coincide" };
 }

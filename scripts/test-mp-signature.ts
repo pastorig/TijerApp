@@ -17,7 +17,8 @@ function check(name: string, got: unknown, expected: unknown) {
   else failed++;
 }
 
-const SECRET = "clave-secreta-de-la-app";
+const SECRET = "clave-secreta-productiva";
+const SECRET_TEST = "clave-secreta-de-prueba";
 const DATA_ID = "1234567890";
 const REQUEST_ID = "a1b2c3d4-0000-4444-8888-abcdefabcdef";
 const TS = "1755640000";
@@ -42,7 +43,7 @@ function firmar({
 const base = {
   requestIdHeader: REQUEST_ID,
   dataId: DATA_ID,
-  secret: SECRET,
+  secrets: { produccion: SECRET },
 };
 
 check(
@@ -109,8 +110,8 @@ check(
 // El caso que importa para no romper producción: hasta que exista la env var,
 // la validación no puede rechazar nada.
 check(
-  "sin MP_WEBHOOK_SECRET → no valida y deja pasar",
-  verifyWebhookSignature({ ...base, secret: undefined, signatureHeader: null })
+  "sin ningún secreto → no valida y deja pasar",
+  verifyWebhookSignature({ ...base, secrets: {}, signatureHeader: null })
     .reason,
   "sin-secreto",
 );
@@ -124,6 +125,73 @@ check(
     signatureHeader: firmar({ dataId: "abc123xyz" }),
   }).ok,
   true,
+);
+
+// ── Los dos modos ───────────────────────────────────────────────────────
+// MP firma con el secreto del modo que generó la notificación. Con un solo
+// secreto cargado, la prueba con usuarios de prueba se rechazaría con 401 y
+// parecería que el pago no confirma el turno.
+const ambos = {
+  requestIdHeader: REQUEST_ID,
+  dataId: DATA_ID,
+  secrets: { produccion: SECRET, prueba: SECRET_TEST },
+};
+
+check(
+  "firmada en producción, con los dos cargados → pasa",
+  verifyWebhookSignature({ ...ambos, signatureHeader: firmar() }).ok,
+  true,
+);
+check(
+  "y avisa que fue con el secreto productivo",
+  verifyWebhookSignature({ ...ambos, signatureHeader: firmar() }).modo,
+  "produccion",
+);
+check(
+  "firmada en prueba, con los dos cargados → pasa",
+  verifyWebhookSignature({
+    ...ambos,
+    signatureHeader: firmar({ secret: SECRET_TEST }),
+  }).ok,
+  true,
+);
+check(
+  "y avisa que fue con el secreto de prueba",
+  verifyWebhookSignature({
+    ...ambos,
+    signatureHeader: firmar({ secret: SECRET_TEST }),
+  }).modo,
+  "prueba",
+);
+
+// El caso que motivó todo esto.
+check(
+  "firmada en prueba con SOLO el productivo cargado → la rechaza",
+  verifyWebhookSignature({
+    ...base,
+    signatureHeader: firmar({ secret: SECRET_TEST }),
+  }).ok,
+  false,
+);
+check(
+  "solo el de prueba cargado: una firma productiva no pasa",
+  verifyWebhookSignature({
+    requestIdHeader: REQUEST_ID,
+    dataId: DATA_ID,
+    secrets: { prueba: SECRET_TEST },
+    signatureHeader: firmar(),
+  }).ok,
+  false,
+);
+// Un secreto vacío (env var declarada pero sin valor) no cuenta como cargado.
+check(
+  "secretos vacíos → sigue inerte, no rechaza todo",
+  verifyWebhookSignature({
+    ...base,
+    secrets: { produccion: "", prueba: "" },
+    signatureHeader: null,
+  }).reason,
+  "sin-secreto",
 );
 
 console.log(`\n${passed}/${passed + failed} OK${failed ? ` · ${failed} FALLARON` : ""}`);
