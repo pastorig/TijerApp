@@ -121,7 +121,12 @@ function computeStats(
     active.length > 0 ? (confirmed.length / active.length) * 100 : 0;
   const cancellationRate =
     active.length > 0 ? (cancelled.length / active.length) * 100 : 0;
-  const avgPerDay = days > 0 ? active.length / days : 0;
+  // Los cancelados NO cuentan como carga de trabajo: un turno que se cayó no
+  // es un turno atendido. Ojo que las tasas de confirmación y cancelación de
+  // acá arriba SÍ usan el total, porque ahí el cancelado tiene que estar en el
+  // denominador o la tasa no significa nada.
+  const avgPerDay =
+    days > 0 ? (confirmed.length + pending.length) / days : 0;
   return {
     total: active.length,
     confirmed: confirmed.length,

@@ -201,6 +201,11 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
     const cancelled = todayAppointments.filter(
       (a) => a.status === "cancelled",
     ).length;
+    // Los turnos que siguen en pie. `total` incluye los cancelados a
+    // propósito, porque la tarjeta "Turnos hoy" los desglosa; para todo lo
+    // demás —lo programado, lo atendido, la plata— el número que vale es
+    // este. Un turno cancelado no es trabajo ni es plata que entra.
+    const active = activeAppointments.length;
 
     // Ingresos estimados = suma de service_price de activos (no cancelados/eliminados)
     const estimatedRevenue = activeAppointments.reduce(
@@ -237,6 +242,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
 
     return {
       total,
+      active,
       pending,
       confirmed,
       cancelled,
@@ -364,9 +370,10 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
   // Resumen del día — texto inteligente que comunica "cómo va"
   const daySummary = useMemo(() => {
     if (stats.total === 0) return "Día sin turnos cargados todavía";
-    if (stats.total === 1) return "1 turno programado";
-    return `${stats.total} turnos programados`;
-  }, [stats.total]);
+    if (stats.active === 0) return "Sin turnos en pie — todos cancelados";
+    if (stats.active === 1) return "1 turno programado";
+    return `${stats.active} turnos programados`;
+  }, [stats.total, stats.active]);
 
   const baseClosingStr = formatMinutesToTime(stats.baseClosingMin);
 
@@ -430,13 +437,21 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
       !upcomingAppointment &&
       !inProgressAppointment
     ) {
-      const attended =
-        stats.confirmed + (stats.total - stats.pending - stats.confirmed - stats.cancelled);
+      // Atendidos = confirmados. La cuenta anterior era
+      //   confirmed + (total - pending - confirmed - cancelled)
+      // y el paréntesis siempre daba CERO, porque total es exactamente la
+      // suma de esos tres. O sea que `attended` ya era `confirmed`, con una
+      // aritmética de adorno encima. Lo grave era el fallback: cuando no había
+      // ningún confirmado, `attended || stats.total` mostraba el TOTAL, que
+      // incluye los cancelados. Un barbero que cancelaba dos turnos los veía
+      // contados como atendidos, al lado de los ingresos estimados.
+      const attended = stats.confirmed;
+      const plural = attended === 1 ? "" : "s";
       return {
         tone: "success",
         icon: "check",
         label: "Día completado",
-        hint: `${attended || stats.total} turno${stats.total === 1 ? "" : "s"} atendido${stats.total === 1 ? "" : "s"}${stats.estimatedRevenue > 0 ? ` · ${formatPrice(stats.estimatedRevenue)} estimados` : ""}`,
+        hint: `${attended} turno${plural} atendido${plural}${stats.estimatedRevenue > 0 ? ` · ${formatPrice(stats.estimatedRevenue)} estimados` : ""}`,
       };
     }
     // Prioridad 5: sin turnos hoy
@@ -452,7 +467,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
     return {
       tone: "info",
       icon: "calendar",
-      label: `${stats.total} turnos programados`,
+      label: `${stats.active} turnos programados`,
       hint: `Cierre estimado ${formatMinutesToTime(stats.effectiveClosingMin)}`,
     };
   }, [
