@@ -22,6 +22,7 @@ import { getBarberDayAvailability } from "@/lib/barber-availability";
 import type { AvailabilitySlot } from "@/lib/availability";
 import { listActiveServicesByBarber } from "@/lib/barber-services";
 import { listActiveBarbersByBarbershop } from "@/lib/barbers";
+import { openPendingTab } from "@/lib/pending-tab";
 import { normalizePhone } from "@/lib/barbershop-clients";
 import { cn } from "@/lib/cn";
 import {
@@ -511,6 +512,21 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     setFormError("");
     setIsSaving(true);
 
+    // La pestaña de WhatsApp se pide ACÁ, mientras el navegador todavía
+    // reconoce el click. Más abajo hay dos idas y vueltas a la red (validar el
+    // horario y crear la reserva) y para cuando terminan el permiso ya se
+    // perdió: `window.open` queda bloqueado y el cliente se come la pantalla
+    // de "listo" sin que se abra nada. Ver src/lib/pending-tab.ts.
+    const whatsappTab = openPendingTab();
+
+    // Toda salida por error cierra la pestaña que se abrió con el click. Sin
+    // esto, un horario ya tomado o un fallo de red te dejan una pestaña
+    // "Abriendo WhatsApp…" que no lleva a ningún lado.
+    const failBooking = (mensaje: string) => {
+      whatsappTab.cancel();
+      setFormError(mensaje);
+    };
+
     try {
       const { isAvailable, error } = await validateAppointmentTimeIsAvailable({
         barbershopSlug: barbershop.slug,
@@ -524,7 +540,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       });
 
       if (error) {
-        setFormError("No pudimos validar la disponibilidad. Intentá nuevamente.");
+        failBooking("No pudimos validar la disponibilidad. Intentá nuevamente.");
         return;
       }
 
@@ -537,11 +553,11 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           ),
         );
         setSelectedTime("");
-        setFormError("Ese horario ya fue reservado. Elegí otro.");
+        failBooking("Ese horario ya fue reservado. Elegí otro.");
         return;
       }
     } catch {
-      setFormError("No pudimos validar la disponibilidad. Intentá nuevamente.");
+      failBooking("No pudimos validar la disponibilidad. Intentá nuevamente.");
       return;
     } finally {
       setIsSaving(false);
@@ -588,7 +604,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             );
             setSelectedTime("");
           }
-          setFormError(
+          failBooking(
             data.error || "No pudimos crear la reserva. Probá de nuevo.",
           );
           return;
@@ -610,7 +626,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           initPoint: data.initPoint ?? null,
         });
       } catch {
-        setFormError("No pudimos crear la reserva. Probá de nuevo.");
+        failBooking("No pudimos crear la reserva. Probá de nuevo.");
       } finally {
         setIsSaving(false);
       }
@@ -691,13 +707,13 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             ),
           );
           setSelectedTime("");
-          setFormError(
+          failBooking(
             "Ese horario acaba de ocuparse. Elegí otro disponible.",
           );
           return;
         }
 
-        setFormError(
+        failBooking(
           "No pudimos guardar la reserva. Revisá los datos e intentá nuevamente.",
         );
         return;
@@ -705,7 +721,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
 
       confirmationToken = data?.confirmation_token;
     } catch {
-      setFormError(
+      failBooking(
         "No pudimos guardar la reserva. Revisá los datos e intentá nuevamente.",
       );
       return;
@@ -755,7 +771,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     // Abrimos WhatsApp automático como hasta ahora — el cliente puede
     // mandar el mensaje y después volver al browser para usar el link
     // de confirmación.
-    window.open(whatsappLink, "_blank", "noopener,noreferrer");
+    whatsappTab.go(whatsappLink);
   }
 
   const summaryRows: Array<{ label: string; value: string }> = [
