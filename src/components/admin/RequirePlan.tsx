@@ -70,7 +70,8 @@ function FeaturePaywall({
     reportes_por_barbero: "Reportes por barbero",
     push_notifications: "Notificaciones push",
     fidelizacion: "Sistema de fidelización",
-    multi_admin: "Multi-admin (equipo)",
+    cuentas_empleados: "Cuentas para tus empleados",
+  multi_admin: "Multi-admin (equipo)",
     reportes_mensuales_email: "Reportes mensuales por email",
     soporte_prioritario: "Soporte prioritario",
   };

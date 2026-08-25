@@ -33,7 +33,8 @@ export type Feature =
   | "fidelizacion"
   | "multi_admin" // permite agregar más de 1 admin (Equipo)
   | "reportes_mensuales_email"
-  | "soporte_prioritario";
+  | "soporte_prioritario"
+  | "cuentas_empleados";
 
 /**
  * Matriz feature → tiers que la incluyen.
@@ -51,6 +52,11 @@ export const PLAN_FEATURES: Record<Feature, ReadonlyArray<PlanTier>> = {
   push_notifications: ["esencial", "pro"],
   fidelizacion: ["pro"],
   multi_admin: ["pro"],
+  // Cuentas para EMPLEADOS (feature 016). No confundir con multi_admin, que es
+  // el cupo de cuentas de DUEÑO: los accesos de empleados no lo consumen.
+  // Desde Esencial porque en Solo el tope es de 1 barbero y no hay empleado a
+  // quien invitar.
+  cuentas_empleados: ["esencial", "pro"],
   reportes_mensuales_email: ["pro"],
   soporte_prioritario: ["pro"],
 } as const;

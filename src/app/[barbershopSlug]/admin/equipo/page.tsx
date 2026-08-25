@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { AdminAuthGuard } from "@/components/AdminAuthGuard";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminTeamManager } from "@/components/admin/AdminTeamManager";
+import { StaffAccessSection } from "@/components/admin/StaffAccessSection";
 import { RequirePlan } from "@/components/admin/RequirePlan";
 import {
   listKnownBarbershops,
@@ -34,6 +35,7 @@ export default async function AdminTeamPage({ params }: Props) {
       >
         <RequirePlan feature="multi_admin" barbershopSlug={barbershop.slug}>
           <AdminTeamManager barbershop={barbershop} />
+          <StaffAccessSection barbershop={barbershop} />
         </RequirePlan>
       </AdminShell>
     </AdminAuthGuard>

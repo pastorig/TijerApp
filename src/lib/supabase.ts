@@ -32,12 +32,33 @@ type AppointmentInsert = {
   deposit_expires_at?: string | null;
   mp_payment_id?: string | null;
   mp_preference_id?: string | null;
+  // Quién confirmó o canceló por última vez (feature 016). null = el cambio es
+  // anterior a las cuentas de empleados, o lo hizo el sistema.
+  status_changed_by?: string | null;
+  status_changed_at?: string | null;
 };
 
 type AppointmentRow = Omit<AppointmentInsert, "status"> & {
   id?: string;
   created_at?: string;
   status: AppointmentStatus;
+};
+
+/**
+ * Acceso de un empleado a la agenda de UN barbero (feature 016).
+ *
+ * OJO: `barber_id` es uuid acá, pero `appointments.barber_id` es text. Al
+ * cruzarlos hay que comparar el uuid como texto o la consulta devuelve cero
+ * turnos sin dar error.
+ */
+export type BarberStaffAccessRow = {
+  id: string;
+  user_id: string;
+  barbershop_slug: string;
+  barber_id: string;
+  granted_by: string;
+  granted_at: string;
+  revoked_at: string | null;
 };
 
 type PaymentEventRow = {
@@ -619,6 +640,16 @@ type Database = {
         Row: AppointmentRow;
         Insert: AppointmentInsert;
         Update: Partial<AppointmentInsert>;
+        Relationships: [];
+      };
+      barber_staff_access: {
+        Row: BarberStaffAccessRow;
+        Insert: Omit<BarberStaffAccessRow, "id" | "granted_at" | "revoked_at"> & {
+          id?: string;
+          granted_at?: string;
+          revoked_at?: string | null;
+        };
+        Update: Partial<BarberStaffAccessRow>;
         Relationships: [];
       };
       appointment_reviews: {

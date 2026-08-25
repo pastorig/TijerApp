@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Eye, EyeOff, Store } from "lucide-react";
 import { getCurrentUserAdminBarbershops } from "@/lib/barbershop-access";
+import { getCurrentUserStaffBarbershops } from "@/lib/staff-access-client";
+import { resolvePostLoginDestination } from "@/lib/staff-routing";
 import { signInWithEmailAndPassword } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/supabase";
 import {
@@ -94,6 +96,24 @@ export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
       if (data.length === 1) {
         router.replace(`/${data[0].barbershop_slug}/admin`);
         return;
+      }
+
+      // No administra ninguna barbería: puede ser un empleado. Se consulta
+      // recién acá y no antes para no sumarle una consulta al login del dueño,
+      // que es el caso frecuente.
+      if (data.length === 0) {
+        const { data: staff } = await getCurrentUserStaffBarbershops();
+        if (staff.length > 0) {
+          const destino = resolvePostLoginDestination({
+            barbershopSlug: staff[0].barbershopSlug,
+            isAdmin: false,
+            isStaff: true,
+          });
+          if (destino.kind === "staff") {
+            router.replace(destino.path);
+            return;
+          }
+        }
       }
 
       // Administra varias: hay que elegir. Buscamos los nombres reales — antes

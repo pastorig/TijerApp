@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getCurrentUserStaffBarbershops } from "@/lib/staff-access-client";
+import { resolvePostLoginDestination } from "@/lib/staff-routing";
 import { useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
@@ -47,7 +49,20 @@ export function AdminLoginForm({ barbershop }: AdminLoginFormProps) {
         return;
       }
 
-      router.replace(`/${barbershop.slug}/admin`);
+      // Un empleado que entra por el login de la barbería va a SU agenda, no
+      // al panel: el panel le rebotaría igual, y rebotarlo después de entrar
+      // bien se lee como "no me anda el usuario".
+      const { data: staff } = await getCurrentUserStaffBarbershops();
+      const destino = resolvePostLoginDestination({
+        barbershopSlug: barbershop.slug,
+        isAdmin: !staff.some((a) => a.barbershopSlug === barbershop.slug),
+        isStaff: staff.some((a) => a.barbershopSlug === barbershop.slug),
+      });
+      router.replace(
+        destino.kind === "sin-acceso"
+          ? `/${barbershop.slug}/admin`
+          : destino.path,
+      );
     } catch {
       setErrorMessage("No pudimos iniciar sesión. Intentá nuevamente.");
     } finally {
