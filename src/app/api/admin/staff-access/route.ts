@@ -14,9 +14,18 @@ export const runtime = "nodejs";
  *
  * Cuidados que valen la pena nombrar:
  *
- * - El dueño **nunca elige ni ve la contraseña**. Se le manda al empleado un
- *   mail para que la ponga él. Una contraseña que el dueño elige es una
- *   contraseña que el dueño sabe.
+ * - **El dueño le pone una contraseña inicial** y se la dice en persona. Se
+ *   eligió esto sobre la invitación por mail porque para un barbero el mail es
+ *   fricción real: buscarlo, mirar spam, tenerlo en el celular.
+ *
+ *   La contrapartida, que está asumida: el dueño sabe esa clave y puede entrar
+ *   como el empleado, así que el registro de "quién canceló" no sirve como
+ *   prueba contra el dueño. Por eso el empleado **puede cambiarla** desde su
+ *   propia pantalla, y se le avisa que puede.
+ *
+ *   Si la persona YA tenía cuenta, no se le toca la contraseña: entra con la
+ *   que ya usa. Cambiársela sería que un dueño le pise la credencial a alguien
+ *   que quizá la usa en otra barbería.
  * - Revocar escribe `revoked_at`, no borra: el empleado se va y la barbería
  *   conserva turnos, clientes y comisiones.
  * - El barbero tiene que ser de ESTA barbería. Sin ese chequeo, un dueño podría
@@ -87,6 +96,7 @@ export async function POST(request: Request) {
   const barberId = typeof body.barberId === "string" ? body.barberId : "";
   const email =
     typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  const password = typeof body.password === "string" ? body.password : "";
 
   const owner = await assertOwner(request.headers.get("authorization"), slug);
   if (!owner.ok) {
@@ -109,6 +119,12 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+  if (password.length < 8) {
+    return NextResponse.json(
+      { error: "La contraseña tiene que tener al menos 8 caracteres." },
+      { status: 400 },
+    );
+  }
 
   const supabase = getSupabaseAdminClient();
 
@@ -127,16 +143,21 @@ export async function POST(request: Request) {
     );
   }
 
-  // Invitar crea el usuario si no existe y le manda el mail para que ponga su
-  // contraseña. Si ya tenía cuenta (trabaja en dos locales), se reusa.
+  // Se crea la cuenta con la contraseña que puso el dueño, ya confirmada: sin
+  // mail de por medio, el barbero entra en el momento.
   let userId = "";
-  const { data: invitado, error: inviteError } =
-    await supabase.auth.admin.inviteUserByEmail(email);
+  const { data: creado, error: createError } =
+    await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
 
-  if (invitado?.user) {
-    userId = invitado.user.id;
+  if (creado?.user) {
+    userId = creado.user.id;
   } else {
-    // Ya existía: se lo busca por email en vez de tratarlo como error.
+    // Ya tenía cuenta. NO se le pisa la contraseña: puede estar usándola en
+    // otra barbería, o ser el mail personal de alguien. Entra con la suya.
     const { data: lista } = await supabase.auth.admin.listUsers({
       page: 1,
       perPage: 1000,
@@ -145,11 +166,11 @@ export async function POST(request: Request) {
       (u) => (u.email ?? "").toLowerCase() === email,
     );
     if (!existente) {
-      Sentry.captureException(inviteError, {
-        tags: { route: "admin/staff-access", step: "invite" },
+      Sentry.captureException(createError, {
+        tags: { route: "admin/staff-access", step: "create-user" },
       });
       return NextResponse.json(
-        { error: "No pudimos invitar a esa persona." },
+        { error: "No pudimos crear la cuenta de esa persona." },
         { status: 500 },
       );
     }
@@ -186,7 +207,14 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ ok: true, barbero: barbero.name });
+  return NextResponse.json({
+    ok: true,
+    barbero: barbero.name,
+    // El dueño tiene que saber si la clave que escribió sirve o si esa persona
+    // ya tenía cuenta y entra con la suya. Sin esto le diría una clave
+    // equivocada al barbero y parecería que la app no anda.
+    usaContrasenaNueva: Boolean(creado?.user),
+  });
 }
 
 export async function DELETE(request: Request) {

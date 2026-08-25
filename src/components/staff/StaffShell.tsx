@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { CalendarDays, LogOut, ShieldOff, Wallet } from "lucide-react";
+import { CalendarDays, KeyRound, LogOut, ShieldOff, Wallet } from "lucide-react";
 import { getCurrentUserStaffBarbershops } from "@/lib/staff-access-client";
 import { signOut } from "@/lib/auth";
 import { cn } from "@/lib/cn";
@@ -87,8 +87,13 @@ export function StaffShell({
     },
     {
       href: `/${barbershopSlug}/mi-agenda/ganancias`,
-      label: "Mis ganancias",
+      label: "Ganancias",
       icon: Wallet,
+    },
+    {
+      href: `/${barbershopSlug}/mi-agenda/clave`,
+      label: "Mi clave",
+      icon: KeyRound,
     },
   ];
 

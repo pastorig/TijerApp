@@ -26,6 +26,7 @@ export function StaffAccessSection({
   const [cargando, setCargando] = useState(true);
   const [invitando, setInvitando] = useState<string | null>(null);
   const [emails, setEmails] = useState<Record<string, string>>({});
+  const [claves, setClaves] = useState<Record<string, string>>({});
   const [recarga, setRecarga] = useState(0);
 
   useEffect(() => {
@@ -57,8 +58,13 @@ export function StaffAccessSection({
 
   async function invitar(barberId: string) {
     const email = (emails[barberId] ?? "").trim();
+    const password = claves[barberId] ?? "";
     if (!email.includes("@")) {
       toast.error("Escribí un email válido");
+      return;
+    }
+    if (password.length < 8) {
+      toast.error("La contraseña tiene que tener al menos 8 caracteres");
       return;
     }
     setInvitando(barberId);
@@ -72,10 +78,11 @@ export function StaffAccessSection({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ bs: barbershop.slug, barberId, email }),
+        body: JSON.stringify({ bs: barbershop.slug, barberId, email, password }),
       });
       const payload = (await res.json().catch(() => ({}))) as {
         error?: string;
+        usaContrasenaNueva?: boolean;
       };
       if (!res.ok) {
         toast.error("No se pudo dar el acceso", {
@@ -83,10 +90,13 @@ export function StaffAccessSection({
         });
         return;
       }
-      toast.success("Acceso enviado", {
-        description: `Le mandamos un mail a ${email} para que ponga su contraseña.`,
+      toast.success("Listo, ya puede entrar", {
+        description: payload.usaContrasenaNueva
+          ? `Pasále el mail y la contraseña que pusiste.`
+          : `Esa persona ya tenía cuenta: entra con SU contraseña, no con la que escribiste.`,
       });
       setEmails((prev) => ({ ...prev, [barberId]: "" }));
+      setClaves((prev) => ({ ...prev, [barberId]: "" }));
       setRecarga((v) => v + 1);
     } finally {
       setInvitando(null);
@@ -195,6 +205,18 @@ export function StaffAccessSection({
                       placeholder="email del barbero"
                       className="min-h-10 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
                     />
+                    <input
+                      type="text"
+                      value={claves[barbero.id] ?? ""}
+                      onChange={(e) =>
+                        setClaves((prev) => ({
+                          ...prev,
+                          [barbero.id]: e.target.value,
+                        }))
+                      }
+                      placeholder="contraseña (mín. 8)"
+                      className="min-h-10 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+                    />
                     <button
                       type="button"
                       disabled={invitando === barbero.id}
@@ -217,8 +239,9 @@ export function StaffAccessSection({
       )}
 
       <p className="mt-4 text-[11px] leading-4 text-[color:var(--text-subtle)]">
-        La contraseña la elige cada barbero desde el mail que le llega. Vos no
-        la ves ni la elegís.
+        Le ponés vos la contraseña y se la pasás en persona: entra en el
+        momento, sin mails. Tené en cuenta que <strong>vos la vas a saber</strong>;
+        si el barbero prefiere que no, puede cambiarla desde su propia pantalla.
       </p>
     </section>
   );
