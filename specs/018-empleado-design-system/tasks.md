@@ -46,4 +46,7 @@ Orden por dependencia. `[P]` = paralelizable con la anterior.
 - [x] **T014** `tsc` + `lint` + `test:unit` + `build` verdes.
 - [x] **T015** QA headless a 390 / 768 / 1440 px (a 320 no: el headless de
       Windows recorta por debajo de 500 px).
-- [ ] **T016** Merge a `main` + push (deploy autónomo) y verificar en prod.
+- [x] **T016** Merge a `main` + push (deploy autónomo) y verificar en prod.
+      Verificado el 25/08/2026: las tres pantallas dan 200 y
+      `/api/staff/agenda-counts` pasó de 404 a **401**, que es la señal de que
+      la build de Vercel salió bien y el endpoint nuevo existe.

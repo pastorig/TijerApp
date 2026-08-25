@@ -4,6 +4,48 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## 📱 Probar 016/017 en un celular de verdad (lo único que falta del empleado)
+
+**Ya verificado contra la base de producción el 25/08/2026, sin celular:**
+
+- `chinitodou@gmail.com` es empleado de `primebarber` y está atado a **Matias
+  Rojas**, con el acceso vigente (`revoked_at` en null).
+- **Los avisos ya están activados**: tiene una suscripción push viva para esa
+  barbería. Ese paso del checklist ya está hecho.
+- La función `enqueue_admin_push` que está corriendo en prod filtra por
+  barbero. Simulando el reparto con las filas reales: un turno **con Matías**
+  encola **1 aviso** (el de chinitodou); un turno **con Esteban** encola
+  **ninguno**. Que es exactamente lo que pide la feature 017.
+
+**Lo que NO se puede verificar sin un teléfono en la mano**, y es lo que queda:
+
+1. Reservar en `primebarber` eligiendo a **Matías** → la notificación tiene que
+   **llegar al celular** y, al tocarla, abrir `/primebarber/mi-agenda` (no el
+   panel del dueño).
+2. Reservar eligiendo a **Esteban** → **no tiene que llegar nada**.
+
+Lo que se prueba ahí es la entrega (VAPID + service worker), no el ruteo: el
+ruteo ya quedó probado arriba.
+
+### Dos cosas que aparecieron mirando la base
+
+- **Matías no tiene comisión configurada** (`commission_percent` en null). La
+  pantalla de Ganancias del empleado va a decir "tu comisión todavía no está
+  configurada" en vez de un número — está bien que lo diga, pero si querés ver
+  esa pantalla con plata, hay que cargarle el porcentaje desde Equipo.
+- **Al dueño de `primebarber` no le llega ningún aviso**, porque no tiene
+  notificaciones activadas en esa barbería. Para la demo da igual, pero en una
+  barbería real es lo primero que hay que mirar si el dueño dice "no me llegan".
+
+---
+
+## ✂️ Volver a prender la seña en `primebarber`
+
+Bautista la apagó para una prueba y quedó apagada. Se prende en
+`/primebarber/admin/cobros`.
+
+---
+
 ## 🔎 NOVIEMBRE 2026 — checkpoint de SEO (decidir si se sigue o se abandona)
 
 **Contexto:** toda la fundación de SEO (sitemap, robots, JSON-LD, `llms.txt`, grafo
