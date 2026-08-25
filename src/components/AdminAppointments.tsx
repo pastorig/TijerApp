@@ -55,7 +55,7 @@ import {
   createWhatsAppReviewRequestLink,
 } from "@/lib/whatsapp";
 import { Select, useConfirm, useToast } from "@/components/ui";
-import { AgendaCalendar } from "./admin/AgendaCalendar";
+import { AgendaCalendar } from "./calendar/AgendaCalendar";
 import { AgendaCalendarGridView } from "./admin/AgendaCalendarGridView";
 import { AppointmentRow as AppointmentCard } from "./admin/AppointmentRow";
 import { AppointmentRowSkeletonList } from "./admin/AppointmentRowSkeleton";

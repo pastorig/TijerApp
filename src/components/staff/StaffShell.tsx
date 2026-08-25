@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { CalendarDays, KeyRound, LogOut, ShieldOff, Wallet } from "lucide-react";
+import { CalendarDays, LogOut, ShieldOff, UserCog, Wallet } from "lucide-react";
+import { InitialsAvatar } from "@/components/booking/InitialsAvatar";
 import { getCurrentUserStaffBarbershops } from "@/lib/staff-access-client";
 import { signOut } from "@/lib/auth";
 import { cn } from "@/lib/cn";
-import { Logo } from "@/components/ui";
+import { Button, Card, Logo } from "@/components/ui";
 
 /**
  * El marco de las pantallas del empleado: guard + navegación.
@@ -19,6 +20,14 @@ import { Logo } from "@/components/ui";
  *
  * Se chequea en cada carga y no solo al entrar, así revocarle el acceso a
  * alguien lo saca aunque tenga la app abierta.
+ *
+ * ── Por qué se parece tanto al panel del dueño ──────────────────────────────
+ * Porque es el mismo producto. La barra de arriba (56px, sticky, ícono dorado
+ * de la sección) y las pestañas con borde inferior son las de `AdminTopBar` y
+ * `AdminSubtabs`. Un barbero que también es dueño pasa de una a la otra sin
+ * sentir que cambió de aplicación. El contenido usa el mismo ancho y los
+ * mismos márgenes: antes quedaba en una columna de celular en una pantalla de
+ * escritorio.
  */
 export function StaffShell({
   barbershopSlug,
@@ -59,22 +68,22 @@ export function StaffShell({
   if (estado === "sin-acceso") {
     return (
       <div className="grid min-h-screen place-items-center bg-[color:var(--surface-0)] px-6">
-        <div className="max-w-sm text-center">
+        <Card className="max-w-sm text-center">
           <ShieldOff className="mx-auto size-8 text-[color:var(--text-muted)]" />
           <h1 className="mt-4 text-lg font-black text-white">
             No tenés acceso a esta barbería
           </h1>
-          <p className="mt-2 text-sm text-[color:var(--text-muted)]">
+          <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
             Si trabajás acá, pedile al dueño que te dé acceso desde Equipo.
           </p>
-          <button
-            type="button"
+          <Button
+            size="sm"
+            className="mt-5"
             onClick={() => router.replace("/login")}
-            className="bg-gold-grad mt-5 min-h-10 rounded-[var(--radius-sm)] px-4 text-xs font-bold uppercase tracking-[0.14em] text-black"
           >
             Ir al login
-          </button>
-        </div>
+          </Button>
+        </Card>
       </div>
     );
   }
@@ -93,27 +102,50 @@ export function StaffShell({
     {
       href: `/${barbershopSlug}/mi-agenda/cuenta`,
       label: "Mi cuenta",
-      icon: KeyRound,
+      icon: UserCog,
     },
   ];
 
+  const seccion = tabs.find((tab) => tab.href === pathname) ?? tabs[0];
+  const SeccionIcon = seccion.icon;
+
   return (
-    <div className="min-h-screen bg-[color:var(--surface-0)]">
-      <header className="sticky top-0 z-20 border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 px-4 py-3">
-          <p className="truncate text-sm font-black uppercase tracking-tight text-white">
-            {barbershopName}
+    <div className="min-h-screen bg-black text-white">
+      {/* Barra superior — misma altura, mismo sticky y mismo blur que el panel. */}
+      <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 backdrop-blur-md sm:px-6">
+        <div className="flex min-w-0 items-center gap-2">
+          <SeccionIcon
+            aria-hidden="true"
+            className="size-4 shrink-0 text-[color:var(--brand-gold)]"
+          />
+          <p className="truncate text-sm font-bold tracking-tight text-white sm:text-base">
+            {seccion.label}
           </p>
+        </div>
+
+        <div className="ml-auto flex min-w-0 items-center gap-2">
+          {/* El nombre de la barbería es contexto, no navegación: un empleado
+              tiene una sola. En pantalla chica se queda solo el avatar. */}
+          <span className="flex min-w-0 items-center gap-2">
+            <InitialsAvatar name={barbershopName} className="size-8 text-[11px]" />
+            <span className="hidden max-w-[14rem] truncate text-xs font-semibold text-[color:var(--text-secondary)] sm:inline">
+              {barbershopName}
+            </span>
+          </span>
           <button
             type="button"
             onClick={() => void signOut().then(() => router.replace("/login"))}
             aria-label="Salir"
-            className="rounded-full p-2 text-[color:var(--text-muted)] hover:text-white"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
           >
             <LogOut className="size-4" />
           </button>
         </div>
-        <nav className="mx-auto flex w-full max-w-2xl gap-1 px-4 pb-2">
+      </header>
+
+      {/* Pestañas — las subpestañas del panel, tal cual. */}
+      <div className="sticky top-14 z-30 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-5xl gap-1 overflow-x-auto px-4 sm:px-8 lg:px-12">
           {tabs.map((tab) => {
             const activo = pathname === tab.href;
             return (
@@ -121,20 +153,23 @@ export function StaffShell({
                 key={tab.href}
                 href={tab.href}
                 className={cn(
-                  "inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] text-[11px] font-bold uppercase tracking-[0.12em] transition-colors",
+                  "inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-3 text-sm font-semibold transition-colors duration-[var(--duration-fast)]",
                   activo
-                    ? "bg-gold-grad text-black"
-                    : "border border-[color:var(--border-subtle)] text-[color:var(--text-secondary)]",
+                    ? "border-[color:var(--brand-gold)] text-[color:var(--brand-gold)]"
+                    : "border-transparent text-[color:var(--text-muted)] hover:text-white",
                 )}
               >
-                <tab.icon className="size-3.5" />
+                <tab.icon className="size-4 shrink-0" aria-hidden="true" />
                 {tab.label}
               </Link>
             );
           })}
-        </nav>
-      </header>
-      {children}
+        </div>
+      </div>
+
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
+        {children}
+      </div>
     </div>
   );
 }
