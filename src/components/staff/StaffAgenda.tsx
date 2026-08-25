@@ -14,6 +14,7 @@ import {
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import { formatPrice } from "@/lib/format";
+import { agruparPorFranja } from "@/lib/staff-agenda-grouping";
 import { createWhatsAppClientContactLink } from "@/lib/whatsapp";
 
 /**
@@ -218,11 +219,147 @@ export function StaffAgenda({
     return proximo ? { turno: proximo, enCurso: false } : null;
   }, [activos, esHoy]);
 
+  // Mañana y tarde. Si todos los turnos caen del mismo lado no se agrupa:
+  // un solo encabezado arriba de la lista entera es ruido, no orden.
+  const franjas = useMemo(() => agruparPorFranja(turnos), [turnos]);
+
   /** Siete días arrancando ayer, para poder mirar atrás sin perder el hilo. */
   const dias = useMemo(
     () => Array.from({ length: 7 }, (_, i) => sumarDias(hoy, i - 1)),
     [hoy],
   );
+
+  /**
+   * El turno, tal cual se ve. Vive fuera del JSX porque ahora se dibuja desde
+   * dos lugares (mañana y tarde) y desde la lista sin agrupar: duplicarlo era
+   * garantizar que en tres meses uno de los tres quede distinto.
+   */
+  function renderTurno(turno: Turno) {
+              const cancelado = turno.status === "cancelled";
+              const esDestacado = destacado?.turno.id === turno.id;
+              const waLink = turno.customer_phone
+                ? createWhatsAppClientContactLink({
+                    barbershopName,
+                    clientName: turno.customer_name,
+                    clientPhone: turno.customer_phone,
+                    date: fecha,
+                    time: turno.appointment_time.slice(0, 5),
+                  })
+                : null;
+
+              return (
+                <li
+                  key={turno.id}
+                  className={cn(
+                    "rounded-[var(--radius-md)] border p-3 transition-colors",
+                    cancelado
+                      ? "border-[color:var(--border-subtle)] opacity-45"
+                      : esDestacado
+                        ? "border-[color:var(--brand-gold-ring)]"
+                        : "border-[color:var(--border-subtle)]",
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    {/* La hora manda: es por lo que un barbero recorre la
+                        lista. Antes competía con el nombre del cliente. */}
+                    <span
+                      className={cn(
+                        "shrink-0 text-lg font-black tabular-nums leading-tight",
+                        cancelado
+                          ? "text-[color:var(--text-subtle)] line-through"
+                          : "text-[color:var(--brand-gold)]",
+                      )}
+                    >
+                      {turno.appointment_time.slice(0, 5)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={cn(
+                          "truncate text-sm font-bold",
+                          cancelado
+                            ? "text-[color:var(--text-muted)] line-through"
+                            : "text-white",
+                        )}
+                      >
+                        {turno.customer_name}
+                      </p>
+                      <p className="truncate text-xs text-[color:var(--text-muted)]">
+                        {turno.service_name}
+                        {turno.service_duration_minutes
+                          ? ` · ${turno.service_duration_minutes} min`
+                          : ""}
+                        {turno.service_price
+                          ? ` · ${formatPrice(turno.service_price)}`
+                          : ""}
+                      </p>
+                      {turno.comment ? (
+                        <p className="mt-1 text-xs italic text-[color:var(--text-subtle)]">
+                          “{turno.comment}”
+                        </p>
+                      ) : null}
+                    </div>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+                        turno.status === "confirmed" &&
+                          "bg-[color:var(--success-soft)] text-[color:var(--success)]",
+                        turno.status === "pending" &&
+                          "bg-amber-400/10 text-amber-400",
+                        cancelado &&
+                          "bg-[color:var(--danger)]/10 text-[color:var(--danger)]",
+                      )}
+                    >
+                      {turno.status === "confirmed"
+                        ? "Confirmado"
+                        : turno.status === "pending"
+                          ? "Pendiente"
+                          : "Cancelado"}
+                    </span>
+                  </div>
+
+                  {!cancelado ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {turno.status !== "confirmed" ? (
+                        <button
+                          type="button"
+                          disabled={tocando === turno.id}
+                          onClick={() =>
+                            void cambiarEstado(turno.id, "confirmed")
+                          }
+                          className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--success)] text-[11px] font-bold uppercase tracking-[0.12em] text-black disabled:opacity-50"
+                        >
+                          <Check className="size-3.5" />
+                          Confirmar
+                        </button>
+                      ) : null}
+                      {waLink ? (
+                        /* Escribirle al cliente es lo que más hace un barbero
+                           con un turno, y era lo único que el panel del dueño
+                           tenía y esta pantalla no. */
+                        <a
+                          href={waLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[11px] font-bold uppercase tracking-[0.12em] text-white"
+                        >
+                          <MessageCircle className="size-3.5" />
+                          WhatsApp
+                        </a>
+                      ) : null}
+                      <button
+                        type="button"
+                        disabled={tocando === turno.id}
+                        onClick={() => void cambiarEstado(turno.id, "cancelled")}
+                        aria-label="Cancelar turno"
+                        className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 px-3 text-[color:var(--danger)] disabled:opacity-50"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </div>
+                  ) : null}
+                </li>
+              );
+  }
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pb-10 pt-4">
@@ -359,136 +496,47 @@ export function StaffAgenda({
             </section>
           ) : null}
 
-          <ol className="mt-4 flex flex-col gap-2">
-            {turnos.map((turno) => {
-              const cancelado = turno.status === "cancelled";
-              const esDestacado = destacado?.turno.id === turno.id;
-              const waLink = turno.customer_phone
-                ? createWhatsAppClientContactLink({
-                    barbershopName,
-                    clientName: turno.customer_name,
-                    clientPhone: turno.customer_phone,
-                    date: fecha,
-                    time: turno.appointment_time.slice(0, 5),
-                  })
-                : null;
-
-              return (
-                <li
-                  key={turno.id}
-                  className={cn(
-                    "rounded-[var(--radius-md)] border p-3 transition-colors",
-                    cancelado
-                      ? "border-[color:var(--border-subtle)] opacity-45"
-                      : esDestacado
-                        ? "border-[color:var(--brand-gold-ring)]"
-                        : "border-[color:var(--border-subtle)]",
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    {/* La hora manda: es por lo que un barbero recorre la
-                        lista. Antes competía con el nombre del cliente. */}
-                    <span
-                      className={cn(
-                        "shrink-0 text-lg font-black tabular-nums leading-tight",
-                        cancelado
-                          ? "text-[color:var(--text-subtle)] line-through"
-                          : "text-[color:var(--brand-gold)]",
-                      )}
-                    >
-                      {turno.appointment_time.slice(0, 5)}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={cn(
-                          "truncate text-sm font-bold",
-                          cancelado
-                            ? "text-[color:var(--text-muted)] line-through"
-                            : "text-white",
-                        )}
-                      >
-                        {turno.customer_name}
-                      </p>
-                      <p className="truncate text-xs text-[color:var(--text-muted)]">
-                        {turno.service_name}
-                        {turno.service_duration_minutes
-                          ? ` · ${turno.service_duration_minutes} min`
-                          : ""}
-                        {turno.service_price
-                          ? ` · ${formatPrice(turno.service_price)}`
-                          : ""}
-                      </p>
-                      {turno.comment ? (
-                        <p className="mt-1 text-xs italic text-[color:var(--text-subtle)]">
-                          “{turno.comment}”
-                        </p>
-                      ) : null}
-                    </div>
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider",
-                        turno.status === "confirmed" &&
-                          "bg-[color:var(--success-soft)] text-[color:var(--success)]",
-                        turno.status === "pending" &&
-                          "bg-amber-400/10 text-amber-400",
-                        cancelado &&
-                          "bg-[color:var(--danger)]/10 text-[color:var(--danger)]",
-                      )}
-                    >
-                      {turno.status === "confirmed"
-                        ? "Confirmado"
-                        : turno.status === "pending"
-                          ? "Pendiente"
-                          : "Cancelado"}
-                    </span>
-                  </div>
-
-                  {!cancelado ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {turno.status !== "confirmed" ? (
-                        <button
-                          type="button"
-                          disabled={tocando === turno.id}
-                          onClick={() =>
-                            void cambiarEstado(turno.id, "confirmed")
-                          }
-                          className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--success)] text-[11px] font-bold uppercase tracking-[0.12em] text-black disabled:opacity-50"
-                        >
-                          <Check className="size-3.5" />
-                          Confirmar
-                        </button>
-                      ) : null}
-                      {waLink ? (
-                        /* Escribirle al cliente es lo que más hace un barbero
-                           con un turno, y era lo único que el panel del dueño
-                           tenía y esta pantalla no. */
-                        <a
-                          href={waLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[11px] font-bold uppercase tracking-[0.12em] text-white"
-                        >
-                          <MessageCircle className="size-3.5" />
-                          WhatsApp
-                        </a>
-                      ) : null}
-                      <button
-                        type="button"
-                        disabled={tocando === turno.id}
-                        onClick={() => void cambiarEstado(turno.id, "cancelled")}
-                        aria-label="Cancelar turno"
-                        className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 px-3 text-[color:var(--danger)] disabled:opacity-50"
-                      >
-                        <X className="size-3.5" />
-                      </button>
-                    </div>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ol>
+          {franjas.agrupar ? (
+            <>
+              <ListaDeTurnos titulo="Mañana" turnos={franjas.manana} render={renderTurno} />
+              <ListaDeTurnos titulo="Tarde" turnos={franjas.tarde} render={renderTurno} />
+            </>
+          ) : (
+            <ol className="mt-4 flex flex-col gap-2">
+              {franjas.turnos.map(renderTurno)}
+            </ol>
+          )}
         </>
       )}
     </div>
+  );
+}
+
+/** Una franja del día, con su encabezado y cuántos turnos tiene. */
+function ListaDeTurnos({
+  titulo,
+  turnos,
+  render,
+}: {
+  titulo: string;
+  turnos: Turno[];
+  render: (turno: Turno) => React.ReactNode;
+}) {
+  // Los cancelados NO se cuentan, igual que en el resumen de arriba. Si acá
+  // contaran, la misma pantalla mostraría dos números distintos para lo mismo.
+  const enPie = turnos.filter((t) => t.status !== "cancelled").length;
+
+  return (
+    <section className="mt-5">
+      <p className="mb-2 flex items-baseline gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)]">
+          {titulo}
+        </span>
+        <span className="text-[10px] font-semibold text-[color:var(--text-subtle)]">
+          {enPie} turno{enPie === 1 ? "" : "s"}
+        </span>
+      </p>
+      <ol className="flex flex-col gap-2">{turnos.map(render)}</ol>
+    </section>
   );
 }
