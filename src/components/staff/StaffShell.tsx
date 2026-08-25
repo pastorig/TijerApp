@@ -91,8 +91,8 @@ export function StaffShell({
       icon: Wallet,
     },
     {
-      href: `/${barbershopSlug}/mi-agenda/clave`,
-      label: "Mi clave",
+      href: `/${barbershopSlug}/mi-agenda/cuenta`,
+      label: "Mi cuenta",
       icon: KeyRound,
     },
   ];
