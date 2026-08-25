@@ -3,7 +3,9 @@
 /**
  * AgendaCalendar
  *
- * Calendario tipo "Google Calendar mobile" para el admin de TijerApp.
+ * Calendario tipo "Google Calendar mobile". Lo comparten el turnero del
+ * dueño y la agenda del empleado (feature 018): el mismo gesto de swipe y la
+ * misma vista mensual en las dos, escritos una sola vez.
  *
  *   ┌───────────────────────────────────┐
  *   │  Miércoles 20 de mayo    [Hoy]    │  ← header (día activo + Hoy / flechas)
@@ -18,7 +20,7 @@
  * Estilo: minimalista TijerApp (negro / gold / silver).
  */
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarX, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
@@ -43,6 +45,29 @@ type AgendaCalendarProps = {
    * el día actualmente seleccionado.
    */
   onQuickBlock?: (date: string) => void;
+  /**
+   * Qué día es "hoy", en "YYYY-MM-DD".
+   *
+   * Por defecto se toma del dispositivo. La agenda del empleado calcula todo
+   * en hora argentina y pasa el suyo: si no, en un dispositivo con otra zona
+   * la misma pantalla marcaría un "hoy" en el calendario y otro en el título.
+   */
+  todayYmd?: string;
+  /**
+   * Avisa qué mes quedó a la vista (1-12), al expandir o al navegar.
+   *
+   * El turnero del dueño ya tiene todos los turnos cargados y no lo necesita.
+   * La agenda del empleado sí: pide los conteos al servidor, y sin esto los
+   * puntitos desaparecerían apenas se pasa al mes siguiente.
+   */
+  onVisibleMonthChange?: (year: number, month: number) => void;
+  /**
+   * Achica el encabezado para cuando el calendario vive en una columna
+   * angosta (la agenda del empleado, que lo tiene al costado de la lista).
+   * Sin esto "Martes 25 de agosto" entra en el ancho del turnero pero se
+   * corta en el del costado.
+   */
+  compact?: boolean;
 };
 
 /**
@@ -69,6 +94,9 @@ export function AgendaCalendar({
   onFocusDateChange,
   countsByDay,
   onQuickBlock,
+  todayYmd,
+  onVisibleMonthChange,
+  compact = false,
 }: AgendaCalendarProps) {
   const [isMonthExpanded, setIsMonthExpanded] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState<Date>(() => {
@@ -89,7 +117,13 @@ export function AgendaCalendar({
     }
   }
 
-  const today = useMemo(() => getTodayYmd(), []);
+  const today = useMemo(() => todayYmd ?? getTodayYmd(), [todayYmd]);
+
+  // En un efecto y no en el handler: el mes visible también cambia solo
+  // cuando el día enfocado se va a otro mes (la sincronización de arriba).
+  useEffect(() => {
+    onVisibleMonthChange?.(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1);
+  }, [visibleMonth, onVisibleMonthChange]);
   const weekDays = useMemo(() => getWeekDays(focusDate), [focusDate]);
   const monthGrid = useMemo(
     () => getMonthGrid(visibleMonth.getFullYear(), visibleMonth.getMonth()),
@@ -223,12 +257,20 @@ export function AgendaCalendar({
           <button
             type="button"
             onClick={() => setIsMonthExpanded(false)}
-            className="min-w-0 flex-1 text-left text-xl font-black uppercase tracking-tight text-white sm:text-2xl"
+            className={cn(
+              "min-w-0 flex-1 text-left font-black uppercase tracking-tight text-white",
+              compact ? "text-base sm:text-lg" : "text-xl sm:text-2xl",
+            )}
           >
             <span className="truncate">{formatMonthYear(visibleMonth)}</span>
           </button>
         ) : (
-          <h2 className="min-w-0 flex-1 truncate text-xl font-black uppercase tracking-tight text-white sm:text-2xl">
+          <h2
+            className={cn(
+              "min-w-0 flex-1 truncate font-black uppercase tracking-tight text-white",
+              compact ? "text-base sm:text-lg" : "text-xl sm:text-2xl",
+            )}
+          >
             {formatDayHeading(focusDate)}
           </h2>
         )}

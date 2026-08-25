@@ -1,9 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Info, Loader2, Wallet } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  Loader2,
+  Scissors,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
 import { formatPrice } from "@/lib/format";
+import { MetricCard } from "@/components/admin/MetricCard";
+import { Button, Card, Eyebrow } from "@/components/ui";
 
 /**
  * Lo que el empleado lleva ganado en el período.
@@ -101,46 +111,49 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
   const { desde } = rangoDelMes(offset);
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-6">
-      <header className="mb-5">
-        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)]">
-          Mis ganancias
-        </p>
-        <h1 className="mt-1 text-2xl font-black tracking-tight text-white">
-          {nombreDelMes(desde)}
-        </h1>
+    <div className="flex flex-col gap-5">
+      {/* Encabezado y navegación en la misma fila, como el resto del panel: el
+          mes que se está mirando y las flechas para moverlo van juntos. */}
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <Eyebrow>Mis ganancias</Eyebrow>
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">
+            {nombreDelMes(desde)}
+          </h1>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setOffset((o) => o - 1)}
+            iconLeft={<ChevronLeft className="size-3.5" />}
+          >
+            Anterior
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setOffset(0)}
+            disabled={offset === 0}
+          >
+            Este mes
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setOffset((o) => Math.min(0, o + 1))}
+            disabled={offset === 0}
+            iconRight={<ChevronRight className="size-3.5" />}
+          >
+            Siguiente
+          </Button>
+        </div>
       </header>
-
-      <div className="mb-5 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setOffset((o) => o - 1)}
-          className="min-h-10 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-xs font-bold text-white"
-        >
-          ← Mes anterior
-        </button>
-        <button
-          type="button"
-          onClick={() => setOffset(0)}
-          disabled={offset === 0}
-          className="min-h-10 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-xs font-bold text-white disabled:opacity-40"
-        >
-          Este mes
-        </button>
-        <button
-          type="button"
-          onClick={() => setOffset((o) => Math.min(0, o + 1))}
-          disabled={offset === 0}
-          className="min-h-10 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-xs font-bold text-white disabled:opacity-40"
-        >
-          Siguiente →
-        </button>
-      </div>
 
       {error ? (
         <p
           role="alert"
-          className="mb-4 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]"
+          className="rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]"
         >
           {error}
         </p>
@@ -151,23 +164,19 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
           <Loader2 className="size-5 animate-spin text-[color:var(--text-muted)]" />
         </div>
       ) : datos ? (
-        <div className="flex flex-col gap-3">
-          <section className="card-premium p-5">
-            <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)]">
-              <Wallet className="size-3.5" />
-              Tu comisión
-            </p>
+        <div className="flex flex-col gap-4">
+          <MetricCard label="Tu comisión" icon={Wallet}>
             {datos.comision === null ? (
               /* Sin comisión configurada NO se muestra $0: "cero" se lee como
                  "no ganaste nada", y lo que pasa es que falta un dato. */
-              <p className="mt-3 flex items-start gap-2 text-sm leading-5 text-[color:var(--text-secondary)]">
+              <p className="flex items-start gap-2 text-sm leading-5 text-[color:var(--text-secondary)]">
                 <Info className="mt-0.5 size-4 shrink-0 text-[color:var(--brand-gold)]" />
                 Tu comisión todavía no está configurada. Hablalo con el dueño de
                 la barbería y acá vas a ver cuánto te corresponde.
               </p>
             ) : (
               <>
-                <p className="stat-number mt-2 w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-4xl font-black tabular-nums leading-none text-transparent">
+                <p className="stat-number w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-4xl font-black tabular-nums leading-none text-transparent">
                   {formatPrice(datos.comision)}
                 </p>
                 <p className="mt-2 text-xs text-[color:var(--text-muted)]">
@@ -175,31 +184,27 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
                 </p>
               </>
             )}
-          </section>
+          </MetricCard>
 
-          <div className="grid grid-cols-2 gap-3">
-            <section className="card-premium p-4">
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
-                Producción
-              </p>
-              <p className="mt-2 text-xl font-black tabular-nums text-white">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <MetricCard label="Producción" icon={TrendingUp}>
+              <p className="stat-number text-xl font-black tabular-nums text-white">
                 {formatPrice(datos.produccion)}
               </p>
-            </section>
-            <section className="card-premium p-4">
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
-                Turnos
-              </p>
-              <p className="mt-2 text-xl font-black tabular-nums text-white">
+            </MetricCard>
+            <MetricCard label="Turnos" icon={Scissors}>
+              <p className="stat-number text-xl font-black tabular-nums text-white">
                 {datos.turnos}
               </p>
-            </section>
+            </MetricCard>
           </div>
 
-          <p className="px-1 text-[11px] leading-4 text-[color:var(--text-subtle)]">
-            Cuenta los turnos confirmados y los pendientes. Los cancelados no
-            suman.
-          </p>
+          <Card variant="flat" padding="sm">
+            <p className="text-[11px] leading-4 text-[color:var(--text-subtle)]">
+              Cuenta los turnos confirmados y los pendientes. Los cancelados no
+              suman.
+            </p>
+          </Card>
         </div>
       ) : null}
     </div>
