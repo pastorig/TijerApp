@@ -27,7 +27,7 @@ export const runtime = "nodejs";
  *   201 { id: string } — subscription creada o actualizada
  *   400 { error } — body inválido
  *   401 { error } — sin auth o token inválido
- *   403 { error } — admin de otra barbería
+ *   403 { error } — no administra ni trabaja en esta barbería
  *   500 { error } — error inesperado
  */
 async function assertAdminOfBarbershop(
@@ -59,8 +59,27 @@ async function assertAdminOfBarbershop(
   if (adminError) {
     return { ok: false, status: 500, error: "Error validando permisos." };
   }
-  if (!adminRow) {
-    return { ok: false, status: 403, error: "No sos admin de esta barbería." };
+  if (adminRow) {
+    return { ok: true, userId: userResult.user.id };
+  }
+
+  // Los empleados con acceso también pueden activar avisos (feature 017). Lo
+  // que reciben lo decide `enqueue_admin_push`: solo los turnos de SU barbero,
+  // nunca los de un compañero. Acá se resuelve quién puede prender el
+  // interruptor, no qué le llega.
+  const { data: staffRow, error: staffError } = await supabaseAdmin
+    .from("barber_staff_access")
+    .select("user_id")
+    .eq("user_id", userResult.user.id)
+    .eq("barbershop_slug", barbershopSlug)
+    .is("revoked_at", null)
+    .maybeSingle();
+
+  if (staffError) {
+    return { ok: false, status: 500, error: "Error validando permisos." };
+  }
+  if (!staffRow) {
+    return { ok: false, status: 403, error: "No tenés acceso a esta barbería." };
   }
   return { ok: true, userId: userResult.user.id };
 }
