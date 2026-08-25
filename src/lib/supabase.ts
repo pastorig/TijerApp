@@ -644,9 +644,10 @@ type Database = {
       };
       barber_staff_access: {
         Row: BarberStaffAccessRow;
-        Insert: Omit<BarberStaffAccessRow, "id" | "granted_at"> & {
+        Insert: Omit<BarberStaffAccessRow, "id" | "granted_at" | "revoked_at"> & {
           id?: string;
           granted_at?: string;
+          revoked_at?: string | null;
         };
         Update: Partial<BarberStaffAccessRow>;
         Relationships: [];
