@@ -147,12 +147,11 @@ más, **no tiene cuenta**. Es dejar de obligarlos a compartir una contraseña.
 - Que el empleado vea la comisión de otros.
 - Liquidar o pagarle al empleado desde la app.
 
-## Decisiones que quedan para Bautista
+## Decisiones cerradas (Bautista, 24/08/2026)
 
-1. **¿Desde qué plan está disponible?** Sugerencia: desde **Esencial**. En Solo
-   el tope es de 1 barbero, así que no hay empleado a quien invitar — la
-   feature se habilita sola donde tiene sentido, sin gatearla a mano, y le
-   suma valor a Esencial.
-2. **¿Cuántos accesos como máximo?** Sugerencia: uno por barbero cargado, sin
-   tope aparte. El valor está en que el dueño duerma tranquilo, no en cobrar
-   por asiento.
+1. **Disponible desde Esencial.** En Solo el tope es de 1 barbero, así que no
+   hay empleado a quien invitar: la feature se habilita sola donde tiene
+   sentido y le suma valor a Esencial, que hoy tiene poco diferencial.
+2. **Un acceso por barbero cargado, sin tope aparte.** No consume el cupo de
+   cuentas de dueño. El valor está en que el dueño duerma tranquilo, no en
+   cobrar por asiento.

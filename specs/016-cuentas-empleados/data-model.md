@@ -9,7 +9,7 @@ Vincula una cuenta con **un barbero** de **una barbería**.
 | `id` | `uuid` | PK |
 | `user_id` | `uuid not null` | FK → `auth.users` |
 | `barbershop_slug` | `text not null` | FK → `barbershops(slug)` |
-| `barber_id` | `text not null` | FK → `barbers(id)`. La agenda que maneja |
+| `barber_id` | `uuid not null` | FK → `barbers(id)`. La agenda que maneja |
 | `granted_by` | `uuid not null` | Qué dueño le dio el acceso |
 | `granted_at` | `timestamptz` | `default now()` |
 | `revoked_at` | `timestamptz null` | `null` = activo |
@@ -61,5 +61,10 @@ existiera". No se inventa un responsable retroactivo.
 
 - **`barbers`** — `commission_percent` ya existe (feature 014).
 - **`appointments`** — filtrados por `barber_id`, siempre resuelto en el server.
+
+  ⚠️ **Ojo con los tipos:** `barbers.id` es `uuid` pero
+  `appointments.barber_id` es `text` (y admite null). Al filtrar hay que
+  comparar contra el uuid **como texto**. Si no, no falla: devuelve cero
+  turnos, que es peor que un error.
 - **`barbershop_subscriptions`** — el empleado hereda el modo lectura si el
   plan venció.
