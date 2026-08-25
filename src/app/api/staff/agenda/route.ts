@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { calculateCommissions } from "@/lib/commissions";
 import {
   barberIdForAppointments,
   resolveStaffAccess,
@@ -62,9 +63,36 @@ export async function GET(request: Request) {
     );
   }
 
+  const turnos = (data ?? []) as Array<{
+    service_price: number | null;
+    status: string;
+  }>;
+
+  // Lo que va a ganar HOY, con la misma función que el resto (feature 014).
+  // Es el dato que un barbero mira mientras labura, y tenía que estar en la
+  // agenda y no escondido en otra pestaña. Cuenta confirmados y pendientes: un
+  // turno cancelado no es plata que entra.
+  const produccion = turnos
+    .filter((t) => t.status === "confirmed" || t.status === "pending")
+    .reduce((suma, t) => suma + (t.service_price ?? 0), 0);
+
+  const resumen = calculateCommissions([
+    {
+      barberId: access.access.barberId,
+      name: access.access.barberName,
+      revenue: produccion,
+      commissionPercent: access.access.commissionPercent,
+    },
+  ]);
+  const fila = resumen.rows[0] ?? null;
+
   return NextResponse.json({
     ok: true,
     barbero: access.access.barberName,
-    turnos: data ?? [],
+    barberia: access.access.barbershopSlug,
+    turnos,
+    produccionDelDia: produccion,
+    // null = el dueño todavía no le configuró comisión. No es cero.
+    comisionDelDia: fila ? fila.commission : null,
   });
 }

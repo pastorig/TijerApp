@@ -23,7 +23,10 @@ export default async function MiAgendaPage({ params }: Props) {
       barbershopSlug={barbershop.slug}
       barbershopName={barbershop.name}
     >
-      <StaffAgenda barbershopSlug={barbershop.slug} />
+      <StaffAgenda
+        barbershopSlug={barbershop.slug}
+        barbershopName={barbershop.name}
+      />
     </StaffShell>
   );
 }

@@ -42,11 +42,14 @@ function rangoDelMes(offsetMeses: number): { desde: string; hasta: string } {
 
 function nombreDelMes(desde: string): string {
   const [a, m] = desde.split("-").map(Number);
-  return new Intl.DateTimeFormat("es-AR", {
+  // Mayúscula solo en la primera letra: `capitalize` de CSS la pone en cada
+  // palabra y deja "Agosto De 2026".
+  const texto = new Intl.DateTimeFormat("es-AR", {
     month: "long",
     year: "numeric",
     timeZone: "UTC",
   }).format(new Date(Date.UTC(a, m - 1, 1)));
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
 export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
@@ -103,7 +106,7 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
         <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)]">
           Mis ganancias
         </p>
-        <h1 className="mt-1 text-2xl font-black capitalize tracking-tight text-white">
+        <h1 className="mt-1 text-2xl font-black tracking-tight text-white">
           {nombreDelMes(desde)}
         </h1>
       </header>
