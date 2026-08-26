@@ -56,4 +56,6 @@ Orden por dependencia. `[P]` = paralelizable con la anterior.
 - [x] **T015** `tsc` + `lint` + `test:unit` + `build` verdes.
 - [x] **T016** QA headless de las combinaciones que importan: todo prendido,
       todo apagado, y solo sin ganancias.
-- [ ] **T017** Merge a `main` + push y verificar en prod.
+- [x] **T017** Merge a `main` + push y verificar en prod. Verificado el
+      25/08/2026: el PATCH pasó de 405 a 401, o sea que la build salió bien y
+      el método nuevo existe.
