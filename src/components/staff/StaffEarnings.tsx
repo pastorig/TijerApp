@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Info,
   Loader2,
+  Lock,
   Scissors,
   TrendingUp,
   Wallet,
@@ -67,6 +68,15 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
   const [datos, setDatos] = useState<Ganancias | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  /**
+   * El dueño le sacó el permiso de ver lo que gana (feature 019).
+   *
+   * Se distingue de un error a propósito: "no pudimos calcular tus ganancias"
+   * invita a reintentar y a escribirle al dueño porque la app anda mal. Acá no
+   * hay nada roto, hay una decisión de la barbería, y decirlo así evita el
+   * reclamo.
+   */
+  const [sinPermiso, setSinPermiso] = useState(false);
 
   // Mismo patrón que el resto del panel: la función vive DENTRO del efecto.
   useEffect(() => {
@@ -91,10 +101,15 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
           error?: string;
         };
         if (!vivo) return;
+        if (res.status === 403) {
+          setSinPermiso(true);
+          return;
+        }
         if (!res.ok) {
           setError(payload.error ?? "No pudimos calcular tus ganancias.");
           return;
         }
+        setSinPermiso(false);
         setDatos(payload);
       } catch {
         if (vivo) setError("No pudimos calcular tus ganancias.");
@@ -109,6 +124,21 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
   }, [barbershopSlug, offset]);
 
   const { desde } = rangoDelMes(offset);
+
+  if (sinPermiso) {
+    return (
+      <Card className="max-w-md">
+        <Lock className="size-6 text-[color:var(--text-muted)]" />
+        <h1 className="mt-3 text-lg font-black tracking-tight text-white">
+          Esta pantalla no está habilitada
+        </h1>
+        <p className="mt-2 text-sm leading-5 text-[color:var(--text-secondary)]">
+          El dueño de la barbería eligió no mostrar acá lo que ganás. Si te
+          parece que tendría que estar, hablalo con él.
+        </p>
+      </Card>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-5">

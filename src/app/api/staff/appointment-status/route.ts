@@ -6,6 +6,7 @@ import {
   barberIdForAppointments,
   resolveStaffAccess,
 } from "@/lib/server/staff-access";
+import { puedeCambiarEstado } from "@/lib/staff-permissions";
 
 export const runtime = "nodejs";
 
@@ -15,11 +16,15 @@ export const runtime = "nodejs";
  *
  * El empleado confirma o cancela **un turno suyo**.
  *
- * ── Las tres guardas, en orden ──────────────────────────────────────────────
+ * ── Las cuatro guardas, en orden ────────────────────────────────────────────
  * 1. Tiene acceso a esta barbería (y con eso sabemos qué barbero es).
- * 2. El plan está al día: con el plan vencido la barbería es de lectura, para
+ * 2. **El dueño le habilitó esa acción** (feature 019). Confirmar y cancelar
+ *    son permisos separados: hay dueños que dejan confirmar y no cancelar.
+ *    Se chequea acá y no escondiendo el botón, porque un botón escondido no
+ *    frena a nadie que arme la llamada a mano.
+ * 3. El plan está al día: con el plan vencido la barbería es de lectura, para
  *    el empleado igual que para el dueño.
- * 3. **El turno es de SU barbero.** Va dentro del propio update, no como un
+ * 4. **El turno es de SU barbero.** Va dentro del propio update, no como un
  *    select previo: si se preguntara antes y se escribiera después, entre una
  *    cosa y la otra hay una ventana.
  *
@@ -63,6 +68,18 @@ export async function POST(request: Request) {
     // El empleado solo confirma o cancela. No puede, por ejemplo, mandar
     // "deleted" y borrar un turno del historial de la barbería.
     return NextResponse.json({ error: "Estado inválido." }, { status: 400 });
+  }
+
+  if (!puedeCambiarEstado(status as EstadoPermitido, access.access.permisos)) {
+    return NextResponse.json(
+      {
+        error:
+          status === "cancelled"
+            ? "El dueño de la barbería no habilitó que canceles turnos."
+            : "El dueño de la barbería no habilitó que confirmes turnos.",
+      },
+      { status: 403 },
+    );
   }
 
   const plan = await assertPlanActive(slug);

@@ -24,6 +24,11 @@ export const dynamic = "force-dynamic";
  * ── Qué turnos cuentan ──────────────────────────────────────────────────────
  * Confirmados y pendientes, igual que la producción que ve el dueño. Un turno
  * cancelado no es plata que entró.
+ *
+ * ── Y desde la 019, puede estar cerrado ─────────────────────────────────────
+ * Si el dueño le sacó "ver lo que gana", acá se responde 403 y no se calcula
+ * nada. Es el mismo permiso que le saca el precio de los turnos en la agenda:
+ * de poco serviría esconder el precio y dejar abierto el total del mes.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -39,6 +44,13 @@ export async function GET(request: Request) {
     return NextResponse.json(
       { error: access.error },
       { status: access.status },
+    );
+  }
+
+  if (!access.access.permisos.verGanancias) {
+    return NextResponse.json(
+      { error: "El dueño de la barbería no habilitó que veas tus ganancias." },
+      { status: 403 },
     );
   }
 

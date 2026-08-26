@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { calculateCommissions } from "@/lib/commissions";
+import { recortarTurno } from "@/lib/staff-permissions";
 import {
   barberIdForAppointments,
   resolveStaffAccess,
@@ -20,8 +21,13 @@ export const dynamic = "force-dynamic";
  * un id.
  *
  * Tampoco se devuelve todo el turno: va lo que hace falta para atender. El
- * precio del servicio SÍ, porque de ahí sale su comisión y ya lo ve en
- * Ganancias; el email del cliente no, que no le hace falta para nada.
+ * email del cliente no, que no le hace falta para nada.
+ *
+ * Y desde la feature 019, lo que va depende de los permisos que le dio el
+ * dueño: sin "ver lo que gana" el precio no viaja, y sin "escribirle al
+ * cliente" el teléfono tampoco. **Se recortan acá, del payload.** Ocultarlos
+ * en la pantalla dejaría el dato a un clic de las herramientas del navegador,
+ * y el dueño creyendo que lo apagó.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -63,6 +69,7 @@ export async function GET(request: Request) {
     );
   }
 
+  const permisos = access.access.permisos;
   const turnos = (data ?? []) as Array<{
     service_price: number | null;
     status: string;
@@ -90,9 +97,12 @@ export async function GET(request: Request) {
     ok: true,
     barbero: access.access.barberName,
     barberia: access.access.barbershopSlug,
-    turnos,
-    produccionDelDia: produccion,
+    permisos,
+    turnos: (data ?? []).map((turno) => recortarTurno(turno, permisos)),
+    // La plata solo si la puede ver. `undefined` no llega al JSON, así que la
+    // pantalla no tiene que distinguir "no permitido" de "sin configurar".
+    produccionDelDia: permisos.verGanancias ? produccion : undefined,
     // null = el dueño todavía no le configuró comisión. No es cero.
-    comisionDelDia: fila ? fila.commission : null,
+    comisionDelDia: permisos.verGanancias && fila ? fila.commission : undefined,
   });
 }

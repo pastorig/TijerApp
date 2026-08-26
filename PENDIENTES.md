@@ -4,9 +4,19 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
-## 📱 Probar 016/017 en un celular de verdad (lo único que falta del empleado)
+## ✅ 016/017 — PROBADAS EN UN CELULAR Y FUNCIONANDO (2026-08-25)
 
-**Ya verificado contra la base de producción el 25/08/2026, sin celular:**
+Bautista confirmó que el aviso llega al empleado que corresponde. Con eso las
+cuentas de empleados y el push por barbero quedan **cerradas de punta a punta**:
+código, ruteo verificado contra la base y entrega verificada en un teléfono
+real. No queda nada por probar de esas dos features.
+
+Lo de abajo es el histórico de cómo se verificó.
+
+<details>
+<summary>Qué se había verificado antes, sin celular</summary>
+
+**Verificado contra la base de producción el 25/08/2026:**
 
 - `chinitodou@gmail.com` es empleado de `primebarber` y está atado a **Matias
   Rojas**, con el acceso vigente (`revoked_at` en null).
@@ -17,17 +27,12 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
   encola **1 aviso** (el de chinitodou); un turno **con Esteban** encola
   **ninguno**. Que es exactamente lo que pide la feature 017.
 
-**Lo que NO se puede verificar sin un teléfono en la mano**, y es lo que queda:
+Lo que faltaba era la entrega (VAPID + service worker) en un teléfono real, que
+es lo que Bautista confirmó.
 
-1. Reservar en `primebarber` eligiendo a **Matías** → la notificación tiene que
-   **llegar al celular** y, al tocarla, abrir `/primebarber/mi-agenda` (no el
-   panel del dueño).
-2. Reservar eligiendo a **Esteban** → **no tiene que llegar nada**.
+</details>
 
-Lo que se prueba ahí es la entrega (VAPID + service worker), no el ruteo: el
-ruteo ya quedó probado arriba.
-
-### Dos cosas que aparecieron mirando la base
+### Dos cosas que aparecieron mirando la base y siguen abiertas
 
 - **Matías no tiene comisión configurada** (`commission_percent` en null). La
   pantalla de Ganancias del empleado va a decir "tu comisión todavía no está

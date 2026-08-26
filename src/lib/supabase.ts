@@ -59,6 +59,12 @@ export type BarberStaffAccessRow = {
   granted_by: string;
   granted_at: string;
   revoked_at: string | null;
+  // Permisos (feature 019). Default true en la base: un acceso que ya existia
+  // no pierde nada. La lista canonica vive en @/lib/staff-permissions.
+  can_see_earnings: boolean;
+  can_confirm: boolean;
+  can_cancel: boolean;
+  can_contact_client: boolean;
 };
 
 type PaymentEventRow = {
@@ -644,10 +650,23 @@ type Database = {
       };
       barber_staff_access: {
         Row: BarberStaffAccessRow;
-        Insert: Omit<BarberStaffAccessRow, "id" | "granted_at" | "revoked_at"> & {
+        Insert: Omit<
+          BarberStaffAccessRow,
+          | "id"
+          | "granted_at"
+          | "revoked_at"
+          | "can_see_earnings"
+          | "can_confirm"
+          | "can_cancel"
+          | "can_contact_client"
+        > & {
           id?: string;
           granted_at?: string;
           revoked_at?: string | null;
+          can_see_earnings?: boolean;
+          can_confirm?: boolean;
+          can_cancel?: boolean;
+          can_contact_client?: boolean;
         };
         Update: Partial<BarberStaffAccessRow>;
         Relationships: [];
