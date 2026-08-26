@@ -20,6 +20,10 @@ import { AgendaCalendar } from "@/components/calendar/AgendaCalendar";
 import { addDays } from "@/components/calendar/date-utils";
 import { MetricCard } from "@/components/admin/MetricCard";
 import { Badge, Button, Card } from "@/components/ui";
+import {
+  PERMISOS_POR_DEFECTO,
+  type StaffPermissions,
+} from "@/lib/staff-permissions";
 
 /**
  * La agenda del empleado: SUS turnos del día.
@@ -58,6 +62,7 @@ type Respuesta = {
   turnos?: Turno[];
   produccionDelDia?: number;
   comisionDelDia?: number | null;
+  permisos?: StaffPermissions;
   error?: string;
 };
 
@@ -117,6 +122,17 @@ export function StaffAgenda({
   const [tocando, setTocando] = useState<string | null>(null);
   const [recarga, setRecarga] = useState(0);
   const [conteos, setConteos] = useState<Record<string, number>>({});
+  /**
+   * Qué le habilitó el dueño (feature 019). Arranca en "todo", que es lo que
+   * era la app antes de que existieran los permisos, y lo corrige la primera
+   * respuesta. Así no parpadea una pantalla recortada para quien puede todo.
+   *
+   * Esto decide qué se DIBUJA. Lo que de verdad frena una acción es el
+   * servidor: el precio y el teléfono ni siquiera llegan cuando no
+   * corresponde, y confirmar o cancelar se rechaza con 403.
+   */
+  const [permisos, setPermisos] =
+    useState<StaffPermissions>(PERMISOS_POR_DEFECTO);
   const hoy = useMemo(() => hoyEnArgentina(), []);
   const [rango, setRango] = useState(() => {
     const [a, m] = hoy.split("-").map(Number);
@@ -148,6 +164,7 @@ export function StaffAgenda({
         }
         setTurnos(payload.turnos ?? []);
         setComision(payload.comisionDelDia ?? null);
+        if (payload.permisos) setPermisos(payload.permisos);
       } catch {
         if (vivo) setError("No pudimos traer tus turnos.");
       } finally {
@@ -213,7 +230,9 @@ export function StaffAgenda({
         },
         body: JSON.stringify({ barbershopSlug, appointmentId: id, status }),
       });
-      const payload = (await res.json().catch(() => ({}))) as { error?: string };
+      const payload = (await res.json().catch(() => ({}))) as {
+        error?: string;
+      };
       if (!res.ok) {
         setError(payload.error ?? "No pudimos actualizar el turno.");
         return;
@@ -278,7 +297,9 @@ export function StaffAgenda({
           className={cn(
             "p-3 transition-colors",
             cancelado && "opacity-45",
-            esDestacado && !cancelado && "border-[color:var(--brand-gold-ring)]",
+            esDestacado &&
+              !cancelado &&
+              "border-[color:var(--brand-gold-ring)]",
           )}
         >
           <div className="flex items-start gap-3">
@@ -338,9 +359,9 @@ export function StaffAgenda({
             </Badge>
           </div>
 
-          {!cancelado ? (
+          {!cancelado && (permisos.confirmar || permisos.cancelar || waLink) ? (
             <div className="mt-3 flex flex-wrap gap-2">
-              {turno.status !== "confirmed" ? (
+              {turno.status !== "confirmed" && permisos.confirmar ? (
                 <Button
                   variant="success"
                   size="sm"
@@ -369,16 +390,18 @@ export function StaffAgenda({
                   WhatsApp
                 </Button>
               ) : null}
-              <Button
-                variant="danger"
-                size="sm"
-                disabled={tocando === turno.id}
-                onClick={() => void cambiarEstado(turno.id, "cancelled")}
-                aria-label="Cancelar turno"
-                className="shrink-0"
-              >
-                <X className="size-3.5" />
-              </Button>
+              {permisos.cancelar ? (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  disabled={tocando === turno.id}
+                  onClick={() => void cambiarEstado(turno.id, "cancelled")}
+                  aria-label="Cancelar turno"
+                  className="shrink-0"
+                >
+                  <X className="size-3.5" />
+                </Button>
+              ) : null}
             </div>
           ) : null}
         </Card>
@@ -404,25 +427,36 @@ export function StaffAgenda({
         </Card>
 
         {/* El resumen del día: cuántos turnos y cuánto se lleva. Es lo que un
-            barbero quiere saber sin entrar a otra pantalla. */}
-        <div className="grid grid-cols-2 gap-3">
+            barbero quiere saber sin entrar a otra pantalla.
+
+            Sin el permiso de ver la plata queda solo el contador, a lo ancho.
+            No se deja la tarjeta vacía ni con un guioncito: un hueco donde
+            antes había un número se lee como que la app se rompió. */}
+        <div
+          className={cn(
+            "grid gap-3",
+            permisos.verGanancias ? "grid-cols-2" : "grid-cols-1",
+          )}
+        >
           <MetricCard label="Turnos" icon={Scissors}>
             <p className="stat-number text-2xl font-black tabular-nums leading-none text-white">
               {activos.length}
             </p>
           </MetricCard>
-          <MetricCard label="Te llevás" icon={Wallet}>
-            <p
-              className={cn(
-                "stat-number text-2xl font-black tabular-nums leading-none",
-                comision === null
-                  ? "text-[color:var(--text-subtle)]"
-                  : "w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-transparent",
-              )}
-            >
-              {comision === null ? "—" : formatPrice(comision)}
-            </p>
-          </MetricCard>
+          {permisos.verGanancias ? (
+            <MetricCard label="Te llevás" icon={Wallet}>
+              <p
+                className={cn(
+                  "stat-number text-2xl font-black tabular-nums leading-none",
+                  comision === null
+                    ? "text-[color:var(--text-subtle)]"
+                    : "w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-transparent",
+                )}
+              >
+                {comision === null ? "—" : formatPrice(comision)}
+              </p>
+            </MetricCard>
+          ) : null}
         </div>
       </div>
 

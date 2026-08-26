@@ -9,6 +9,10 @@ import { getCurrentUserStaffBarbershops } from "@/lib/staff-access-client";
 import { signOut } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import { Button, Card, Logo } from "@/components/ui";
+import {
+  PERMISOS_POR_DEFECTO,
+  type StaffPermissions,
+} from "@/lib/staff-permissions";
 
 /**
  * El marco de las pantallas del empleado: guard + navegación.
@@ -43,14 +47,20 @@ export function StaffShell({
   const [estado, setEstado] = useState<"chequeando" | "ok" | "sin-acceso">(
     "chequeando",
   );
+  // Los permisos salen de la MISMA consulta que ya resolvía "¿tenés acceso?"
+  // (feature 019): saber qué pestañas mostrar no cuesta un pedido más.
+  const [permisos, setPermisos] = useState<StaffPermissions>(
+    PERMISOS_POR_DEFECTO,
+  );
 
   useEffect(() => {
     let vivo = true;
     void (async () => {
       const { data } = await getCurrentUserStaffBarbershops();
       if (!vivo) return;
-      const tiene = data.some((a) => a.barbershopSlug === barbershopSlug);
-      setEstado(tiene ? "ok" : "sin-acceso");
+      const acceso = data.find((a) => a.barbershopSlug === barbershopSlug);
+      if (acceso) setPermisos(acceso.permisos);
+      setEstado(acceso ? "ok" : "sin-acceso");
     })();
     return () => {
       vivo = false;
@@ -94,11 +104,17 @@ export function StaffShell({
       label: "Mi agenda",
       icon: CalendarDays,
     },
-    {
-      href: `/${barbershopSlug}/mi-agenda/ganancias`,
-      label: "Ganancias",
-      icon: Wallet,
-    },
+    // Ganancias desaparece si el dueño no la habilitó. La ruta igual existe y
+    // se defiende sola: sacar el link no alcanza si alguien la tiene guardada.
+    ...(permisos.verGanancias
+      ? [
+          {
+            href: `/${barbershopSlug}/mi-agenda/ganancias`,
+            label: "Ganancias",
+            icon: Wallet,
+          },
+        ]
+      : []),
     {
       href: `/${barbershopSlug}/mi-agenda/cuenta`,
       label: "Mi cuenta",

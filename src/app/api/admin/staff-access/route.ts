@@ -2,14 +2,20 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { assertPlanFeature } from "@/lib/api-plan-guard";
+import {
+  aColumnas,
+  normalizarPermisos,
+  permisosDesdeBody,
+} from "@/lib/staff-permissions";
 
 export const runtime = "nodejs";
 
 /**
  * Dar y quitar acceso a un empleado. **Solo el dueño.**
  *
- * GET    ?bs=<slug>            → qué barberos tienen acceso hoy
+ * GET    ?bs=<slug>              → qué barberos tienen acceso, y con qué permisos
  * POST   { bs, barberId, email } → invita
+ * PATCH  { bs, barberId, ...permisos } → cambia qué puede ver y tocar
  * DELETE { bs, barberId }        → revoca
  *
  * Cuidados que valen la pena nombrar:
@@ -30,6 +36,11 @@ export const runtime = "nodejs";
  *   conserva turnos, clientes y comisiones.
  * - El barbero tiene que ser de ESTA barbería. Sin ese chequeo, un dueño podría
  *   darle a alguien acceso a la agenda de otro local.
+ * - **Al barbero marcado como dueño no se le da login de empleado.** Ese
+ *   barbero ES la barbería: entra por el panel, donde ve y toca todo. Un acceso
+ *   de empleado sobre su ficha le da estrictamente menos y abre la puerta a que
+ *   alguien maneje la agenda del dueño con otra cuenta. Se rechaza acá, en el
+ *   servidor, además de no ofrecerse en la pantalla.
  */
 
 async function assertOwner(
@@ -70,7 +81,9 @@ export async function GET(request: Request) {
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from("barber_staff_access")
-    .select("barber_id, granted_at")
+    .select(
+      "barber_id, granted_at, can_see_earnings, can_confirm, can_cancel, can_contact_client",
+    )
     .eq("barbershop_slug", slug)
     .is("revoked_at", null);
 
@@ -81,7 +94,14 @@ export async function GET(request: Request) {
       { status: 500 },
     );
   }
-  return NextResponse.json({ ok: true, accesos: data ?? [] });
+  return NextResponse.json({
+    ok: true,
+    accesos: (data ?? []).map((fila) => ({
+      barber_id: fila.barber_id,
+      granted_at: fila.granted_at,
+      permisos: normalizarPermisos(fila as unknown as Record<string, unknown>),
+    })),
+  });
 }
 
 export async function POST(request: Request) {
@@ -131,7 +151,7 @@ export async function POST(request: Request) {
   // El barbero tiene que ser de ESTA barbería.
   const { data: barbero } = await supabase
     .from("barbers")
-    .select("id, name")
+    .select("id, name, is_owner")
     .eq("id", barberId)
     .eq("barbershop_slug", slug)
     .is("deleted_at", null)
@@ -139,6 +159,15 @@ export async function POST(request: Request) {
   if (!barbero) {
     return NextResponse.json(
       { error: "Ese barbero no es de tu barbería." },
+      { status: 400 },
+    );
+  }
+  if (barbero.is_owner) {
+    return NextResponse.json(
+      {
+        error:
+          "Ese barbero está marcado como dueño: entra por el panel, no necesita una cuenta de empleado.",
+      },
       { status: 400 },
     );
   }
@@ -214,6 +243,81 @@ export async function POST(request: Request) {
     // ya tenía cuenta y entra con la suya. Sin esto le diría una clave
     // equivocada al barbero y parecería que la app no anda.
     usaContrasenaNueva: Boolean(creado?.user),
+  });
+}
+
+/**
+ * Cambiar qué puede ver y tocar un empleado (feature 019).
+ *
+ * Solo toca las columnas de permisos que vinieron en el body: el dueño
+ * destilda una casilla y se manda esa, no el set entero. Así dos pestañas
+ * abiertas del panel no se pisan los permisos entre sí.
+ */
+export async function PATCH(request: Request) {
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return NextResponse.json({ error: "Body inválido." }, { status: 400 });
+  }
+
+  const slug = typeof body.bs === "string" ? body.bs : "";
+  const barberId = typeof body.barberId === "string" ? body.barberId : "";
+
+  const owner = await assertOwner(request.headers.get("authorization"), slug);
+  if (!owner.ok) {
+    return NextResponse.json({ error: owner.error }, { status: owner.status });
+  }
+
+  if (!barberId) {
+    return NextResponse.json({ error: "Falta el barbero." }, { status: 400 });
+  }
+
+  // El cast es al set cerrado de columnas de permiso: `aColumnas` ya solo
+  // puede producir esas cuatro claves, pero su firma es un Record abierto y el
+  // cliente tipado de Supabase, con razón, no acepta cualquier columna.
+  const columnas = aColumnas(permisosDesdeBody(body)) as Partial<{
+    can_see_earnings: boolean;
+    can_confirm: boolean;
+    can_cancel: boolean;
+    can_contact_client: boolean;
+  }>;
+  if (Object.keys(columnas).length === 0) {
+    return NextResponse.json(
+      { error: "No mandaste ningún permiso." },
+      { status: 400 },
+    );
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("barber_staff_access")
+    .update(columnas)
+    .eq("barbershop_slug", slug)
+    .eq("barber_id", barberId)
+    .is("revoked_at", null)
+    .select(
+      "barber_id, can_see_earnings, can_confirm, can_cancel, can_contact_client",
+    )
+    .maybeSingle();
+
+  if (error) {
+    Sentry.captureException(error, { tags: { route: "admin/staff-access" } });
+    return NextResponse.json(
+      { error: "No pudimos guardar los permisos." },
+      { status: 500 },
+    );
+  }
+  if (!data) {
+    return NextResponse.json(
+      { error: "Ese barbero no tiene un acceso activo." },
+      { status: 404 },
+    );
+  }
+
+  return NextResponse.json({
+    ok: true,
+    permisos: normalizarPermisos(data as unknown as Record<string, unknown>),
   });
 }
 

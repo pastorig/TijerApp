@@ -1,5 +1,9 @@
 import { getUserFromLocalSession } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/supabase";
+import {
+  normalizarPermisos,
+  type StaffPermissions,
+} from "@/lib/staff-permissions";
 
 /**
  * "¿Soy empleado, y de qué barbería?" — desde el navegador.
@@ -17,6 +21,14 @@ import { getSupabaseClient } from "@/lib/supabase";
 export type StaffBarbershop = {
   barbershopSlug: string;
   barberId: string;
+  /**
+   * Qué le habilitó el dueño (feature 019). Viene de la misma fila que ya se
+   * leía para saber quién es, así que saberlo no cuesta un pedido más.
+   *
+   * Sirve para **dibujar**: qué pestañas y qué botones mostrar. Lo que de
+   * verdad frena una acción es el chequeo del servidor, no esto.
+   */
+  permisos: StaffPermissions;
 };
 
 export async function getCurrentUserStaffBarbershops(): Promise<{
@@ -34,7 +46,9 @@ export async function getCurrentUserStaffBarbershops(): Promise<{
 
   const { data, error } = await getSupabaseClient()
     .from("barber_staff_access")
-    .select("barbershop_slug, barber_id")
+    .select(
+      "barbershop_slug, barber_id, can_see_earnings, can_confirm, can_cancel, can_contact_client",
+    )
     .eq("user_id", user.id)
     .is("revoked_at", null)
     .order("barbershop_slug", { ascending: true });
@@ -43,6 +57,7 @@ export async function getCurrentUserStaffBarbershops(): Promise<{
     data: (data ?? []).map((row) => ({
       barbershopSlug: row.barbershop_slug,
       barberId: row.barber_id,
+      permisos: normalizarPermisos(row as unknown as Record<string, unknown>),
     })),
     error,
   };

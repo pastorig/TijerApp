@@ -1,19 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { KeyRound, Loader2, Mail, ShieldOff } from "lucide-react";
+import { Check, Crown, KeyRound, Loader2, Mail, ShieldOff } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
-import { useConfirm, useToast } from "@/components/ui";
+import { Badge, Button, Input, useConfirm, useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
+import {
+  PERMISOS_POR_DEFECTO,
+  PERMISOS_UI,
+  type StaffPermission,
+  type StaffPermissions,
+} from "@/lib/staff-permissions";
 
 /**
  * Accesos de empleados, dentro de Equipo.
  *
  * Es distinto de la sección de administradores de arriba: un administrador ve
- * y toca TODA la barbería, un empleado solo su agenda y su comisión. Por eso
- * son dos listas separadas y no una con un selector de rol — mezclarlas
+ * y toca TODA la barbería, un empleado solo lo que el dueño le habilite. Por
+ * eso son dos listas separadas y no una con un selector de rol — mezclarlas
  * invitaría a darle "admin" a un empleado sin pensarlo.
+ *
+ * ── El barbero marcado como dueño no aparece para invitar ───────────────────
+ * Ese barbero ES la barbería y entra por el panel, donde ve y toca todo. Una
+ * cuenta de empleado sobre su ficha le daría estrictamente menos, y abriría la
+ * puerta a que la agenda del dueño la maneje otra cuenta. El servidor lo
+ * rechaza igual; acá directamente no se ofrece, que es mejor que ofrecerlo y
+ * después explicar por qué no se puede.
  */
 export function StaffAccessSection({
   barbershop,
@@ -23,8 +36,10 @@ export function StaffAccessSection({
   const toast = useToast();
   const confirm = useConfirm();
   const [conAcceso, setConAcceso] = useState<string[]>([]);
+  const [permisos, setPermisos] = useState<Record<string, StaffPermissions>>({});
   const [cargando, setCargando] = useState(true);
   const [invitando, setInvitando] = useState<string | null>(null);
+  const [guardando, setGuardando] = useState<string | null>(null);
   const [emails, setEmails] = useState<Record<string, string>>({});
   const [claves, setClaves] = useState<Record<string, string>>({});
   const [recarga, setRecarga] = useState(0);
@@ -42,10 +57,19 @@ export function StaffAccessSection({
           { headers: { Authorization: `Bearer ${token}` } },
         );
         const payload = (await res.json().catch(() => ({}))) as {
-          accesos?: Array<{ barber_id: string }>;
+          accesos?: Array<{ barber_id: string; permisos?: StaffPermissions }>;
         };
         if (!vivo || !res.ok) return;
-        setConAcceso((payload.accesos ?? []).map((a) => a.barber_id));
+        const accesos = payload.accesos ?? [];
+        setConAcceso(accesos.map((a) => a.barber_id));
+        setPermisos(
+          Object.fromEntries(
+            accesos.map((a) => [
+              a.barber_id,
+              a.permisos ?? PERMISOS_POR_DEFECTO,
+            ]),
+          ),
+        );
       } finally {
         if (vivo) setCargando(false);
       }
@@ -103,6 +127,55 @@ export function StaffAccessSection({
     }
   }
 
+  /**
+   * Guarda un solo permiso, no el set entero.
+   *
+   * La pantalla se actualiza al toque y se corrige con lo que responde el
+   * servidor. Si fallara y no se revirtiera, el dueño se quedaría mirando una
+   * casilla destildada creyendo que le sacó algo que el empleado sigue
+   * teniendo — que es justo el error que no se puede permitir acá.
+   */
+  async function cambiarPermiso(
+    barberId: string,
+    key: StaffPermission,
+    valor: boolean,
+  ) {
+    const previo = permisos[barberId] ?? PERMISOS_POR_DEFECTO;
+    setPermisos((prev) => ({
+      ...prev,
+      [barberId]: { ...previo, [key]: valor },
+    }));
+    setGuardando(`${barberId}:${key}`);
+    try {
+      const { data: sessionData } = await getCurrentSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return;
+      const res = await fetch("/api/admin/staff-access", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ bs: barbershop.slug, barberId, [key]: valor }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        permisos?: StaffPermissions;
+      };
+      if (!res.ok || !payload.permisos) {
+        setPermisos((prev) => ({ ...prev, [barberId]: previo }));
+        toast.error("No se pudo guardar", { description: payload.error });
+        return;
+      }
+      setPermisos((prev) => ({ ...prev, [barberId]: payload.permisos! }));
+    } catch {
+      setPermisos((prev) => ({ ...prev, [barberId]: previo }));
+      toast.error("No se pudo guardar");
+    } finally {
+      setGuardando(null);
+    }
+  }
+
   async function revocar(barberId: string, nombre: string) {
     const ok = await confirm({
       title: `¿Quitarle el acceso a ${nombre}?`,
@@ -145,8 +218,9 @@ export function StaffAccessSection({
           Que cada uno maneje su agenda
         </h2>
         <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">
-          Ve <strong>solo sus turnos</strong> y su comisión. No accede a tus
-          clientes, tu facturación ni la configuración de la barbería.
+          Ve <strong>solo sus turnos</strong>, y de ahí para abajo elegís vos. No
+          accede a tus clientes, tu facturación ni la configuración de la
+          barbería.
         </p>
       </header>
 
@@ -162,37 +236,81 @@ export function StaffAccessSection({
         <ul className="mt-4 flex flex-col gap-2">
           {barberos.map((barbero) => {
             const tiene = conAcceso.includes(barbero.id);
+            const sus = permisos[barbero.id] ?? PERMISOS_POR_DEFECTO;
+
             return (
               <li
                 key={barbero.id}
                 className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] p-3"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-bold text-white">{barbero.name}</p>
-                  <span
-                    className={cn(
-                      "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                      tiene
-                        ? "bg-[color:var(--success-soft)] text-[color:var(--success)]"
-                        : "bg-[color:var(--surface-2)] text-[color:var(--text-muted)]",
-                    )}
+                  <p className="flex min-w-0 items-center gap-2 text-sm font-bold text-white">
+                    <span className="truncate">{barbero.name}</span>
+                    {barbero.isOwner ? (
+                      <Crown
+                        aria-label="Dueño"
+                        className="size-3.5 shrink-0 text-[color:var(--brand-gold)]"
+                      />
+                    ) : null}
+                  </p>
+                  <Badge
+                    variant={
+                      barbero.isOwner ? "accent" : tiene ? "success" : "muted"
+                    }
+                    className="shrink-0"
                   >
-                    {tiene ? "Con acceso" : "Sin acceso"}
-                  </span>
+                    {barbero.isOwner
+                      ? "Dueño"
+                      : tiene
+                        ? "Con acceso"
+                        : "Sin acceso"}
+                  </Badge>
                 </div>
 
-                {tiene ? (
-                  <button
-                    type="button"
-                    onClick={() => void revocar(barbero.id, barbero.name)}
-                    className="mt-3 inline-flex min-h-9 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--danger)]"
-                  >
-                    <ShieldOff className="size-3.5" />
-                    Quitar acceso
-                  </button>
+                {barbero.isOwner ? (
+                  <p className="mt-2 text-xs leading-5 text-[color:var(--text-muted)]">
+                    Entra con tu cuenta al panel, donde ve y toca todo. No
+                    necesita una cuenta de empleado, que le daría menos.
+                  </p>
+                ) : tiene ? (
+                  <>
+                    <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
+                      Qué puede hacer
+                    </p>
+                    <ul className="mt-2 flex flex-col gap-1.5">
+                      {PERMISOS_UI.map((permiso) => (
+                        <li key={permiso.key}>
+                          <TildePermiso
+                            marcado={sus[permiso.key]}
+                            guardando={
+                              guardando === `${barbero.id}:${permiso.key}`
+                            }
+                            label={permiso.label}
+                            detalle={permiso.detalle}
+                            onChange={(valor) =>
+                              void cambiarPermiso(
+                                barbero.id,
+                                permiso.key,
+                                valor,
+                              )
+                            }
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => void revocar(barbero.id, barbero.name)}
+                      iconLeft={<ShieldOff className="size-3.5" />}
+                    >
+                      Quitar acceso
+                    </Button>
+                  </>
                 ) : (
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                    <input
+                    <Input
                       type="email"
                       inputMode="email"
                       value={emails[barbero.id] ?? ""}
@@ -203,9 +321,9 @@ export function StaffAccessSection({
                         }))
                       }
                       placeholder="email del barbero"
-                      className="min-h-10 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+                      className="flex-1 text-sm"
                     />
-                    <input
+                    <Input
                       type="text"
                       value={claves[barbero.id] ?? ""}
                       onChange={(e) =>
@@ -215,21 +333,16 @@ export function StaffAccessSection({
                         }))
                       }
                       placeholder="contraseña (mín. 8)"
-                      className="min-h-10 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+                      className="flex-1 text-sm"
                     />
-                    <button
-                      type="button"
-                      disabled={invitando === barbero.id}
+                    <Button
+                      size="sm"
+                      loading={invitando === barbero.id}
                       onClick={() => void invitar(barbero.id)}
-                      className="bg-gold-grad inline-flex min-h-10 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-4 text-[11px] font-bold uppercase tracking-[0.12em] text-black disabled:opacity-50"
+                      iconLeft={<Mail className="size-3.5" />}
                     >
-                      {invitando === barbero.id ? (
-                        <Loader2 className="size-3.5 animate-spin" />
-                      ) : (
-                        <Mail className="size-3.5" />
-                      )}
                       Darle acceso
-                    </button>
+                    </Button>
                   </div>
                 )}
               </li>
@@ -244,5 +357,68 @@ export function StaffAccessSection({
         si el barbero prefiere que no, puede cambiarla desde su propia pantalla.
       </p>
     </section>
+  );
+}
+
+/**
+ * Un permiso, con su explicación.
+ *
+ * Es un `<label>` con un checkbox de verdad adentro, no un div con onClick:
+ * así funciona con el teclado y lo lee un lector de pantalla sin que haya que
+ * reimplementar nada. El cuadradito visible es el que se pinta; el input real
+ * está tapado pero presente.
+ */
+function TildePermiso({
+  marcado,
+  guardando,
+  label,
+  detalle,
+  onChange,
+}: {
+  marcado: boolean;
+  guardando: boolean;
+  label: string;
+  detalle: string;
+  onChange: (valor: boolean) => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-2.5">
+      <input
+        type="checkbox"
+        checked={marcado}
+        disabled={guardando}
+        onChange={(e) => onChange(e.target.checked)}
+        className="peer sr-only"
+      />
+      <span
+        aria-hidden="true"
+        className={cn(
+          "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-[var(--radius-xs)] border transition-colors duration-[var(--duration-fast)]",
+          "peer-focus-visible:outline peer-focus-visible:outline-1 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[color:var(--brand-gold)]",
+          marcado
+            ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
+            : "border-[color:var(--border-default)] text-transparent",
+        )}
+      >
+        {guardando ? (
+          <Loader2 className="size-3 animate-spin text-[color:var(--text-muted)]" />
+        ) : (
+          <Check className="size-3" />
+        )}
+      </span>
+      <span className="min-w-0">
+        <span
+          className={cn(
+            "block text-xs font-bold",
+            marcado ? "text-white" : "text-[color:var(--text-muted)]",
+          )}
+        >
+          {label}
+        </span>
+        <span className="block text-[11px] leading-4 text-[color:var(--text-subtle)]">
+          {detalle}
+        </span>
+      </span>
+    </label>
   );
 }

@@ -1,4 +1,8 @@
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import {
+  normalizarPermisos,
+  type StaffPermissions,
+} from "@/lib/staff-permissions";
 
 /**
  * Quién es el empleado que está haciendo este request.
@@ -27,6 +31,12 @@ export type StaffAccess = {
   barberName: string;
   /** Porcentaje de comisión. `null` = sin configurar, distinto de 0%. */
   commissionPercent: number | null;
+  /**
+   * Qué puede ver y tocar (feature 019). Viene de la misma fila que el
+   * barbero: resolver el acceso y resolver los permisos son la misma consulta,
+   * así no existe el estado intermedio de "sé quién es pero no qué puede".
+   */
+  permisos: StaffPermissions;
 };
 
 export type StaffAccessResult =
@@ -61,7 +71,9 @@ export async function resolveStaffAccess(
 
   const { data, error } = await supabase
     .from("barber_staff_access")
-    .select("barber_id, barbers(id, name, commission_percent)")
+    .select(
+      "barber_id, can_see_earnings, can_confirm, can_cancel, can_contact_client, barbers(id, name, commission_percent)",
+    )
     .eq("user_id", userResult.user.id)
     .eq("barbershop_slug", barbershopSlug)
     .is("revoked_at", null)
@@ -76,7 +88,7 @@ export async function resolveStaffAccess(
     return { ok: false, status: 403, error: "No tenés acceso a esta barbería." };
   }
 
-  const row = data as unknown as {
+  const row = data as unknown as Record<string, unknown> & {
     barber_id: string;
     barbers: { id: string; name: string; commission_percent: number | null } | null;
   };
@@ -97,6 +109,7 @@ export async function resolveStaffAccess(
         row.barbers.commission_percent === null
           ? null
           : Number(row.barbers.commission_percent),
+      permisos: normalizarPermisos(row),
     },
   };
 }
