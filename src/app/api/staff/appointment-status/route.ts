@@ -113,6 +113,10 @@ export async function POST(request: Request) {
     .update({
       status: status as EstadoPermitido,
       status_changed_by: access.access.userId,
+      // El nombre va como snapshot (feature 021): el dueño no puede traducir
+      // el user_id a un nombre desde el navegador, y guardarlo acá hace que el
+      // registro siga siendo legible aunque después se borre al empleado.
+      status_changed_by_name: access.access.barberName,
       status_changed_at: new Date().toISOString(),
       ...(status === "cancelled" ? { cancellation_reason: motivo } : {}),
     })

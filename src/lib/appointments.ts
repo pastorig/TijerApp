@@ -5,8 +5,19 @@ import {
 } from "@/lib/supabase";
 import { getBarberDayAvailability } from "@/lib/barber-availability";
 
+/**
+ * Las columnas que el panel necesita de un turno.
+ *
+ * ⚠️ Ojo con lo que NO está acá: una columna que falte no rompe nada visible,
+ * llega como `undefined` y la pantalla que la use se comporta como si el dato
+ * no existiera. Pasó con `cancellation_reason` (feature 021): el turnero tenía
+ * escrito el bloque "Motivo" y la pantalla de Clientes detectaba ghosts a
+ * partir de él, pero como no se pedía, el motivo nunca llegaba — el bloque no
+ * se dibujaba nunca y NINGÚN cliente se marcaba como ghost, ni siquiera los
+ * que el dueño había marcado a mano al cancelar.
+ */
 const APPOINTMENT_SELECT =
-  "id, barbershop_slug, barber_id, barber_name, customer_name, customer_phone, customer_email, service_name, service_price, service_duration_minutes, actual_duration_minutes, appointment_date, appointment_time, comment, status, created_at, confirmation_token, internal_notes, deposit_status, deposit_amount";
+  "id, barbershop_slug, barber_id, barber_name, customer_name, customer_phone, customer_email, service_name, service_price, service_duration_minutes, actual_duration_minutes, appointment_date, appointment_time, comment, status, created_at, confirmation_token, internal_notes, deposit_status, deposit_amount, cancellation_reason, status_changed_by_name, status_changed_at";
 
 /** Tope de filas por request de PostgREST/Supabase (default del proyecto). */
 const PAGE_SIZE = 1000;

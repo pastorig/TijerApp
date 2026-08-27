@@ -24,6 +24,7 @@ import {
   CancelAppointmentDialog,
   type CancellationContext,
 } from "@/components/appointments/CancelAppointmentDialog";
+import { DepositStatusChip } from "@/components/appointments/DepositStatusChip";
 import {
   PERMISOS_POR_DEFECTO,
   type StaffPermissions,
@@ -60,6 +61,12 @@ type Turno = {
   appointment_time: string;
   comment: string | null;
   status: "pending" | "confirmed" | "cancelled";
+  /**
+   * Estado de la seña. El endpoint ya lo traía desde la feature 016 y la
+   * pantalla lo descartaba: el barbero que recibe al cliente en la puerta es
+   * el que más necesita saber si pagó (feature 021).
+   */
+  deposit_status?: string | null;
 };
 
 type Respuesta = {
@@ -373,22 +380,26 @@ export function StaffAgenda({
                 </p>
               ) : null}
             </div>
-            <Badge
-              variant={
-                turno.status === "confirmed"
-                  ? "success"
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <Badge
+                variant={
+                  turno.status === "confirmed"
+                    ? "success"
+                    : turno.status === "pending"
+                      ? "accent"
+                      : "danger"
+                }
+              >
+                {turno.status === "confirmed"
+                  ? "Confirmado"
                   : turno.status === "pending"
-                    ? "accent"
-                    : "danger"
-              }
-              className="shrink-0"
-            >
-              {turno.status === "confirmed"
-                ? "Confirmado"
-                : turno.status === "pending"
-                  ? "Pendiente"
-                  : "Cancelado"}
-            </Badge>
+                    ? "Pendiente"
+                    : "Cancelado"}
+              </Badge>
+              {turno.deposit_status ? (
+                <DepositStatusChip status={turno.deposit_status} />
+              ) : null}
+            </div>
           </div>
 
           {!cancelado && (permisos.confirmar || permisos.cancelar || waLink) ? (

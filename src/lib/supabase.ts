@@ -35,6 +35,8 @@ type AppointmentInsert = {
   // Quién confirmó o canceló por última vez (feature 016). null = el cambio es
   // anterior a las cuentas de empleados, o lo hizo el sistema.
   status_changed_by?: string | null;
+  /** El nombre de esa persona, guardado en el momento (feature 021). */
+  status_changed_by_name?: string | null;
   status_changed_at?: string | null;
 };
 
