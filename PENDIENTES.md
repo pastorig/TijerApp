@@ -82,9 +82,10 @@ así que no hubo que volver a activarla.
 
 > **Si volvés a probar el push, ahora reservá con Esteban, no con Matías.**
 
-⚠️ **Esteban tampoco tiene comisión cargada** (`commission_percent` en null),
-así que la pantalla de Ganancias va a seguir diciendo "sin configurar". Si
-querés verla con plata, cargale el porcentaje desde Equipo.
+✅ **Comisión cargada: Esteban al 50%.** Con la producción de este mes
+($12.000, 1 turno), la pantalla de Ganancias tiene que mostrar **$6.000**. Si
+muestra otra cosa, ahí hay algo para mirar. El porcentaje se cambia desde
+Equipo cuando quieras.
 
 ---
 
