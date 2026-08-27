@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
-import { sendClientPushForAppointment } from "@/lib/push/sendClientPush";
-import { formatDateWithWeekday, normalizeTimeValue } from "@/lib/format";
+import { enviarAvisoDeCancelacion } from "@/lib/server/cancellation-email";
+import { enviarPushDeEstadoAlCliente } from "@/lib/server/client-status-push";
 
 export const runtime = "nodejs";
 
@@ -24,6 +24,16 @@ export const runtime = "nodejs";
  *
  * Es best-effort por diseño: si esto falla, el turno ya cambió de estado igual.
  * El turnero lo llama sin esperar el resultado.
+ *
+ * ── Desde la feature 026 también manda el MAIL, al cancelar ─────────────────
+ * El push solo le llega al cliente que activó notificaciones desde su link, que
+ * son los menos. El mail alcanza a todos los que dejaron uno, así que la
+ * cancelación deja de ser silenciosa para la mayoría.
+ *
+ * El mail tiene su propia regla de cuándo corresponde (`debeAvisarCancelacion`):
+ * al que no vino y al que pidió cancelar no se le escribe. **El push no se tocó**
+ * y sigue saliendo siempre: cambiarle la conducta a algo que ya funcionaba no
+ * era parte de esto.
  */
 
 async function assertAdmin(authHeader: string | null, barbershopSlug: string) {
@@ -83,52 +93,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const supabase = getSupabaseAdminClient();
-    const { data: appointment, error } = await supabase
-      .from("appointments")
-      .select(
-        "id, barbershop_slug, appointment_date, appointment_time, barber_name, confirmation_token",
-      )
-      .eq("id", appointmentId)
-      // El turno tiene que ser de ESTA barbería: sin esto, un admin podría
-      // disparar notificaciones de turnos de otra.
-      .eq("barbershop_slug", barbershopSlug)
-      .maybeSingle();
-
-    if (error || !appointment) {
-      return NextResponse.json(
-        { error: "No encontramos el turno." },
-        { status: 404 },
-      );
-    }
-
-    const cuando = `${formatDateWithWeekday(appointment.appointment_date)} a las ${normalizeTimeValue(
-      appointment.appointment_time,
-    ).slice(0, 5)}`;
-
-    const conBarbero = appointment.barber_name
-      ? ` con ${appointment.barber_name}`
-      : "";
-
-    const payload =
-      status === "confirmed"
-        ? {
-            title: "Tu turno está confirmado",
-            body: `Te esperamos el ${cuando}${conBarbero}.`,
-          }
-        : {
-            title: "Se canceló tu turno",
-            body: `El del ${cuando} no va. Escribinos y lo reprogramamos.`,
-          };
-
-    const result = await sendClientPushForAppointment(appointmentId, {
-      ...payload,
-      url: appointment.confirmation_token
-        ? `/r/${appointment.confirmation_token}`
-        : "/",
+    const push = await enviarPushDeEstadoAlCliente({
+      appointmentId,
+      barbershopSlug,
+      status,
     });
 
-    return NextResponse.json({ sent: result.sent });
+    // El mail, solo al cancelar. Nunca tira: el turno ya cambió de estado.
+    const email =
+      status === "cancelled"
+        ? await enviarAvisoDeCancelacion({ appointmentId, barbershopSlug })
+        : null;
+
+    return NextResponse.json({ sent: push.sent, email });
   } catch (err) {
     Sentry.captureException(err, {
       tags: { route: "appointments/notify-client", method: "POST" },
