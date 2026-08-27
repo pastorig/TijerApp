@@ -101,13 +101,39 @@ Equipo cuando quieras.
 La **026** manda un mail cuando la barbería cancela un turno. Probarlo con un
 turno real le escribe a un cliente real, así que:
 
-1. Cargá un turno a mano **con tu propio mail**, en una fecha futura.
-2. Cancelalo con un motivo que **no** sea "Cliente avisó" ni "Cliente no vino"
+**El turno ya está cargado** (28/08/2026 16:00, Esteban Perez, Corte, con
+`ginopastori66@gmail.com`). Solo falta:
+
+1. Cancelarlo con un motivo que **no** sea "Cliente avisó" ni "Cliente no vino"
    — esos dos callan el mail a propósito.
-3. Tiene que llegarte el mail y la pantalla decir "le avisamos por mail".
+2. Tiene que llegarte el mail y la pantalla decir "le avisamos por mail".
+
+Se puede cancelar desde tu panel **o** desde la agenda del empleado con
+`chinitodou`: los dos caminos mandan el mismo mail, y probar los dos es la
+prueba completa.
+
+> Ojo: en `primebarber` **ya había dos turnos** con ese mismo mail (28/08 a las
+> 10:20 y a las 13:00, en `pending`). Si cancelás cualquiera de esos también te
+> va a llegar el mail. El de la prueba es el de las **16:00**, que dice
+> "Gino Pastori (prueba)".
 
 ⚠️ Los tres casos en los que **NO** se manda, y está bien que no se mande: el
 turno ya pasó, el cliente no vino, o el cliente pidió cancelar.
+
+---
+
+## 🔔 El push del empleado se murió: hay que volver a activarlo
+
+La suscripción push de `chinitodou` (la del empleado en `primebarber`) **quedó
+invalidada el 27/08**. Se creó el 25/08, mandó bien **un** push —el que probaste
+y confirmaste— y al siguiente el servicio de push la rechazó, así que la app la
+marcó vencida, que es lo correcto.
+
+No es un bug: las suscripciones rotan solas (reinstalar la PWA, limpiar el
+navegador, el propio browser). Pero **hasta que no se reactive, al empleado no
+le llega ningún push**.
+
+Se reactiva desde `/<barberia>/mi-agenda/cuenta` con la cuenta del empleado.
 
 ---
 
