@@ -170,6 +170,8 @@ export function StaffAgenda({
   const [bloqueandoHorario, setBloqueandoHorario] = useState(false);
   const [bloqueos, setBloqueos] = useState<Bloqueo[]>([]);
   const [avisoBloqueo, setAvisoBloqueo] = useState("");
+  /** Qué pasó con el aviso al cliente después de cancelar (feature 026). */
+  const [avisoCliente, setAvisoCliente] = useState("");
   /** El turno que se está por mover (feature 024). `null` = modal cerrado. */
   const [porMover, setPorMover] = useState<Turno | null>(null);
   const [recarga, setRecarga] = useState(0);
@@ -294,10 +296,33 @@ export function StaffAgenda({
       });
       const payload = (await res.json().catch(() => ({}))) as {
         error?: string;
+        aviso?: { sent: boolean; skipped?: string } | null;
       };
       if (!res.ok) {
         setError(payload.error ?? "No pudimos actualizar el turno.");
         return;
+      }
+
+      // Qué pasó con el aviso al cliente (feature 026).
+      //
+      // Solo se dice algo cuando hace falta: si el mail salió, o si el cliente
+      // se quedó sin enterarse y el barbero tiene que resolverlo él. Los
+      // silencios a propósito —el que no vino, el que pidió cancelar— no
+      // merecen un cartel: ahí no avisar ES lo correcto.
+      if (status === "cancelled" && payload.aviso) {
+        const a = payload.aviso;
+        if (a.sent) {
+          setAvisoCliente("Le avisamos por mail al cliente.");
+        } else if (
+          a.skipped === "no email" ||
+          a.skipped === "no pudimos mandar el mail"
+        ) {
+          setAvisoCliente(
+            "El cliente no se enteró: avisale vos, o va a venir igual.",
+          );
+        } else {
+          setAvisoCliente("");
+        }
       }
       // Se recarga en vez de tocar el estado a mano: así lo que se ve es lo que
       // quedó guardado, y no una versión optimista que puede diferir.
@@ -606,6 +631,18 @@ export function StaffAgenda({
               error —el bloqueo se creó— pero tampoco un "listo": son turnos
               que siguen en pie y el barbero se tiene que enterar hoy y no el
               día del turno. */}
+          {avisoCliente ? (
+            <p
+              className={
+                avisoCliente.startsWith("Le avisamos")
+                  ? "mb-4 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 py-2 text-xs text-[color:var(--success)]"
+                  : "mb-4 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-3 py-2 text-xs text-[color:var(--brand-gold)]"
+              }
+            >
+              {avisoCliente}
+            </p>
+          ) : null}
+
           {avisoBloqueo ? (
             <p className="mb-4 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-3 py-2 text-xs text-[color:var(--brand-gold)]">
               {avisoBloqueo}

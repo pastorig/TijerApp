@@ -8,6 +8,8 @@ import {
 } from "@/lib/server/staff-access";
 import { puedeCambiarEstado } from "@/lib/staff-permissions";
 import { motivoParaGuardar } from "@/lib/staff-cancellation";
+import { enviarAvisoDeCancelacion } from "@/lib/server/cancellation-email";
+import { enviarPushDeEstadoAlCliente } from "@/lib/server/client-status-push";
 
 export const runtime = "nodejs";
 
@@ -42,6 +44,12 @@ export const runtime = "nodejs";
  * Ahora acepta el motivo que arma el mismo diálogo que usa el dueño. Sigue
  * siendo opcional, igual que para él: lo que se arregla es que pueda darlo, no
  * obligarlo a algo que al dueño no se le obliga.
+ *
+ * ── Y al cancelar se le avisa al cliente (feature 026) ──────────────────────
+ * El mail sale de acá mismo, después de escribir. No siempre: al que no vino y
+ * al que pidió cancelar no se les escribe — esa decisión vive en
+ * `debeAvisarCancelacion`. La respuesta dice qué pasó, para que la pantalla se
+ * lo cuente al barbero en vez de dejarlo suponer.
  */
 
 const ESTADOS_PERMITIDOS = ["confirmed", "cancelled"] as const;
@@ -152,5 +160,23 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ ok: true, turno: data });
+  // Los avisos al cliente, los mismos dos que manda el panel del dueño: el
+  // push a quien lo activó desde su link, y el mail a quien dejó uno. Van
+  // después del update y ninguno tira — el turno ya cambió de estado, y romper
+  // acá haría creer que la operación falló.
+  //
+  // Antes de esto el empleado cancelaba y el cliente no se enteraba por NINGÚN
+  // lado: el push lo disparaba solo el panel del dueño.
+  await enviarPushDeEstadoAlCliente({
+    appointmentId,
+    barbershopSlug: slug,
+    status: status as "confirmed" | "cancelled",
+  });
+
+  const aviso =
+    status === "cancelled"
+      ? await enviarAvisoDeCancelacion({ appointmentId, barbershopSlug: slug })
+      : null;
+
+  return NextResponse.json({ ok: true, turno: data, aviso });
 }

@@ -74,12 +74,7 @@ type AdminAppointmentsProps = {
 };
 
 type AppointmentFilter =
-  | "day"
-  | "all"
-  | "pending"
-  | "confirmed"
-  | "cancelled"
-  | "deleted";
+  "day" | "all" | "pending" | "confirmed" | "cancelled" | "deleted";
 
 const FILTER_OPTIONS: Array<{ value: AppointmentFilter; label: string }> = [
   { value: "day", label: "Dia" },
@@ -300,11 +295,14 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     const activeAppointments = appointments
       .filter(
         (appointment) =>
-          appointment.status === "pending" || appointment.status === "confirmed",
+          appointment.status === "pending" ||
+          appointment.status === "confirmed",
       )
       .sort((firstAppointment, secondAppointment) => {
         const firstDate = normalizeDateValue(firstAppointment.appointment_date);
-        const secondDate = normalizeDateValue(secondAppointment.appointment_date);
+        const secondDate = normalizeDateValue(
+          secondAppointment.appointment_date,
+        );
         const byBarber = firstAppointment.barber_id.localeCompare(
           secondAppointment.barber_id,
         );
@@ -332,11 +330,14 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
 
       const date = normalizeDateValue(appointment.appointment_date);
       const chainKey = `${appointment.barber_id}:${date}`;
-      const reservedStartMinutes = timeValueToMinutes(appointment.appointment_time);
+      const reservedStartMinutes = timeValueToMinutes(
+        appointment.appointment_time,
+      );
       const previousEstimatedEndMinutes =
         lastEndByBarberAndDate.get(chainKey) ?? reservedStartMinutes;
       const effectiveDurationMinutes =
-        appointment.actual_duration_minutes ?? appointment.service_duration_minutes;
+        appointment.actual_duration_minutes ??
+        appointment.service_duration_minutes;
       const estimatedStartMinutes = Math.max(
         reservedStartMinutes,
         previousEstimatedEndMinutes,
@@ -497,7 +498,8 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     const activeFocusDateAppointments = focusDateAppointments
       .filter(
         (appointment) =>
-          appointment.status === "pending" || appointment.status === "confirmed",
+          appointment.status === "pending" ||
+          appointment.status === "confirmed",
       )
       .sort(
         (firstAppointment, secondAppointment) =>
@@ -521,9 +523,12 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     return Array.from(appointmentsByBarber.entries())
       .map(([barberId, barberAppointments]) => {
         const barber =
-          barbers.find((currentBarber) => currentBarber.id === barberId) ?? null;
+          barbers.find((currentBarber) => currentBarber.id === barberId) ??
+          null;
         const barberName =
-          barber?.display_name?.trim() || barber?.name || barberAppointments[0]?.barber_name;
+          barber?.display_name?.trim() ||
+          barber?.name ||
+          barberAppointments[0]?.barber_name;
         const baseDurationMinutes = minDurationByBarber.get(barberId) ?? 30;
         const daySchedule = getBarberDaySchedule({
           barberId,
@@ -563,8 +568,9 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           .filter(
             (
               projectedAppointment,
-            ): projectedAppointment is NonNullable<typeof projectedAppointment> =>
-              projectedAppointment !== null,
+            ): projectedAppointment is NonNullable<
+              typeof projectedAppointment
+            > => projectedAppointment !== null,
           );
 
         if (projectedAppointments.length === 0) {
@@ -580,7 +586,10 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           dayStartMinutes,
         );
 
-        const overflowMinutes = Math.max(0, latestEstimatedEndMinutes - dayEndMinutes);
+        const overflowMinutes = Math.max(
+          0,
+          latestEstimatedEndMinutes - dayEndMinutes,
+        );
         const lastPotentialSlotStartMinutes = Math.max(
           dayStartMinutes,
           dayEndMinutes - baseDurationMinutes,
@@ -610,13 +619,19 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           barberName,
           dayLabel: formatDayCompact(focusDate),
           closingTime: normalizeTimeShort(daySchedule.endTime),
-          latestEstimatedEndTime: formatMinutesToTime(latestEstimatedEndMinutes),
+          latestEstimatedEndTime: formatMinutesToTime(
+            latestEstimatedEndMinutes,
+          ),
           lostCuts,
           overflowMinutes,
-          lastPotentialSlotTime: formatMinutesToTime(lastPotentialSlotStartMinutes),
+          lastPotentialSlotTime: formatMinutesToTime(
+            lastPotentialSlotStartMinutes,
+          ),
           extensionMinutes,
           currentClosingTime: normalizeTimeShort(daySchedule.endTime),
-          nextClosingTime: formatMinutesToTime(dayEndMinutes + extensionMinutes),
+          nextClosingTime: formatMinutesToTime(
+            dayEndMinutes + extensionMinutes,
+          ),
         };
       })
       .filter((alert): alert is NonNullable<typeof alert> => alert !== null);
@@ -654,53 +669,65 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   }, [appointments, focusDate, scheduleProjectionByAppointmentId]);
 
   const resolvedDayOverrideSummaries = useMemo(() => {
-    return Object.entries(dayOverridesByBarber)
-      .filter(([, override]) => override !== null)
-      .filter(([barberId]) => selectedBarberFilter === "all" || barberId === selectedBarberFilter)
-      .map(([barberId, override]) => {
-        if (!override) {
-          return null;
-        }
+    return (
+      Object.entries(dayOverridesByBarber)
+        .filter(([, override]) => override !== null)
+        .filter(
+          ([barberId]) =>
+            selectedBarberFilter === "all" || barberId === selectedBarberFilter,
+        )
+        .map(([barberId, override]) => {
+          if (!override) {
+            return null;
+          }
 
-        const barber =
-          barbers.find((currentBarber) => currentBarber.id === barberId) ?? null;
-        const barberName = barber?.display_name?.trim() || barber?.name || "Barbero";
-        const weeklySchedules = weeklySchedulesByBarber[barberId] ?? [];
-        const mergedSchedules = mergeWeeklySchedulesWithDefaults(
-          weeklySchedules,
-          barbershop.workingHours,
-        );
-        const weeklySchedule = mergedSchedules.find(
-          (schedule) => schedule.dayOfWeek === getDayOfWeekFromDate(focusDate),
-        );
+          const barber =
+            barbers.find((currentBarber) => currentBarber.id === barberId) ??
+            null;
+          const barberName =
+            barber?.display_name?.trim() || barber?.name || "Barbero";
+          const weeklySchedules = weeklySchedulesByBarber[barberId] ?? [];
+          const mergedSchedules = mergeWeeklySchedulesWithDefaults(
+            weeklySchedules,
+            barbershop.workingHours,
+          );
+          const weeklySchedule = mergedSchedules.find(
+            (schedule) =>
+              schedule.dayOfWeek === getDayOfWeekFromDate(focusDate),
+          );
 
-        if (!weeklySchedule) {
-          return null;
-        }
+          if (!weeklySchedule) {
+            return null;
+          }
 
-        return {
-          barberId,
-          barberName,
-          dayLabel: formatDayCompact(focusDate),
-          baseClosingTime: weeklySchedule.endTime,
-          overrideClosingTime: normalizeTimeShort(override.end_time),
-        };
-      })
-      .filter((summary): summary is NonNullable<typeof summary> => summary !== null)
-      // BUG 1: ocultar el aprovechamiento "fantasma".
-      // Caso A: el override iguala al base — no hay extensión real.
-      // Caso B: hay override > base, pero ningún turno actual excede el
-      // cierre base (la extensión sobra porque las duraciones volvieron
-      // a la normalidad). El override sigue en DB pero ya no aporta.
-      .filter((summary) => {
-        const baseMinutes = timeValueToMinutes(summary.baseClosingTime);
-        const overrideMinutes = timeValueToMinutes(summary.overrideClosingTime);
-        if (overrideMinutes === baseMinutes) return false;
-        const latestEnd =
-          latestEstimatedEndByBarberOnFocusDate.get(summary.barberId) ?? 0;
-        if (latestEnd <= baseMinutes) return false;
-        return true;
-      });
+          return {
+            barberId,
+            barberName,
+            dayLabel: formatDayCompact(focusDate),
+            baseClosingTime: weeklySchedule.endTime,
+            overrideClosingTime: normalizeTimeShort(override.end_time),
+          };
+        })
+        .filter(
+          (summary): summary is NonNullable<typeof summary> => summary !== null,
+        )
+        // BUG 1: ocultar el aprovechamiento "fantasma".
+        // Caso A: el override iguala al base — no hay extensión real.
+        // Caso B: hay override > base, pero ningún turno actual excede el
+        // cierre base (la extensión sobra porque las duraciones volvieron
+        // a la normalidad). El override sigue en DB pero ya no aporta.
+        .filter((summary) => {
+          const baseMinutes = timeValueToMinutes(summary.baseClosingTime);
+          const overrideMinutes = timeValueToMinutes(
+            summary.overrideClosingTime,
+          );
+          if (overrideMinutes === baseMinutes) return false;
+          const latestEnd =
+            latestEstimatedEndByBarberOnFocusDate.get(summary.barberId) ?? 0;
+          if (latestEnd <= baseMinutes) return false;
+          return true;
+        })
+    );
   }, [
     barbers,
     barbershop.workingHours,
@@ -775,9 +802,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     setPendingCancelAppointment(appointment);
   }
 
-  async function handleConfirmCancellation(
-    cancellationReason: string | null,
-  ) {
+  async function handleConfirmCancellation(cancellationReason: string | null) {
     const appointment = pendingCancelAppointment;
     if (!appointment?.id) {
       setPendingCancelAppointment(null);
@@ -804,15 +829,25 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
             : a,
         ),
       );
-      void notifyClientOfStatusChange({
+      // El aviso al cliente. Se espera —a diferencia de antes— porque de eso
+      // depende qué decir en el toast: que el cliente no se haya enterado es
+      // justo lo que el dueño tiene que saber antes de seguir con lo suyo.
+      const avisado = await notifyClientOfStatusChange({
         barbershopSlug: barbershop.slug,
         appointmentId: appointment.id,
         status: "cancelled",
       });
+      const email = avisado?.email;
       toast.success("Turno cancelado", {
-        description: cancellationReason
-          ? `${appointment.customer_name} — motivo registrado`
-          : `${appointment.customer_name} liberó el horario.`,
+        description: email?.sent
+          ? `${appointment.customer_name} — le avisamos por mail.`
+          : email &&
+              (email.skipped === "no email" ||
+                email.skipped === "no pudimos mandar el mail")
+            ? `${appointment.customer_name} — no se enteró: avisale vos.`
+            : cancellationReason
+              ? `${appointment.customer_name} — motivo registrado`
+              : `${appointment.customer_name} liberó el horario.`,
       });
       setPendingCancelAppointment(null);
     } catch {
@@ -933,9 +968,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     // Optimistic update local
     setAppointments((current) =>
       current.map((a) =>
-        a.id === appointment.id
-          ? { ...a, internal_notes: trimmed || null }
-          : a,
+        a.id === appointment.id ? { ...a, internal_notes: trimmed || null } : a,
       ),
     );
   }
@@ -977,8 +1010,12 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         toast.error("No pudimos borrar los turnos definitivamente.");
         return;
       }
-      setAppointments((current) => current.filter((a) => a.status !== "deleted"));
-      toast.success(`${count} turno${count === 1 ? "" : "s"} borrado${count === 1 ? "" : "s"}`);
+      setAppointments((current) =>
+        current.filter((a) => a.status !== "deleted"),
+      );
+      toast.success(
+        `${count} turno${count === 1 ? "" : "s"} borrado${count === 1 ? "" : "s"}`,
+      );
     } catch {
       toast.error("No pudimos borrar los turnos definitivamente.");
     } finally {
@@ -1587,208 +1624,225 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                     ) : null}
                     <ul className="grid gap-3 animate-stagger">
                       {group.appointments.flatMap((appointment, index, arr) => {
-                  const appointmentDate = normalizeDateValue(
-                    appointment.appointment_date,
-                  );
-                  const daySchedule = getBarberDaySchedule({
-                    barberId: appointment.barber_id,
-                    date: appointmentDate,
-                    weeklySchedulesByBarber,
-                    dayOverridesByBarber,
-                    workingHours: barbershop.workingHours,
-                    focusDate,
-                  });
-                  const scheduleProjection = appointment.id
-                    ? scheduleProjectionByAppointmentId.get(appointment.id)
-                    : undefined;
-                  const dayClosingMinutes =
-                    daySchedule?.isWorking
-                      ? timeValueToMinutes(daySchedule.endTime)
-                      : undefined;
-                  const overtimeMinutes =
-                    dayClosingMinutes !== undefined && scheduleProjection
-                      ? Math.max(
-                          0,
-                          scheduleProjection.estimatedEndMinutes -
-                            dayClosingMinutes,
-                        )
-                      : 0;
-                  // Botón "Pedir reseña" sólo cuando el turno está
-                  // confirmado/pendiente, la fecha ya pasó y tenemos el token.
-                  const todayIso = new Date().toISOString().slice(0, 10);
-                  const reviewWhatsAppHref =
-                    appointment.confirmation_token &&
-                    appointment.customer_phone &&
-                    (appointment.status === "confirmed" ||
-                      appointment.status === "pending") &&
-                    appointmentDate <= todayIso
-                      ? createWhatsAppReviewRequestLink({
-                          barbershopName: barbershop.name,
-                          clientName: appointment.customer_name,
-                          clientPhone: appointment.customer_phone,
-                          confirmationToken: appointment.confirmation_token,
-                        })
-                      : undefined;
-
-                  // Si hay delay propagado, ofrecemos botón para avisar al
-                  // cliente. Sin restricción de fecha — el owner decide.
-                  const delayWhatsAppHref =
-                    scheduleProjection &&
-                    scheduleProjection.delayMinutes > 0 &&
-                    appointment.customer_phone &&
-                    (appointment.status === "confirmed" ||
-                      appointment.status === "pending")
-                      ? createWhatsAppDelayLink({
-                          barbershopName: barbershop.name,
-                          clientName: appointment.customer_name,
-                          clientPhone: appointment.customer_phone,
-                          serviceName: appointment.service_name,
-                          reservedTime: appointment.appointment_time.slice(0, 5),
-                          estimatedTime: `${String(
-                            Math.floor(
-                              scheduleProjection.estimatedStartMinutes / 60,
-                            ),
-                          ).padStart(2, "0")}:${String(
-                            scheduleProjection.estimatedStartMinutes % 60,
-                          ).padStart(2, "0")}`,
-                          delayMinutes: scheduleProjection.delayMinutes,
-                        })
-                      : undefined;
-                  const nodes: React.ReactNode[] = [
-                    <AppointmentCard
-                      key={
-                        appointment.id ??
-                        `${appointment.customer_phone}-${appointment.appointment_date}-${appointment.appointment_time}`
-                      }
-                      appointment={appointment}
-                      barbershopName={barbershop.name}
-                      whatsappMessageTemplate={
-                        barbershop.whatsappMessageTemplate ?? null
-                      }
-                      onConfirm={handleConfirmAppointment}
-                      onWhatsApp={handleSendWhatsApp}
-                      onCancel={handleCancelAppointment}
-                      onRestore={handleRestoreAppointment}
-                      onDelete={handleDeleteAppointment}
-                      onHardDelete={handleHardDeleteAppointment}
-                      onSaveInternalNotes={handleSaveInternalNotes}
-                      onDuplicate={setDuplicatingAppointment}
-                      confirmingId={confirmingAppointmentId}
-                      cancellingId={cancellingAppointmentId}
-                      restoringId={restoringAppointmentId}
-                      deletingId={deletingAppointmentId}
-                      hardDeletingId={hardDeletingAppointmentId}
-                      updatingDurationId={updatingDurationAppointmentId}
-                      onAdjustActualDuration={handleAdjustActualDuration}
-                      scheduleProjection={scheduleProjection}
-                      dayClosingMinutes={dayClosingMinutes}
-                      overtimeAccepted={
-                        updatingDayOverrideBarberId === appointment.barber_id
-                      }
-                      onAcceptOvertime={
-                        appointment.id && overtimeMinutes > 0
-                          ? () =>
-                              handleExtendClosingForDay(
-                                appointment.barber_id,
-                                overtimeMinutes,
-                                appointmentDate,
+                        const appointmentDate = normalizeDateValue(
+                          appointment.appointment_date,
+                        );
+                        const daySchedule = getBarberDaySchedule({
+                          barberId: appointment.barber_id,
+                          date: appointmentDate,
+                          weeklySchedulesByBarber,
+                          dayOverridesByBarber,
+                          workingHours: barbershop.workingHours,
+                          focusDate,
+                        });
+                        const scheduleProjection = appointment.id
+                          ? scheduleProjectionByAppointmentId.get(
+                              appointment.id,
+                            )
+                          : undefined;
+                        const dayClosingMinutes = daySchedule?.isWorking
+                          ? timeValueToMinutes(daySchedule.endTime)
+                          : undefined;
+                        const overtimeMinutes =
+                          dayClosingMinutes !== undefined && scheduleProjection
+                            ? Math.max(
+                                0,
+                                scheduleProjection.estimatedEndMinutes -
+                                  dayClosingMinutes,
                               )
-                          : undefined
-                      }
-                      showDate
-                      clientTags={getTagsForAppointment(appointment)}
-                      reviewWhatsAppHref={reviewWhatsAppHref}
-                      delayWhatsAppHref={delayWhatsAppHref}
-                      isNextUp={
-                        Boolean(appointment.id) &&
-                        appointment.id === nextUpAppointmentId
-                      }
-                    />,
-                  ];
+                            : 0;
+                        // Botón "Pedir reseña" sólo cuando el turno está
+                        // confirmado/pendiente, la fecha ya pasó y tenemos el token.
+                        const todayIso = new Date().toISOString().slice(0, 10);
+                        const reviewWhatsAppHref =
+                          appointment.confirmation_token &&
+                          appointment.customer_phone &&
+                          (appointment.status === "confirmed" ||
+                            appointment.status === "pending") &&
+                          appointmentDate <= todayIso
+                            ? createWhatsAppReviewRequestLink({
+                                barbershopName: barbershop.name,
+                                clientName: appointment.customer_name,
+                                clientPhone: appointment.customer_phone,
+                                confirmationToken:
+                                  appointment.confirmation_token,
+                              })
+                            : undefined;
 
-                  // Gap marker entre turnos consecutivos activos del mismo dÃƒÆ’Ã‚Â­a.
-                  // Solo tiene sentido cuando el filtro es "DÃƒÆ’Ã‚Â­a" (ver un solo dÃƒÆ’Ã‚Â­a)
-                  // y ambos turnos estÃƒÆ’Ã‚Â¡n activos (pending/confirmed).
-                  // Durante bÃƒÆ’Ã‚Âºsqueda no aplicamos gap markers (los resultados
-                  // pueden ser de distintos dÃƒÆ’Ã‚Â­as).
-                  if (
-                    !isSearching &&
-                    activeFilter === "day" &&
-                    index < arr.length - 1
-                  ) {
-                    const next = arr[index + 1];
-                    const currentActive =
-                      appointment.status === "pending" ||
-                      appointment.status === "confirmed";
-                    const nextActive =
-                      next.status === "pending" || next.status === "confirmed";
-
-                    if (currentActive && nextActive) {
-                      const currentProjection = appointment.id
-                        ? scheduleProjectionByAppointmentId.get(appointment.id)
-                        : undefined;
-                      const currentEnd =
-                        currentProjection?.estimatedEndMinutes ??
-                        (timeValueToMinutes(appointment.appointment_time) +
-                          (appointment.actual_duration_minutes ??
-                            appointment.service_duration_minutes ??
-                            0));
-                      const nextStart = timeValueToMinutes(next.appointment_time);
-                      const gap = nextStart - currentEnd;
-
-                      if (gap > 0) {
-                        // Capacidad estimada segÃƒÆ’Ã‚Âºn servicios activos de cada
-                        // barbero. Si los dos barberos del gap tienen MISMA
-                        // duraciÃƒÆ’Ã‚Â³n mÃƒÆ’Ã‚Â­nima (o son el mismo), mostramos un solo
-                        // nÃƒÆ’Ã‚Âºmero. Si difieren, desglosamos por barbero.
-                        const prevMin = minDurationByBarber.get(
-                          appointment.barber_id,
-                        );
-                        const nextMin = minDurationByBarber.get(next.barber_id);
-                        const sameBarber =
-                          appointment.barber_id === next.barber_id;
-
-                        let possibleCuts = 0;
-                        let perBarber:
-                          | Array<{ name: string; cuts: number }>
-                          | null = null;
-
-                        if (sameBarber) {
-                          if (prevMin && prevMin > 0) {
-                            possibleCuts = Math.floor(gap / prevMin);
-                          }
-                        } else if (prevMin && nextMin && prevMin === nextMin) {
-                          possibleCuts = Math.floor(gap / prevMin);
-                        } else if (prevMin && nextMin) {
-                          perBarber = [
-                            {
-                              name: appointment.barber_name,
-                              cuts: Math.floor(gap / prevMin),
-                            },
-                            {
-                              name: next.barber_name,
-                              cuts: Math.floor(gap / nextMin),
-                            },
-                          ];
-                        } else if (prevMin) {
-                          possibleCuts = Math.floor(gap / prevMin);
-                        } else if (nextMin) {
-                          possibleCuts = Math.floor(gap / nextMin);
-                        }
-
-                        nodes.push(
-                          <GapMarker
-                            key={`gap-${appointment.id ?? index}`}
-                            startMinutes={currentEnd}
-                            endMinutes={nextStart}
-                            minutes={gap}
-                            possibleCuts={possibleCuts}
-                            perBarber={perBarber}
+                        // Si hay delay propagado, ofrecemos botón para avisar al
+                        // cliente. Sin restricción de fecha — el owner decide.
+                        const delayWhatsAppHref =
+                          scheduleProjection &&
+                          scheduleProjection.delayMinutes > 0 &&
+                          appointment.customer_phone &&
+                          (appointment.status === "confirmed" ||
+                            appointment.status === "pending")
+                            ? createWhatsAppDelayLink({
+                                barbershopName: barbershop.name,
+                                clientName: appointment.customer_name,
+                                clientPhone: appointment.customer_phone,
+                                serviceName: appointment.service_name,
+                                reservedTime:
+                                  appointment.appointment_time.slice(0, 5),
+                                estimatedTime: `${String(
+                                  Math.floor(
+                                    scheduleProjection.estimatedStartMinutes /
+                                      60,
+                                  ),
+                                ).padStart(2, "0")}:${String(
+                                  scheduleProjection.estimatedStartMinutes % 60,
+                                ).padStart(2, "0")}`,
+                                delayMinutes: scheduleProjection.delayMinutes,
+                              })
+                            : undefined;
+                        const nodes: React.ReactNode[] = [
+                          <AppointmentCard
+                            key={
+                              appointment.id ??
+                              `${appointment.customer_phone}-${appointment.appointment_date}-${appointment.appointment_time}`
+                            }
+                            appointment={appointment}
+                            barbershopName={barbershop.name}
+                            whatsappMessageTemplate={
+                              barbershop.whatsappMessageTemplate ?? null
+                            }
+                            onConfirm={handleConfirmAppointment}
+                            onWhatsApp={handleSendWhatsApp}
+                            onCancel={handleCancelAppointment}
+                            onRestore={handleRestoreAppointment}
+                            onDelete={handleDeleteAppointment}
+                            onHardDelete={handleHardDeleteAppointment}
+                            onSaveInternalNotes={handleSaveInternalNotes}
+                            onDuplicate={setDuplicatingAppointment}
+                            confirmingId={confirmingAppointmentId}
+                            cancellingId={cancellingAppointmentId}
+                            restoringId={restoringAppointmentId}
+                            deletingId={deletingAppointmentId}
+                            hardDeletingId={hardDeletingAppointmentId}
+                            updatingDurationId={updatingDurationAppointmentId}
+                            onAdjustActualDuration={handleAdjustActualDuration}
+                            scheduleProjection={scheduleProjection}
+                            dayClosingMinutes={dayClosingMinutes}
+                            overtimeAccepted={
+                              updatingDayOverrideBarberId ===
+                              appointment.barber_id
+                            }
+                            onAcceptOvertime={
+                              appointment.id && overtimeMinutes > 0
+                                ? () =>
+                                    handleExtendClosingForDay(
+                                      appointment.barber_id,
+                                      overtimeMinutes,
+                                      appointmentDate,
+                                    )
+                                : undefined
+                            }
+                            showDate
+                            clientTags={getTagsForAppointment(appointment)}
+                            reviewWhatsAppHref={reviewWhatsAppHref}
+                            delayWhatsAppHref={delayWhatsAppHref}
+                            isNextUp={
+                              Boolean(appointment.id) &&
+                              appointment.id === nextUpAppointmentId
+                            }
                           />,
-                        );
-                      }
-                    }
-                  }
+                        ];
+
+                        // Gap marker entre turnos consecutivos activos del mismo dÃƒÆ’Ã‚Â­a.
+                        // Solo tiene sentido cuando el filtro es "DÃƒÆ’Ã‚Â­a" (ver un solo dÃƒÆ’Ã‚Â­a)
+                        // y ambos turnos estÃƒÆ’Ã‚Â¡n activos (pending/confirmed).
+                        // Durante bÃƒÆ’Ã‚Âºsqueda no aplicamos gap markers (los resultados
+                        // pueden ser de distintos dÃƒÆ’Ã‚Â­as).
+                        if (
+                          !isSearching &&
+                          activeFilter === "day" &&
+                          index < arr.length - 1
+                        ) {
+                          const next = arr[index + 1];
+                          const currentActive =
+                            appointment.status === "pending" ||
+                            appointment.status === "confirmed";
+                          const nextActive =
+                            next.status === "pending" ||
+                            next.status === "confirmed";
+
+                          if (currentActive && nextActive) {
+                            const currentProjection = appointment.id
+                              ? scheduleProjectionByAppointmentId.get(
+                                  appointment.id,
+                                )
+                              : undefined;
+                            const currentEnd =
+                              currentProjection?.estimatedEndMinutes ??
+                              timeValueToMinutes(appointment.appointment_time) +
+                                (appointment.actual_duration_minutes ??
+                                  appointment.service_duration_minutes ??
+                                  0);
+                            const nextStart = timeValueToMinutes(
+                              next.appointment_time,
+                            );
+                            const gap = nextStart - currentEnd;
+
+                            if (gap > 0) {
+                              // Capacidad estimada segÃƒÆ’Ã‚Âºn servicios activos de cada
+                              // barbero. Si los dos barberos del gap tienen MISMA
+                              // duraciÃƒÆ’Ã‚Â³n mÃƒÆ’Ã‚Â­nima (o son el mismo), mostramos un solo
+                              // nÃƒÆ’Ã‚Âºmero. Si difieren, desglosamos por barbero.
+                              const prevMin = minDurationByBarber.get(
+                                appointment.barber_id,
+                              );
+                              const nextMin = minDurationByBarber.get(
+                                next.barber_id,
+                              );
+                              const sameBarber =
+                                appointment.barber_id === next.barber_id;
+
+                              let possibleCuts = 0;
+                              let perBarber: Array<{
+                                name: string;
+                                cuts: number;
+                              }> | null = null;
+
+                              if (sameBarber) {
+                                if (prevMin && prevMin > 0) {
+                                  possibleCuts = Math.floor(gap / prevMin);
+                                }
+                              } else if (
+                                prevMin &&
+                                nextMin &&
+                                prevMin === nextMin
+                              ) {
+                                possibleCuts = Math.floor(gap / prevMin);
+                              } else if (prevMin && nextMin) {
+                                perBarber = [
+                                  {
+                                    name: appointment.barber_name,
+                                    cuts: Math.floor(gap / prevMin),
+                                  },
+                                  {
+                                    name: next.barber_name,
+                                    cuts: Math.floor(gap / nextMin),
+                                  },
+                                ];
+                              } else if (prevMin) {
+                                possibleCuts = Math.floor(gap / prevMin);
+                              } else if (nextMin) {
+                                possibleCuts = Math.floor(gap / nextMin);
+                              }
+
+                              nodes.push(
+                                <GapMarker
+                                  key={`gap-${appointment.id ?? index}`}
+                                  startMinutes={currentEnd}
+                                  endMinutes={nextStart}
+                                  minutes={gap}
+                                  possibleCuts={possibleCuts}
+                                  perBarber={perBarber}
+                                />,
+                              );
+                            }
+                          }
+                        }
 
                         return nodes;
                       })}
@@ -1875,9 +1929,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         barbers={barberFilterOptions}
         focusDate={calendarQuickBlockDate ?? focusDate}
         preselectedBarberId={
-          selectedBarberFilter !== "all"
-            ? selectedBarberFilter
-            : undefined
+          selectedBarberFilter !== "all" ? selectedBarberFilter : undefined
         }
         controlledOpen={calendarQuickBlockDate !== null}
         onControlledClose={() => setCalendarQuickBlockDate(null)}
@@ -1939,7 +1991,7 @@ function getBarberDaySchedule(params: {
   );
   const dayOverride =
     normalizeDateValue(date) === focusDate
-      ? dayOverridesByBarber[barberId] ?? null
+      ? (dayOverridesByBarber[barberId] ?? null)
       : null;
 
   if (dayOverride) {
@@ -2025,8 +2077,8 @@ function DayOptimizationAlertCard({
 
       {canExtendClosing ? (
         <p className="mt-2 text-xs text-[color:var(--text-muted)]">
-          Esto ajusta el cierre de {dayLabel} solamente, de {currentClosingTime} a{" "}
-          {nextClosingTime}.
+          Esto ajusta el cierre de {dayLabel} solamente, de {currentClosingTime}{" "}
+          a {nextClosingTime}.
         </p>
       ) : null}
     </article>
@@ -2097,11 +2149,11 @@ function GapMarker({
       : `Hueco libre de ${minutes} minutos`;
 
   return (
-    <li
-      aria-label={ariaLabel}
-      className="flex items-center gap-3 px-2 py-1"
-    >
-      <span className="h-px flex-1 bg-[color:var(--border-subtle)]" aria-hidden="true" />
+    <li aria-label={ariaLabel} className="flex items-center gap-3 px-2 py-1">
+      <span
+        className="h-px flex-1 bg-[color:var(--border-subtle)]"
+        aria-hidden="true"
+      />
       <span className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-subtle)]">
         <span className="font-mono tabular-nums">
           {formatMinutesToTime(startMinutes)}
@@ -2113,7 +2165,9 @@ function GapMarker({
             {perBarber.map((b, idx) => (
               <span key={`${b.name}-${idx}`}>
                 {idx > 0 ? (
-                  <span className="mx-1 text-[color:var(--text-subtle)]">/</span>
+                  <span className="mx-1 text-[color:var(--text-subtle)]">
+                    /
+                  </span>
                 ) : null}
                 {b.name}: {b.cuts}
               </span>
@@ -2133,8 +2187,10 @@ function GapMarker({
           </span>
         )}
       </span>
-      <span className="h-px flex-1 bg-[color:var(--border-subtle)]" aria-hidden="true" />
+      <span
+        className="h-px flex-1 bg-[color:var(--border-subtle)]"
+        aria-hidden="true"
+      />
     </li>
   );
 }
-

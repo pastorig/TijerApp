@@ -215,13 +215,13 @@ export async function notifyClientOfStatusChange(params: {
   barbershopSlug: string;
   appointmentId: string;
   status: "confirmed" | "cancelled";
-}): Promise<void> {
+}): Promise<{ email?: { sent: boolean; skipped?: string } | null } | null> {
   try {
     const { data } = await getSupabaseClient().auth.getSession();
     const accessToken = data.session?.access_token;
-    if (!accessToken) return;
+    if (!accessToken) return null;
 
-    await fetch("/api/appointments/notify-client", {
+    const res = await fetch("/api/appointments/notify-client", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -229,7 +229,14 @@ export async function notifyClientOfStatusChange(params: {
       },
       body: JSON.stringify(params),
     });
+    // Devuelve qué pasó con el mail de cancelación (feature 026) para que el
+    // panel avise si el cliente quedó sin enterarse. Sigue sin tirar nunca: el
+    // turno ya cambió de estado y esto es un aviso, no la operación.
+    return (await res.json().catch(() => null)) as {
+      email?: { sent: boolean; skipped?: string } | null;
+    } | null;
   } catch {
     // Silencio deliberado.
+    return null;
   }
 }
