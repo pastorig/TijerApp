@@ -7,6 +7,7 @@ import {
   Clock,
   Plus,
   Ban,
+  CalendarClock,
   Loader2,
   MessageCircle,
   Scissors,
@@ -29,6 +30,7 @@ import {
 import { DepositStatusChip } from "@/components/appointments/DepositStatusChip";
 import { StaffNewAppointmentModal } from "./StaffNewAppointmentModal";
 import { StaffBlockTimeModal } from "./StaffBlockTimeModal";
+import { StaffRescheduleModal } from "./StaffRescheduleModal";
 import {
   PERMISOS_POR_DEFECTO,
   type StaffPermissions,
@@ -168,6 +170,8 @@ export function StaffAgenda({
   const [bloqueandoHorario, setBloqueandoHorario] = useState(false);
   const [bloqueos, setBloqueos] = useState<Bloqueo[]>([]);
   const [avisoBloqueo, setAvisoBloqueo] = useState("");
+  /** El turno que se está por mover (feature 024). `null` = modal cerrado. */
+  const [porMover, setPorMover] = useState<Turno | null>(null);
   const [recarga, setRecarga] = useState(0);
   const [conteos, setConteos] = useState<Record<string, number>>({});
   /**
@@ -445,7 +449,11 @@ export function StaffAgenda({
             </div>
           </div>
 
-          {!cancelado && (permisos.confirmar || permisos.cancelar || waLink) ? (
+          {!cancelado &&
+          (permisos.confirmar ||
+            permisos.cancelar ||
+            permisos.reprogramar ||
+            waLink) ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {turno.status !== "confirmed" && permisos.confirmar ? (
                 <Button
@@ -457,6 +465,17 @@ export function StaffAgenda({
                   iconLeft={<Check className="size-3.5" />}
                 >
                   Confirmar
+                </Button>
+              ) : null}
+              {permisos.reprogramar ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setPorMover(turno)}
+                  iconLeft={<CalendarClock className="size-3.5" />}
+                  className="flex-1 sm:flex-initial"
+                >
+                  Mover
                 </Button>
               ) : null}
               {waLink ? (
@@ -710,6 +729,15 @@ export function StaffAgenda({
       {/* El mismo diálogo que usa el dueño. La `key` fuerza el remount entre
         apariciones, así el motivo elegido no queda pegado del turno anterior:
         cancelar por "no vino" el turno de otro cliente sería un dato falso. */}
+      <StaffRescheduleModal
+        turno={porMover}
+        barbershopSlug={barbershopSlug}
+        barbershopName={barbershopName}
+        fecha={fecha}
+        onCerrar={() => setPorMover(null)}
+        onMovido={() => setRecarga((v) => v + 1)}
+      />
+
       <StaffBlockTimeModal
         abierto={bloqueandoHorario}
         barbershopSlug={barbershopSlug}
