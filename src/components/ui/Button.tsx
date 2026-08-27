@@ -134,6 +134,19 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
     return (
       <button
         ref={ref as React.Ref<HTMLButtonElement>}
+        /*
+         * `type="button"` por defecto, y no el "submit" que pone HTML.
+         *
+         * Un botón sin type adentro de un formulario lo envía al tocarlo,
+         * aunque su onClick haga otra cosa. Apareció en la 022: el botón de
+         * "Agregar turno" quedó como submit sin que nadie lo pidiera. Estaba
+         * fuera de un form y no rompió nada, pero el día que uno de estos caiga
+         * adentro de uno, el bug es de los que cuesta ver.
+         *
+         * Los que SÍ envían ya lo declaran: el spread de abajo pisa este
+         * default, así que no cambia nada de lo que ya andaba.
+         */
+        type="button"
         className={classes}
         aria-busy={loading || undefined}
         disabled={loading || (rest as ButtonHTMLAttributes<HTMLButtonElement>).disabled}

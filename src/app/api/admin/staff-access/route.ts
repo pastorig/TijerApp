@@ -82,7 +82,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("barber_staff_access")
     .select(
-      "barber_id, granted_at, can_see_earnings, can_confirm, can_cancel, can_contact_client",
+      "barber_id, granted_at, can_see_earnings, can_confirm, can_cancel, can_contact_client, can_create_appointment",
     )
     .eq("barbershop_slug", slug)
     .is("revoked_at", null);
@@ -281,6 +281,7 @@ export async function PATCH(request: Request) {
     can_confirm: boolean;
     can_cancel: boolean;
     can_contact_client: boolean;
+    can_create_appointment: boolean;
   }>;
   if (Object.keys(columnas).length === 0) {
     return NextResponse.json(
@@ -297,7 +298,7 @@ export async function PATCH(request: Request) {
     .eq("barber_id", barberId)
     .is("revoked_at", null)
     .select(
-      "barber_id, can_see_earnings, can_confirm, can_cancel, can_contact_client",
+      "barber_id, can_see_earnings, can_confirm, can_cancel, can_contact_client, can_create_appointment",
     )
     .maybeSingle();
 

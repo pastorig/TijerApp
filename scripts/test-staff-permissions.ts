@@ -5,6 +5,7 @@
  */
 import {
   aColumnas,
+  COLUMNA_DE_PERMISO,
   normalizarPermisos,
   permisosDesdeBody,
   PERMISOS_POR_DEFECTO,
@@ -26,12 +27,11 @@ function check(name: string, got: unknown, expected: unknown) {
 // ── El default es "sí" ──────────────────────────────────────────────────────
 // Es lo que evita que el día del deploy todos los empleados de todas las
 // barberías pierdan la mitad de la app sin que nadie lo haya pedido.
-check("una fila vieja, sin las columnas, puede todo", normalizarPermisos({}), {
-  verGanancias: true,
-  confirmar: true,
-  cancelar: true,
-  contactarCliente: true,
-});
+check(
+  "una fila vieja, sin las columnas, puede todo",
+  normalizarPermisos({}),
+  PERMISOS_POR_DEFECTO,
+);
 
 check("sin fila, todo permitido", normalizarPermisos(null), PERMISOS_POR_DEFECTO);
 
@@ -44,18 +44,36 @@ check(
 check(
   "un false explícito se respeta, y solo ese",
   normalizarPermisos({ can_see_earnings: false }),
-  { verGanancias: false, confirmar: true, cancelar: true, contactarCliente: true },
+  { ...PERMISOS_POR_DEFECTO, verGanancias: false },
 );
 
+// Con TODOS apagados el empleado queda en "solo turnero": mira su día y nada
+// más. Es la combinación que pidió Bautista y la que más fácil se rompe si
+// alguien agrega un permiso nuevo y se olvida de que existe este caso.
 check(
-  "los cuatro apagados = solo turnero",
+  "todos apagados = solo turnero",
   normalizarPermisos({
     can_see_earnings: false,
     can_confirm: false,
     can_cancel: false,
     can_contact_client: false,
+    can_create_appointment: false,
   }),
-  { verGanancias: false, confirmar: false, cancelar: false, contactarCliente: false },
+  {
+    verGanancias: false,
+    confirmar: false,
+    cancelar: false,
+    contactarCliente: false,
+    cargarTurno: false,
+  },
+);
+
+// Guarda contra el olvido: si mañana se agrega un permiso y no se lo suma al
+// caso de arriba, este test lo caza igual.
+check(
+  "y no queda ningún permiso fuera de la lista canónica",
+  Object.keys(PERMISOS_POR_DEFECTO).length,
+  Object.keys(COLUMNA_DE_PERMISO).length,
 );
 
 // ── Lo que se recorta del payload ───────────────────────────────────────────

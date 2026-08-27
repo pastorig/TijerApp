@@ -5,6 +5,7 @@ import {
   CalendarX2,
   Check,
   Clock,
+  Plus,
   Loader2,
   MessageCircle,
   Scissors,
@@ -25,6 +26,7 @@ import {
   type CancellationContext,
 } from "@/components/appointments/CancelAppointmentDialog";
 import { DepositStatusChip } from "@/components/appointments/DepositStatusChip";
+import { StaffNewAppointmentModal } from "./StaffNewAppointmentModal";
 import {
   PERMISOS_POR_DEFECTO,
   type StaffPermissions,
@@ -149,6 +151,8 @@ export function StaffAgenda({
   const [porCancelar, setPorCancelar] = useState<
     (CancellationContext & { id: string }) | null
   >(null);
+  /** El modal de "agregar turno" (feature 022). */
+  const [cargandoTurno, setCargandoTurno] = useState(false);
   const [recarga, setRecarga] = useState(0);
   const [conteos, setConteos] = useState<Record<string, number>>({});
   /**
@@ -512,6 +516,22 @@ export function StaffAgenda({
         </div>
 
         <div className="min-w-0">
+          {/* Agregar turno encabeza la columna de la lista y no la del
+              calendario, porque el turno se carga PARA el día que se está
+              mirando: la acción pertenece a lo que hay abajo. */}
+          {permisos.cargarTurno ? (
+            <div className="mb-4 flex justify-end">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setCargandoTurno(true)}
+                iconLeft={<Plus className="size-3.5" />}
+              >
+                Agregar turno
+              </Button>
+            </div>
+          ) : null}
+
           {error ? (
             <p
               role="alert"
@@ -593,6 +613,14 @@ export function StaffAgenda({
       {/* El mismo diálogo que usa el dueño. La `key` fuerza el remount entre
         apariciones, así el motivo elegido no queda pegado del turno anterior:
         cancelar por "no vino" el turno de otro cliente sería un dato falso. */}
+      <StaffNewAppointmentModal
+        abierto={cargandoTurno}
+        barbershopSlug={barbershopSlug}
+        fecha={fecha}
+        onCerrar={() => setCargandoTurno(false)}
+        onCreado={() => setRecarga((v) => v + 1)}
+      />
+
       <CancelAppointmentDialog
         key={porCancelar?.id}
         context={porCancelar}
