@@ -68,6 +68,26 @@ cualquiera adentro de un form lo enviaba al tocarlo. Arreglado en la 022.
 
 ---
 
+## ✅ El login de empleado de la demo pasó al barbero que NO es dueño (26/08)
+
+En `primebarber`, **Matias Rojas** es `is_owner` y tenía login de empleado — el
+único caso así en todo el sistema. Se revocó (no se borró: queda el historial)
+y el acceso pasó a **Esteban Perez**, con la misma cuenta `chinitodou@gmail.com`
+para no perder el login de prueba.
+
+Verificado contra la base: el reparto de avisos **se dio vuelta solo**, sin
+tocar nada más. Ahora un turno con Esteban le avisa a chinitodou y uno con
+Matías no le avisa a nadie. La suscripción push va por cuenta, no por barbero,
+así que no hubo que volver a activarla.
+
+> **Si volvés a probar el push, ahora reservá con Esteban, no con Matías.**
+
+⚠️ **Esteban tampoco tiene comisión cargada** (`commission_percent` en null),
+así que la pantalla de Ganancias va a seguir diciendo "sin configurar". Si
+querés verla con plata, cargale el porcentaje desde Equipo.
+
+---
+
 ## ✂️ Volver a prender la seña en `primebarber`
 
 Bautista la apagó para una prueba y quedó apagada. Se prende en
