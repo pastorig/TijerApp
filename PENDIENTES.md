@@ -44,6 +44,30 @@ es lo que Bautista confirmó.
 
 ---
 
+## ✅ Auditoría del módulo empleado — CERRADA (2026-08-26)
+
+Los 5 hallazgos accionables se arreglaron en las features 020, 021 y 022, todas
+en prod. Quedan dos a propósito:
+
+- **06** (GET/PATCH/DELETE de staff-access sin chequeo de plan): prolijidad. Sin
+  poder invitar no hay a quién editarle permisos.
+- **07** (al cliente no se le avisa que le cancelaron): **no es del empleado**,
+  el dueño tampoco manda aviso automático. Es una decisión de producto: si se
+  hace, se hace para los dos.
+
+### Lo que encontró la implementación y la auditoría no vio
+
+**`APPOINTMENT_SELECT` no traía `cancellation_reason`.** El bloque "Motivo" del
+turnero no se dibujaba nunca y el segmento de clientes ghost daba siempre
+falso. **Leo Cuts marcó 2 turnos como "Cliente no vino" y nunca los vio
+marcados** — el único hallazgo de todo esto que ya estaba afectando a un
+cliente que paga. Arreglado en la 021.
+
+**El `<Button>` del sistema no fijaba `type`**, así que por defecto era submit:
+cualquiera adentro de un form lo enviaba al tocarlo. Arreglado en la 022.
+
+---
+
 ## ✂️ Volver a prender la seña en `primebarber`
 
 Bautista la apagó para una prueba y quedó apagada. Se prende en
