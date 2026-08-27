@@ -25,7 +25,8 @@ export type StaffPermission =
   | "verGanancias"
   | "confirmar"
   | "cancelar"
-  | "contactarCliente";
+  | "contactarCliente"
+  | "cargarTurno";
 
 export type StaffPermissions = Record<StaffPermission, boolean>;
 
@@ -35,6 +36,7 @@ export const COLUMNA_DE_PERMISO: Record<StaffPermission, string> = {
   confirmar: "can_confirm",
   cancelar: "can_cancel",
   contactarCliente: "can_contact_client",
+  cargarTurno: "can_create_appointment",
 };
 
 /** Cómo se le explica cada permiso al dueño, en Equipo. */
@@ -64,6 +66,12 @@ export const PERMISOS_UI: Array<{
     label: "Escribirle al cliente",
     detalle: "Ve el teléfono del cliente y puede abrirle el WhatsApp.",
   },
+  {
+    key: "cargarTurno",
+    label: "Cargar turnos",
+    detalle:
+      "Puede anotar en su agenda al cliente que entra sin haber reservado.",
+  },
 ];
 
 export const PERMISOS_POR_DEFECTO: StaffPermissions = {
@@ -71,6 +79,7 @@ export const PERMISOS_POR_DEFECTO: StaffPermissions = {
   confirmar: true,
   cancelar: true,
   contactarCliente: true,
+  cargarTurno: true,
 };
 
 /**

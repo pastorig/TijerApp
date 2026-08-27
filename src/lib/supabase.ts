@@ -67,6 +67,7 @@ export type BarberStaffAccessRow = {
   can_confirm: boolean;
   can_cancel: boolean;
   can_contact_client: boolean;
+  can_create_appointment: boolean;
 };
 
 type PaymentEventRow = {
@@ -661,6 +662,7 @@ type Database = {
           | "can_confirm"
           | "can_cancel"
           | "can_contact_client"
+          | "can_create_appointment"
         > & {
           id?: string;
           granted_at?: string;
@@ -669,6 +671,7 @@ type Database = {
           can_confirm?: boolean;
           can_cancel?: boolean;
           can_contact_client?: boolean;
+          can_create_appointment?: boolean;
         };
         Update: Partial<BarberStaffAccessRow>;
         Relationships: [];

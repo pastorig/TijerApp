@@ -83,7 +83,7 @@ export async function resolveStaffAccess(
   const { data, error } = await supabase
     .from("barber_staff_access")
     .select(
-      "barber_id, can_see_earnings, can_confirm, can_cancel, can_contact_client, barbers(id, name, commission_percent, is_active, deleted_at)",
+      "barber_id, can_see_earnings, can_confirm, can_cancel, can_contact_client, can_create_appointment, barbers(id, name, commission_percent, is_active, deleted_at)",
     )
     .eq("user_id", userResult.user.id)
     .eq("barbershop_slug", barbershopSlug)
