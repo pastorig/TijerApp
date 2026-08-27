@@ -7,12 +7,13 @@ import {
   resolveStaffAccess,
 } from "@/lib/server/staff-access";
 import { puedeCambiarEstado } from "@/lib/staff-permissions";
+import { motivoParaGuardar } from "@/lib/staff-cancellation";
 
 export const runtime = "nodejs";
 
 /**
  * POST /api/staff/appointment-status
- * Body: { barbershopSlug, appointmentId, status: "confirmed" | "cancelled" }
+ * Body: { barbershopSlug, appointmentId, status, cancellationReason? }
  *
  * El empleado confirma o cancela **un turno suyo**.
  *
@@ -31,6 +32,16 @@ export const runtime = "nodejs";
  * Y queda registrado quién lo hizo. Hasta ahora no hacía falta porque había una
  * sola cuenta por barbería; con empleados, el dueño va a querer saber quién
  * canceló qué.
+ *
+ * ── El motivo de la cancelación (feature 020) ───────────────────────────────
+ * El empleado cancelaba con un `status: cancelled` pelado. No es que eligiera
+ * no dar un motivo: no tenía dónde darlo. Y como la detección de clientes
+ * ghost sale de `cancellation_reason`, cada cancelación suya empeoraba la
+ * pantalla de Clientes del dueño sin que nada avisara.
+ *
+ * Ahora acepta el motivo que arma el mismo diálogo que usa el dueño. Sigue
+ * siendo opcional, igual que para él: lo que se arregla es que pueda darlo, no
+ * obligarlo a algo que al dueño no se le obliga.
  */
 
 const ESTADOS_PERMITIDOS = ["confirmed", "cancelled"] as const;
@@ -49,6 +60,7 @@ export async function POST(request: Request) {
   const appointmentId =
     typeof body.appointmentId === "string" ? body.appointmentId : "";
   const status = typeof body.status === "string" ? body.status : "";
+
 
   const access = await resolveStaffAccess(
     request.headers.get("authorization"),
@@ -87,6 +99,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: plan.error }, { status: plan.status });
   }
 
+  const motivo = motivoParaGuardar(
+    status as EstadoPermitido,
+    body.cancellationReason,
+  );
+
   const supabase = getSupabaseAdminClient();
 
   // La guarda del barbero va DENTRO del update. Que el turno sea suyo se
@@ -97,6 +114,7 @@ export async function POST(request: Request) {
       status: status as EstadoPermitido,
       status_changed_by: access.access.userId,
       status_changed_at: new Date().toISOString(),
+      ...(status === "cancelled" ? { cancellation_reason: motivo } : {}),
     })
     .eq("id", appointmentId)
     .eq("barbershop_slug", slug)

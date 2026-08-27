@@ -21,6 +21,10 @@ import { addDays } from "@/components/calendar/date-utils";
 import { MetricCard } from "@/components/admin/MetricCard";
 import { Badge, Button, Card } from "@/components/ui";
 import {
+  CancelAppointmentDialog,
+  type CancellationContext,
+} from "@/components/appointments/CancelAppointmentDialog";
+import {
   PERMISOS_POR_DEFECTO,
   type StaffPermissions,
 } from "@/lib/staff-permissions";
@@ -89,6 +93,17 @@ function minutosDeAhora(): number {
   return h * 60 + m;
 }
 
+/** "mar 25 de agosto" — para el encabezado del diálogo de cancelación. */
+function fechaLargaCorta(ymd: string): string {
+  const [a, m, d] = ymd.split("-").map(Number);
+  return new Intl.DateTimeFormat("es-AR", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(a, m - 1, d)));
+}
+
 function aMinutos(hhmm: string): number {
   const [h, m] = hhmm.slice(0, 5).split(":").map(Number);
   return h * 60 + m;
@@ -120,6 +135,13 @@ export function StaffAgenda({
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [tocando, setTocando] = useState<string | null>(null);
+  /**
+   * El turno que se está por cancelar, mientras el diálogo pide el motivo
+   * (feature 020). `null` = diálogo cerrado.
+   */
+  const [porCancelar, setPorCancelar] = useState<
+    (CancellationContext & { id: string }) | null
+  >(null);
   const [recarga, setRecarga] = useState(0);
   const [conteos, setConteos] = useState<Record<string, number>>({});
   /**
@@ -216,7 +238,11 @@ export function StaffAgenda({
     );
   }, []);
 
-  async function cambiarEstado(id: string, status: "confirmed" | "cancelled") {
+  async function cambiarEstado(
+    id: string,
+    status: "confirmed" | "cancelled",
+    cancellationReason: string | null = null,
+  ) {
     setTocando(id);
     try {
       const { data: sessionData } = await getCurrentSession();
@@ -228,7 +254,12 @@ export function StaffAgenda({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ barbershopSlug, appointmentId: id, status }),
+        body: JSON.stringify({
+          barbershopSlug,
+          appointmentId: id,
+          status,
+          cancellationReason,
+        }),
       });
       const payload = (await res.json().catch(() => ({}))) as {
         error?: string;
@@ -242,6 +273,7 @@ export function StaffAgenda({
       setRecarga((v) => v + 1);
     } finally {
       setTocando(null);
+      setPorCancelar(null);
     }
   }
 
@@ -395,7 +427,14 @@ export function StaffAgenda({
                   variant="danger"
                   size="sm"
                   disabled={tocando === turno.id}
-                  onClick={() => void cambiarEstado(turno.id, "cancelled")}
+                  onClick={() =>
+                    setPorCancelar({
+                      id: turno.id,
+                      customerName: turno.customer_name,
+                      appointmentDate: fechaLargaCorta(fecha),
+                      appointmentTime: turno.appointment_time.slice(0, 5),
+                    })
+                  }
                   aria-label="Cancelar turno"
                   className="shrink-0"
                 >
@@ -410,132 +449,150 @@ export function StaffAgenda({
   }
 
   return (
-    /* Dos columnas en escritorio: el calendario y los números quedan fijos a
-       la izquierda y la lista scrollea sola. En celular es una sola columna,
-       en el mismo orden de siempre. */
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] lg:items-start">
-      <div className="flex flex-col gap-4 lg:sticky lg:top-32">
-        <Card padding="sm">
-          <AgendaCalendar
-            focusDate={fecha}
-            onFocusDateChange={setFecha}
-            compact
-            countsByDay={conteos}
-            todayYmd={hoy}
-            onVisibleMonthChange={alCambiarMes}
-          />
-        </Card>
+    <>
+      {/* Dos columnas en escritorio: el calendario y los números quedan fijos a
+        la izquierda y la lista scrollea sola. En celular es una sola columna,
+        en el mismo orden de siempre. */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] lg:items-start">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-32">
+          <Card padding="sm">
+            <AgendaCalendar
+              focusDate={fecha}
+              onFocusDateChange={setFecha}
+              compact
+              countsByDay={conteos}
+              todayYmd={hoy}
+              onVisibleMonthChange={alCambiarMes}
+            />
+          </Card>
 
-        {/* El resumen del día: cuántos turnos y cuánto se lleva. Es lo que un
+          {/* El resumen del día: cuántos turnos y cuánto se lleva. Es lo que un
             barbero quiere saber sin entrar a otra pantalla.
 
             Sin el permiso de ver la plata queda solo el contador, a lo ancho.
             No se deja la tarjeta vacía ni con un guioncito: un hueco donde
             antes había un número se lee como que la app se rompió. */}
-        <div
-          className={cn(
-            "grid gap-3",
-            permisos.verGanancias ? "grid-cols-2" : "grid-cols-1",
-          )}
-        >
-          <MetricCard label="Turnos" icon={Scissors}>
-            <p className="stat-number text-2xl font-black tabular-nums leading-none text-white">
-              {activos.length}
-            </p>
-          </MetricCard>
-          {permisos.verGanancias ? (
-            <MetricCard label="Te llevás" icon={Wallet}>
-              <p
-                className={cn(
-                  "stat-number text-2xl font-black tabular-nums leading-none",
-                  comision === null
-                    ? "text-[color:var(--text-subtle)]"
-                    : "w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-transparent",
-                )}
-              >
-                {comision === null ? "—" : formatPrice(comision)}
+          <div
+            className={cn(
+              "grid gap-3",
+              permisos.verGanancias ? "grid-cols-2" : "grid-cols-1",
+            )}
+          >
+            <MetricCard label="Turnos" icon={Scissors}>
+              <p className="stat-number text-2xl font-black tabular-nums leading-none text-white">
+                {activos.length}
               </p>
             </MetricCard>
+            {permisos.verGanancias ? (
+              <MetricCard label="Te llevás" icon={Wallet}>
+                <p
+                  className={cn(
+                    "stat-number text-2xl font-black tabular-nums leading-none",
+                    comision === null
+                      ? "text-[color:var(--text-subtle)]"
+                      : "w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-transparent",
+                  )}
+                >
+                  {comision === null ? "—" : formatPrice(comision)}
+                </p>
+              </MetricCard>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="min-w-0">
+          {error ? (
+            <p
+              role="alert"
+              className="mb-4 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]"
+            >
+              {error}
+            </p>
           ) : null}
+
+          {cargando ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="size-5 animate-spin text-[color:var(--text-muted)]" />
+            </div>
+          ) : turnos.length === 0 ? (
+            <div className="flex flex-col items-center rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-subtle)] px-6 py-12 text-center">
+              <CalendarX2 className="size-7 text-[color:var(--text-subtle)]" />
+              <p className="mt-3 text-sm font-bold text-white">
+                {esHoy ? "Hoy no tenés turnos" : "Sin turnos este día"}
+              </p>
+              <p className="mt-1 text-xs text-[color:var(--text-muted)]">
+                Cuando alguien reserve con vos, te aparece acá.
+              </p>
+            </div>
+          ) : (
+            <>
+              {destacado ? (
+                <section
+                  className={cn(
+                    "card-premium card-premium-glow p-4",
+                    destacado.enCurso && "border-[color:var(--brand-gold)]",
+                  )}
+                >
+                  <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)]">
+                    <Clock className="size-3" />
+                    {destacado.enCurso
+                      ? "Atendiendo ahora"
+                      : "Tu próximo turno"}
+                  </p>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="stat-number text-3xl font-black tabular-nums leading-none text-white">
+                      {destacado.turno.appointment_time.slice(0, 5)}
+                    </span>
+                    <span className="truncate text-base font-bold text-white">
+                      {destacado.turno.customer_name}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-[color:var(--text-muted)]">
+                    {destacado.turno.service_name}
+                    {destacado.turno.service_duration_minutes
+                      ? ` · ${destacado.turno.service_duration_minutes} min`
+                      : ""}
+                  </p>
+                </section>
+              ) : null}
+
+              {franjas.agrupar ? (
+                <>
+                  <ListaDeTurnos
+                    titulo="Mañana"
+                    turnos={franjas.manana}
+                    render={renderTurno}
+                  />
+                  <ListaDeTurnos
+                    titulo="Tarde"
+                    turnos={franjas.tarde}
+                    render={renderTurno}
+                  />
+                </>
+              ) : (
+                <ol className="mt-4 flex flex-col gap-2">
+                  {franjas.turnos.map(renderTurno)}
+                </ol>
+              )}
+            </>
+          )}
         </div>
       </div>
 
-      <div className="min-w-0">
-        {error ? (
-          <p
-            role="alert"
-            className="mb-4 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]"
-          >
-            {error}
-          </p>
-        ) : null}
-
-        {cargando ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="size-5 animate-spin text-[color:var(--text-muted)]" />
-          </div>
-        ) : turnos.length === 0 ? (
-          <div className="flex flex-col items-center rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-subtle)] px-6 py-12 text-center">
-            <CalendarX2 className="size-7 text-[color:var(--text-subtle)]" />
-            <p className="mt-3 text-sm font-bold text-white">
-              {esHoy ? "Hoy no tenés turnos" : "Sin turnos este día"}
-            </p>
-            <p className="mt-1 text-xs text-[color:var(--text-muted)]">
-              Cuando alguien reserve con vos, te aparece acá.
-            </p>
-          </div>
-        ) : (
-          <>
-            {destacado ? (
-              <section
-                className={cn(
-                  "card-premium card-premium-glow p-4",
-                  destacado.enCurso && "border-[color:var(--brand-gold)]",
-                )}
-              >
-                <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)]">
-                  <Clock className="size-3" />
-                  {destacado.enCurso ? "Atendiendo ahora" : "Tu próximo turno"}
-                </p>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="stat-number text-3xl font-black tabular-nums leading-none text-white">
-                    {destacado.turno.appointment_time.slice(0, 5)}
-                  </span>
-                  <span className="truncate text-base font-bold text-white">
-                    {destacado.turno.customer_name}
-                  </span>
-                </div>
-                <p className="mt-1 text-xs text-[color:var(--text-muted)]">
-                  {destacado.turno.service_name}
-                  {destacado.turno.service_duration_minutes
-                    ? ` · ${destacado.turno.service_duration_minutes} min`
-                    : ""}
-                </p>
-              </section>
-            ) : null}
-
-            {franjas.agrupar ? (
-              <>
-                <ListaDeTurnos
-                  titulo="Mañana"
-                  turnos={franjas.manana}
-                  render={renderTurno}
-                />
-                <ListaDeTurnos
-                  titulo="Tarde"
-                  turnos={franjas.tarde}
-                  render={renderTurno}
-                />
-              </>
-            ) : (
-              <ol className="mt-4 flex flex-col gap-2">
-                {franjas.turnos.map(renderTurno)}
-              </ol>
-            )}
-          </>
-        )}
-      </div>
-    </div>
+      {/* El mismo diálogo que usa el dueño. La `key` fuerza el remount entre
+        apariciones, así el motivo elegido no queda pegado del turno anterior:
+        cancelar por "no vino" el turno de otro cliente sería un dato falso. */}
+      <CancelAppointmentDialog
+        key={porCancelar?.id}
+        context={porCancelar}
+        isSubmitting={tocando === porCancelar?.id}
+        onCancel={() => setPorCancelar(null)}
+        onConfirm={(motivo) => {
+          if (!porCancelar) return;
+          return cambiarEstado(porCancelar.id, "cancelled", motivo);
+        }}
+      />
+    </>
   );
 }
 

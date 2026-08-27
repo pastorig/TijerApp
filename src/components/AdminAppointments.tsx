@@ -62,7 +62,7 @@ import { AppointmentRowSkeletonList } from "./admin/AppointmentRowSkeleton";
 import {
   CancelAppointmentDialog,
   type CancellationContext,
-} from "./admin/CancelAppointmentDialog";
+} from "./appointments/CancelAppointmentDialog";
 import { DuplicateAppointmentModal } from "./admin/DuplicateAppointmentModal";
 import { ManualAppointmentModal } from "./admin/ManualAppointmentModal";
 import { READ_ONLY_REASON, useIsReadOnly } from "./admin/PlanContext";
