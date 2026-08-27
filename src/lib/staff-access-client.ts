@@ -47,7 +47,7 @@ export async function getCurrentUserStaffBarbershops(): Promise<{
   const { data, error } = await getSupabaseClient()
     .from("barber_staff_access")
     .select(
-      "barbershop_slug, barber_id, can_see_earnings, can_confirm, can_cancel, can_contact_client, can_create_appointment",
+      "barbershop_slug, barber_id, can_see_earnings, can_confirm, can_cancel, can_contact_client, can_create_appointment, can_block_time",
     )
     .eq("user_id", user.id)
     .is("revoked_at", null)

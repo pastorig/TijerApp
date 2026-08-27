@@ -6,6 +6,7 @@ import {
   Check,
   Clock,
   Plus,
+  Ban,
   Loader2,
   MessageCircle,
   Scissors,
@@ -27,6 +28,7 @@ import {
 } from "@/components/appointments/CancelAppointmentDialog";
 import { DepositStatusChip } from "@/components/appointments/DepositStatusChip";
 import { StaffNewAppointmentModal } from "./StaffNewAppointmentModal";
+import { StaffBlockTimeModal } from "./StaffBlockTimeModal";
 import {
   PERMISOS_POR_DEFECTO,
   type StaffPermissions,
@@ -71,8 +73,17 @@ type Turno = {
   deposit_status?: string | null;
 };
 
+/** Un rango tapado: franco, se va antes, el médico (feature 023). */
+type Bloqueo = {
+  id: string;
+  start_time: string;
+  end_time: string;
+  reason: string | null;
+};
+
 type Respuesta = {
   turnos?: Turno[];
+  bloqueos?: Bloqueo[];
   produccionDelDia?: number;
   comisionDelDia?: number | null;
   permisos?: StaffPermissions;
@@ -153,6 +164,10 @@ export function StaffAgenda({
   >(null);
   /** El modal de "agregar turno" (feature 022). */
   const [cargandoTurno, setCargandoTurno] = useState(false);
+  /** El modal de "bloquear horario" y los bloqueos del día (feature 023). */
+  const [bloqueandoHorario, setBloqueandoHorario] = useState(false);
+  const [bloqueos, setBloqueos] = useState<Bloqueo[]>([]);
+  const [avisoBloqueo, setAvisoBloqueo] = useState("");
   const [recarga, setRecarga] = useState(0);
   const [conteos, setConteos] = useState<Record<string, number>>({});
   /**
@@ -196,6 +211,7 @@ export function StaffAgenda({
           return;
         }
         setTurnos(payload.turnos ?? []);
+        setBloqueos(payload.bloqueos ?? []);
         setComision(payload.comisionDelDia ?? null);
         if (payload.permisos) setPermisos(payload.permisos);
       } catch {
@@ -286,6 +302,29 @@ export function StaffAgenda({
       setTocando(null);
       setPorCancelar(null);
     }
+  }
+
+  async function sacarBloqueo(id: string) {
+    const { data: sessionData } = await getCurrentSession();
+    const token = sessionData.session?.access_token;
+    if (!token) return;
+    const res = await fetch("/api/staff/time-block", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ barbershopSlug, blockId: id }),
+    });
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      setError(payload.error ?? "No pudimos sacar el bloqueo.");
+      return;
+    }
+    setAvisoBloqueo("");
+    setRecarga((v) => v + 1);
   }
 
   const esHoy = fecha === hoy;
@@ -519,17 +558,75 @@ export function StaffAgenda({
           {/* Agregar turno encabeza la columna de la lista y no la del
               calendario, porque el turno se carga PARA el día que se está
               mirando: la acción pertenece a lo que hay abajo. */}
-          {permisos.cargarTurno ? (
-            <div className="mb-4 flex justify-end">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setCargandoTurno(true)}
-                iconLeft={<Plus className="size-3.5" />}
-              >
-                Agregar turno
-              </Button>
+          {permisos.cargarTurno || permisos.bloquearHorario ? (
+            <div className="mb-4 flex flex-wrap justify-end gap-2">
+              {permisos.bloquearHorario ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setBloqueandoHorario(true)}
+                  iconLeft={<Ban className="size-3.5" />}
+                >
+                  Bloquear horario
+                </Button>
+              ) : null}
+              {permisos.cargarTurno ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setCargandoTurno(true)}
+                  iconLeft={<Plus className="size-3.5" />}
+                >
+                  Agregar turno
+                </Button>
+              ) : null}
             </div>
+          ) : null}
+
+          {/* El aviso de los turnos que quedaron adentro del bloqueo. No es un
+              error —el bloqueo se creó— pero tampoco un "listo": son turnos
+              que siguen en pie y el barbero se tiene que enterar hoy y no el
+              día del turno. */}
+          {avisoBloqueo ? (
+            <p className="mb-4 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-3 py-2 text-xs text-[color:var(--brand-gold)]">
+              {avisoBloqueo}
+            </p>
+          ) : null}
+
+          {/* Los rangos tapados del día. Van arriba de la lista: son lo que
+              cambia la lectura de todo lo de abajo. */}
+          {bloqueos.length > 0 ? (
+            <ul className="mb-4 flex flex-col gap-2">
+              {bloqueos.map((b) => (
+                <li
+                  key={b.id}
+                  className="flex items-center gap-3 rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-default)] px-3 py-2"
+                >
+                  <Ban className="size-4 shrink-0 text-[color:var(--text-muted)]" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold tabular-nums text-[color:var(--text-secondary)]">
+                      {b.start_time.slice(0, 5)} a {b.end_time.slice(0, 5)}
+                    </p>
+                    {b.reason ? (
+                      <p className="truncate text-xs text-[color:var(--text-muted)]">
+                        {b.reason}
+                      </p>
+                    ) : null}
+                  </div>
+                  {permisos.bloquearHorario ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void sacarBloqueo(b.id)}
+                      aria-label="Sacar el bloqueo"
+                      className="shrink-0"
+                    >
+                      <X className="size-3.5" />
+                    </Button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
           ) : null}
 
           {error ? (
@@ -613,6 +710,21 @@ export function StaffAgenda({
       {/* El mismo diálogo que usa el dueño. La `key` fuerza el remount entre
         apariciones, así el motivo elegido no queda pegado del turno anterior:
         cancelar por "no vino" el turno de otro cliente sería un dato falso. */}
+      <StaffBlockTimeModal
+        abierto={bloqueandoHorario}
+        barbershopSlug={barbershopSlug}
+        fecha={fecha}
+        onCerrar={() => setBloqueandoHorario(false)}
+        onCreado={(pisados) => {
+          setAvisoBloqueo(
+            pisados > 0
+              ? `Horario bloqueado. Ojo: ten\u00e9s ${pisados} turno${pisados === 1 ? "" : "s"} en ese rango y sigue${pisados === 1 ? "" : "n"} en pie.`
+              : "",
+          );
+          setRecarga((v) => v + 1);
+        }}
+      />
+
       <StaffNewAppointmentModal
         abierto={cargandoTurno}
         barbershopSlug={barbershopSlug}

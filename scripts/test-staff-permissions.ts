@@ -48,33 +48,26 @@ check(
 );
 
 // Con TODOS apagados el empleado queda en "solo turnero": mira su día y nada
-// más. Es la combinación que pidió Bautista y la que más fácil se rompe si
-// alguien agrega un permiso nuevo y se olvida de que existe este caso.
-check(
-  "todos apagados = solo turnero",
-  normalizarPermisos({
-    can_see_earnings: false,
-    can_confirm: false,
-    can_cancel: false,
-    can_contact_client: false,
-    can_create_appointment: false,
-  }),
-  {
-    verGanancias: false,
-    confirmar: false,
-    cancelar: false,
-    contactarCliente: false,
-    cargarTurno: false,
-  },
-);
-
-// Guarda contra el olvido: si mañana se agrega un permiso y no se lo suma al
-// caso de arriba, este test lo caza igual.
-check(
-  "y no queda ningún permiso fuera de la lista canónica",
-  Object.keys(PERMISOS_POR_DEFECTO).length,
-  Object.keys(COLUMNA_DE_PERMISO).length,
-);
+// más. Es la combinación que pidió Bautista.
+//
+// El caso se ARMA a partir de la lista canónica en vez de escribir las columnas
+// a mano. La versión a mano ya se quedó vieja dos veces —una por permiso nuevo—
+// y cada vez el test fallaba por el motivo equivocado: no porque el código
+// estuviera mal, sino porque al test le faltaba una línea.
+{
+  const todasApagadas = Object.fromEntries(
+    Object.values(COLUMNA_DE_PERMISO).map((col) => [col, false]),
+  );
+  const esperado = Object.fromEntries(
+    Object.keys(PERMISOS_POR_DEFECTO).map((k) => [k, false]),
+  );
+  check("todos apagados = solo turnero", normalizarPermisos(todasApagadas), esperado);
+  check(
+    "y la lista canónica y los defaults no se despegaron",
+    Object.keys(PERMISOS_POR_DEFECTO).sort(),
+    Object.keys(COLUMNA_DE_PERMISO).sort(),
+  );
+}
 
 // ── Lo que se recorta del payload ───────────────────────────────────────────
 {
