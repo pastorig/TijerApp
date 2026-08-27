@@ -70,6 +70,18 @@ export async function GET(request: Request) {
   }
 
   const permisos = access.access.permisos;
+
+  // Los bloqueos del día (feature 023). Van con los turnos y no en un pedido
+  // aparte: son parte de "qué pasa hoy en mi agenda".
+  const { data: bloqueos } = await supabase
+    .from("barber_time_blocks")
+    .select("id, start_time, end_time, reason")
+    .eq("barbershop_slug", slug)
+    .eq("barber_id", access.access.barberId)
+    .eq("block_date", date)
+    .eq("is_active", true)
+    .is("deleted_at", null)
+    .order("start_time", { ascending: true });
   const turnos = (data ?? []) as Array<{
     service_price: number | null;
     status: string;
@@ -98,6 +110,7 @@ export async function GET(request: Request) {
     barbero: access.access.barberName,
     barberia: access.access.barbershopSlug,
     permisos,
+    bloqueos: bloqueos ?? [],
     turnos: (data ?? []).map((turno) => recortarTurno(turno, permisos)),
     // La plata solo si la puede ver. `undefined` no llega al JSON, así que la
     // pantalla no tiene que distinguir "no permitido" de "sin configurar".

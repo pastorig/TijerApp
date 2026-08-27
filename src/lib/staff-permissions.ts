@@ -26,7 +26,8 @@ export type StaffPermission =
   | "confirmar"
   | "cancelar"
   | "contactarCliente"
-  | "cargarTurno";
+  | "cargarTurno"
+  | "bloquearHorario";
 
 export type StaffPermissions = Record<StaffPermission, boolean>;
 
@@ -37,6 +38,7 @@ export const COLUMNA_DE_PERMISO: Record<StaffPermission, string> = {
   cancelar: "can_cancel",
   contactarCliente: "can_contact_client",
   cargarTurno: "can_create_appointment",
+  bloquearHorario: "can_block_time",
 };
 
 /** Cómo se le explica cada permiso al dueño, en Equipo. */
@@ -72,6 +74,12 @@ export const PERMISOS_UI: Array<{
     detalle:
       "Puede anotar en su agenda al cliente que entra sin haber reservado.",
   },
+  {
+    key: "bloquearHorario",
+    label: "Bloquear horarios",
+    detalle:
+      "Puede tapar un rango suyo cuando no va a estar: franco, se va antes, el médico.",
+  },
 ];
 
 export const PERMISOS_POR_DEFECTO: StaffPermissions = {
@@ -80,6 +88,7 @@ export const PERMISOS_POR_DEFECTO: StaffPermissions = {
   cancelar: true,
   contactarCliente: true,
   cargarTurno: true,
+  bloquearHorario: true,
 };
 
 /**
