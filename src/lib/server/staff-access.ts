@@ -83,7 +83,7 @@ export async function resolveStaffAccess(
   const { data, error } = await supabase
     .from("barber_staff_access")
     .select(
-      "barber_id, can_see_earnings, can_confirm, can_cancel, can_contact_client, barbers(id, name, commission_percent)",
+      "barber_id, can_see_earnings, can_confirm, can_cancel, can_contact_client, barbers(id, name, commission_percent, is_active, deleted_at)",
     )
     .eq("user_id", userResult.user.id)
     .eq("barbershop_slug", barbershopSlug)
@@ -101,11 +101,27 @@ export async function resolveStaffAccess(
 
   const row = data as unknown as Record<string, unknown> & {
     barber_id: string;
-    barbers: { id: string; name: string; commission_percent: number | null } | null;
+    barbers: {
+      id: string;
+      name: string;
+      commission_percent: number | null;
+      is_active: boolean | null;
+      deleted_at: string | null;
+    } | null;
   };
 
-  if (!row.barbers) {
-    // El barbero se borró y quedó el acceso colgado. Sin barbero no hay agenda.
+  // Sin barbero no hay agenda, y un barbero pausado o borrado no debería
+  // seguir entrando (feature 021). Pausar a alguien es la acción que el dueño
+  // hace pensando "que no trabaje más por ahora": que igual pudiera entrar era
+  // una sorpresa fea esperando a pasar.
+  //
+  // Es un CORTE, no una baja: el acceso no se toca. Cuando el dueño lo
+  // reactiva, entra como antes sin que haya que re-invitarlo.
+  if (
+    !row.barbers ||
+    row.barbers.deleted_at !== null ||
+    row.barbers.is_active === false
+  ) {
     return { ok: false, status: 403, error: "Tu acceso ya no está activo." };
   }
 

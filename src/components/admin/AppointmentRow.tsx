@@ -20,12 +20,13 @@ import {
   User,
   X,
 } from "lucide-react";
+import { getTagTone, tagClassesFor } from "@/components/admin/ClientTagsEditor";
 import {
-  getTagTone,
-  tagClassesFor,
-} from "@/components/admin/ClientTagsEditor";
-import { READ_ONLY_REASON, useIsReadOnly } from "@/components/admin/PlanContext";
+  READ_ONLY_REASON,
+  useIsReadOnly,
+} from "@/components/admin/PlanContext";
 import { cn } from "@/lib/cn";
+import { DepositStatusChip } from "@/components/appointments/DepositStatusChip";
 import {
   formatDateWithWeekday,
   formatPrice,
@@ -134,8 +135,7 @@ function getStatusMeta(status: string): StatusMeta {
       return {
         label: "Pendiente",
         dotColor: "bg-amber-400",
-        pillClasses:
-          "border-amber-400/40 bg-amber-400/10 text-amber-300",
+        pillClasses: "border-amber-400/40 bg-amber-400/10 text-amber-300",
         cardBorderClass: "before:bg-amber-400/60",
         dotPulse: true,
       };
@@ -653,7 +653,9 @@ export function AppointmentRow({
             className="inline-flex w-full min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-4 text-[11px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--brand-gold-soft)]/80 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <RotateCcw className="size-3.5" aria-hidden="true" />
-            {restoringId === appointment.id ? "Restaurando..." : "Restaurar turno"}
+            {restoringId === appointment.id
+              ? "Restaurando..."
+              : "Restaurar turno"}
           </button>
         </div>
       ) : (
@@ -693,7 +695,10 @@ export function AppointmentRow({
                 disabled={isCancelled || isBusy}
                 className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-all duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--success)]/60 hover:bg-[color:var(--success)]/20 hover:shadow-[0_0_0_3px_var(--success-soft)] disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-11"
               >
-                <MessageCircle className="size-5 sm:size-4" aria-hidden="true" />
+                <MessageCircle
+                  className="size-5 sm:size-4"
+                  aria-hidden="true"
+                />
                 WhatsApp
               </button>
 
@@ -729,6 +734,21 @@ export function AppointmentRow({
                 {appointment.cancellation_reason}
               </p>
             </div>
+          ) : null}
+
+          {/* Quién lo tocó y cuándo (feature 021). Solo aparece cuando hay
+              autor: hoy lo escribe la agenda del empleado, y en lo que cancela
+              el dueño no hay nada que aclarar. */}
+          {appointment.status_changed_by_name ? (
+            <p className="mt-2 text-[11px] leading-4 text-[color:var(--text-subtle)]">
+              {isCancelled ? "Cancelado" : "Confirmado"} por{" "}
+              <b className="font-semibold text-[color:var(--text-muted)]">
+                {appointment.status_changed_by_name}
+              </b>
+              {appointment.status_changed_at
+                ? ` · ${formatCambioDeEstado(appointment.status_changed_at)}`
+                : ""}
+            </p>
           ) : null}
 
           {/* Eliminar de la vista — solo si cancelado */}
@@ -867,48 +887,28 @@ function StatusPill({
 }
 
 /** Chip con el estado de la seña de MercadoPago (si la barbería cobra seña). */
-function DepositStatusChip({ status }: { status: string }) {
-  const meta: Record<string, { label: string; classes: string }> = {
-    pending: {
-      label: "Seña pendiente",
-      classes:
-        "border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]",
-    },
-    paid: {
-      label: "Seña pagada",
-      classes:
-        "border-[color:var(--success)]/40 bg-[color:var(--success-soft)] text-[color:var(--success)]",
-    },
-    expired: {
-      label: "Seña vencida",
-      classes:
-        "border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] text-[color:var(--danger)]",
-    },
-    failed: {
-      label: "Seña rechazada",
-      classes:
-        "border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] text-[color:var(--danger)]",
-    },
-  };
-  const m = meta[status];
-  if (!m) return null;
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]",
-        m.classes,
-      )}
-    >
-      {m.label}
-    </span>
-  );
+/** "25/08 a las 14:20" — cuándo se tocó el turno, en hora argentina. */
+function formatCambioDeEstado(iso: string): string {
+  const fecha = new Date(iso);
+  if (Number.isNaN(fecha.getTime())) return "";
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "America/Argentina/Buenos_Aires",
+  })
+    .format(fecha)
+    .replace(", ", " a las ");
 }
 
 function RelativeTimeChip({ info }: { info: RelativeTimeInfo }) {
   const toneClasses: Record<RelativeTimeInfo["tone"], string> = {
     info: "border-sky-400/30 bg-sky-400/[0.06] text-sky-300",
     warning: "border-amber-400/30 bg-amber-400/[0.06] text-amber-300",
-    danger: "border-[color:var(--danger)]/30 bg-[color:var(--danger-soft)] text-[color:var(--danger)]",
+    danger:
+      "border-[color:var(--danger)]/30 bg-[color:var(--danger-soft)] text-[color:var(--danger)]",
     neutral:
       "border-[color:var(--border-default)] bg-[color:var(--surface-0)] text-[color:var(--text-muted)]",
   };
