@@ -26,6 +26,12 @@ import { NO_SHOW_PRESET_LABEL } from "@/lib/client-segments";
  * Pensado para alimentar reportes futuros (% de no-shows, motivos top,
  * etc.) sin meternos en taxonomías rígidas — el texto siempre queda
  * accesible.
+ *
+ * Lo usan el panel del dueño y la agenda del empleado (feature 020). Vive
+ * fuera de `admin/` por eso: el empleado cancelaba sin poder dar un motivo, y
+ * sus cancelaciones no contaban como no-show en la pantalla de Clientes. La
+ * salida no era copiar el modal, era compartirlo — dos copias se habrían
+ * separado y habría dos listas de motivos distintas alimentando el mismo campo.
  */
 
 export type CancellationContext = {

@@ -74,6 +74,35 @@ export async function assertPublicBookingEnabled(
   return { ok: true };
 }
 
+/**
+ * ¿El TIER de la barbería incluye esta función? Sin mirar el vencimiento.
+ *
+ * Es la variante para LEER. `assertPlanFeature` corta también cuando el plan
+ * está vencido, y eso está bien para escribir, pero acá no: cuando el plan
+ * vence la barbería entra en modo lectura (feature 009), donde el dueño sigue
+ * viendo todo. Si un empleado perdiera hasta la vista de su agenda, estaría
+ * peor tratado que el dueño por el mismo vencimiento.
+ *
+ * Lo que frena la escritura de una barbería vencida es `assertPlanActive`, que
+ * ya está puesto donde corresponde.
+ */
+export async function assertTierIncludesFeature(
+  barbershopSlug: string,
+  feature: Feature,
+): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  const plan = await getBarbershopPlan(barbershopSlug);
+
+  if (!hasFeature(plan.tier, feature)) {
+    return {
+      ok: false,
+      status: 403,
+      error: "Tu plan actual no incluye esta función. Mejorá tu plan para usarla.",
+    };
+  }
+
+  return { ok: true };
+}
+
 export async function assertPlanFeature(
   barbershopSlug: string,
   feature: Feature,

@@ -1,4 +1,5 @@
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { assertTierIncludesFeature } from "@/lib/api-plan-guard";
 import {
   normalizarPermisos,
   type StaffPermissions,
@@ -48,6 +49,16 @@ export type StaffAccessResult =
  *
  * Se chequea en CADA request, no solo al entrar: revocarle el acceso a alguien
  * tiene que cortarle el paso en el momento, no cuando se le venza la sesión.
+ *
+ * ── Y también se chequea el plan (feature 020) ──────────────────────────────
+ * Las cuentas de empleados son de Esencial para arriba. Antes eso se validaba
+ * SOLO al invitar, así que una barbería que bajaba a Solo se quedaba con sus
+ * empleados entrando a una función que ya no pagaba. Va acá y no en cada
+ * endpoint porque los cuatro pasan por esta función: un lugar, sin olvidos.
+ *
+ * Mira el TIER y no el vencimiento, a propósito — ver
+ * `assertTierIncludesFeature`. Y no revoca nada: si el dueño vuelve a
+ * Esencial, el empleado entra como antes sin que haya que re-invitarlo.
  */
 export async function resolveStaffAccess(
   authHeader: string | null,
@@ -96,6 +107,19 @@ export async function resolveStaffAccess(
   if (!row.barbers) {
     // El barbero se borró y quedó el acceso colgado. Sin barbero no hay agenda.
     return { ok: false, status: 403, error: "Tu acceso ya no está activo." };
+  }
+
+  const tier = await assertTierIncludesFeature(
+    barbershopSlug,
+    "cuentas_empleados",
+  );
+  if (!tier.ok) {
+    return {
+      ok: false,
+      status: 403,
+      error:
+        "La barbería ya no tiene un plan que incluya cuentas para empleados. Hablalo con el dueño.",
+    };
   }
 
   return {
