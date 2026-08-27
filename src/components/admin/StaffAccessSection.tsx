@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Crown, KeyRound, Loader2, Mail, ShieldOff } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Crown,
+  KeyRound,
+  Loader2,
+  Mail,
+  ShieldOff,
+} from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { Badge, Button, Input, useConfirm, useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
@@ -36,13 +45,24 @@ export function StaffAccessSection({
   const toast = useToast();
   const confirm = useConfirm();
   const [conAcceso, setConAcceso] = useState<string[]>([]);
-  const [permisos, setPermisos] = useState<Record<string, StaffPermissions>>({});
+  const [permisos, setPermisos] = useState<Record<string, StaffPermissions>>(
+    {},
+  );
   const [cargando, setCargando] = useState(true);
   const [invitando, setInvitando] = useState<string | null>(null);
   const [guardando, setGuardando] = useState<string | null>(null);
   const [emails, setEmails] = useState<Record<string, string>>({});
   const [claves, setClaves] = useState<Record<string, string>>({});
   const [recarga, setRecarga] = useState(0);
+  /**
+   * Qué fila tiene los permisos a la vista. Una sola a la vez.
+   *
+   * Con siete permisos por barbero, una barbería de cuatro mostraba
+   * veintiocho casillas apiladas y encontrar la que se buscaba era scrollear.
+   * Plegado, la lista vuelve a leerse de un vistazo: quién tiene acceso y
+   * cuánto le sacaron. Igual que en Dentidad.
+   */
+  const [abierto, setAbierto] = useState<string | null>(null);
 
   useEffect(() => {
     let vivo = true;
@@ -102,7 +122,12 @@ export function StaffAccessSection({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ bs: barbershop.slug, barberId, email, password }),
+        body: JSON.stringify({
+          bs: barbershop.slug,
+          barberId,
+          email,
+          password,
+        }),
       });
       const payload = (await res.json().catch(() => ({}))) as {
         error?: string;
@@ -205,6 +230,21 @@ export function StaffAccessSection({
     setRecarga((v) => v + 1);
   }
 
+  /**
+   * Lo que dice la fila cuando está cerrada.
+   *
+   * El número que importa es **cuántos le sacaron**, no cuántos tiene: todos
+   * arrancan con los siete, así que lo informativo es la excepción. "Puede
+   * todo" es el caso normal y no merece más que dos palabras.
+   */
+  function resumen(sus: StaffPermissions): string {
+    const apagados = PERMISOS_UI.filter((p) => !sus[p.key]).length;
+    if (apagados === 0) return "Puede todo";
+    return apagados === 1
+      ? "1 permiso apagado"
+      : `${apagados} permisos apagados`;
+  }
+
   const barberos = barbershop.barbers ?? [];
 
   return (
@@ -218,8 +258,8 @@ export function StaffAccessSection({
           Que cada uno maneje su agenda
         </h2>
         <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">
-          Ve <strong>solo sus turnos</strong>, y de ahí para abajo elegís vos. No
-          accede a tus clientes, tu facturación ni la configuración de la
+          Ve <strong>solo sus turnos</strong>, y de ahí para abajo elegís vos.
+          No accede a tus clientes, tu facturación ni la configuración de la
           barbería.
         </p>
       </header>
@@ -237,6 +277,7 @@ export function StaffAccessSection({
           {barberos.map((barbero) => {
             const tiene = conAcceso.includes(barbero.id);
             const sus = permisos[barbero.id] ?? PERMISOS_POR_DEFECTO;
+            const estaAbierto = abierto === barbero.id;
 
             return (
               <li
@@ -244,27 +285,56 @@ export function StaffAccessSection({
                 className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] p-3"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <p className="flex min-w-0 items-center gap-2 text-sm font-bold text-white">
-                    <span className="truncate">{barbero.name}</span>
-                    {barbero.isOwner ? (
-                      <Crown
-                        aria-label="Dueño"
-                        className="size-3.5 shrink-0 text-[color:var(--brand-gold)]"
-                      />
+                  <div className="min-w-0">
+                    <p className="flex min-w-0 items-center gap-2 text-sm font-bold text-white">
+                      <span className="truncate">{barbero.name}</span>
+                      {barbero.isOwner ? (
+                        <Crown
+                          aria-label="Dueño"
+                          className="size-3.5 shrink-0 text-[color:var(--brand-gold)]"
+                        />
+                      ) : null}
+                    </p>
+                    {tiene && !barbero.isOwner ? (
+                      <p className="mt-0.5 truncate text-xs text-[color:var(--text-muted)]">
+                        {resumen(sus)}
+                      </p>
                     ) : null}
-                  </p>
-                  <Badge
-                    variant={
-                      barbero.isOwner ? "accent" : tiene ? "success" : "muted"
-                    }
-                    className="shrink-0"
-                  >
-                    {barbero.isOwner
-                      ? "Dueño"
-                      : tiene
-                        ? "Con acceso"
-                        : "Sin acceso"}
-                  </Badge>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Badge
+                      variant={
+                        barbero.isOwner ? "accent" : tiene ? "success" : "muted"
+                      }
+                    >
+                      {barbero.isOwner
+                        ? "Dueño"
+                        : tiene
+                          ? "Con acceso"
+                          : "Sin acceso"}
+                    </Badge>
+                    {tiene && !barbero.isOwner ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setAbierto((a) =>
+                            a === barbero.id ? null : barbero.id,
+                          )
+                        }
+                        aria-expanded={estaAbierto}
+                        iconRight={
+                          estaAbierto ? (
+                            <ChevronUp className="size-3.5" />
+                          ) : (
+                            <ChevronDown className="size-3.5" />
+                          )
+                        }
+                      >
+                        {estaAbierto ? "Cerrar" : "Editar"}
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
 
                 {barbero.isOwner ? (
@@ -273,41 +343,46 @@ export function StaffAccessSection({
                     necesita una cuenta de empleado, que le daría menos.
                   </p>
                 ) : tiene ? (
-                  <>
-                    <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
-                      Qué puede hacer
-                    </p>
-                    <ul className="mt-2 flex flex-col gap-1.5">
-                      {PERMISOS_UI.map((permiso) => (
-                        <li key={permiso.key}>
-                          <TildePermiso
-                            marcado={sus[permiso.key]}
-                            guardando={
-                              guardando === `${barbero.id}:${permiso.key}`
-                            }
-                            label={permiso.label}
-                            detalle={permiso.detalle}
-                            onChange={(valor) =>
-                              void cambiarPermiso(
-                                barbero.id,
-                                permiso.key,
-                                valor,
-                              )
-                            }
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      className="mt-3"
-                      onClick={() => void revocar(barbero.id, barbero.name)}
-                      iconLeft={<ShieldOff className="size-3.5" />}
-                    >
-                      Quitar acceso
-                    </Button>
-                  </>
+                  estaAbierto ? (
+                    <>
+                      <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
+                        Qué puede hacer
+                      </p>
+                      {/* Dos columnas cuando hay ancho: con siete permisos, una
+                        sola columna obliga a recorrer una lista larga para
+                        encontrar el que se viene a tocar. */}
+                      <ul className="mt-2 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                        {PERMISOS_UI.map((permiso) => (
+                          <li key={permiso.key}>
+                            <TildePermiso
+                              marcado={sus[permiso.key]}
+                              guardando={
+                                guardando === `${barbero.id}:${permiso.key}`
+                              }
+                              label={permiso.label}
+                              detalle={permiso.detalle}
+                              onChange={(valor) =>
+                                void cambiarPermiso(
+                                  barbero.id,
+                                  permiso.key,
+                                  valor,
+                                )
+                              }
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        className="mt-3"
+                        onClick={() => void revocar(barbero.id, barbero.name)}
+                        iconLeft={<ShieldOff className="size-3.5" />}
+                      >
+                        Quitar acceso
+                      </Button>
+                    </>
+                  ) : null
                 ) : (
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                     <Input
@@ -353,8 +428,9 @@ export function StaffAccessSection({
 
       <p className="mt-4 text-[11px] leading-4 text-[color:var(--text-subtle)]">
         Le ponés vos la contraseña y se la pasás en persona: entra en el
-        momento, sin mails. Tené en cuenta que <strong>vos la vas a saber</strong>;
-        si el barbero prefiere que no, puede cambiarla desde su propia pantalla.
+        momento, sin mails. Tené en cuenta que{" "}
+        <strong>vos la vas a saber</strong>; si el barbero prefiere que no,
+        puede cambiarla desde su propia pantalla.
       </p>
     </section>
   );
