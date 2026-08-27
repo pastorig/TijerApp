@@ -52,9 +52,13 @@ en prod. Quedan dos a propósito:
 - **06** (GET/PATCH/DELETE de staff-access sin chequeo de plan): prolijidad. Sin
   poder invitar no hay a quién editarle permisos.
 
-Y con la **023** se cerró lo último que quedaba de capacidades: el empleado ya
-puede **bloquear un horario suyo**. De la lista original solo queda
-**reprogramar** un turno, que sigue siendo solo del dueño.
+Con la **023** y la **024** se cerró todo lo que quedaba de capacidades: el
+empleado ya puede **bloquear un horario** y **mover un turno suyo**. De la
+lista original no queda nada.
+
+Son **siete permisos** por empleado, todos tildables en Equipo: ver lo que gana,
+confirmar, cancelar, escribirle al cliente, cargar turnos, bloquear horarios y
+mover turnos.
 - **07** (al cliente no se le avisa que le cancelaron): **no es del empleado**,
   el dueño tampoco manda aviso automático. Es una decisión de producto: si se
   hace, se hace para los dos.
