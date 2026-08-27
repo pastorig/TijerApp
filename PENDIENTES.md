@@ -59,9 +59,8 @@ lista original no queda nada.
 Son **siete permisos** por empleado, todos tildables en Equipo: ver lo que gana,
 confirmar, cancelar, escribirle al cliente, cargar turnos, bloquear horarios y
 mover turnos.
-- **07** (al cliente no se le avisa que le cancelaron): **no es del empleado**,
-  el dueño tampoco manda aviso automático. Es una decisión de producto: si se
-  hace, se hace para los dos.
+- ~~**07** (al cliente no se le avisa que le cancelaron)~~ → **HECHO en la 026**,
+  para los dos caminos.
 
 ### Lo que encontró la implementación y la auditoría no vio
 
@@ -94,6 +93,21 @@ así que no hubo que volver a activarla.
 ($12.000, 1 turno), la pantalla de Ganancias tiene que mostrar **$6.000**. Si
 muestra otra cosa, ahí hay algo para mirar. El porcentaje se cambia desde
 Equipo cuando quieras.
+
+---
+
+## 📧 Probar el mail de cancelación SIN escribirle a un cliente real
+
+La **026** manda un mail cuando la barbería cancela un turno. Probarlo con un
+turno real le escribe a un cliente real, así que:
+
+1. Cargá un turno a mano **con tu propio mail**, en una fecha futura.
+2. Cancelalo con un motivo que **no** sea "Cliente avisó" ni "Cliente no vino"
+   — esos dos callan el mail a propósito.
+3. Tiene que llegarte el mail y la pantalla decir "le avisamos por mail".
+
+⚠️ Los tres casos en los que **NO** se manda, y está bien que no se mande: el
+turno ya pasó, el cliente no vino, o el cliente pidió cancelar.
 
 ---
 
