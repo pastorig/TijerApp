@@ -126,11 +126,19 @@ tachado y la invitación a sacar otro.
 
 Ninguna de las dos se veía sin mandar el mail de verdad y leerlo.
 
-### Falta una sola cosa: ver el botón de WhatsApp funcionando
+### ✅ Y el botón de WhatsApp también quedó verificado (29/08 00:30)
 
-A `primebarber` se le cargó el número real (**+54 9 3571 62-4511**), así que
-ahora el mail SÍ va a traer el botón. **Cancelá el turno del 05/09 11:00** y se
-verifica el último pedazo.
+A `primebarber` se le cargó el número real (**+54 9 3571 62-4511**) y se canceló
+el turno del 05/09. El mail llegó **2 segundos después** con todo:
+
+- Botón **ESCRIBINOS POR WHATSAPP** → `https://wa.me/5493571624511`
+- El cuerpo cambió a *"...o escribinos y lo vemos juntos"*
+- El pie con el número: *"PRIME BARBER · WhatsApp: +54 9 3571 62-4511"*
+
+O sea que las dos ramas del condicional están probadas con envíos reales: **sin**
+número usable el mail sale sin botón, **con** número sale completo.
+
+**No queda nada por probar de los mails al cliente.**
 
 ---
 
