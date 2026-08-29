@@ -115,16 +115,23 @@ export async function POST(request: Request) {
   // mal identificador acá porque los celulares argentinos salen por CGNAT y
   // clientes distintos comparten IP pública. El de teléfono es el que
   // realmente distingue a una persona de un script.
-  const ipLimit = await checkRateLimit(
-    "reserva",
-    getRequestIdentifier(request, slug),
-  );
-  const phoneLimit = ipLimit.allowed
-    ? await checkRateLimit(
-        "reserva-telefono",
-        getValueIdentifier(customerPhone.replace(/D/g, "")),
-      )
-    : ipLimit;
+  // Los dos frenos van EN PARALELO. Antes el del teléfono esperaba al de IP
+  // para ahorrarse una consulta en el caso bloqueado, que es el raro; el
+  // precio lo pagaba el caso normal, que es todos los demás.
+  //
+  // ⚠️ El identificador se normaliza con `\D` (no dígitos). Estaba escrito
+  // `/D/`, que borra la letra "D" y deja el teléfono tal cual vino: el mismo
+  // número escrito "3571624511", "3571 62-4511" y "+54 9 3571 62-4511" caía en
+  // tres cubetas distintas. O sea que el freno por teléfono —que es el que de
+  // verdad distingue a una persona de un script, porque la IP no sirve con el
+  // CGNAT argentino— se esquivaba cambiando el formato.
+  const [ipLimit, phoneLimit] = await Promise.all([
+    checkRateLimit("reserva", getRequestIdentifier(request, slug)),
+    checkRateLimit(
+      "reserva-telefono",
+      getValueIdentifier(customerPhone.replace(/\D/g, "")),
+    ),
+  ]);
   const limit = ipLimit.allowed ? phoneLimit : ipLimit;
   if (!limit.allowed) {
     return NextResponse.json(

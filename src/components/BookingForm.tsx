@@ -16,7 +16,6 @@ import {
   type DemoBarbershop,
 } from "@/data/demo-barbershops";
 import {
-  validateAppointmentTimeIsAvailable,
 } from "@/lib/appointments";
 import { getBarberDayAvailability } from "@/lib/barber-availability";
 import type { AvailabilitySlot } from "@/lib/availability";
@@ -527,41 +526,21 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       setFormError(mensaje);
     };
 
-    try {
-      const { isAvailable, error } = await validateAppointmentTimeIsAvailable({
-        barbershopSlug: barbershop.slug,
-        barberId: selectedBarber.id,
-        appointmentDate: selectedDate,
-        appointmentTime: selectedTime,
-        appointmentDurationMinutes: selectedService.durationMinutes,
-        barbershopIntervalMinutes: barbershop.workingHours.intervalMinutes,
-        workingHours: barbershop.workingHours,
-        minBookingNoticeMinutes: barbershop.minBookingNoticeMinutes ?? 0,
-      });
-
-      if (error) {
-        failBooking("No pudimos validar la disponibilidad. Intentá nuevamente.");
-        return;
-      }
-
-      if (!isAvailable) {
-        setAvailabilitySlots((currentSlots) =>
-          currentSlots.map((slot) =>
-            slot.time === selectedTime
-              ? { ...slot, isAvailable: false, reason: "occupied" }
-              : slot,
-          ),
-        );
-        setSelectedTime("");
-        failBooking("Ese horario ya fue reservado. Elegí otro.");
-        return;
-      }
-    } catch {
-      failBooking("No pudimos validar la disponibilidad. Intentá nuevamente.");
-      return;
-    } finally {
-      setIsSaving(false);
-    }
+    // ── Acá NO se valida la disponibilidad ────────────────────────────────
+    // Antes había, justo en este punto, una consulta a Supabase desde el
+    // navegador para chequear si el horario seguía libre. La sacamos: el
+    // servidor hace exactamente el mismo chequeo (`assertSlotBookable`) antes
+    // de insertar, y además cubre lo que el cliente no puede — la carrera
+    // entre dos personas reservando el mismo minuto, que la frena el índice
+    // único de la base.
+    //
+    // O sea que era un viaje entero a la red (cuatro consultas) que no
+    // agregaba ninguna garantía y que el cliente esperaba MIRANDO UNA PESTAÑA
+    // EN BLANCO, porque la de WhatsApp ya se abrió con el click.
+    //
+    // El caso "se ocupó recién" no se pierde: el 23505 del servidor se maneja
+    // más abajo y hace lo mismo que hacía este bloque — marca el horario como
+    // ocupado y limpia la selección.
 
     // ── Barbería con seña activa ──────────────────────────────────────────
     // La reserva la crea el server (necesita el access_token de MP, secreto).
