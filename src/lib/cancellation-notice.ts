@@ -25,6 +25,26 @@ import { NO_SHOW_PRESET_LABEL } from "@/lib/client-segments";
 /** El preset que usa el diálogo cuando fue el cliente el que pidió cancelar. */
 export const CLIENTE_AVISO_PRESET_LABEL = "Cliente avisó";
 
+/**
+ * ¿Ese WhatsApp sirve para escribirle a alguien?
+ *
+ * Salió de una prueba real: el mail de `primebarber` llegó diciendo
+ * "WhatsApp: 0000000000", y el de cancelación además arma un botón a
+ * `wa.me/0000000000`, que no lleva a ningún lado. Hoy solo la demo tiene un
+ * número así — las siete barberías reales lo tienen bien — pero un botón
+ * muerto en un mail a un cliente se lee como que la barbería está rota, y
+ * alcanza con que UNA cargue cualquier cosa para que pase de verdad.
+ *
+ * Ante la duda no se dibuja: un mail sin botón se entiende igual.
+ */
+export function telefonoUtilizable(whatsapp: string | null | undefined): boolean {
+  const digitos = (whatsapp ?? "").replace(/\D/g, "");
+  if (digitos.length < 10) return false;
+  // Un solo dígito repetido (0000000000, 1111111111) es un placeholder.
+  if (/^(\d)\1+$/.test(digitos)) return false;
+  return true;
+}
+
 export type DecisionDeAviso =
   | { avisar: true }
   | { avisar: false; porque: string };

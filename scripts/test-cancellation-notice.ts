@@ -3,7 +3,10 @@
  *
  * Correr: node --experimental-strip-types --import ./scripts/register-alias.mjs scripts/test-cancellation-notice.ts
  */
-import { debeAvisarCancelacion } from "../src/lib/cancellation-notice.ts";
+import {
+  debeAvisarCancelacion,
+  telefonoUtilizable,
+} from "../src/lib/cancellation-notice.ts";
 
 let passed = 0;
 let failed = 0;
@@ -102,6 +105,18 @@ check(
   decidir("Se cortó la luz", "2026-08-28", "10:00"),
   { avisar: true },
 );
+
+// ── Si el WhatsApp de la barbería sirve para escribirle a alguien ───────────
+// Salió de una prueba real: el mail de la demo llegó diciendo
+// "WhatsApp: 0000000000", y el de cancelación además arma un botón a
+// wa.me/0000000000, que no lleva a ningún lado.
+check("un número normal sirve", telefonoUtilizable("+54 9 3571 35-4248"), true);
+check("uno de 10 dígitos sin prefijo también", telefonoUtilizable("3571416517"), true);
+check("el placeholder de todo ceros NO", telefonoUtilizable("0000000000"), false);
+check("el mismo dígito repetido tampoco", telefonoUtilizable("1111111111"), false);
+check("demasiado corto no sirve", telefonoUtilizable("3571"), false);
+check("vacío no sirve", telefonoUtilizable(""), false);
+check("null no sirve", telefonoUtilizable(null), false);
 
 console.log(`\n${passed} pasaron, ${failed} fallaron`);
 if (failed > 0) process.exit(1);

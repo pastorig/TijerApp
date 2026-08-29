@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/nextjs";
 import { Resend } from "resend";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { resolveEmailFrom } from "@/lib/email/from";
+import { telefonoUtilizable } from "@/lib/cancellation-notice";
 
 /**
  * El mail que le avisa al cliente que le movieron el turno.
@@ -188,7 +189,7 @@ export async function enviarAvisoDeReprogramacion({
             <td style="padding-top:24px;border-top:1px solid rgba(255,255,255,0.06);">
               <p style="margin:0;font-size:11px;line-height:1.5;color:#5a5a5a;">
                 Este mail se generó automáticamente desde TijerApp.<br>
-                ${barbershop.name}${barbershop.whatsapp ? ` · WhatsApp: ${barbershop.whatsapp}` : ""}
+                ${barbershop.name}${telefonoUtilizable(barbershop.whatsapp) ? ` · WhatsApp: ${barbershop.whatsapp}` : ""}
               </p>
             </td>
           </tr>

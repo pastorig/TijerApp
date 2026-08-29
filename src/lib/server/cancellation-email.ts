@@ -2,7 +2,10 @@ import * as Sentry from "@sentry/nextjs";
 import { Resend } from "resend";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { resolveEmailFrom } from "@/lib/email/from";
-import { debeAvisarCancelacion } from "@/lib/cancellation-notice";
+import {
+  debeAvisarCancelacion,
+  telefonoUtilizable,
+} from "@/lib/cancellation-notice";
 
 /**
  * El mail que le avisa al cliente que le cancelaron el turno.
@@ -122,7 +125,10 @@ export async function enviarAvisoDeCancelacion({
   const subject = `Se canceló tu turno · ${barbershop.name}`;
   const previewText = `Era el ${cuando}. Escribinos y lo reprogramamos.`;
   const logoUrl = (barbershop as { logo_url?: string | null }).logo_url;
-  const waLink = barbershop.whatsapp
+  // Solo si el número sirve: un botón que lleva a wa.me/0000000000 es peor que
+  // no tener botón. Ver `telefonoUtilizable`.
+  const waUtil = telefonoUtilizable(barbershop.whatsapp);
+  const waLink = waUtil
     ? `https://wa.me/${String(barbershop.whatsapp).replace(/\D/g, "")}`
     : null;
 
@@ -172,7 +178,7 @@ export async function enviarAvisoDeCancelacion({
         <tr><td style="padding-top:24px;border-top:1px solid rgba(255,255,255,0.06);">
           <p style="margin:0;font-size:11px;line-height:1.5;color:#5a5a5a;">
             Este mail se generó automáticamente desde TijerApp.<br>
-            ${barbershop.name}${barbershop.whatsapp ? ` · WhatsApp: ${barbershop.whatsapp}` : ""}
+            ${barbershop.name}${waUtil ? ` · WhatsApp: ${barbershop.whatsapp}` : ""}
           </p>
         </td></tr>
       </table>
