@@ -96,31 +96,41 @@ Equipo cuando quieras.
 
 ---
 
-## 📧 Mails al cliente: reprogramar VERIFICADO, cancelar falta (29/08)
+## ✅ Mails al cliente: los DOS verificados de punta a punta (29/08)
 
-### ✅ Reprogramar (024) — probado de punta a punta
+Se probaron con envíos reales a `bau.pastori@gmail.com` y se leyeron los mails.
 
-Se movió un turno del 28/08 13:00 al 29/08 14:00 desde la agenda del empleado y
-**el mail llegó**: "Tu turno fue reagendado", con el horario viejo tachado y el
-nuevo abajo. Primera verificación real de ese mail.
+### Reprogramar (024)
 
-### ⏳ Cancelar (026) — la primera prueba NO ejercitó el mail
+Turno movido del 28/08 13:00 al 29/08 14:00 desde la agenda del empleado.
+Llegó "Tu turno fue reagendado", con el horario viejo tachado y el nuevo abajo.
 
-Se canceló el turno del **28/08 16:00** a las **00:06 del 29/08**: o sea que el
-turno **ya había pasado**, y la regla de la 026 calla el mail en ese caso. El
-sistema hizo lo correcto, pero la prueba no probó el envío.
+### Cancelar (026)
 
-**Turno nuevo cargado para rehacerla: 05/09/2026 11:00**, Esteban, con
-`bau.pastori@gmail.com`. Cancelalo (desde tu panel o desde la agenda del
-empleado) con un motivo que no sea "Cliente avisó" ni "Cliente no vino", y
-Claude puede leer el mail y confirmarlo.
+Cancelado el del 29/08 14:00. Llegó "Se canceló tu turno", con el horario
+tachado y la invitación a sacar otro.
 
-### Lo que encontró esa prueba
+> **Ojo con cómo se prueba esto.** El primer intento no sirvió: se canceló un
+> turno que ya había pasado, y la regla de la 026 calla el mail en ese caso —
+> el sistema hizo lo correcto, pero la prueba no probó nada. **El turno tiene
+> que ser futuro**, y el motivo no puede ser "Cliente avisó" ni "Cliente no
+> vino".
 
-El mail llegaba con el pie **"WhatsApp: 0000000000"** — el placeholder de la
-demo. En el de cancelación era peor: armaba un botón a `wa.me/0000000000`.
-Arreglado en la **027**: si el número no sirve, no se dibuja. Las 7 barberías
-reales tienen el número bien; era solo la demo.
+### Lo que encontraron esas dos pruebas
+
+1. El pie decía **"WhatsApp: 0000000000"** (el placeholder de la demo), y el de
+   cancelación armaba un botón a `wa.me/0000000000`. Arreglado en la **027**:
+   si el número no sirve, no se dibuja.
+2. El **preheader** seguía diciendo "Escribinos y lo reprogramamos" aunque el
+   cuerpo no ofreciera por dónde. Arreglado en la **028**.
+
+Ninguna de las dos se veía sin mandar el mail de verdad y leerlo.
+
+### Falta una sola cosa: ver el botón de WhatsApp funcionando
+
+A `primebarber` se le cargó el número real (**+54 9 3571 62-4511**), así que
+ahora el mail SÍ va a traer el botón. **Cancelá el turno del 05/09 11:00** y se
+verifica el último pedazo.
 
 ---
 
