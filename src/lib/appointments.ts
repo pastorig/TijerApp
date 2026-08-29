@@ -37,10 +37,6 @@ type AppointmentAvailabilityInput = {
   minBookingNoticeMinutes?: number;
 };
 
-type AppointmentTimeInput = AppointmentAvailabilityInput & {
-  appointmentTime: string;
-};
-
 export async function createPendingAppointment(
   appointment: AppointmentDraft,
   options?: { autoConfirm?: boolean },
@@ -165,38 +161,6 @@ export async function listOccupiedAppointmentTimes({
   return {
     data: data.filter((slot) => !slot.isAvailable).map((slot) => slot.time),
     error,
-  };
-}
-
-export async function validateAppointmentTimeIsAvailable({
-  barbershopSlug,
-  barberId,
-  appointmentDate,
-  appointmentTime,
-  appointmentDurationMinutes,
-  workingHours,
-  barbershopIntervalMinutes,
-  minBookingNoticeMinutes = 0,
-}: AppointmentTimeInput) {
-  const { data, error } = await getBarberDayAvailability({
-    barbershopSlug,
-    barberId,
-    appointmentDate,
-    appointmentDurationMinutes,
-    workingHours,
-    barbershopIntervalMinutes,
-    minBookingNoticeMinutes,
-  });
-
-  if (error) {
-    return { isAvailable: false, error };
-  }
-
-  const selectedSlot = data.find((slot) => slot.time === appointmentTime);
-
-  return {
-    isAvailable: Boolean(selectedSlot?.isAvailable),
-    error: null,
   };
 }
 
