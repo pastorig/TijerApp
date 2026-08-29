@@ -142,18 +142,34 @@ número usable el mail sale sin botón, **con** número sale completo.
 
 ---
 
-## 🔔 El push del empleado se murió: hay que volver a activarlo
+## ✅ El push del empleado quedó verificado (29/08 00:36)
 
-La suscripción push de `chinitodou` (la del empleado en `primebarber`) **quedó
-invalidada el 27/08**. Se creó el 25/08, mandó bien **un** push —el que probaste
-y confirmaste— y al siguiente el servicio de push la rechazó, así que la app la
-marcó vencida, que es lo correcto.
+Bautista lo activó con `chinitodou` en `/primebarber/mi-agenda/cuenta` desde la
+PC y le llegó: *"Nueva reserva — Gino · mar 01/09 09:30 · **con Esteban** ·
+Corte"*. Suscripción nueva VIVA en la base, con un envío OK.
 
-No es un bug: las suscripciones rotan solas (reinstalar la PWA, limpiar el
-navegador, el propio browser). Pero **hasta que no se reactive, al empleado no
-le llega ningún push**.
+Que el aviso diga "con Esteban" es el ruteo de la 017 funcionando: le llega al
+que maneja esa agenda y no a los demás.
 
-Se reactiva desde `/<barberia>/mi-agenda/cuenta` con la cuenta del empleado.
+> **Ojo, las suscripciones se mueren solas.** La anterior duró dos días. No es
+> un bug —las rota el navegador— pero si un barbero dice "no me llega nada", lo
+> primero es que la vuelva a activar desde su pantalla de cuenta.
+
+---
+
+## ⏱️ Reservar → WhatsApp: se aceleró (029), falta que Bautista lo sienta
+
+Bautista notó que tardaba en abrirse WhatsApp después de reservar. Se sacó un
+viaje entero a la red que no aportaba nada (el navegador validaba el horario y
+el servidor ya lo revalida) y se paralelizaron los dos rate limits.
+
+**No pude medir la latencia real desde una red argentina** — lo que hice fue
+contar y sacar viajes. Falta que Bautista reserve un turno de prueba y diga si
+se nota.
+
+De paso apareció un bug: el freno por teléfono usaba `/D/` en vez de `/D/`, así
+que el mismo número escrito distinto caía en cubetas distintas y se esquivaba
+cambiando el formato. Arreglado.
 
 ---
 
