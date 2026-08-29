@@ -123,11 +123,18 @@ export async function enviarAvisoDeCancelacion({
 
   const cuando = `${formatLongDate(appointment.appointment_date)} a las ${appointment.appointment_time.slice(0, 5)}`;
   const subject = `Se canceló tu turno · ${barbershop.name}`;
-  const previewText = `Era el ${cuando}. Escribinos y lo reprogramamos.`;
   const logoUrl = (barbershop as { logo_url?: string | null }).logo_url;
   // Solo si el número sirve: un botón que lleva a wa.me/0000000000 es peor que
   // no tener botón. Ver `telefonoUtilizable`.
   const waUtil = telefonoUtilizable(barbershop.whatsapp);
+  // El preheader (lo que se lee en la bandeja antes de abrir) tiene que decir
+  // lo mismo que el cuerpo. Decía "Escribinos" siempre, incluso cuando la
+  // barbería no tiene un WhatsApp usable y el mail no ofrece por dónde: se vio
+  // en la primera prueba real.
+  const previewText = waUtil
+    ? `Era el ${cuando}. Escribinos y lo reprogramamos.`
+    : `Era el ${cuando}. Sacá otro turno cuando te quede cómodo.`;
+
   const waLink = waUtil
     ? `https://wa.me/${String(barbershop.whatsapp).replace(/\D/g, "")}`
     : null;
