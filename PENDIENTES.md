@@ -96,29 +96,31 @@ Equipo cuando quieras.
 
 ---
 
-## 📧 Probar el mail de cancelación SIN escribirle a un cliente real
+## 📧 Mails al cliente: reprogramar VERIFICADO, cancelar falta (29/08)
 
-La **026** manda un mail cuando la barbería cancela un turno. Probarlo con un
-turno real le escribe a un cliente real, así que:
+### ✅ Reprogramar (024) — probado de punta a punta
 
-**El turno ya está cargado** (28/08/2026 16:00, Esteban Perez, Corte, con
-`ginopastori66@gmail.com`). Solo falta:
+Se movió un turno del 28/08 13:00 al 29/08 14:00 desde la agenda del empleado y
+**el mail llegó**: "Tu turno fue reagendado", con el horario viejo tachado y el
+nuevo abajo. Primera verificación real de ese mail.
 
-1. Cancelarlo con un motivo que **no** sea "Cliente avisó" ni "Cliente no vino"
-   — esos dos callan el mail a propósito.
-2. Tiene que llegarte el mail y la pantalla decir "le avisamos por mail".
+### ⏳ Cancelar (026) — la primera prueba NO ejercitó el mail
 
-Se puede cancelar desde tu panel **o** desde la agenda del empleado con
-`chinitodou`: los dos caminos mandan el mismo mail, y probar los dos es la
-prueba completa.
+Se canceló el turno del **28/08 16:00** a las **00:06 del 29/08**: o sea que el
+turno **ya había pasado**, y la regla de la 026 calla el mail en ese caso. El
+sistema hizo lo correcto, pero la prueba no probó el envío.
 
-> Ojo: en `primebarber` **ya había dos turnos** con ese mismo mail (28/08 a las
-> 10:20 y a las 13:00, en `pending`). Si cancelás cualquiera de esos también te
-> va a llegar el mail. El de la prueba es el de las **16:00**, que dice
-> "Gino Pastori (prueba)".
+**Turno nuevo cargado para rehacerla: 05/09/2026 11:00**, Esteban, con
+`bau.pastori@gmail.com`. Cancelalo (desde tu panel o desde la agenda del
+empleado) con un motivo que no sea "Cliente avisó" ni "Cliente no vino", y
+Claude puede leer el mail y confirmarlo.
 
-⚠️ Los tres casos en los que **NO** se manda, y está bien que no se mande: el
-turno ya pasó, el cliente no vino, o el cliente pidió cancelar.
+### Lo que encontró esa prueba
+
+El mail llegaba con el pie **"WhatsApp: 0000000000"** — el placeholder de la
+demo. En el de cancelación era peor: armaba un botón a `wa.me/0000000000`.
+Arreglado en la **027**: si el número no sirve, no se dibuja. Las 7 barberías
+reales tienen el número bien; era solo la demo.
 
 ---
 
