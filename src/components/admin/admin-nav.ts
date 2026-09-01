@@ -100,7 +100,11 @@ export function getAdminNavGroups(barbershopSlug: string): AdminNavGroup[] {
           label: "Equipo",
           href: `${base}/equipo`,
           icon: Users,
-          requiresFeature: "multi_admin",
+          // La pestaña la abre la feature de ABAJO, no la de arriba: adentro
+          // conviven los accesos de empleado (Esencial) y las cuentas de dueño
+          // (Pro). Atada a `multi_admin`, un Esencial no veía la única puerta
+          // para darle acceso a su barbero.
+          requiresFeature: "cuentas_empleados",
         },
       ],
     },

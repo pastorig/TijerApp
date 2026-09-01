@@ -58,6 +58,7 @@ const PLANS: Plan[] = [
     features: [
       "Todo lo de Solo, más:",
       "Hasta 3 barberos",
+      "Cuenta para cada barbero (ve solo su agenda)",
       "Cobro de seña online (Mercado Pago)",
       "Cupones de descuento",
       "Reportes por barbero",

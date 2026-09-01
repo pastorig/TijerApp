@@ -6,6 +6,7 @@
  *
  * Correr: node --experimental-strip-types scripts/test-plans.ts
  */
+import { getAdminNavGroups } from "@/components/admin/admin-nav";
 import {
   ANNUAL_DISCOUNT_PERCENT,
   PLAN_LIMITS,
@@ -303,6 +304,32 @@ check(
   "el monto sin fundador es el de su tier",
   billedMonthlyArs("esencial", false),
   PLAN_META.esencial.priceArs,
+);
+
+// ── La puerta de Equipo ──────────────────────────────────────────────────────
+// Adentro de esa pantalla conviven dos features de planes distintos: los
+// accesos de empleado (Esencial) y las cuentas de dueño (Pro). Estuvo atada a
+// `multi_admin`, así que un Esencial pagaba por los accesos y no tenía ninguna
+// pantalla desde donde darlos: la pestaña ni aparecía. La puerta la marca la
+// feature de ABAJO, y esto lo deja clavado.
+const pestañaEquipo = getAdminNavGroups("una-barberia")
+  .find((g) => g.key === "equipo")
+  ?.items.find((i) => i.href.endsWith("/equipo"));
+
+check(
+  "la pestaña Equipo existe",
+  Boolean(pestañaEquipo),
+  true,
+);
+check(
+  "Equipo se abre con la feature de los empleados, no con la de admins",
+  pestañaEquipo?.requiresFeature,
+  "cuentas_empleados",
+);
+check(
+  "y por lo tanto un Esencial la ve",
+  hasFeature("esencial", pestañaEquipo!.requiresFeature!),
+  true,
 );
 
 console.log(`\n${passed}/${passed + failed} OK${failed ? ` · ${failed} FALLARON` : ""}`);
