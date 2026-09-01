@@ -39,6 +39,7 @@ import { InitialsAvatar } from "./booking/InitialsAvatar";
 import { ServicePicker } from "./booking/ServicePicker";
 import { DateStrip } from "./booking/DateStrip";
 import { StepHeader } from "./booking/StepHeader";
+import { PasoPendiente } from "./booking/PasoPendiente";
 import { DepositPaymentPanel } from "./DepositPaymentPanel";
 import { SimulatePaymentButton } from "./SimulatePaymentButton";
 import type { CouponValidation } from "@/lib/public-coupons";
@@ -979,7 +980,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             </p>
           ) : null}
 
-          <div className="space-y-3">
+          <div className="space-y-3" id="paso-barbero">
             <StepHeader
               number={1}
               title={activeBarbers.length > 1 ? "Elegí tu barbero" : "Tu barbero"}
@@ -1009,16 +1010,20 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             ) : null}
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3" id="paso-servicio">
             <StepHeader
               number={2}
               title="¿Qué te hacés?"
               subtitle={isLoadingServices ? "Actualizando…" : undefined}
               done={Boolean(selectedService)}
+              locked={!selectedBarber}
             />
+            {/* El aviso grande va UNA sola vez, en el paso de la fecha. Acá y
+                en los horarios alcanza con el paso en gris: repetir el mismo
+                cartel tres veces convierte la ayuda en ruido y deja de leerse. */}
             {!selectedBarber ? (
               <p className="text-xs text-[color:var(--text-muted)]">
-                Elegí un barbero primero.
+                Se abre cuando elijas tu barbero.
               </p>
             ) : availableServices.length === 0 &&
               !isLoadingServices &&
@@ -1044,11 +1049,30 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 selectedDate ? getWeekdayName(selectedDate) : undefined
               }
               done={Boolean(selectedDate)}
+              locked={!selectedBarber}
             />
+            {/* Sin barbero la tira de días no sirve para nada: los horarios se
+                calculan contra la agenda de UNO. Antes quedaba clickeable, y
+                ahí se perdía la gente — tocaba un día, no pasaba nada y se iba
+                creyendo que la barbería no tenía turnos. */}
+            {!selectedBarber ? (
+              <PasoPendiente
+                texto="Elegí primero tu barbero y ahí se abren los días con sus horarios."
+                irA="paso-barbero"
+                irLabel="Elegir barbero"
+              />
+            ) : null}
+            <div
+              className={
+                selectedBarber
+                  ? undefined
+                  : "pointer-events-none select-none opacity-45"
+              }
+            >
             <DateStrip
               value={selectedDate}
               today={getTodayInputValue()}
-              disabled={isSaving}
+              disabled={isSaving || !selectedBarber}
               onChange={(ymd) => {
                 // Doble guard contra fechas pasadas (por el input "otra fecha").
                 setSelectedDate(
@@ -1058,6 +1082,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 setFormError("");
               }}
             />
+            </div>
           </div>
 
           {/* Horarios como grid de pills clickeables */}
@@ -1067,6 +1092,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 number={4}
                 title="¿A qué hora?"
                 done={Boolean(selectedTime)}
+                locked={!selectedService}
               />
               {isLoadingTimes ? (
                 <span className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
@@ -1075,10 +1101,21 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               ) : null}
             </div>
 
+            {/* Decía siempre "elegí un servicio", incluso cuando lo que faltaba
+                era el barbero: mandaba a un paso que todavía estaba cerrado. */}
             {!selectedService ? (
-              <p className="mt-4 text-xs text-[color:var(--text-muted)]">
-                Elegí un servicio para ver los horarios disponibles.
-              </p>
+              !selectedBarber ? (
+                <p className="mt-4 text-xs text-[color:var(--text-muted)]">
+                  Se abren cuando elijas tu barbero.
+                </p>
+              ) : isLoadingServices || isLoadingBarbers ? null : (
+                // Con barbero elegido el servicio se autoselecciona, así que
+                // acá se cae sólo si ese barbero no tiene ninguno activo — y de
+                // eso ya avisa el paso 2. No hay a dónde mandarlo.
+                <p className="mt-4 text-xs font-semibold text-[color:var(--danger)]">
+                  Este barbero todavía no tiene servicios para reservar.
+                </p>
+              )
             ) : availabilitySlots.length === 0 && !isLoadingTimes ? (
               <div className="mt-4 grid gap-3">
                 {barbershop.waitlistEnabled ? (
