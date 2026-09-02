@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import {
   DEFAULT_SERVICES,
   DEFAULT_WORKING_HOURS,
@@ -14,6 +14,7 @@ import {
   findAvailableSlug,
   provisionBarbershop,
 } from "@/lib/provision-barbershop";
+import { avisarAltaDeBarberia } from "@/lib/server/signup-notice";
 
 /**
  * Registro self-serve público: el barbero se da de alta solo y arranca su
@@ -139,6 +140,23 @@ export async function POST(request: Request) {
         { status: result.status },
       );
     }
+
+    // El aviso al dueño de TijerApp va DESPUÉS de la respuesta: el barbero no
+    // puede quedarse mirando una pantalla de carga por un mail que ni siquiera
+    // es para él. Va con `after` y no con un `void` suelto porque la promesa
+    // huérfana la puede cortar la plataforma al terminar la request — el aviso
+    // llegaría o no según cuánto tardara Resend.
+    after(() =>
+      avisarAltaDeBarberia({
+        slug: result.slug,
+        nombre: result.name,
+        dueño: payload.ownerName!.trim(),
+        email,
+        whatsapp: payload.whatsapp!.trim(),
+        cuentaYaExistía: result.reusedExistingUser,
+        diasDeTrial: TRIAL_DAYS,
+      }),
+    );
 
     // El email ya tenía cuenta: la barbería quedó creada y vinculada, pero la
     // contraseña que acaba de tipear NO es la suya. Se lo avisamos para que
