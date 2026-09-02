@@ -64,6 +64,27 @@ function getTodayInputValue() {
   return getLocalDateInputValue();
 }
 
+/**
+ * Qué servicio queda elegido cuando se (re)carga la lista de un barbero.
+ *
+ * Con uno solo no tiene sentido pedir un toque: se preselecciona, igual que
+ * pasa con el barbero único. Con dos o más NO se preselecciona ninguno. Antes
+ * quedaba marcado el primero y el precio del resumen lo acompañaba, así que
+ * alguien podía terminar reservando "Corte" cuando quería "Corte + Barba"
+ * simplemente porque ya venía tildado y nunca tocó nada.
+ *
+ * Si la elección que ya había sigue existiendo, se respeta: recargar la lista
+ * no puede pisar lo que el cliente eligió.
+ */
+function elegirServicioInicial(
+  servicios: readonly BookingService[],
+  elegido?: string,
+): string {
+  const sigueValido = servicios.find((servicio) => servicio.id === elegido);
+  if (sigueValido) return sigueValido.id;
+  return servicios.length === 1 ? servicios[0].id : "";
+}
+
 const SLOT_REASON_TITLE: Record<AvailabilitySlot["reason"], string> = {
   available: "",
   occupied: "Ocupado",
@@ -93,7 +114,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     initialBarber?.id ?? "",
   );
   const [selectedServiceId, setSelectedServiceId] = useState(
-    initialBarber?.services[0]?.id ?? "",
+    elegirServicioInicial(initialBarber?.services ?? []),
   );
   const [selectedBarberServices, setSelectedBarberServices] = useState<
     BookingService[]
@@ -176,9 +197,14 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     ? getBarberDisplayName(selectedBarber)
     : "";
   const availableServices = selectedBarberServices;
-  const selectedService =
-    availableServices.find((service) => service.id === selectedServiceId) ??
-    availableServices[0];
+  // Sin `?? availableServices[0]`: ese fallback hacía que elegir el servicio
+  // no fuera realmente un paso. Ahora, o lo eligió el cliente, o es el único
+  // que hay (lo resuelve `elegirServicioInicial`).
+  const selectedService = availableServices.find(
+    (service) => service.id === selectedServiceId,
+  );
+  const faltaBarbero = !selectedBarber;
+  const faltaServicio = !selectedService;
   const isSubmitDisabled =
     isSaving ||
     isLoadingBarbers ||
@@ -202,7 +228,9 @@ export function BookingForm({ barbershop }: BookingFormProps) {
 
     setSelectedBarberId(barberId);
     setSelectedBarberServices(barber?.services ?? []);
-    setSelectedServiceId("");
+    // Cambiar de barbero borra el servicio: son listas distintas. La misma
+    // regla de siempre decide si queda uno puesto (sólo si tiene uno solo).
+    setSelectedServiceId(elegirServicioInicial(barber?.services ?? []));
     setSelectedTime("");
     setFormError("");
   }
@@ -314,7 +342,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
         setActiveBarbers(nextBarbers);
         setSelectedBarberId(nextSelectedBarber?.id ?? "");
         setSelectedBarberServices(nextSelectedBarber?.services ?? []);
-        setSelectedServiceId(nextSelectedBarber?.services[0]?.id ?? "");
+        setSelectedServiceId(elegirServicioInicial(nextSelectedBarber?.services ?? []));
       } catch {
         if (isMounted) {
           setActiveBarbers(demoActiveBarbers);
@@ -360,7 +388,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
 
         if (error) {
           setSelectedBarberServices(selectedBarber.services);
-          setSelectedServiceId(selectedBarber.services[0]?.id ?? "");
+          setSelectedServiceId(elegirServicioInicial(selectedBarber.services));
           setFormError(
             "No pudimos cargar los servicios reales. Mostramos la demo temporalmente.",
           );
@@ -379,14 +407,12 @@ export function BookingForm({ barbershop }: BookingFormProps) {
 
         setSelectedBarberServices(nextServices);
         setSelectedServiceId(
-          nextServices.find((service) => service.id === selectedServiceId)?.id ??
-            nextServices[0]?.id ??
-            "",
+          elegirServicioInicial(nextServices, selectedServiceId),
         );
       } catch {
         if (isMounted) {
           setSelectedBarberServices(selectedBarber.services);
-          setSelectedServiceId(selectedBarber.services[0]?.id ?? "");
+          setSelectedServiceId(elegirServicioInicial(selectedBarber.services));
           setFormError(
             "No pudimos cargar los servicios reales. Mostramos la demo temporalmente.",
           );
@@ -1049,30 +1075,37 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 selectedDate ? getWeekdayName(selectedDate) : undefined
               }
               done={Boolean(selectedDate)}
-              locked={!selectedBarber}
+              locked={faltaBarbero || faltaServicio}
             />
-            {/* Sin barbero la tira de días no sirve para nada: los horarios se
-                calculan contra la agenda de UNO. Antes quedaba clickeable, y
-                ahí se perdía la gente — tocaba un día, no pasaba nada y se iba
+            {/* La tira de días no sirve hasta tener barbero Y servicio: el
+                horario se calcula contra la agenda de UNO y depende de cuánto
+                dura lo que se va a hacer. Antes quedaba clickeable igual, y ahí
+                se perdía la gente — tocaba un día, no pasaba nada y se iba
                 creyendo que la barbería no tenía turnos. */}
-            {!selectedBarber ? (
+            {faltaBarbero ? (
               <PasoPendiente
                 texto="Elegí primero tu barbero y ahí se abren los días con sus horarios."
                 irA="paso-barbero"
                 irLabel="Elegir barbero"
               />
+            ) : faltaServicio ? (
+              <PasoPendiente
+                texto="Ahora elegí qué te vas a hacer: el horario depende de cuánto dura."
+                irA="paso-servicio"
+                irLabel="Elegir servicio"
+              />
             ) : null}
             <div
               className={
-                selectedBarber
-                  ? undefined
-                  : "pointer-events-none select-none opacity-45"
+                faltaBarbero || faltaServicio
+                  ? "pointer-events-none select-none opacity-45"
+                  : undefined
               }
             >
             <DateStrip
               value={selectedDate}
               today={getTodayInputValue()}
-              disabled={isSaving || !selectedBarber}
+              disabled={isSaving || faltaBarbero || faltaServicio}
               onChange={(ymd) => {
                 // Doble guard contra fechas pasadas (por el input "otra fecha").
                 setSelectedDate(
@@ -1092,7 +1125,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 number={4}
                 title="¿A qué hora?"
                 done={Boolean(selectedTime)}
-                locked={!selectedService}
+                locked={faltaServicio}
               />
               {isLoadingTimes ? (
                 <span className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
@@ -1103,15 +1136,19 @@ export function BookingForm({ barbershop }: BookingFormProps) {
 
             {/* Decía siempre "elegí un servicio", incluso cuando lo que faltaba
                 era el barbero: mandaba a un paso que todavía estaba cerrado. */}
-            {!selectedService ? (
-              !selectedBarber ? (
+            {faltaServicio ? (
+              faltaBarbero ? (
                 <p className="mt-4 text-xs text-[color:var(--text-muted)]">
                   Se abren cuando elijas tu barbero.
                 </p>
-              ) : isLoadingServices || isLoadingBarbers ? null : (
-                // Con barbero elegido el servicio se autoselecciona, así que
-                // acá se cae sólo si ese barbero no tiene ninguno activo — y de
-                // eso ya avisa el paso 2. No hay a dónde mandarlo.
+              ) : isLoadingServices || isLoadingBarbers ? null : availableServices.length > 0 ? (
+                <p className="mt-4 text-xs text-[color:var(--text-muted)]">
+                  Se abren cuando elijas el servicio.
+                </p>
+              ) : (
+                // Barbero elegido y ni un servicio en la lista: no es que falte
+                // tocar algo, es que ese barbero no tiene ninguno activo. De eso
+                // ya avisa el paso 2, así que acá no hay a dónde mandarlo.
                 <p className="mt-4 text-xs font-semibold text-[color:var(--danger)]">
                   Este barbero todavía no tiene servicios para reservar.
                 </p>
