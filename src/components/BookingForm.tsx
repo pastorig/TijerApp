@@ -695,16 +695,17 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       const data = payload.ok && payload.token
         ? { confirmation_token: payload.token }
         : null;
-      const error = data
-        ? null
-        : { code: res.status === 409 ? "23505" : "", message: payload.error ?? "" };
-
-      if (error) {
-        // 23505 = unique_violation de Postgres. El índice parcial
-        // `appointments_unique_active_slot` rechazó porque ya existe un turno
-        // activo (pending/confirmed) en ese slot. Race condition cerrada por
-        // la DB — el cliente recibe un mensaje claro y un slot recargado.
-        if (error.code === "23505") {
+      if (!data) {
+        // 409 = el horario no se puede reservar. El servidor manda el motivo
+        // real (ocupado, bloqueado, fuera del horario de ESE barbero, muy
+        // pronto) y acá se muestra tal cual.
+        //
+        // Antes cualquier 409 se traducía a "acaba de ocuparse". Una barbería
+        // reportó que un barbero le bloqueaba la agenda a otro: el horario
+        // estaba fuera del día de ese barbero, pero el cartel decía que alguien
+        // se lo había ganado de mano, y salieron a buscar un choque que no
+        // existía. El mensaje del servidor ya venía bien; lo tirábamos.
+        if (res.status === 409) {
           setAvailabilitySlots((currentSlots) =>
             currentSlots.map((slot) =>
               slot.time === selectedTime
@@ -713,14 +714,13 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             ),
           );
           setSelectedTime("");
-          failBooking(
-            "Ese horario acaba de ocuparse. Elegí otro disponible.",
-          );
+          failBooking(payload.error || "Ese horario no está disponible. Elegí otro.");
           return;
         }
 
         failBooking(
-          "No pudimos guardar la reserva. Revisá los datos e intentá nuevamente.",
+          payload.error ||
+            "No pudimos guardar la reserva. Revisá los datos e intentá nuevamente.",
         );
         return;
       }

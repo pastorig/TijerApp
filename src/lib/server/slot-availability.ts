@@ -1,7 +1,11 @@
 import "server-only";
 
-import { buildAvailabilitySlots } from "@/lib/availability";
+import {
+  buildAvailabilitySlots,
+  type AvailabilitySlot,
+} from "@/lib/availability";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { motivoDeHorario } from "@/lib/slot-reason";
 import type {
   BarberDayOverrideRow,
   BarberTimeBlockRow,
@@ -36,7 +40,7 @@ export const MAX_BOOKING_DAYS_AHEAD = 180;
 
 export async function getServerAvailability(
   params: ServerAvailabilityParams,
-): Promise<{ available: string[] }> {
+): Promise<{ available: string[]; slots: AvailabilitySlot[] }> {
   const { barbershopSlug, barberId, date, durationMinutes, excludeAppointmentId } =
     params;
   const supabase = getSupabaseAdminClient();
@@ -128,7 +132,10 @@ export async function getServerAvailability(
     minBookingNoticeMinutes: shopRes.data?.min_booking_notice_minutes ?? 0,
   });
 
-  return { available: slots.filter((s) => s.isAvailable).map((s) => s.time) };
+  return {
+    available: slots.filter((s) => s.isAvailable).map((s) => s.time),
+    slots,
+  };
 }
 
 export type SlotCheck =
@@ -164,13 +171,18 @@ export async function assertSlotBookable(
     };
   }
 
-  const { available } = await getServerAvailability(params);
+  const { available, slots } = await getServerAvailability(params);
+  const buscado = time.slice(0, 5);
 
-  if (!available.includes(time.slice(0, 5))) {
+  if (!available.includes(buscado)) {
+    // Si el horario ni figura en la grilla del barbero es que para él no
+    // existe: pasa cuando dos barberos arrancan a horas distintas y sus
+    // grillas no coinciden. `motivoDeHorario` cubre ese caso.
+    const slot = slots.find((s) => s.time === buscado);
     return {
       ok: false,
       status: 409,
-      error: "Ese horario no está disponible. Elegí otro.",
+      error: motivoDeHorario(slot?.reason),
     };
   }
   return { ok: true };
