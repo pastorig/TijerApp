@@ -9,6 +9,7 @@ import {
   type BarberTimeBlockUpdate,
   type BarberWeeklyScheduleInsert,
 } from "@/lib/supabase";
+import { ahoraEnArgentina } from "@/lib/hora-argentina";
 
 type BarberLookupInput = {
   barbershopSlug: string;
@@ -315,6 +316,10 @@ export async function getBarberDayAvailability({
     timeBlocks: blocksResult.data ?? [],
     appointments: (appointmentsResult.data ?? []) as AppointmentInterval[],
     minBookingNoticeMinutes,
+    // La hora manda la barbería, no el aparato del cliente. Acá casi siempre
+    // coinciden —el que reserva está en Argentina—, pero un celular con la
+    // zona mal puesta le tachaba o le ofrecía horarios que no eran.
+    now: ahoraEnArgentina(),
   });
 
   return {

@@ -6,6 +6,7 @@ import {
 } from "@/lib/availability";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { motivoDeHorario } from "@/lib/slot-reason";
+import { ahoraEnArgentina } from "@/lib/hora-argentina";
 import type {
   BarberDayOverrideRow,
   BarberTimeBlockRow,
@@ -130,6 +131,10 @@ export async function getServerAvailability(
         durationMinutes: r.service_duration_minutes,
       })),
     minBookingNoticeMinutes: shopRes.data?.min_booking_notice_minutes ?? 0,
+    // Sin esto el servidor mide con el reloj de Vercel, que corre en UTC: tres
+    // horas adelante del de la barbería. Rechazaba por "falta muy poco" turnos
+    // que la pantalla del cliente mostraba libres.
+    now: ahoraEnArgentina(),
   });
 
   return {
