@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No quedan marcadores [NEEDS CLARIFICATION] — **quedan 2 preguntas abiertas (Q1 y Q2), con opción sugerida en las dos**
+- [x] No quedan marcadores [NEEDS CLARIFICATION] — Q1 y Q2 resueltas el 06/09/2026
 - [x] Los requisitos son testeables y sin ambigüedad
 - [x] Los criterios de éxito son medibles
 - [x] Los criterios de éxito no hablan de implementación
@@ -35,4 +35,4 @@
 
 **El arreglo de la pausa (FR-004) no es opcional.** Sin él, esta feature empeora las cosas: hoy la excepción se carga de a un día y desde un aviso puntual; con una pantalla propia para cargar semanas enteras, el almuerzo abierto a reservas pasaría de un caso raro a algo cotidiano. Está verificado en producción: el 30 y el 31 de julio, un barbero con pausa de 13:00 a 16:00 quedó con esas tres horas ofrecidas.
 
-**Q1 y Q2 no bloquean la planificación** de la mayor parte del trabajo; sí definen el comportamiento al guardar y la forma de la pantalla. Conviene responderlas antes de escribir la UI.
+**Q1 y Q2 quedaron resueltas** (06/09/2026): al guardar se avisa de los turnos que quedan afuera pero no se traba ni se toca ninguno, y el rango no abre los días que el barbero tiene libres salvo pedido explícito. La spec está lista para planificar.

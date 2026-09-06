@@ -21,13 +21,17 @@ La barbería tiene que poder decir **"del 14 al 18 de septiembre este barbero tr
 
 3. **Given** una excepción cargada del 14 al 18, **When** se la elimina, **Then** esos días vuelven inmediatamente a la regla semanal y ningún otro día se ve afectado.
 
-4. **Given** un rango que incluye un día en el que el barbero **no** trabaja según su regla semanal, **When** la excepción dice que sí trabaja, **Then** ese día pasa a ofrecer turnos con el horario de la excepción.
+4. **Given** un rango del 14 al 28 que incluye dos domingos, días en los que el barbero **no** trabaja, **When** se guarda la excepción sin pedir nada especial, **Then** los domingos siguen cerrados y solo cambian los días que ya trabajaba.
 
-5. **Given** un rango cargado para marcar días libres (no trabaja), **When** un cliente entra a reservar, **Then** esos días no ofrecen ningún horario.
+5. **Given** ese mismo rango, **When** se marca explícitamente "incluir también mis días libres", **Then** los domingos pasan a ofrecer turnos con el horario de la excepción.
 
-6. **Given** una excepción ya cargada para el 15 de septiembre, **When** se carga otra excepción que incluye el 15, **Then** la nueva reemplaza a la anterior para ese día, sin duplicar.
+6. **Given** un rango cargado para marcar días libres (no trabaja), **When** un cliente entra a reservar, **Then** esos días no ofrecen ningún horario.
 
-7. **Given** una excepción vigente, **When** el dueño mira la agenda de esos días, **Then** ve marcado que ese día tiene un horario distinto al habitual.
+7. **Given** una excepción ya cargada para el 15 de septiembre, **When** se carga otra excepción que incluye el 15, **Then** la nueva reemplaza a la anterior para ese día, sin duplicar.
+
+8. **Given** una excepción vigente, **When** el dueño mira la agenda de esos días, **Then** ve marcado que ese día tiene un horario distinto al habitual.
+
+9. **Given** turnos ya reservados a las 19:40 y 20:20 del jueves 17, **When** se guarda una excepción que cierra ese día a las 18:00, **Then** el sistema avisa cuáles son los dos turnos que quedan afuera, **deja guardar igual** y los turnos siguen en pie.
 
 ### Edge Cases
 
@@ -52,9 +56,11 @@ La barbería tiene que poder decir **"del 14 al 18 de septiembre este barbero tr
 - **FR-006**: Se puede eliminar una excepción; las fechas vuelven a la regla semanal.
 - **FR-007**: Cargar una excepción sobre fechas que ya tienen una **reemplaza** la anterior en esas fechas, sin dejar dos excepciones vivas para el mismo día.
 - **FR-008**: La disponibilidad pública que ve el cliente y la que valida el servidor al reservar usan **exactamente la misma** definición de jornada para esas fechas.
-- **FR-009**: Antes de guardar, si hay turnos ya reservados que quedarían fuera del nuevo horario, el sistema lo avisa indicando cuáles.
+- **FR-009**: Antes de guardar, si hay turnos ya reservados que quedarían fuera del nuevo horario, el sistema avisa **cuáles son** (cliente y hora) y **deja guardar igual**. La barbería los resuelve con el cliente por su cuenta, como hace hoy cuando un turno se pasa del cierre.
 - **FR-010**: La barbería puede ver la lista de excepciones vigentes de cada barbero, con sus fechas y horarios.
-- **FR-011**: Guardar una excepción no altera los turnos ya reservados: ni los cancela, ni los mueve, ni les cambia la hora.
+- **FR-011**: Guardar una excepción no altera los turnos ya reservados: ni los cancela, ni los mueve, ni les cambia la hora. Ninguna acción de esta pantalla toca un turno.
+- **FR-012**: Por defecto la excepción **solo toca los días del rango en los que el barbero ya trabaja**. Un rango del 14 al 28 no abre los domingos.
+- **FR-013**: Para abrir días que la regla semanal tiene cerrados hay que pedirlo explícitamente ("incluir también mis días libres"), apagado por defecto. Abrir un día libre sin querer es el error más caro: el cliente reserva, el barbero no aparece.
 
 ### Should Have
 
@@ -119,38 +125,24 @@ Cada capa hace **una** cosa. La excepción define la jornada; no cancela turnos,
 
 ## Clarifications
 
-### Q1: Turnos que quedan fuera del horario nuevo
+### Q1 — Turnos que quedan fuera del horario nuevo · **RESUELTA: avisar y dejar guardar**
 
-**Context**: FR-009 y FR-011. Si la excepción **acorta** la jornada (por ejemplo, "el jueves cierro a las 18" cuando había turnos a las 20), esos turnos quedan afuera del horario.
+Cuando la excepción **acorta** la jornada, los turnos ya reservados afuera del horario nuevo **no se tocan**. El sistema avisa cuáles son, con cliente y hora, y deja guardar. La barbería lo resuelve con cada uno, igual que hoy cuando un turno se pasa del cierre.
 
-**What we need to know**: ¿Qué hace el sistema al guardar?
+Se descartó bloquear el guardado: quien se marca un día libre suele estar apurado y necesita cerrar el día primero, no hacer los deberes antes. Y se descartó reprogramar desde acá: mete todo el flujo de reprogramación adentro de esta pantalla.
 
-| Option | Answer | Implications |
-| ------ | ------ | ------------ |
-| A | Avisa cuáles quedan afuera y deja guardar igual. Los turnos siguen en pie y la agenda los muestra marcados como fuera de horario. | Nadie pierde un turno por error. La barbería resuelve con el cliente por WhatsApp, como hace hoy. Es lo que ya pasa cuando un turno se pasa del cierre. |
-| B | Bloquea el guardado hasta que se reprogramen o cancelen esos turnos. | Imposible dejar la agenda inconsistente, pero traba a quien solo quería marcarse un día libre y tiene que ir a mover turnos primero. |
-| C | Avisa y ofrece reprogramarlos ahí mismo. | Lo más completo y lo más caro: mete el flujo de reprogramación adentro de esta pantalla. |
+Queda en FR-009 y FR-011.
 
-**Suggested**: A — es coherente con cómo se comporta hoy el resto del sistema y no traba al que tiene apuro.
+### Q2 — Días que el barbero no trabaja · **RESUELTA: no se abren solos**
 
-**Your choice**: _[pendiente]_
+El rango **solo toca los días en los que el barbero ya trabaja**. Cargar del 14 al 28 no abre los domingos.
 
-### Q2: Días sueltos dentro del rango
+Para abrir un día normalmente cerrado hay un tilde explícito, apagado por defecto. Abrir un domingo sin querer es el error más caro de todos: el cliente reserva, el barbero no aparece, y para el cliente la que falló es la app.
 
-**Context**: FR-103. Un rango del lunes 14 al viernes 18 no tiene problema, pero uno del 14 al 28 se come dos domingos.
+Se descartaron por ahora los tildes por día de la semana (L M M J V S D): cubren casos como "las próximas tres semanas, solo los sábados", pero recargan la pantalla y todavía nadie lo pidió. Queda anotado como FR-103.
 
-**What we need to know**: ¿La excepción aplica a **todos** los días del rango, o se eligen los días de la semana?
-
-| Option | Answer | Implications |
-| ------ | ------ | ------------ |
-| A | A todos los días del rango. Los días que el barbero no trabaja según su regla semanal quedan como no laborables salvo que la excepción diga otra cosa. | Lo más simple de entender y de explicar. Para saltear un domingo hay que cargar dos rangos. |
-| B | Con tildes de días de la semana (L M M J V S D) dentro del rango. | Cubre "las próximas tres semanas, solo los sábados" en una sola carga. Una pantalla más cargada. |
-
-**Suggested**: A para el MVP, B como FR-103 si aparece la necesidad.
-
-**Your choice**: _[pendiente]_
+Queda en FR-012 y FR-013.
 
 ## Next Steps
 
-- Responder Q1 y Q2 (o correr **speckit-clarify**).
 - Correr **speckit-plan** para el diseño de implementación.
