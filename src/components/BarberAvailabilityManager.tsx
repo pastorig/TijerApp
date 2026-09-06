@@ -20,6 +20,7 @@ import {
 } from "@/lib/barber-availability";
 import { listActiveServicesByBarber } from "@/lib/barber-services";
 import { useConfirm } from "@/components/ui";
+import { BarberScheduleExceptions } from "@/components/admin/BarberScheduleExceptions";
 import { formatDateForDisplay, timeValueToMinutes } from "@/lib/format";
 import { getTodayYmd } from "@/components/admin/date-utils";
 import type { BarberRow, BarberServiceRow } from "@/lib/supabase";
@@ -1040,6 +1041,14 @@ export function BarberAvailabilityManager({
               ) : null}
             </div>
           </div>
+
+          {/* Cambiar el horario por unos días sin tocar la regla semanal. Va en
+              su propio componente: este archivo ya pasa las mil líneas. */}
+          <BarberScheduleExceptions
+            barbershop={barbershop}
+            barber={barber}
+            reglaSemanal={weeklySchedules}
+          />
         </>
       )}
     </section>

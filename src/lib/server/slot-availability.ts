@@ -66,7 +66,11 @@ export async function getServerAvailability(
         .eq("barber_id", barberId),
       supabase
         .from("barber_day_overrides")
-        .select("override_date, start_time, end_time, is_working")
+        // La pausa va en el select: sin estas columnas el servidor arma el día
+        // sin almuerzo y termina aceptando turnos que la pantalla no ofrece.
+        .select(
+          "override_date, start_time, end_time, is_working, hereda_pausa, break_start, break_end",
+        )
         .eq("barbershop_slug", barbershopSlug)
         .eq("barber_id", barberId)
         .eq("override_date", date)

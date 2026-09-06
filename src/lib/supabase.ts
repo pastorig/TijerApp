@@ -338,6 +338,20 @@ type BarberDayOverrideRow = {
   end_time: string;
   is_working: boolean;
   deleted_at: string | null;
+  /**
+   * true = la pausa del día sale de la regla semanal. Es el default de la
+   * columna, y lo que arregla las filas viejas: antes la excepción borraba el
+   * almuerzo del barbero sin avisar.
+   *
+   * Opcional en el tipo porque las filas leídas con un `select` que no la pida
+   * llegan sin ella — un modo de falla silencioso conocido.
+   */
+  hereda_pausa?: boolean;
+  /** Solo se mira cuando `hereda_pausa` es false. Ambos null = ese día no para. */
+  break_start?: string | null;
+  break_end?: string | null;
+  /** "horas extra", "vacaciones". Solo la ve la barbería. */
+  nota?: string | null;
 };
 
 type BarberDayOverrideInsert = Omit<
