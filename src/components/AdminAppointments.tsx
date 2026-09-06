@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  CalendarClock,
   Plus,
   ChevronDown,
   ChevronRight,
@@ -741,6 +742,35 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const hasOptimizationSection =
     dayOptimizationAlerts.length > 0 || resolvedDayOverrideSummaries.length > 0;
 
+  /**
+   * Los barberos que HOY tienen un horario distinto al de siempre.
+   *
+   * Es distinto de `resolvedDayOverrideSummaries`, que solo aparece cuando la
+   * extensión del cierre además se está aprovechando con turnos. Esto es más
+   * básico y siempre visible: sin un cartel, el dueño abre la agenda del 15,
+   * ve turnos hasta las 22 y no tiene forma de saber por qué ese día llega más
+   * lejos que el resto.
+   */
+  const horariosEspecialesDelDia = useMemo(() => {
+    return Object.entries(dayOverridesByBarber)
+      .filter(
+        ([barberId, override]) =>
+          override !== null &&
+          (selectedBarberFilter === "all" || barberId === selectedBarberFilter),
+      )
+      .map(([barberId, override]) => {
+        const barber = barbers.find((b) => b.id === barberId);
+        return {
+          barberId,
+          barberName: barber?.display_name?.trim() || barber?.name || "Barbero",
+          trabaja: override!.is_working,
+          desde: normalizeTimeShort(override!.start_time),
+          hasta: normalizeTimeShort(override!.end_time),
+          nota: override!.nota ?? null,
+        };
+      });
+  }, [barbers, dayOverridesByBarber, selectedBarberFilter]);
+
   async function handleConfirmAppointment(appointment: AppointmentRow) {
     if (!appointment.id) {
       toast.error("No pudimos identificar la reserva.");
@@ -1389,6 +1419,34 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                   </div>
                 ) : null}
               </section>
+            ) : null}
+
+            {/* Este día no se rige por el horario de siempre. Va arriba de la
+                lista y sin plegar: es contexto para leer todo lo de abajo. */}
+            {horariosEspecialesDelDia.length > 0 ? (
+              <div className="mb-4 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/35 bg-[color:var(--brand-gold-soft)] px-3 py-2.5">
+                <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)]">
+                  <CalendarClock aria-hidden="true" className="size-3.5" />
+                  Horario especial este día
+                </p>
+                <ul className="mt-1.5 grid gap-1">
+                  {horariosEspecialesDelDia.map((h) => (
+                    <li key={h.barberId} className="text-xs leading-5 text-white">
+                      <strong>{h.barberName}</strong>{" "}
+                      {h.trabaja ? (
+                        <>
+                          trabaja de {h.desde} a {h.hasta}
+                        </>
+                      ) : (
+                        "no trabaja"
+                      )}
+                      {h.nota ? (
+                        <span className="text-[color:var(--text-muted)]"> · {h.nota}</span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
 
             {/* Buscador + filtro barbero.
