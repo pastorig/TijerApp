@@ -192,6 +192,22 @@ T012  →  T013                            lint+build · smoke contra la demo
   - [ ] Lo que ofrece la página y lo que acepta el servidor coinciden en las fechas con excepción (SC-005)
 - **Dependencies**: T012
 
+## Estado al 06/09/2026 — TODO HECHO Y EN PRODUCCIÓN
+
+T001 a T013 completas. La migración la corrió Bautista en el SQL Editor y quedó
+verificada: las cuatro columnas existen, las 16 excepciones que ya estaban
+pasaron a heredar la pausa (o sea que lo de julio quedó arreglado hacia atrás),
+y el check rechaza media pausa.
+
+Verificado de punta a punta contra la demo, en local: se cargaron los cinco días
+desde la pantalla, el día se estiró de 19:20 a 21:20, la pausa de 13 a 16 quedó
+intacta (SC-002), el lunes siguiente no se movió (SC-001) y la limpieza dejó
+todo como estaba (SC-006). Después, en producción: la pantalla está, el cartel
+de la agenda aparece con horario y motivo, y la reserva pública sigue andando en
+las tres barberías con reserva activa. Las otras tres dan cero por motivos
+ajenos: Keka's no trabaja los martes, y Pope's y Grado tienen la reserva pausada
+por plan vencido.
+
 ## Completion Criteria
 
 - Todas las tareas ✅
