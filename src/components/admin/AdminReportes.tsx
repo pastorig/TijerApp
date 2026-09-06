@@ -10,20 +10,24 @@ import { calculateCommissions } from "@/lib/commissions";
 import { whatsAppLinkWithMessage } from "@/lib/whatsapp";
 import { cn } from "@/lib/cn";
 import {
+  formatDateForDisplay,
   formatPrice,
   normalizeDateValue,
   timeValueToMinutes,
 } from "@/lib/format";
+import {
+  rangoAnterior,
+  rangoDelPeriodo,
+  type PeriodKey,
+} from "@/lib/report-ranges";
 import type { AppointmentRow, BarberRow } from "@/lib/supabase";
 import { Select } from "@/components/ui";
-import { getTodayYmd, parseYmd, toYmd } from "./date-utils";
+import { getTodayYmd, parseYmd } from "./date-utils";
 import { ExportReportPdfButton } from "./ExportReportPdfButton";
 
 type AdminReportesProps = {
   barbershop: DemoBarbershop;
 };
-
-type PeriodKey = "today" | "week" | "month";
 
 const PERIOD_OPTIONS: Array<{ value: PeriodKey; label: string }> = [
   { value: "today", label: "Hoy" },
@@ -31,51 +35,8 @@ const PERIOD_OPTIONS: Array<{ value: PeriodKey; label: string }> = [
   { value: "month", label: "Este mes" },
 ];
 
-// ── Helpers de período ────────────────────────────────────────────
-function getStartOfWeek(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay(); // 0=Dom, 1=Lun, …
-  const diff = day === 0 ? -6 : 1 - day; // lunes = inicio
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function getPeriodRange(
-  period: PeriodKey,
-  offset: 0 | -1,
-): { start: string; end: string; days: number } {
-  const today = parseYmd(getTodayYmd());
-  if (period === "today") {
-    const d = new Date(today);
-    d.setDate(d.getDate() + offset);
-    const ymd = toYmd(d);
-    return { start: ymd, end: ymd, days: 1 };
-  }
-  if (period === "week") {
-    const startCurrent = getStartOfWeek(today);
-    const start = new Date(startCurrent);
-    start.setDate(start.getDate() + offset * 7);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 6);
-    return { start: toYmd(start), end: toYmd(end), days: 7 };
-  }
-  // month
-  const start = new Date(
-    today.getFullYear(),
-    today.getMonth() + offset,
-    1,
-  );
-  const end = new Date(
-    today.getFullYear(),
-    today.getMonth() + offset + 1,
-    0,
-  );
-  const days = Math.round(
-    (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
-  ) + 1;
-  return { start: toYmd(start), end: toYmd(end), days };
-}
+// Los rangos viven en `@/lib/report-ranges`: adentro del componente no había
+// forma de testearlos, y es justo la lógica que se rompe sin que se note.
 
 function isWithinRange(ymd: string, start: string, end: string): boolean {
   return ymd >= start && ymd <= end;
@@ -188,8 +149,14 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
   }, [barbershop.slug]);
 
   // Rangos
-  const currentRange = useMemo(() => getPeriodRange(period, 0), [period]);
-  const previousRange = useMemo(() => getPeriodRange(period, -1), [period]);
+  const currentRange = useMemo(
+    () => rangoDelPeriodo(period, parseYmd(getTodayYmd())),
+    [period],
+  );
+  const previousRange = useMemo(
+    () => rangoAnterior(period, currentRange.days, parseYmd(getTodayYmd())),
+    [period, currentRange.days],
+  );
 
   const matchesBarber = useMemo(() => {
     return (a: AppointmentRow) =>
@@ -494,6 +461,16 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                 );
               })}
             </div>
+
+            {/* Qué días se están contando. Sin esto, "esta semana" y "este mes"
+                son dos cajas negras que dan números distintos y el barbero no
+                tiene cómo saber por qué: es justo lo que pasó con SV Barber. */}
+            <p className="text-[11px] leading-4 text-[color:var(--text-muted)] sm:col-span-2">
+              Contando del <strong className="text-white">{formatDateForDisplay(currentRange.start)}</strong>{" "}
+              al <strong className="text-white">{formatDateForDisplay(currentRange.end)}</strong>
+              {currentRange.days > 1 ? ` · ${currentRange.days} días` : ""} — hasta hoy.
+              Lo que ya está reservado para más adelante se ve en la Agenda.
+            </p>
 
             <div className="flex items-center gap-2">
               {barberOptions.length > 1 ? (
