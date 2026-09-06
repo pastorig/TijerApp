@@ -4,6 +4,7 @@ import type {
   BarberWeeklyScheduleRow,
 } from "@/lib/supabase";
 import { normalizeDateValue, normalizeTimeValue, timeValueToMinutes } from "@/lib/format";
+import { resolverJornadaDelDia } from "@/lib/jornada-del-dia";
 
 export type AppointmentInterval = {
   startTime: string;
@@ -207,16 +208,14 @@ export function buildAvailabilitySlots(params: {
     (schedule) => schedule.dayOfWeek === getDayOfWeekFromDate(appointmentDate),
   );
 
-  const activeSchedule = dayOverride
-    ? {
-        startTime: normalizeTimeValue(dayOverride.start_time),
-        endTime: normalizeTimeValue(dayOverride.end_time),
-        isWorking: dayOverride.is_working,
-        // Day overrides puntuales no soportan pausa al medio (caso edge raro).
-        breakStart: null as string | null,
-        breakEnd: null as string | null,
-      }
-    : weeklySchedule
+  // Quién manda en el horario de este día se decide en un solo lugar, aparte:
+  // `resolverJornadaDelDia`. Acá adentro esa resolución convivía con el armado
+  // de la grilla y el filtrado de ocupados, y así fue como la pausa del mediodía
+  // se perdía cuando la fecha tenía excepción — el comentario decía que era un
+  // "caso edge raro" y no lo era: 5 barberos en producción tienen pausa, y a uno
+  // le abrió el almuerzo a reservas el 30 y el 31 de julio de 2026.
+  const jornada = resolverJornadaDelDia({
+    reglaSemanal: weeklySchedule
       ? {
           startTime: weeklySchedule.startTime,
           endTime: weeklySchedule.endTime,
@@ -224,11 +223,33 @@ export function buildAvailabilitySlots(params: {
           breakStart: weeklySchedule.breakStart,
           breakEnd: weeklySchedule.breakEnd,
         }
-      : null;
+      : null,
+    excepcion: dayOverride
+      ? {
+          startTime: normalizeTimeValue(dayOverride.start_time),
+          endTime: normalizeTimeValue(dayOverride.end_time),
+          isWorking: dayOverride.is_working,
+          // Las filas viejas no tienen la columna: heredar es el default de la
+          // base y también el default de acá.
+          heredaPausa: dayOverride.hereda_pausa ?? true,
+          breakStart: dayOverride.break_start ?? null,
+          breakEnd: dayOverride.break_end ?? null,
+        }
+      : null,
+    horarioBarberia: workingHours,
+  });
 
-  if (!activeSchedule?.isWorking) {
+  if (!jornada.trabaja) {
     return [] satisfies AvailabilitySlot[];
   }
+
+  const activeSchedule = {
+    startTime: jornada.inicio,
+    endTime: jornada.fin,
+    isWorking: jornada.trabaja,
+    breakStart: jornada.pausa?.inicio ?? null,
+    breakEnd: jornada.pausa?.fin ?? null,
+  };
 
   const dayStart = timeValueToMinutes(activeSchedule.startTime);
   const dayEnd = timeValueToMinutes(activeSchedule.endTime);

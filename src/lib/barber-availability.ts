@@ -51,6 +51,12 @@ type UpsertDayOverrideInput = BarberLookupInput & {
   startTime: string;
   endTime: string;
   isWorking: boolean;
+  /** true (default) = la pausa sale de la regla semanal de ese día. */
+  heredaPausa?: boolean;
+  /** Solo se miran si `heredaPausa` es false. Ambos null = ese día no para. */
+  breakStart?: string | null;
+  breakEnd?: string | null;
+  nota?: string | null;
 };
 
 type GetBarberDayAvailabilityInput = BarberLookupInput & {
@@ -69,8 +75,11 @@ const weeklySchedulesSelect =
   "id, created_at, barbershop_slug, barber_id, day_of_week, start_time, end_time, is_working, break_start, break_end";
 const timeBlocksSelect =
   "id, created_at, barbershop_slug, barber_id, block_date, start_time, end_time, reason, is_active, deleted_at";
+// Las columnas de la pausa SÍ se piden: una columna que no se pide llega
+// `undefined` y apaga la feature en silencio, sin error y sin log. Acá eso
+// significaría que la excepción vuelve a borrarle el almuerzo al barbero.
 const dayOverridesSelect =
-  "id, created_at, barbershop_slug, barber_id, override_date, start_time, end_time, is_working, deleted_at";
+  "id, created_at, barbershop_slug, barber_id, override_date, start_time, end_time, is_working, deleted_at, hereda_pausa, break_start, break_end, nota";
 
 export async function listWeeklySchedulesByBarber({
   barbershopSlug,
@@ -181,6 +190,10 @@ export async function upsertDayOverrideForBarber({
   startTime,
   endTime,
   isWorking,
+  heredaPausa = true,
+  breakStart = null,
+  breakEnd = null,
+  nota = null,
 }: UpsertDayOverrideInput) {
   const payload: BarberDayOverrideInsert = {
     barbershop_slug: barbershopSlug,
@@ -190,6 +203,10 @@ export async function upsertDayOverrideForBarber({
     end_time: endTime,
     is_working: isWorking,
     deleted_at: null,
+    hereda_pausa: heredaPausa,
+    break_start: breakStart,
+    break_end: breakEnd,
+    nota,
   };
 
   const { data, error } = await getSupabaseClient()
@@ -197,6 +214,80 @@ export async function upsertDayOverrideForBarber({
     .upsert(payload, {
       onConflict: "barber_id,override_date",
     })
+    .select(dayOverridesSelect)
+    .single();
+
+  return { data, error };
+}
+
+/**
+ * Escribe una excepción en varias fechas de un saque.
+ *
+ * Va en un solo upsert con array y no en un `for` de N llamadas: cargar una
+ * quincena serían quince idas a la base, y si la séptima falla queda media
+ * excepción escrita sin que nadie sepa dónde cortó.
+ *
+ * El `onConflict` es lo que hace que reescribir una fecha ya cargada la
+ * reemplace en vez de duplicar, y que reactivar una borrada sea el mismo
+ * camino: el borrado es blando y `deleted_at: null` la revive. El unique de la
+ * tabla no filtra por `deleted_at`, así que un insert pelado chocaría.
+ */
+export async function upsertDayOverridesEnLote(
+  filas: UpsertDayOverrideInput[],
+) {
+  if (filas.length === 0) {
+    return { data: [], error: null };
+  }
+
+  const payload: BarberDayOverrideInsert[] = filas.map((f) => ({
+    barbershop_slug: f.barbershopSlug,
+    barber_id: f.barberId,
+    override_date: f.overrideDate,
+    start_time: f.startTime,
+    end_time: f.endTime,
+    is_working: f.isWorking,
+    deleted_at: null,
+    hereda_pausa: f.heredaPausa ?? true,
+    break_start: f.breakStart ?? null,
+    break_end: f.breakEnd ?? null,
+    nota: f.nota ?? null,
+  }));
+
+  const { data, error } = await getSupabaseClient()
+    .from("barber_day_overrides")
+    .upsert(payload, { onConflict: "barber_id,override_date" })
+    .select(dayOverridesSelect);
+
+  return { data, error };
+}
+
+/**
+ * Las excepciones de un barbero de una fecha en adelante, para la lista de la
+ * pantalla. Las viejas no se muestran: ya no cambian nada y solo estorban.
+ */
+export async function listDayOverridesDesde({
+  barbershopSlug,
+  barberId,
+  desde,
+}: BarberLookupInput & { desde: string }) {
+  const { data, error } = await getSupabaseClient()
+    .from("barber_day_overrides")
+    .select(dayOverridesSelect)
+    .eq("barbershop_slug", barbershopSlug)
+    .eq("barber_id", barberId)
+    .gte("override_date", desde)
+    .is("deleted_at", null)
+    .order("override_date", { ascending: true });
+
+  return { data, error };
+}
+
+/** Borrado blando de una fecha: vuelve a regir la regla semanal. */
+export async function deleteDayOverride(overrideId: string) {
+  const { data, error } = await getSupabaseClient()
+    .from("barber_day_overrides")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", overrideId)
     .select(dayOverridesSelect)
     .single();
 
