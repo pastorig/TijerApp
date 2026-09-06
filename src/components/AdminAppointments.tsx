@@ -1133,6 +1133,9 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         startTime: baseSchedule.startTime,
         endTime: formatMinutesToTime(nextEndMinutes),
         isWorking: true,
+        // Explícito y no por el default de la columna: acá se está estirando el
+        // cierre, no cambiándole el almuerzo al barbero. Que se lea.
+        heredaPausa: true,
       });
 
       if (error || !data) {
