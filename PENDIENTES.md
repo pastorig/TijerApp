@@ -4,6 +4,25 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## ⏳ Exportación al CRM — falta una env var (2026-09-07)
+
+El endpoint `GET /api/crm/export` está listo en la rama
+`claude/crm-export-endpoint`, **sin mergear y sin desplegar**. Para que ande
+hace falta cargar en Vercel:
+
+- `CRM_EXPORT_TOKEN` — el mismo secreto que se configure del lado del CRM.
+  Generar con `openssl rand -hex 32`. **Sin esta variable el endpoint contesta
+  503 y no expone nada**, que es a propósito: un endpoint que se abre solo
+  cuando alguien olvida una variable es un agujero esperando el despiste.
+- `CRM_EXPORT_ENVIRONMENT` — opcional. Qué entorno describe la BASE a la que
+  apunta la app (`test`, `preview` o `production`). Vacío se deduce del
+  despliegue; sólo hace falta si se corre local contra la base de producción.
+
+Ojo: las variables nuevas **no entran en un deploy ya hecho**, hay que
+redeployar.
+
+---
+
 ## ✅ 016/017 — PROBADAS EN UN CELULAR Y FUNCIONANDO (2026-08-25)
 
 Bautista confirmó que el aviso llega al empleado que corresponde. Con eso las
