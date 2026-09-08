@@ -256,13 +256,21 @@ function DraggableAppointmentBlock({
         "border-[color:var(--border-default)] bg-[color:var(--surface-2)]",
         "shadow-[0_1px_0_rgba(255,255,255,0.05)_inset,0_10px_26px_-16px_rgba(0,0,0,0.9)]",
         "transition-[transform,box-shadow,opacity] duration-150",
-        // touch-manipulation (no touch-none): el TouchSensor usa delay de
-        // 200ms para distinguir scroll de drag, así que el browser TIENE que
-        // poder scrollear sobre el turno en swipes rápidos. Con touch-none el
-        // dedo apoyado sobre un turno bloqueaba el scroll de la página en
-        // mobile (el barbero quedaba "trabado" y no podía subir/bajar la agenda).
-        // Al iniciarse el drag, dnd-kit frena el scroll con preventDefault.
-        !isLocked && "touch-manipulation select-none",
+        // `touch-pan-y`, no `touch-none` ni `touch-manipulation`.
+        //
+        // `touch-none` fue el primer intento y trababa la página entera: con el
+        // dedo sobre un turno no se podía subir ni bajar la agenda.
+        // `touch-manipulation` lo arregló, pero habilita los DOS ejes, y como
+        // la grilla scrollea de costado el navegador se enganchaba al eje
+        // horizontal ante el mínimo desvío del dedo: se corría el calendario en
+        // vez de bajar la página. Con `pan-y` el navegador solo puede mover la
+        // página hacia arriba y abajo desde un turno; el costado se sigue
+        // moviendo desde los espacios vacíos de la grilla.
+        //
+        // El arrastre no se pierde: el TouchSensor activa por long-press de
+        // 200 ms sin mover el dedo, y a partir de ahí dnd-kit toma el control
+        // con preventDefault.
+        !isLocked && "touch-pan-y select-none",
         isLocked
           ? "cursor-not-allowed opacity-60 [filter:saturate(0.55)]"
           : "cursor-grab hover:z-20 hover:shadow-elevated hover:-translate-y-px active:cursor-grabbing",
@@ -1069,7 +1077,19 @@ export function AgendaCalendarGridView({
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] shadow-card">
+      {/* ── El calendario scrollea SOLO de costado ─────────────────────────
+          `overflow-x-auto` solo no alcanza: CSS no permite `visible` en un eje
+          cuando el otro es `auto`, así que el vertical quedaba en `auto` sin
+          que nadie lo pidiera. Con los 12px que sobraban por el borde, esto
+          era un scroller vertical de 12px puesto encima de toda la grilla: el
+          dedo bajaba, se comía esos 12px, y la página no se movía. En el
+          celular se sentía como que la agenda se traba y no deja bajar.
+
+          `overflow-y-hidden` lo deja como lo que tiene que ser —una tira
+          horizontal— y los gestos verticales pasan de largo a la página.
+          `overscroll-x-contain` evita que el rebote al llegar al final del
+          costado dispare el "volver atrás" de Safari. */}
+      <div className="overflow-x-auto overflow-y-hidden overscroll-x-contain rounded-[var(--radius-lg)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] shadow-card">
         <div style={{ minWidth: columnsMinWidth }}>
           {/* ── Cabecera sticky (arriba): esquina + barberos ── */}
           <div className="sticky top-0 z-30 flex border-b border-[color:var(--border-default)] bg-[color:var(--surface-2)]/95 backdrop-blur-sm">
