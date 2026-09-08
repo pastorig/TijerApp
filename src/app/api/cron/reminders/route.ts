@@ -540,6 +540,32 @@ export async function GET(request: Request) {
     }
   }
 
+  // ── Sellos de fidelización ───────────────────────────────────────────────
+  // El trigger de la base solo sella cuando alguien escribe la fila del turno,
+  // y para entonces la fecha todavía es futura: el turno se graba para mañana.
+  // Resultado, hasta hoy: 143 turnos confirmados en Leo Cuts y 4 sellos. Este
+  // barrido es el que cierra ese hueco.
+  //
+  // Sin ventana horaria y en cada corrida, a propósito: la función es
+  // idempotente (loyalty_stamps es único por appointment_id) y solo mira
+  // turnos ya pasados que todavía no tienen sello. Si una corrida falla, la
+  // siguiente recupera lo que quedó — no hay un tren que se pierda.
+  //
+  // En su propio try/catch, como los avisos de plan: que falle un sello no
+  // puede dejar sin recordatorio a los clientes.
+  let loyaltyStamped: number | null = null;
+  let loyaltyError: string | undefined;
+  try {
+    const { data, error } = await supabase.rpc("batch_grant_loyalty_stamps");
+    if (error) throw new Error(error.message);
+    loyaltyStamped = typeof data === "number" ? data : 0;
+  } catch (err) {
+    loyaltyError = err instanceof Error ? err.message : String(err);
+    Sentry.captureException(err, {
+      tags: { route: "cron/reminders", step: "loyalty-stamps" },
+    });
+  }
+
   return NextResponse.json({
     ok: true,
     runAtUtc: argParts.isoUtc,
@@ -552,5 +578,7 @@ export async function GET(request: Request) {
     planNotices: planNoticesInWindow ? planNotices : "fuera de la ventana 10-13",
     planNoticesDryRun: planNoticesDryRun || undefined,
     planNoticesError,
+    loyaltyStamped,
+    loyaltyError,
   });
 }

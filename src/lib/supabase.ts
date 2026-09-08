@@ -1062,6 +1062,14 @@ type Database = {
           created_at: string;
         }>;
       };
+      // Barre los turnos ya cumplidos que todavía no tienen sello y los sella.
+      // La llama el cron de recordatorios en cada corrida: el trigger de la
+      // base solo alcanza a los turnos que alguien edita después de su fecha.
+      // Devuelve cuántos sellos otorgó de verdad (0 es la respuesta normal).
+      batch_grant_loyalty_stamps: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
       get_public_loyalty_status_by_token: {
         Args: { p_token: string };
         Returns: Array<{
