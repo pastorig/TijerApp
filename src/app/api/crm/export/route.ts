@@ -27,10 +27,12 @@ import {
   toPaymentRecord,
   toSubscriptionRecord,
   toTrialRecord,
+  toUsageRecords,
   tokenMatches,
 } from "@/lib/crm-export";
 import {
   fetchBarbershopPage,
+  fetchBarbershopUsage,
   fetchIdsPorSlug,
   fetchPaymentPage,
 } from "@/lib/crm-export-datos";
@@ -108,6 +110,22 @@ export async function GET(request: Request) {
     }
 
     const barberias = await fetchBarbershopPage(cursor, limit);
+
+    if (resource === "usage") {
+      const porSlug = new Map(barberias.map((b) => [b.slug, b.id]));
+      const uso = await fetchBarbershopUsage(barberias.map((b) => b.slug));
+      const records = uso.flatMap((fila) => {
+        const barbershopId = porSlug.get(fila.slug);
+        // Sin id no hay cuenta a la que colgar la senal.
+        if (!barbershopId) return [];
+        return toUsageRecords({ barbershopId, turnos: fila.turnos, ultimoTurno: fila.ultimoTurno });
+      });
+      return NextResponse.json({
+        ...sobre,
+        nextCursor: barberias.length === limit ? (barberias[barberias.length - 1]?.id ?? null) : null,
+        records,
+      });
+    }
     const records =
       resource === "accounts"
         ? barberias.map(toAccountRecord)
