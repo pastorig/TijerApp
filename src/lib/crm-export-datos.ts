@@ -92,3 +92,51 @@ export async function fetchIdsPorSlug(slugs: string[]): Promise<Map<string, stri
 
   return new Map(((data ?? []) as { id: string; slug: string }[]).map((f) => [f.slug, f.id]));
 }
+
+/** Uso agregado de una barbería. Conteos y fechas: ni un cliente. */
+export type BarbershopUsageRow = {
+  slug: string;
+  turnos: number;
+  ultimoTurno: string | null;
+};
+
+/**
+ * Señales de uso por barbería: **cuántos turnos** tomó y **cuándo fue el
+ * último**.
+ *
+ * Contesta si la están usando o se dieron de alta y nunca entraron. En una
+ * barbería el turno es la unidad de trabajo: sin turnos no hay uso.
+ *
+ * Son conteos y fechas. No sale el nombre de un cliente, ni un teléfono, ni un
+ * servicio, ni un precio. `ultimoTurno` es la fecha del último turno real,
+ * nunca la de esta consulta: si fuera "ahora", cada sincronización parecería
+ * actividad y una barbería abandonada no se detectaría jamás.
+ *
+ * Va con una consulta por barbería. Es N+1, pero N está acotado por el tamaño
+ * de página y evita agregar una función en la base sólo para esto.
+ */
+export async function fetchBarbershopUsage(slugs: string[]): Promise<BarbershopUsageRow[]> {
+  const unicos = [...new Set(slugs.filter(Boolean))];
+  if (unicos.length === 0) return [];
+
+  const supabase = getSupabaseAdminClient();
+  const salida: BarbershopUsageRow[] = [];
+
+  for (const slug of unicos) {
+    const { data, count, error } = await supabase
+      .from("appointments")
+      .select("appointment_date", { count: "exact" })
+      .eq("barbershop_slug", slug)
+      .order("appointment_date", { ascending: false })
+      .limit(1);
+
+    if (error) throw new Error(error.message);
+    salida.push({
+      slug,
+      turnos: count ?? 0,
+      ultimoTurno: (data?.[0]?.appointment_date as string | undefined) ?? null,
+    });
+  }
+
+  return salida;
+}

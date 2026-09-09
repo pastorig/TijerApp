@@ -56,10 +56,7 @@ export const CRM_CAPABILITIES: Record<CrmResource, Capability> = {
     reason:
       "Cobros registrados a mano al acreditarse la transferencia. La moneda no está en la tabla: TijerApp cobra sólo en pesos argentinos (los precios son `priceArs`), así que se declara ARS. `paidAt` es la fecha de registro, no la del movimiento bancario.",
   },
-  usage: {
-    status: "unavailable",
-    reason: "Todavía no se agregan señales de uso por barbería.",
-  },
+  usage: { status: "supported", reason: null },
 };
 
 /** Fila de `barbershops` con su suscripción embebida (puede no tenerla). */
@@ -343,4 +340,38 @@ export function resolveEnvironment(env: {
 /** El cursor de paginación es el id de la última fila leída. */
 export function esCursorValido(cursor: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cursor);
+}
+
+/** Uso agregado de una barbería. Conteos y fechas: ni un cliente. */
+export type BarbershopUsage = {
+  barbershopId: string;
+  turnos: number;
+  ultimoTurno: string | null;
+};
+
+/**
+ * Señal de uso de una barbería: cuántos turnos tomó y cuándo fue el último.
+ *
+ * El cero se informa —"tomó 0 turnos" es el dato que se busca, no un hueco— y
+ * sin actividad no se inventa una fecha.
+ */
+export function toUsageRecords(row: BarbershopUsage) {
+  const campos = {
+    accountExternalId: row.barbershopId,
+    signalKey: "turnos",
+    value: row.turnos,
+    occurredAt: iso(row.ultimoTurno),
+  };
+
+  return [
+    {
+      type: "usage" as const,
+      // Una señal por barbería y por clave: reimportar actualiza, no duplica.
+      externalId: `turnos:${row.barbershopId}`,
+      sourceUpdatedAt: null,
+      versionHash: versionHashOf(campos),
+      deletedAt: null,
+      ...campos,
+    },
+  ];
 }

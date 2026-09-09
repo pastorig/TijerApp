@@ -19,6 +19,7 @@ import {
   toPaymentRecord,
   toSubscriptionRecord,
   toTrialRecord,
+  toUsageRecords,
   tokenMatches,
   versionHashOf,
   type BarbershopRow,
@@ -169,7 +170,7 @@ console.log("\n— Capacidades —");
 check("los cobros se declaran parciales, no completos", CRM_CAPABILITIES.payments.status, "partial");
 check("y se explica que la moneda no está en la tabla", CRM_CAPABILITIES.payments.reason?.includes("moneda"), true);
 check("la suscripción declara que va sin importe", CRM_CAPABILITIES.subscriptions.reason?.includes("sin importe"), true);
-check("el uso se declara no disponible", CRM_CAPABILITIES.usage.status, "unavailable");
+
 
 console.log("\n— Nada de la operación de la barbería —");
 {
