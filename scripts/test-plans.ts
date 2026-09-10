@@ -24,6 +24,7 @@ import {
   resolvePlanStatus,
   tierBelow,
 } from "../src/lib/plans.ts";
+import { isFounder, tienePrecioDeFundador } from "../src/data/founders.ts";
 
 let passed = 0;
 let failed = 0;
@@ -330,6 +331,55 @@ check(
   "y por lo tanto un Esencial la ve",
   hasFeature("esencial", pestañaEquipo!.requiresFeature!),
   true,
+);
+
+// ─── El precio de fundador vence; el status de fundador no ─────────────────
+// Las dos cosas colgaban de isFounder, así que sacarle el descuento a alguien
+// le borraba también el badge y el muro de /precios.
+const enArgentina = (ymd: string) => {
+  const [a, m, d] = ymd.split("-").map(Number);
+  return new Date(a, m - 1, d, 12, 0, 0);
+};
+
+check(
+  "SV Barber sigue siendo Fundador",
+  isFounder("barber"),
+  true,
+);
+check(
+  "pero ya NO tiene el precio congelado",
+  tienePrecioDeFundador("barber", enArgentina("2026-09-09")),
+  false,
+);
+check(
+  "así que se le cobra Esencial de lista",
+  billedMonthlyArs("esencial", tienePrecioDeFundador("barber", enArgentina("2026-09-09"))),
+  33000,
+);
+check(
+  "Leo Cuts todavía tiene el precio congelado",
+  tienePrecioDeFundador("leocuts", enArgentina("2026-09-09")),
+  true,
+);
+check(
+  "y por eso paga el tier de abajo",
+  billedMonthlyArs("esencial", tienePrecioDeFundador("leocuts", enArgentina("2026-09-09"))),
+  22000,
+);
+check(
+  "el último día del beneficio todavía cuenta",
+  tienePrecioDeFundador("leocuts", enArgentina("2026-10-21")),
+  true,
+);
+check(
+  "y al día siguiente ya paga la lista",
+  billedMonthlyArs("esencial", tienePrecioDeFundador("leocuts", enArgentina("2026-10-22"))),
+  33000,
+);
+check(
+  "una barbería que nunca fue fundadora no cambia",
+  tienePrecioDeFundador("primebarber", enArgentina("2026-09-09")),
+  false,
 );
 
 console.log(`\n${passed}/${passed + failed} OK${failed ? ` · ${failed} FALLARON` : ""}`);

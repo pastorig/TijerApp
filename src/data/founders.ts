@@ -9,6 +9,8 @@
  * Server Components sin arrastrar el bundle del cliente.
  */
 
+import { ahoraEnArgentina } from "@/lib/hora-argentina";
+
 export type Founder = {
   /** Slug de la barbería en TijerApp. */
   slug: string;
@@ -41,6 +43,53 @@ export const FOUNDER_SLUGS: readonly string[] = ["leocuts", "barber"];
 
 export function isFounder(barbershopSlug: string): boolean {
   return FOUNDER_SLUGS.includes(barbershopSlug);
+}
+
+/**
+ * Hasta cuándo le rige a cada fundador el PRECIO congelado (fecha argentina
+ * inclusive, `YYYY-MM-DD`). `null` = el beneficio ya terminó y pasa a pagar la
+ * lista.
+ *
+ * Está separado de `FOUNDER_SLUGS` a propósito: ser Fundador es permanente
+ * —el badge del panel y el muro de /precios se quedan para siempre, es un
+ * reconocimiento— y lo que vence es únicamente el descuento. Cuando las dos
+ * cosas colgaban de `isFounder`, sacarle el precio a alguien le borraba
+ * también el reconocimiento.
+ *
+ * Un slug que no figura acá nunca tuvo precio congelado.
+ */
+export const FOUNDER_PRICE_UNTIL: Readonly<Record<string, string | null>> = {
+  // Fundador #1. Congelado hasta el 21/10/2026.
+  leocuts: "2026-10-21",
+  // Fundador #2 (SV Barber, renombrada de `sv-barber`). El beneficio terminó
+  // el 09/09/2026: pasa a pagar Esencial de lista.
+  barber: null,
+};
+
+/**
+ * ¿Hoy le rige el precio de fundador? Decide si se le muestra el tier de abajo
+ * o el precio de lista.
+ *
+ * La fecha se compara en hora argentina y no con `new Date()` a secas: esto
+ * corre tanto en el navegador del barbero como en funciones de Vercel, que van
+ * en UTC. Sin eso, el día del vencimiento el precio cambiaría tres horas antes
+ * de tiempo para quien lo mire desde el servidor.
+ */
+export function tienePrecioDeFundador(
+  barbershopSlug: string,
+  hoyEnArgentina: Date = ahoraEnArgentina(),
+): boolean {
+  if (!isFounder(barbershopSlug)) return false;
+  const hasta = FOUNDER_PRICE_UNTIL[barbershopSlug];
+  if (!hasta) return false;
+  return aYmd(hoyEnArgentina) <= hasta;
+}
+
+/** `YYYY-MM-DD` de un Date ya expresado en hora argentina. */
+function aYmd(fecha: Date): string {
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dia = String(fecha.getDate()).padStart(2, "0");
+  return `${fecha.getFullYear()}-${mes}-${dia}`;
 }
 
 export const founders: Founder[] = [

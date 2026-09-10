@@ -19,7 +19,7 @@ import {
   type PlanTier,
   type SubscriptionStatus,
 } from "@/lib/plans";
-import { isFounder } from "@/data/founders";
+import { tienePrecioDeFundador } from "@/data/founders";
 
 type PlanRow = {
   slug: string;
@@ -745,7 +745,7 @@ function RegisterPaymentModal({
   // precio del tier asignado, el fundador quedaría cargado a $33.000 cuando
   // transfirió $22.000.
   const defaultAmount = row.plan_tier
-    ? billedMonthlyArs(row.plan_tier, isFounder(row.slug))
+    ? billedMonthlyArs(row.plan_tier, tienePrecioDeFundador(row.slug))
     : 0;
   const [amount, setAmount] = useState<string>(String(defaultAmount));
   const [method, setMethod] = useState<"transferencia" | "efectivo" | "otro">(

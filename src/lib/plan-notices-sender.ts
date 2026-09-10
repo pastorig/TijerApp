@@ -7,7 +7,7 @@ import {
   type PlanNoticeKind,
 } from "@/lib/plan-notices";
 import { billedMonthlyArs, formatArs, type PlanTier } from "@/lib/plans";
-import { isFounder } from "@/data/founders";
+import { tienePrecioDeFundador } from "@/data/founders";
 
 /**
  * Envío de los avisos de vencimiento de plan.
@@ -108,7 +108,7 @@ export async function sendPlanNotices({
         daysLeft: daysUntil(periodEndsAt, todayYmd),
         // Lo que paga, no el precio del tier asignado.
         priceLabel: sub.plan_tier
-          ? formatArs(billedMonthlyArs(sub.plan_tier, isFounder(slug)))
+          ? formatArs(billedMonthlyArs(sub.plan_tier, tienePrecioDeFundador(slug)))
           : undefined,
       });
 
