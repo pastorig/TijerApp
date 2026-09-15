@@ -90,6 +90,8 @@ export type PaymentRow = {
   method: string | null;
   period_start: string | null;
   period_end: string | null;
+  /** Cuándo entró el dinero, si se informó (pagos cargados desde crmsaas). */
+  paid_at?: string | null;
   created_at: string;
 };
 
@@ -282,7 +284,8 @@ export function toPaymentRecord(row: PaymentRow, barbershopId: string | null) {
     // planes son `priceArs` y la UI formatea con `formatArs`.
     currency: "ARS",
     status: "confirmed" as const,
-    paidAt: iso(row.created_at),
+    // Los pagos del owner no traen fecha de pago: se usa la de carga, como siempre.
+    paidAt: iso(row.paid_at ?? row.created_at),
     // No hay reversas: un cobro mal cargado se corrige borrando la fila.
     reversedAt: null,
     coverageStart: iso(row.period_start),

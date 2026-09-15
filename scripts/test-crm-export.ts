@@ -103,6 +103,16 @@ check("se cuelga de la suscripción de esa barbería", pago?.subscriptionExterna
 // Un cobro cuyo slug ya no existe no se cuelga de una cuenta equivocada.
 check("un cobro huérfano no se exporta", toPaymentRecord(cobro(), null), null);
 check("un cobro con importe ilegible no se exporta", toPaymentRecord(cobro({ amount: "?" }), ID), null);
+check(
+  "la fecha de pago es la informada, no la de carga",
+  toPaymentRecord(cobro({ paid_at: "2026-08-30T15:00:00.000Z" }), ID)?.paidAt,
+  "2026-08-30T15:00:00.000Z",
+);
+check(
+  "sin fecha informada se usa la de carga, como antes",
+  toPaymentRecord(cobro({ paid_at: null }), ID)?.paidAt,
+  pago?.paidAt,
+);
 
 console.log("\n— Suscripción —");
 const sub = toSubscriptionRecord(barberia());
