@@ -64,7 +64,7 @@ export async function fetchPaymentPage(
   const supabase = getSupabaseAdminClient();
   let query = supabase
     .from("barbershop_payments")
-    .select("id, barbershop_slug, amount, method, period_start, period_end, created_at")
+    .select("id, barbershop_slug, amount, method, period_start, period_end, paid_at, created_at")
     .order("id", { ascending: true })
     .limit(limit);
   if (cursor) query = query.gt("id", cursor);
