@@ -69,8 +69,10 @@ const trialEnGracia = resolvePlanStatus({
   graceExpiresAt: future,
   now,
 });
-check("Trial vencido + gracia vigente → grace", trialEnGracia.effectiveStatus, "grace");
-check("En gracia → todavía puede usar features", trialEnGracia.canAccessFeatures, true);
+// Sin días de cortesía desde el 21/09/2026: aunque la base traiga una fecha de
+// gracia futura, un trial vencido ya es modo lectura.
+check("Trial vencido, aunque la gracia siga vigente → expired", trialEnGracia.effectiveStatus, "expired");
+check("y ya NO puede usar features", trialEnGracia.canAccessFeatures, false);
 
 const trialVencido = resolvePlanStatus({
   tier: "pro",
@@ -148,9 +150,19 @@ const readOnlyCases: Array<[string, Parameters<typeof resolvePlanStatus>[0], boo
     false,
   ],
   [
-    "en gracia → todavía escribe",
+    "trial vencido con gracia vigente → MODO LECTURA igual (sin cortesía)",
     { tier: "pro", rawStatus: "trial", trialExpiresAt: past, graceExpiresAt: future, now },
-    false,
+    true,
+  ],
+  [
+    "pago vencido hace un rato → MODO LECTURA en el acto (antes: 7 días más)",
+    { tier: "esencial", rawStatus: "active", trialExpiresAt: null, graceExpiresAt: null, currentPeriodEndsAt: new Date(now.getTime() - 60 * 60 * 1000), now },
+    true,
+  ],
+  [
+    "una fila con status grace en la base → MODO LECTURA",
+    { tier: "pro", rawStatus: "grace", trialExpiresAt: past, graceExpiresAt: future, now },
+    true,
   ],
   [
     "trial vencido sin gracia → MODO LECTURA",

@@ -231,8 +231,9 @@ export type ResolvedPlan = {
   /**
    * Status efectivo después de evaluar trial/grace/expired.
    * - active: pago al día o trial activo
-   * - grace: trial expiró, pero está en ventana de 7 días
-   * - expired: paywall completo, solo /admin/settings/plan accesible
+   * - grace: ya NO se produce (sin días de cortesía desde el 21/09/2026);
+   *   queda en el tipo porque la base todavía puede tener filas con ese status
+   * - expired: modo lectura — ve todo, no escribe, sin reserva pública
    * - cancelled: el owner desactivó
    */
   effectiveStatus: "active" | "grace" | "expired" | "cancelled";
@@ -264,9 +265,6 @@ export type ResolvedPlan = {
    */
   isReadOnly: boolean;
 };
-
-/** Días de gracia después de que vence el trial o el período pago. */
-export const GRACE_DAYS = 7;
 
 /**
  * Suma `n` meses a una fecha, clampeando al último día válido del mes destino
@@ -314,45 +312,28 @@ export function resolvePlanStatus(input: {
   const paidUntil = input.currentPeriodEndsAt ?? null;
 
   let effectiveStatus: ResolvedPlan["effectiveStatus"];
-  let isInGracePeriod = false;
+  // Sin días de cortesía desde el 21/09/2026: al vencer el pago o la prueba,
+  // la barbería pasa directo a MODO LECTURA (ve todo, no escribe nada, la
+  // reserva pública se corta). Antes tenía 7 días más con la app entera, y
+  // eso le sacaba toda la urgencia al cobro.
+  //
+  // `graceExpiresAt` y el status "grace" se siguen leyendo porque existen en la
+  // base, pero ya no habilitan nada: una fila que diga "grace" es modo lectura.
+  const isInGracePeriod = false;
 
   if (rawStatus === "cancelled") {
     effectiveStatus = "cancelled";
   } else if (paidUntil) {
-    // Vigencia por pago (precede al trial). Al vencer: gracia y luego expired.
-    if (paidUntil.getTime() > now.getTime()) {
-      effectiveStatus = "active";
-    } else if (
-      paidUntil.getTime() + GRACE_DAYS * 24 * 60 * 60 * 1000 >
-      now.getTime()
-    ) {
-      effectiveStatus = "grace";
-      isInGracePeriod = true;
-    } else {
-      effectiveStatus = "expired";
-    }
+    // Vigencia por pago (precede al trial).
+    effectiveStatus =
+      paidUntil.getTime() > now.getTime() ? "active" : "expired";
   } else if (rawStatus === "active") {
     effectiveStatus = "active";
   } else if (rawStatus === "trial") {
-    // Trial activo a menos que ya expiró
-    if (trialExpiresAt && trialExpiresAt.getTime() < now.getTime()) {
-      // Trial expiró → ver si está en grace
-      if (graceExpiresAt && graceExpiresAt.getTime() > now.getTime()) {
-        effectiveStatus = "grace";
-        isInGracePeriod = true;
-      } else {
-        effectiveStatus = "expired";
-      }
-    } else {
-      effectiveStatus = "active";
-    }
-  } else if (rawStatus === "grace") {
-    if (graceExpiresAt && graceExpiresAt.getTime() > now.getTime()) {
-      effectiveStatus = "grace";
-      isInGracePeriod = true;
-    } else {
-      effectiveStatus = "expired";
-    }
+    effectiveStatus =
+      trialExpiresAt && trialExpiresAt.getTime() < now.getTime()
+        ? "expired"
+        : "active";
   } else {
     // expired
     effectiveStatus = "expired";
@@ -368,9 +349,8 @@ export function resolvePlanStatus(input: {
     ? Math.ceil((paidUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
     : null;
 
-  // canAccessFeatures: en active y grace, sí. En expired/cancelled, no.
-  const canAccessFeatures =
-    effectiveStatus === "active" || effectiveStatus === "grace";
+  // canAccessFeatures: solo en active. Vencido o cancelado = modo lectura.
+  const canAccessFeatures = effectiveStatus === "active";
 
   return {
     tier,
