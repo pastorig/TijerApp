@@ -10,6 +10,7 @@ import {
   franjasNoDisponibles,
   huecosLibres,
   layoutDia,
+  ocupacionDelDia,
   pisaAOtro,
   rangoDelDia,
   type TurnoParaLayout,
@@ -201,6 +202,17 @@ function hayTapados(bloques: ReturnType<typeof layoutDia>["bloques"]) {
   check("15:30 pisa al de 15:00 (40 min)", pisaAOtro({ inicioMin: h("15:30"), duracionMin: 15 }, turnos), true);
   check("15:40 no pisa", pisaAOtro({ inicioMin: h("15:40"), duracionMin: 15 }, turnos), false);
   check("14:45 de 15 min no pisa", pisaAOtro({ inicioMin: h("14:45"), duracionMin: 15 }, turnos), false);
+}
+
+// 16) Ocupación del día.
+{
+  const jornada = { trabaja: true, inicioMin: h("10:00"), finMin: h("14:00"), pausa: { inicioMin: h("12:00"), finMin: h("13:00") } };
+  // Disponible: 4 h − 1 h de pausa = 180 min. Ocupado: 90 min.
+  check("ocupación 90/180 → 50%", ocupacionDelDia(jornada, [{ inicioMin: h("10:00"), duracionMin: 60 }, { inicioMin: h("13:00"), duracionMin: 30 }], []), 50);
+  check("encimados no cuentan doble", ocupacionDelDia(jornada, [{ inicioMin: h("10:00"), duracionMin: 60 }, { inicioMin: h("10:30"), duracionMin: 30 }], []), 33);
+  check("bloqueo se descuenta de lo disponible", ocupacionDelDia(jornada, [{ inicioMin: h("10:00"), duracionMin: 60 }], [{ inicioMin: h("13:00"), finMin: h("14:00") }]), 50);
+  check("día vacío → 0%", ocupacionDelDia(jornada, [], []), 0);
+  check("no trabaja → null", ocupacionDelDia(null, [], []), null);
 }
 
 console.log(`\n${passed}/${passed + failed} OK${failed ? ` · ${failed} FALLARON` : ""}`);

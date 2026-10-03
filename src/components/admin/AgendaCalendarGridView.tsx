@@ -47,10 +47,14 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import {
   PX_POR_MIN,
   franjasNoDisponibles,
+  huecosLibres,
   layoutDia,
+  ocupacionDelDia,
   rangoDelDia,
   type BloqueDibujado,
   type GrupoDibujado,
+  type Intervalo,
+  type JornadaParaLayout,
 } from "@/lib/agenda-layout";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
@@ -108,6 +112,10 @@ type AgendaCalendarGridViewProps = {
 const RULER_WIDTH_PX = 58; // Columna de horas (izquierda)
 const MIN_COL_WIDTH_PX = 200; // Ancho mínimo de columna de barbero en escritorio
 const SWIPE_MIN_PX = 60;
+/** Un rato libre se marca ("Libre · 40 min") desde estos minutos. */
+const MIN_HUECO_VISIBLE = 30;
+/** Alto de la etiqueta de hueco libre (px). */
+const ALTO_HUECO_PX = 36;
 /** Desde esta altura el bloque muestra nombre, servicio y horario en tres líneas. */
 const ALTO_COMPLETO_PX = 84;
 const MOBILE_QUERY = "(max-width: 767px)";
@@ -130,6 +138,14 @@ function minutesToTimeLabel(minutes: number): string {
   const hh = Math.floor(minutes / 60);
   const mm = minutes % 60;
   return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+}
+
+/** 40 → "40 min", 90 → "1 h 30", 120 → "2 h". */
+function formatoMinutos(minutos: number): string {
+  if (minutos < 60) return `${minutos} min`;
+  const h = Math.floor(minutos / 60);
+  const m = minutos % 60;
+  return m === 0 ? `${h} h` : `${h} h ${m}`;
 }
 
 /** Lo que dura el turno según el barbero: la duración real si la ajustó. */
@@ -176,6 +192,8 @@ function DraggableAppointmentBlock({
   isOverlay = false,
   isLocked = false,
   isInProgress = false,
+  isPast = false,
+  progress = null,
   wasRecentlyDropped = false,
   onOpen,
 }: {
@@ -185,6 +203,10 @@ function DraggableAppointmentBlock({
   isOverlay?: boolean;
   isLocked?: boolean;
   isInProgress?: boolean;
+  /** Hoy, ya terminó: se ve atenuado para que resalte lo que sigue. */
+  isPast?: boolean;
+  /** Hoy, en curso: cuánto lleva (0 a 1), para la barrita de progreso. */
+  progress?: number | null;
   wasRecentlyDropped?: boolean;
   onOpen?: () => void;
 }) {
@@ -265,6 +287,7 @@ function DraggableAppointmentBlock({
         "touch-pan-y select-none",
         isLocked ? "cursor-pointer" : "cursor-pointer hover:z-20 hover:shadow-elevated active:cursor-grabbing",
         isDragging && !isOverlay && "opacity-25",
+        isPast && !isDragging && !isOverlay && "opacity-50 hover:opacity-100 focus-visible:opacity-100",
         isOverlay &&
           "rotate-[-1deg] scale-[1.03] shadow-elevated ring-2 ring-[color:var(--brand-gold)]",
         isInProgress && !isOverlay && "ring-1 ring-[color:var(--brand-gold)]/70",
@@ -273,6 +296,14 @@ function DraggableAppointmentBlock({
     >
       {/* Barra de estado: verde confirmado, dorado pendiente. */}
       <span aria-hidden="true" className="absolute inset-y-0 left-0 w-[3px]" style={{ background: status.bar }} />
+      {/* En curso: barrita abajo que avanza con el reloj (se actualiza cada minuto). */}
+      {progress !== null && !isOverlay ? (
+        <span
+          aria-hidden="true"
+          className="absolute bottom-0 left-[3px] h-[3px] bg-[color:var(--brand-gold)] transition-[width] duration-700"
+          style={{ width: `calc((100% - 3px) * ${Math.min(1, Math.max(0, progress))})` }}
+        />
+      ) : null}
 
       {compact ? (
         <div className="flex h-full items-center gap-1.5 pl-2.5 pr-1.5">
@@ -352,6 +383,31 @@ function BlockFlags({ encimado, sobreturno }: { encimado: boolean; sobreturno: b
         <Zap aria-hidden="true" className="size-3.5 fill-current text-[color:var(--brand-gold)]" />
       ) : null}
     </span>
+  );
+}
+
+/** Barra fina con qué parte de la jornada está ocupada. */
+function OccupancyBar({ percent }: { percent: number | null }) {
+  if (percent === null) return null;
+  return (
+    <div className="mt-1.5 flex items-center gap-2">
+      <div
+        role="meter"
+        aria-label="Jornada ocupada"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+        className="h-1 flex-1 overflow-hidden rounded-full bg-[color:var(--surface-3)]"
+      >
+        <div
+          className="h-full rounded-full bg-[color:var(--brand-gold)] transition-[width] duration-500"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <span className="shrink-0 text-xs tabular-nums text-[color:var(--text-muted)]">
+        {percent}% ocupado
+      </span>
+    </div>
   );
 }
 
@@ -749,6 +805,43 @@ export function AgendaCalendarGridView({
     return map;
   }, [columns, timeBlocksByBarber, rango]);
 
+  // Por barbero: huecos libres para mostrar ("Libre · 40 min") y qué parte de
+  // la jornada tiene ocupada. Hoy, lo que ya pasó no cuenta como hueco.
+  const diaByBarber = useMemo(() => {
+    const map = new Map<string, { huecos: Intervalo[]; ocupacion: number | null }>();
+    for (const { barber, schedule, isOffDay } of columns) {
+      const jornada: JornadaParaLayout | null = isOffDay
+        ? null
+        : {
+            trabaja: schedule.isWorking,
+            inicioMin: timeToMinutes(schedule.startTime),
+            finMin: timeToMinutes(schedule.endTime),
+            pausa: schedule.pausa
+              ? {
+                  inicioMin: timeToMinutes(schedule.pausa.startTime),
+                  finMin: timeToMinutes(schedule.pausa.endTime),
+                }
+              : null,
+          };
+      const turnos = dayAppointments
+        .filter((a) => a.barber_id === barber.id)
+        .map((a) => ({
+          inicioMin: timeToMinutes(a.appointment_time.slice(0, 5)),
+          duracionMin: duracionDibujada(a, interval),
+        }));
+      const bloqueos = (timeBlocksByBarber[barber.id] ?? []).map((b) => ({
+        inicioMin: timeToMinutes(b.start_time.slice(0, 5)),
+        finMin: timeToMinutes(b.end_time.slice(0, 5)),
+      }));
+      const desde = isToday ? nowMinutes : -1;
+      const huecos = huecosLibres(jornada, turnos, bloqueos)
+        .map((h) => ({ inicioMin: Math.max(h.inicioMin, desde), finMin: h.finMin }))
+        .filter((h) => h.finMin - h.inicioMin >= MIN_HUECO_VISIBLE);
+      map.set(barber.id, { huecos, ocupacion: ocupacionDelDia(jornada, turnos, bloqueos) });
+    }
+    return map;
+  }, [columns, dayAppointments, interval, timeBlocksByBarber, isToday, nowMinutes]);
+
   const statsByBarber = useMemo(() => {
     const stats = new Map<string, { total: number; nextTime: string | null }>();
     for (const { barber } of columns) {
@@ -1069,6 +1162,13 @@ export function AgendaCalendarGridView({
       {visibleColumns.map(({ barber, schedule }) => {
         const layout = layoutByBarber.get(barber.id) ?? { bloques: [], grupos: [] };
         const franjas = franjasByBarber.get(barber.id) ?? [];
+        // Etiquetas "Libre · N min": arriba de cada hueco, solo si se puede cargar.
+        const huecos = isDayLocked
+          ? []
+          : (diaByBarber.get(barber.id)?.huecos ?? []).map((h) => ({
+              ...h,
+              topPx: (h.inicioMin - rango.inicioMin) * PX_POR_MIN + 4,
+            }));
         const scheduleStart = timeToMinutes(schedule.startTime);
         const scheduleEnd = timeToMinutes(schedule.endTime);
         return (
@@ -1107,6 +1207,10 @@ export function AgendaCalendarGridView({
                         f.tipo !== "fuera-de-horario" &&
                         f.inicioMin < slotMin + interval &&
                         slotMin < f.finMin,
+                    ) ||
+                    // Donde está la etiqueta "Libre": la etiqueta ya es el botón.
+                    huecos.some(
+                      (h) => h.topPx < (i + 1) * slotHeight && i * slotHeight < h.topPx + ALTO_HUECO_PX,
                     )
                   }
                   isDayLocked={isDayLocked}
@@ -1116,10 +1220,34 @@ export function AgendaCalendarGridView({
               );
             })}
 
+            {!activeAppointment
+              ? huecos.map((h) => {
+                  const minutos = h.finMin - h.inicioMin;
+                  const hora = minutesToTimeLabel(h.inicioMin);
+                  return (
+                    <button
+                      key={`hueco-${h.inicioMin}`}
+                      type="button"
+                      onClick={() => setSlotMenu({ barberId: barber.id, time: hora, top: h.topPx })}
+                      aria-label={`Libre ${minutos} minutos desde las ${hora}. Cargar un turno`}
+                      className="absolute left-1.5 right-1.5 z-[3] flex items-center justify-between gap-2 rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-strong)] px-2.5 text-xs text-[color:var(--text-muted)] transition-colors hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold-hi)]"
+                      style={{ top: h.topPx, height: Math.min(ALTO_HUECO_PX, minutos * PX_POR_MIN - 8) }}
+                    >
+                      <span className="truncate">
+                        Libre · <span className="font-semibold tabular-nums">{formatoMinutos(minutos)}</span>
+                      </span>
+                      <Plus aria-hidden="true" className="size-4 shrink-0" />
+                    </button>
+                  );
+                })
+              : null}
+
             {showNowLine ? (
               <div
                 ref={visibleColumns[0]?.barber.id === barber.id ? nowLineRef : undefined}
-                className="pointer-events-none absolute inset-x-0 z-[15] flex items-center"
+                // Debajo de los turnos (z 10): cruzaba el texto del que está en
+                // curso, que igual se marca con su barrita de progreso.
+                className="pointer-events-none absolute inset-x-0 z-[4] flex items-center"
                 style={{ top: nowTop }}
               >
                 <span className="size-2 -translate-x-1/2 rounded-full bg-[color:var(--brand-gold)]" />
@@ -1142,6 +1270,12 @@ export function AgendaCalendarGridView({
                     durationMinutes={duration}
                     isLocked={isDayLocked}
                     isInProgress={isToday && nowMinutes >= startMin && nowMinutes < startMin + duration}
+                    isPast={isToday && nowMinutes >= startMin + duration}
+                    progress={
+                      isToday && nowMinutes >= startMin && nowMinutes < startMin + duration
+                        ? (nowMinutes - startMin) / duration
+                        : null
+                    }
                     wasRecentlyDropped={recentlyDroppedId === bloque.id}
                     onOpen={() => handleOpen(appointment.id)}
                   />
@@ -1246,6 +1380,11 @@ export function AgendaCalendarGridView({
                   <EncimadosCount count={encimadosDe(selectedColumn.barber.id)} />
                 </p>
               ) : null}
+              {selectedColumn ? (
+                <div className="px-3 pb-2.5">
+                  <OccupancyBar percent={diaByBarber.get(selectedColumn.barber.id)?.ocupacion ?? null} />
+                </div>
+              ) : null}
             </div>
           ) : (
             <div className="sticky top-0 z-30 flex border-b border-[color:var(--border-default)] bg-[color:var(--surface-2)]">
@@ -1274,6 +1413,7 @@ export function AgendaCalendarGridView({
                           ? ""
                           : ` · ${schedule.startTime.slice(0, 5)}–${schedule.endTime.slice(0, 5)}`}
                     </p>
+                    <OccupancyBar percent={diaByBarber.get(barber.id)?.ocupacion ?? null} />
                   </div>
                 );
               })}

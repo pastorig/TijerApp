@@ -311,6 +311,44 @@ export function huecosLibres(
   return huecos.filter((h) => h.finMin > h.inicioMin);
 }
 
+/**
+ * Qué parte de la jornada tiene ocupada el barbero, de 0 a 100.
+ *
+ * Disponible = jornada menos la pausa y los bloqueos. Ocupado = lo disponible
+ * que no quedó como hueco libre (dos turnos encimados no cuentan doble). Null
+ * si ese día no trabaja.
+ */
+export function ocupacionDelDia(
+  jornada: JornadaParaLayout | null,
+  turnos: Array<{ inicioMin: number; duracionMin: number }>,
+  bloqueos: Intervalo[],
+): number | null {
+  if (!jornada || !jornada.trabaja || jornada.finMin <= jornada.inicioMin) return null;
+  const recortar = (i: Intervalo): Intervalo => ({
+    inicioMin: Math.max(i.inicioMin, jornada.inicioMin),
+    finMin: Math.min(i.finMin, jornada.finMin),
+  });
+  // Pausa y bloqueos juntos, sin contar dos veces lo que se superpone.
+  const noDisponible = [...(jornada.pausa ? [jornada.pausa] : []), ...bloqueos]
+    .map(recortar)
+    .filter((i) => i.finMin > i.inicioMin)
+    .sort((a, b) => a.inicioMin - b.inicioMin);
+  let minutosNoDisponibles = 0;
+  let cursor = -Infinity;
+  for (const i of noDisponible) {
+    const desde = Math.max(i.inicioMin, cursor);
+    if (i.finMin > desde) minutosNoDisponibles += i.finMin - desde;
+    cursor = Math.max(cursor, i.finMin);
+  }
+  const disponible = jornada.finMin - jornada.inicioMin - minutosNoDisponibles;
+  if (disponible <= 0) return 100;
+  const libre = huecosLibres(jornada, turnos, bloqueos).reduce(
+    (total, h) => total + (h.finMin - h.inicioMin),
+    0,
+  );
+  return Math.round(Math.min(100, Math.max(0, ((disponible - libre) / disponible) * 100)));
+}
+
 /** ¿Un turno nuevo se pisaría con alguno de los existentes? */
 export function pisaAOtro(
   nuevo: { inicioMin: number; duracionMin: number },
