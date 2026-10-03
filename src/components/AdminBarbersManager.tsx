@@ -932,7 +932,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                           type="button"
                           disabled={updatingBarberId === selectedBarber.id}
                           onClick={handleCancelEdit}
-                          className="inline-flex min-h-10 items-center justify-center rounded-md border border-[color:var(--border-default)] px-3 py-2 text-xs font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
+                          className="inline-flex min-h-11 items-center justify-center rounded-md border border-[color:var(--border-default)] px-3 py-2 text-xs font-bold normal-case text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Cancelar
                         </button>
@@ -944,7 +944,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                         type="button"
                         disabled={updatingBarberId === selectedBarber.id}
                         onClick={() => handleStartEdit(selectedBarber)}
-                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-[color:var(--border-default)] px-3 py-2 text-xs font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[color:var(--border-default)] px-3 py-2 text-xs font-bold normal-case text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <Pencil className="size-4" /> Editar
                       </button>
@@ -952,7 +952,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                         type="button"
                         disabled={updatingBarberId === selectedBarber.id}
                         onClick={() => handleToggleBarber(selectedBarber)}
-                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-[color:var(--border-default)] px-3 py-2 text-xs font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[color:var(--border-default)] px-3 py-2 text-xs font-bold normal-case text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <Power className="size-4" />
                         {updatingBarberId === selectedBarber.id
@@ -965,7 +965,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                         type="button"
                         disabled={updatingBarberId === selectedBarber.id}
                         onClick={() => handleDeleteBarber(selectedBarber)}
-                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-[color:var(--danger)]/40 px-3 py-2 text-xs font-bold uppercase text-[color:var(--danger)] transition hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[color:var(--danger)]/40 px-3 py-2 text-xs font-bold normal-case text-[color:var(--danger)] transition hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <Trash2 className="size-4" /> Eliminar
                       </button>
@@ -1079,7 +1079,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                       type="button"
                                       disabled={updatingServiceId === service.id}
                                       onClick={handleCancelServiceForm}
-                                      className="inline-flex min-h-9 items-center justify-center rounded-md border border-[color:var(--border-default)] px-3 py-2 text-[11px] font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="inline-flex min-h-11 items-center justify-center rounded-md border border-[color:var(--border-default)] px-3 py-2 text-xs font-bold normal-case text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                       Cancelar
                                     </button>
@@ -1098,7 +1098,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                       </p>
                                     </div>
                                     <span
-                                      className={`shrink-0 rounded-md border px-2 py-1 text-[10px] font-bold uppercase ${
+                                      className={`shrink-0 rounded-md border px-2 py-1 text-xs font-bold normal-case ${
                                         service.is_active
                                           ? "border-[color:var(--success)]/40 bg-[color:var(--success-soft)] text-[color:var(--success)]"
                                           : "border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] text-[color:var(--danger)]"
@@ -1114,7 +1114,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                       onClick={() =>
                                         handleStartEditService(service)
                                       }
-                                      className="inline-flex min-h-8 items-center justify-center rounded-md border border-[color:var(--border-default)] px-2 py-1.5 text-[10px] font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="inline-flex min-h-11 items-center justify-center rounded-md border border-[color:var(--border-default)] px-2 py-1.5 text-xs font-bold normal-case text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                       Editar
                                     </button>
@@ -1122,7 +1122,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                       type="button"
                                       disabled={updatingServiceId === service.id}
                                       onClick={() => handleToggleService(service)}
-                                      className="inline-flex min-h-8 items-center justify-center rounded-md border border-[color:var(--border-default)] px-2 py-1.5 text-[10px] font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="inline-flex min-h-11 items-center justify-center rounded-md border border-[color:var(--border-default)] px-2 py-1.5 text-xs font-bold normal-case text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                       {service.is_active ? "Pausar" : "Activar"}
                                     </button>
@@ -1130,7 +1130,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                                       type="button"
                                       disabled={updatingServiceId === service.id}
                                       onClick={() => handleDeleteService(service)}
-                                      className="inline-flex min-h-8 items-center justify-center rounded-md border border-[color:var(--danger)]/40 px-2 py-1.5 text-[10px] font-bold uppercase text-[color:var(--danger)] transition hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+                                      className="inline-flex min-h-11 items-center justify-center rounded-md border border-[color:var(--danger)]/40 px-2 py-1.5 text-xs font-bold normal-case text-[color:var(--danger)] transition hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                       Eliminar
                                     </button>

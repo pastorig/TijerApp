@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { MessageCircle, X } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
+import { useStaffDialogFocus } from "./useStaffDialogFocus";
 import { createWhatsAppRescheduleLink } from "@/lib/whatsapp";
 import { Button, Field, Input } from "@/components/ui";
 
@@ -50,6 +51,7 @@ export function StaffRescheduleModal({
   onCerrar: () => void;
   onMovido: () => void;
 }) {
+  const dialogRef = useStaffDialogFocus(Boolean(turno));
   const [dia, setDia] = useState(fecha);
   const [hora, setHora] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -142,6 +144,10 @@ export function StaffRescheduleModal({
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-6">
       <form
         onSubmit={mover}
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
         className="flex max-h-[92vh] w-full max-w-md flex-col overflow-y-auto rounded-t-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] sm:rounded-[var(--radius-md)]"
       >
         <header className="flex items-start justify-between gap-3 border-b border-[color:var(--border-subtle)] px-5 py-4">

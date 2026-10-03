@@ -754,7 +754,7 @@ export function StaffAgenda({
           >
             <MetricCard label="Turnos" icon={Scissors}>
               <p className="stat-number text-2xl font-black tabular-nums leading-none text-white">
-                {activos.length}
+                {cargando || error ? "—" : activos.length}
               </p>
             </MetricCard>
             {permisos.verGanancias ? (
@@ -767,7 +767,9 @@ export function StaffAgenda({
                       : "w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-transparent",
                   )}
                 >
-                  {comision === null ? "—" : formatPrice(comision)}
+                  {cargando || error || comision === null
+                    ? "—"
+                    : formatPrice(comision)}
                 </p>
               </MetricCard>
             ) : null}
@@ -904,6 +906,14 @@ export function StaffAgenda({
             <div className="flex justify-center py-12">
               <Loader2 className="size-5 animate-spin text-[color:var(--text-muted)]" />
             </div>
+          ) : error ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setRecarga((v) => v + 1)}
+            >
+              Reintentar
+            </Button>
           ) : vista === "calendario" && barbero && horario ? (
             // Un día sin turnos también se dibuja: ahí es donde más sirve ver
             // la jornada entera libre.

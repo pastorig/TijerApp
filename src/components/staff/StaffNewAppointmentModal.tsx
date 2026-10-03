@@ -10,6 +10,7 @@ import {
   DURACION_SOBRETURNO_POR_DEFECTO,
 } from "@/lib/staff-sobreturno";
 import { getCurrentSession } from "@/lib/auth";
+import { useStaffDialogFocus } from "./useStaffDialogFocus";
 import { formatPrice } from "@/lib/format";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui";
 
@@ -77,6 +78,11 @@ export function StaffNewAppointmentModal({
 }) {
   const esSobreturno = modo === "sobreturno";
   const [servicios, setServicios] = useState<Servicio[]>([]);
+  // Que los servicios no carguen no es lo mismo que no tener servicios: sin
+  // esto el desplegable quedaba vacío y sin explicación.
+  const [serviciosError, setServiciosError] = useState("");
+  const [serviciosRecarga, setServiciosRecarga] = useState(0);
+  const dialogRef = useStaffDialogFocus(abierto);
   const [serviceId, setServiceId] = useState("");
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -95,10 +101,15 @@ export function StaffNewAppointmentModal({
     if (!abierto) return;
     let vivo = true;
     void (async () => {
+      setServiciosError("");
       try {
         const { data: sessionData } = await getCurrentSession();
         const token = sessionData.session?.access_token;
-        if (!vivo || !token) return;
+        if (!vivo) return;
+        if (!token) {
+          setServiciosError("Se cerró tu sesión. Volvé a entrar.");
+          return;
+        }
         const res = await fetch(
           `/api/staff/services?bs=${encodeURIComponent(barbershopSlug)}`,
           { headers: { Authorization: `Bearer ${token}` } },
@@ -106,16 +117,20 @@ export function StaffNewAppointmentModal({
         const payload = (await res.json().catch(() => ({}))) as {
           servicios?: Servicio[];
         };
-        if (!vivo || !res.ok) return;
+        if (!vivo) return;
+        if (!res.ok) {
+          setServiciosError("No pudimos traer tus servicios.");
+          return;
+        }
         setServicios(payload.servicios ?? []);
       } catch {
-        if (vivo) setError("No pudimos traer tus servicios.");
+        if (vivo) setServiciosError("No pudimos traer tus servicios.");
       }
     })();
     return () => {
       vivo = false;
     };
-  }, [abierto, barbershopSlug]);
+  }, [abierto, barbershopSlug, serviciosRecarga]);
 
   useEffect(() => {
     if (!abierto) return;
@@ -210,6 +225,10 @@ export function StaffNewAppointmentModal({
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-6">
       <form
         onSubmit={guardar}
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
         className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-y-auto rounded-t-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] sm:rounded-[var(--radius-md)]"
       >
         <header className="flex items-start justify-between gap-3 border-b border-[color:var(--border-subtle)] px-5 py-4">
@@ -254,6 +273,23 @@ export function StaffNewAppointmentModal({
               ))}
             </Select>
           </Field>
+
+          {serviciosError ? (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center justify-between gap-2 text-xs text-[color:var(--danger)]"
+            >
+              <p>{serviciosError}</p>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setServiciosRecarga((v) => v + 1)}
+              >
+                Reintentar
+              </Button>
+            </div>
+          ) : null}
 
           {esSobreturno ? (
             <fieldset>

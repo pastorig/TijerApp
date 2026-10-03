@@ -796,7 +796,7 @@ export function BarberAvailabilityManager({
 
           {horarioAnalysis.length > 0 ? (
             <div className="mt-5">
-              <p className="text-[11px] font-bold uppercase text-[color:var(--brand-gold)]">
+              <p className="text-xs font-bold normal-case text-[color:var(--brand-gold)]">
                 Aprovechamiento del horario
               </p>
               <p className="mt-1 text-xs text-[color:var(--text-muted)]">
@@ -813,7 +813,7 @@ export function BarberAvailabilityManager({
                       <p className="text-sm font-bold text-white">
                         {service.name}
                       </p>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+                      <p className="font-mono text-xs normal-case tracking-normal text-[color:var(--text-muted)]">
                         {service.duration_minutes} min
                       </p>
                     </div>
@@ -827,16 +827,16 @@ export function BarberAvailabilityManager({
                             className="grid gap-1.5"
                           >
                             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
+                              <span className="font-mono text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)]">
                                 {row.daysLabel}
                               </span>
-                              <span className="font-mono text-[10px] text-[color:var(--text-muted)]">
+                              <span className="font-mono text-xs text-[color:var(--text-muted)]">
                                 {row.startTime}–{row.endTime}
                               </span>
                               {/* Sin esto, "19 cortes" para una jornada de 13
                                   horas se lee como un error de cuenta. */}
                               {row.breakStart && row.breakEnd ? (
-                                <span className="font-mono text-[10px] text-[color:var(--text-subtle)]">
+                                <span className="font-mono text-xs text-[color:var(--text-subtle)]">
                                   pausa {row.breakStart}–{row.breakEnd}
                                 </span>
                               ) : null}
@@ -848,7 +848,7 @@ export function BarberAvailabilityManager({
                                   {row.cutsFitting === 1 ? "corte" : "cortes"}
                                 </span>
                                 {isExact ? null : (
-                                  <span className="ml-2 text-[10px] text-[color:var(--text-muted)]">
+                                  <span className="ml-2 text-xs text-[color:var(--text-muted)]">
                                     · sobran{" "}
                                     <span className="font-bold text-[color:var(--brand-gold)]">
                                       {row.leftoverMinutes}min
@@ -878,7 +878,7 @@ export function BarberAvailabilityManager({
                                         style={{
                                           width: `${(service.duration_minutes / segment.minutes) * 100}%`,
                                         }}
-                                        className="h-full bg-gold-grad"
+                                        className="h-full bg-[color:var(--brand-gold)]"
                                       />
                                     ),
                                   )}
@@ -897,7 +897,7 @@ export function BarberAvailabilityManager({
 
                             {row.suggestedEndTime ? (
                               <div className="flex flex-wrap items-center justify-between gap-2">
-                                <p className="text-[11px] text-[color:var(--text-secondary)]">
+                                <p className="text-xs text-[color:var(--text-secondary)]">
                                   Cerrá a las{" "}
                                   <span className="font-mono font-bold text-[color:var(--brand-gold)]">
                                     {row.suggestedEndTime}
@@ -920,7 +920,7 @@ export function BarberAvailabilityManager({
                                       row.suggestedEndTime,
                                     )
                                   }
-                                  className="inline-flex min-h-7 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                                  className="inline-flex min-h-7 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 px-2 text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   {isApplyingSuggestion
                                     ? "Aplicando…"
@@ -928,7 +928,7 @@ export function BarberAvailabilityManager({
                                 </button>
                               </div>
                             ) : (
-                              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--success)]">
+                              <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--success)]">
                                 Aprovechás el 100%
                               </p>
                             )}

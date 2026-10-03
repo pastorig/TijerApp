@@ -660,9 +660,7 @@ export function AppointmentRow({
         </div>
       ) : (
         <div className="border-t border-white/[0.04] bg-[color:var(--surface-0)]/40 p-3">
-          {/* MOBILE: Confirmar full width arriba, WhatsApp + Cancelar 50/50 abajo */}
-          {/* DESKTOP: Confirmar flex-1, WhatsApp + Cancelar inline a la derecha */}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <div className="grid grid-cols-3 gap-1.5 sm:flex sm:items-center sm:gap-3">
             {/* PRIMARY: Confirmar */}
             <button
               key={isConfirmed ? "confirmed" : "pending"}
@@ -670,12 +668,12 @@ export function AppointmentRow({
               onClick={() => onConfirm?.(appointment)}
               disabled={isConfirmed || isCancelled || isBusy}
               className={cn(
-                "inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-sm)] px-4 text-[12px] font-bold uppercase tracking-[0.16em] transition-all duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed sm:min-h-11",
+                "inline-flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] px-1 text-xs font-semibold transition-colors disabled:cursor-not-allowed sm:flex-row sm:gap-2 sm:px-4 sm:text-sm",
                 isConfirmed
-                  ? "animate-success-pop border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] text-[color:var(--success)]"
+                  ? "border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] text-[color:var(--success)]"
                   : isCancelled
                     ? "border border-white/[0.04] bg-transparent text-[color:var(--text-subtle)] opacity-50"
-                    : "bg-gold-grad text-black shadow-[0_0_0_0_var(--brand-gold-ring)] hover:bg-[color:var(--brand-gold-hi)] hover:shadow-[0_0_0_3px_var(--brand-gold-ring)]",
+                    : "bg-[color:var(--brand-gold)] text-black hover:bg-[color:var(--brand-gold-hi)]",
               )}
             >
               <Check className="size-5 sm:size-4" aria-hidden="true" />
@@ -687,13 +685,13 @@ export function AppointmentRow({
             </button>
 
             {/* SECONDARIES: WhatsApp + Cancelar */}
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3">
+            <div className="contents sm:flex sm:items-center sm:gap-3">
               {/* WhatsApp — filled subtle green, mucho más visible que outline */}
               <button
                 type="button"
                 onClick={() => onWhatsApp?.(appointment)}
                 disabled={isCancelled || isBusy}
-                className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-all duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--success)]/60 hover:bg-[color:var(--success)]/20 hover:shadow-[0_0_0_3px_var(--success-soft)] disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-11"
+                className="inline-flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-1 text-xs font-semibold text-[color:var(--success)] transition-colors hover:bg-[color:var(--success)]/20 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm"
               >
                 <MessageCircle
                   className="size-5 sm:size-4"
@@ -708,7 +706,7 @@ export function AppointmentRow({
                 onClick={() => onCancel?.(appointment)}
                 disabled={isCancelled || isBusy}
                 className={cn(
-                  "inline-flex min-h-12 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border px-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-all duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-11",
+                  "inline-flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] border px-1 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm",
                   isCancelled
                     ? "animate-success-pop border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] text-[color:var(--danger)]"
                     : "border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] text-[color:var(--danger)] hover:border-[color:var(--danger)]/70 hover:bg-[color:var(--danger)]/20 hover:shadow-[0_0_0_3px_var(--danger-soft)]",

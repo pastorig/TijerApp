@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminSubtabs } from "./AdminSubtabs";
 import { AdminTopBar } from "./AdminTopBar";
@@ -27,13 +27,17 @@ export function AdminChrome({
   children: ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Estable entre renders: el menú del celular depende de esta función para
+  // abrirse y cerrarse, y una nueva en cada render lo reabriría.
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
   return (
     <div className="min-h-screen bg-black text-white lg:flex">
       <AdminSidebar
         barbershopSlug={barbershopSlug}
+        barbershopName={barbershopName}
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={closeDrawer}
       />
 
       <main className="min-w-0 flex-1">
