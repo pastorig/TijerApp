@@ -203,6 +203,11 @@ function DraggableAppointmentBlock({
   const encimado = Boolean(bloque?.encimado);
   const sobreturno = Boolean(bloque?.esSobreturno ?? appointment.is_sobreturno);
   const angosto = Boolean(bloque && bloque.anchoPct < 40);
+  // El barbero le cambió la duración con −5/+5: el bloque mide distinto que el
+  // servicio y sin aviso un "Corte y barba" de 30 min parece un error.
+  const ajustado =
+    appointment.actual_duration_minutes != null &&
+    appointment.actual_duration_minutes !== appointment.service_duration_minutes;
 
   const positionStyle: React.CSSProperties = isOverlay
     ? { width: 220 }
@@ -293,6 +298,7 @@ function DraggableAppointmentBlock({
             <span className="font-mono font-semibold">
               {startLabel}–{endLabel}
             </span>
+            {ajustado ? " (ajustado)" : ""}
             {!angosto ? ` · ${sobreturno ? "Sobreturno" : appointment.service_name}` : null}
           </p>
         </div>
@@ -307,7 +313,7 @@ function DraggableAppointmentBlock({
           {!angosto ? (
             <p className="truncate text-xs leading-tight text-[color:var(--text-secondary)]">
               {sobreturno ? "Sobreturno · " : ""}
-              {appointment.service_name} · {durationMinutes} min
+              {appointment.service_name} · {durationMinutes} min{ajustado ? " (ajustado)" : ""}
             </p>
           ) : null}
           <p className="mt-auto flex items-center justify-between gap-1.5 text-xs leading-tight">
@@ -349,6 +355,54 @@ function BlockFlags({ encimado, sobreturno }: { encimado: boolean; sobreturno: b
   );
 }
 
+/** "· 2 encimados" en la cabecera del barbero (solo si hay). */
+function EncimadosCount({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <span className="font-semibold text-[color:var(--danger)]">
+      {" "}
+      · {count} encimado{count === 1 ? "" : "s"}
+    </span>
+  );
+}
+
+/**
+ * Qué significa cada cosa del calendario. Sin esto la barra de color, el
+ * triángulo y el rayo había que adivinarlos.
+ */
+function AgendaLegend() {
+  return (
+    <ul
+      aria-label="Referencias del calendario"
+      className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[color:var(--text-secondary)]"
+    >
+      <li className="inline-flex items-center gap-1.5">
+        <span aria-hidden="true" className="h-3.5 w-[3px] rounded-full bg-[color:var(--brand-gold)]" />
+        Pendiente
+      </li>
+      <li className="inline-flex items-center gap-1.5">
+        <span aria-hidden="true" className="h-3.5 w-[3px] rounded-full bg-[color:var(--success)]" />
+        Confirmado
+      </li>
+      <li className="inline-flex items-center gap-1.5">
+        <TriangleAlert aria-hidden="true" className="size-3.5 text-[color:var(--danger)]" />
+        Se pisa con otro turno
+      </li>
+      <li className="inline-flex items-center gap-1.5">
+        <Zap aria-hidden="true" className="size-3.5 fill-current text-[color:var(--brand-gold)]" />
+        Sobreturno
+      </li>
+      <li className="inline-flex items-center gap-1.5">
+        <span
+          aria-hidden="true"
+          className="size-3.5 rounded-[2px] border border-[color:var(--border-default)] [background-image:repeating-linear-gradient(135deg,transparent_0_3px,var(--border-strong)_3px_4px)]"
+        />
+        Pausa o bloqueado
+      </li>
+    </ul>
+  );
+}
+
 /**
  * Slot de fondo: zona donde se puede soltar un turno y, si está libre, tocar
  * para cargar uno. No contiene al bloque (los bloques van encima).
@@ -361,6 +415,7 @@ function DroppableSlot({
   isHourStart,
   isInWorkingHours,
   isOccupied,
+  isCovered,
   isDayLocked,
   isDragActive,
   onPick,
@@ -372,6 +427,8 @@ function DroppableSlot({
   isHourStart: boolean;
   isInWorkingHours: boolean;
   isOccupied: boolean;
+  /** Algún turno pasa por encima de este horario (aunque no empiece acá). */
+  isCovered: boolean;
   isDayLocked: boolean;
   isDragActive: boolean;
   onPick: (barberId: string, time: string, top: number) => void;
@@ -382,17 +439,20 @@ function DroppableSlot({
   });
 
   const isAvailable = isInWorkingHours && !isOccupied && !isDayLocked;
+  // Para cargar un turno el horario tiene que estar libre de verdad: si un
+  // turno lo tapa, el "+ 11:30" quedaba medio escondido debajo del bloque.
+  const canPick = isAvailable && !isCovered && !isDragActive;
   const showDragHint = isAvailable && isDragActive;
   const showBusyTooltip = isOccupied && isDragActive && !isDayLocked;
 
   return (
     <div
       ref={setNodeRef}
-      onClick={isAvailable && !isDragActive ? () => onPick(barberId, time, top) : undefined}
+      onClick={canPick ? () => onPick(barberId, time, top) : undefined}
       className={cn(
         "group/slot absolute inset-x-0 border-t transition-colors duration-150",
         isHourStart ? "border-[color:var(--border-default)]" : "border-[color:var(--border-subtle)]/50",
-        isAvailable && !isDragActive && "cursor-pointer hover:bg-[color:var(--surface-2)]/50",
+        canPick && "cursor-pointer hover:bg-[color:var(--surface-2)]/50",
         showDragHint && !isOver && "bg-[color:var(--brand-gold-soft)]/25",
         isOver &&
           "z-[5] bg-[color:var(--brand-gold-soft)] ring-2 ring-inset ring-[color:var(--brand-gold)] animate-drop-target-pulse",
@@ -400,11 +460,11 @@ function DroppableSlot({
       )}
       style={{ top, height }}
     >
-      {isAvailable && !isDragActive && height >= 24 ? (
+      {canPick && height >= 24 ? (
         <span className="pointer-events-none absolute inset-0 hidden items-center justify-center opacity-0 transition-opacity duration-150 group-hover/slot:opacity-100 sm:flex">
           <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--surface-1)]/90 px-2 py-0.5 text-xs font-semibold text-[color:var(--brand-gold)]">
             <Plus aria-hidden="true" className="size-3" />
-            {time}
+            Cargar a las {time}
           </span>
         </span>
       ) : null}
@@ -920,6 +980,8 @@ export function AgendaCalendarGridView({
   }
 
   const closeSlotMenu = useCallback(() => setSlotMenu(null), []);
+  const encimadosDe = (barberId: string) =>
+    (layoutByBarber.get(barberId)?.bloques ?? []).filter((b) => b.encimado).length;
 
   if (columns.length === 0) {
     return (
@@ -1036,6 +1098,17 @@ export function AgendaCalendarGridView({
                   isHourStart={time.endsWith(":00")}
                   isInWorkingHours={slotMin >= scheduleStart && slotMin < scheduleEnd}
                   isOccupied={occupiedSlots.has(`${barber.id}:${time}`)}
+                  isCovered={
+                    layout.bloques.some(
+                      (b) => b.topPx < (i + 1) * slotHeight && i * slotHeight < b.topPx + b.altoPx,
+                    ) ||
+                    franjas.some(
+                      (f) =>
+                        f.tipo !== "fuera-de-horario" &&
+                        f.inicioMin < slotMin + interval &&
+                        slotMin < f.finMin,
+                    )
+                  }
                   isDayLocked={isDayLocked}
                   isDragActive={Boolean(activeAppointment)}
                   onPick={(barberId, t, top) => setSlotMenu({ barberId, time: t, top })}
@@ -1089,7 +1162,7 @@ export function AgendaCalendarGridView({
                   // (los carriles de la derecha suelen terminar antes).
                   style={{ top: Math.max(grupo.topPx, grupo.topPx + grupo.altoPx - 46) }}
                 >
-                  +{grupo.ocultos.length}
+                  +{grupo.ocultos.length} más
                 </button>
               ))}
 
@@ -1124,15 +1197,18 @@ export function AgendaCalendarGridView({
           {isReadOnly ? READ_ONLY_REASON : "Día pasado: se puede consultar, no mover."}
         </p>
       ) : (
-        <p className="mb-3 text-xs text-[color:var(--text-muted)]">
+        <p className="mb-2 text-xs text-[color:var(--text-muted)]">
           <span className="hidden sm:inline">
-            Tocá un turno para ver el detalle, un hueco para cargar y arrastrá para mover.
+            Tocá un turno para ver el detalle, un horario libre para cargar uno y arrastrá para mover.
           </span>
           <span className="sm:hidden">
-            Tocá un turno o un hueco. Mantené apretado para mover.
+            Tocá un turno o un horario libre. Mantené apretado un turno para moverlo.
           </span>
         </p>
       )}
+
+      <AgendaLegend />
+
 
       <div
         className={cn(
@@ -1167,6 +1243,7 @@ export function AgendaCalendarGridView({
                     ? "Franco, con turnos cargados"
                     : `${selectedColumn.schedule.startTime.slice(0, 5)}–${selectedColumn.schedule.endTime.slice(0, 5)}`}
                   {selectedStats?.nextTime ? ` · próximo ${selectedStats.nextTime}` : ""}
+                  <EncimadosCount count={encimadosDe(selectedColumn.barber.id)} />
                 </p>
               ) : null}
             </div>
@@ -1189,6 +1266,7 @@ export function AgendaCalendarGridView({
                       <span className="font-semibold text-[color:var(--brand-gold)]">
                         {stats?.total ?? 0} turno{(stats?.total ?? 0) === 1 ? "" : "s"}
                       </span>
+                      <EncimadosCount count={encimadosDe(barber.id)} />
                       {isOffDay ? " · franco" : ""}
                       {stats?.nextTime
                         ? ` · próximo ${stats.nextTime}`
