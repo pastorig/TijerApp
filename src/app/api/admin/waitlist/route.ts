@@ -2,36 +2,12 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { assertPlanActive } from "@/lib/api-plan-guard";
+import { resolveBarbershopAdminAccess } from "@/lib/server/barbershop-admin-access";
 
 export const runtime = "nodejs";
 
 const waitlistSelect =
   "id, created_at, barbershop_slug, barber_id, service_name, service_duration_minutes, customer_name, customer_phone, customer_email, preferred_date, preferred_time_from, preferred_time_to, notes, status, resolved_at, deleted_at, confirmation_token";
-
-async function assertAdminOfBarbershop(
-  authHeader: string | null,
-  barbershopSlug: string,
-): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return { ok: false, status: 401, error: "No autorizado." };
-  }
-  const accessToken = authHeader.slice("Bearer ".length);
-  const supabaseAdmin = getSupabaseAdminClient();
-  const { data: userResult } = await supabaseAdmin.auth.getUser(accessToken);
-  if (!userResult.user) {
-    return { ok: false, status: 401, error: "Sesión inválida." };
-  }
-  const { data: adminRow } = await supabaseAdmin
-    .from("barbershop_admins")
-    .select("user_id")
-    .eq("user_id", userResult.user.id)
-    .eq("barbershop_slug", barbershopSlug)
-    .maybeSingle();
-  if (!adminRow) {
-    return { ok: false, status: 403, error: "No sos admin de esta barbería." };
-  }
-  return { ok: true };
-}
 
 export async function PATCH(request: Request) {
   let payload: Record<string, unknown>;
@@ -52,7 +28,7 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const auth = await assertAdminOfBarbershop(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );

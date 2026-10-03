@@ -5,6 +5,7 @@ import { Resend } from "resend";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { resolveEmailFrom } from "@/lib/email/from";
 import { assertPlanActive, assertPlanFeature } from "@/lib/api-plan-guard";
+import { resolveBarbershopAdminAccess } from "@/lib/server/barbershop-admin-access";
 
 export const runtime = "nodejs";
 
@@ -194,22 +195,41 @@ async function sendInvitationEmail(input: {
  *        Solo el owner puede remover. No se puede remover al owner.
  */
 
-async function getAuthUserId(authHeader: string | null): Promise<string | null> {
-  if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
-  const { data } = await getSupabaseAdminClient().auth.getUser(
-    authHeader.slice("Bearer ".length),
-  );
-  return data.user?.id ?? null;
-}
-
-async function getMyRow(userId: string, barbershopSlug: string) {
-  const { data } = await getSupabaseAdminClient()
-    .from("barbershop_admins")
-    .select("user_id, is_owner")
-    .eq("user_id", userId)
-    .eq("barbershop_slug", barbershopSlug)
-    .maybeSingle();
-  return data as { user_id: string; is_owner: boolean } | null;
+/**
+ * Quién soy y si cuento como owner de esta barbería. La decisión es del helper
+ * compartido (el owner de la plataforma cuenta como owner de la barbería); acá
+ * solo se traducen los rechazos a los mensajes que esta ruta ya devolvía:
+ *
+ *  - cualquier 401 → "No autorizado." (esta ruta nunca distinguió entre "sin
+ *    token" y "token vencido");
+ *  - no ser admin, o serlo sin ser owner cuando hace falta → 403 con el mensaje
+ *    de cada método.
+ *
+ * El 503 ("no pudimos verificar tu acceso") pasa tal cual.
+ */
+async function resolveTeamAccess(
+  authHeader: string | null,
+  barbershopSlug: string,
+  forbiddenMessage: string,
+  { requireOwner }: { requireOwner: boolean },
+): Promise<
+  | { ok: true; userId: string; isOwner: boolean }
+  | { ok: false; status: number; error: string }
+> {
+  const access = await resolveBarbershopAdminAccess(authHeader, barbershopSlug);
+  if (!access.ok) {
+    if (access.status === 401) {
+      return { ok: false, status: 401, error: "No autorizado." };
+    }
+    if (access.status === 403) {
+      return { ok: false, status: 403, error: forbiddenMessage };
+    }
+    return access;
+  }
+  if (requireOwner && !access.isBarbershopOwner) {
+    return { ok: false, status: 403, error: forbiddenMessage };
+  }
+  return { ok: true, userId: access.userId, isOwner: access.isBarbershopOwner };
 }
 
 async function listAdminsWithEmails(barbershopSlug: string) {
@@ -252,25 +272,23 @@ export async function GET(request: Request) {
   if (!barbershopSlug) {
     return NextResponse.json({ error: "Falta barbershopSlug." }, { status: 400 });
   }
-  const userId = await getAuthUserId(request.headers.get("authorization"));
-  if (!userId) {
-    return NextResponse.json({ error: "No autorizado." }, { status: 401 });
-  }
-  const myRow = await getMyRow(userId, barbershopSlug);
-  if (!myRow) {
-    return NextResponse.json(
-      { error: "No sos admin de esta barbería." },
-      { status: 403 },
-    );
+  const me = await resolveTeamAccess(
+    request.headers.get("authorization"),
+    barbershopSlug,
+    "No sos admin de esta barbería.",
+    { requireOwner: false },
+  );
+  if (!me.ok) {
+    return NextResponse.json({ error: me.error }, { status: me.status });
   }
 
   try {
     const admins = await listAdminsWithEmails(barbershopSlug);
     return NextResponse.json({
       admins,
-      canInvite: myRow.is_owner && admins.length < MAX_ADMINS_PER_BARBERSHOP,
+      canInvite: me.isOwner && admins.length < MAX_ADMINS_PER_BARBERSHOP,
       max: MAX_ADMINS_PER_BARBERSHOP,
-      iAmOwner: myRow.is_owner,
+      iAmOwner: me.isOwner,
     });
   } catch (error) {
     Sentry.captureException(error, { tags: { route: "admin/team", method: "GET" } });
@@ -297,17 +315,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Email inválido." }, { status: 400 });
   }
 
-  const userId = await getAuthUserId(request.headers.get("authorization"));
-  if (!userId) {
-    return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+  const me = await resolveTeamAccess(
+    request.headers.get("authorization"),
+    barbershopSlug,
+    "Solo el owner puede invitar nuevos admins.",
+    { requireOwner: true },
+  );
+  if (!me.ok) {
+    return NextResponse.json({ error: me.error }, { status: me.status });
   }
-  const myRow = await getMyRow(userId, barbershopSlug);
-  if (!myRow || !myRow.is_owner) {
-    return NextResponse.json(
-      { error: "Solo el owner puede invitar nuevos admins." },
-      { status: 403 },
-    );
-  }
+  const userId = me.userId;
 
   const gate = await assertPlanFeature(barbershopSlug, "multi_admin");
   if (!gate.ok) {
@@ -482,16 +499,14 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Faltan parámetros." }, { status: 400 });
   }
 
-  const userId = await getAuthUserId(request.headers.get("authorization"));
-  if (!userId) {
-    return NextResponse.json({ error: "No autorizado." }, { status: 401 });
-  }
-  const myRow = await getMyRow(userId, barbershopSlug);
-  if (!myRow || !myRow.is_owner) {
-    return NextResponse.json(
-      { error: "Solo el owner puede remover admins." },
-      { status: 403 },
-    );
+  const me = await resolveTeamAccess(
+    request.headers.get("authorization"),
+    barbershopSlug,
+    "Solo el owner puede remover admins.",
+    { requireOwner: true },
+  );
+  if (!me.ok) {
+    return NextResponse.json({ error: me.error }, { status: me.status });
   }
 
   // Plan vencido => modo lectura: la barbería se puede leer, no escribir.

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { assertPlanActive } from "@/lib/api-plan-guard";
+import { resolveBarbershopAdminAccess } from "@/lib/server/barbershop-admin-access";
 import { getBarbershopPlan } from "@/lib/plan-access";
 import { PLAN_LIMITS, PLAN_META } from "@/lib/plans";
 import type { BarberInsert } from "@/lib/supabase";
@@ -22,33 +23,6 @@ export const runtime = "nodejs";
  * Sigue el mismo patrón que el resto de /api/admin/*: validar admin con el
  * service role y recién ahí escribir.
  */
-
-async function assertAdmin(authHeader: string | null, barbershopSlug: string) {
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return { ok: false as const, status: 401, error: "No autorizado." };
-  }
-  const supabase = getSupabaseAdminClient();
-  const { data: userResult } = await supabase.auth.getUser(
-    authHeader.slice("Bearer ".length),
-  );
-  if (!userResult.user) {
-    return { ok: false as const, status: 401, error: "Sesión inválida." };
-  }
-  const { data: adminRow } = await supabase
-    .from("barbershop_admins")
-    .select("user_id")
-    .eq("user_id", userResult.user.id)
-    .eq("barbershop_slug", barbershopSlug)
-    .maybeSingle();
-  if (!adminRow) {
-    return {
-      ok: false as const,
-      status: 403,
-      error: "No sos admin de esta barbería.",
-    };
-  }
-  return { ok: true as const, userId: userResult.user.id };
-}
 
 /** Mensaje de paywall: dice cuántos tenés, cuál es el tope y a dónde subir. */
 function limitReachedMessage(
@@ -88,7 +62,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const auth = await assertAdmin(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );

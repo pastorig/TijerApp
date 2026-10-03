@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { assertPlanActive } from "@/lib/api-plan-guard";
+import { resolveBarbershopAdminAccess } from "@/lib/server/barbershop-admin-access";
 
 export const runtime = "nodejs";
 
@@ -39,36 +40,17 @@ function getStoragePathFromPublicUrl(
   return match?.[1] ?? null;
 }
 
-async function assertAdminOfBarbershop(
-  authHeader: string | null,
+/** El path en el bucket del logo que esta barbería tiene guardado hoy. */
+async function logoGuardado(
+  supabaseAdmin: ReturnType<typeof getSupabaseAdminClient>,
   barbershopSlug: string,
-): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return { ok: false, status: 401, error: "No autorizado." };
-  }
-  const accessToken = authHeader.slice("Bearer ".length);
-  const supabaseAdmin = getSupabaseAdminClient();
-
-  const { data: userResult, error: userError } =
-    await supabaseAdmin.auth.getUser(accessToken);
-  if (userError || !userResult.user) {
-    return { ok: false, status: 401, error: "Sesión inválida." };
-  }
-
-  const { data: adminRow, error: adminError } = await supabaseAdmin
-    .from("barbershop_admins")
-    .select("user_id")
-    .eq("user_id", userResult.user.id)
-    .eq("barbershop_slug", barbershopSlug)
+): Promise<string | null> {
+  const { data } = await supabaseAdmin
+    .from("barbershops")
+    .select("logo_url")
+    .eq("slug", barbershopSlug)
     .maybeSingle();
-
-  if (adminError) {
-    return { ok: false, status: 500, error: "Error validando permisos." };
-  }
-  if (!adminRow) {
-    return { ok: false, status: 403, error: "No sos admin de esta barbería." };
-  }
-  return { ok: true };
+  return getStoragePathFromPublicUrl(data?.logo_url ?? null);
 }
 
 export async function POST(request: Request) {
@@ -111,7 +93,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const auth = await assertAdminOfBarbershop(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );
@@ -149,11 +131,11 @@ export async function POST(request: Request) {
     );
   }
 
-  // Si el path anterior es distinto, borramos el archivo viejo.
-  const previousPath =
-    typeof previousLogoUrl === "string"
-      ? getStoragePathFromPublicUrl(previousLogoUrl)
-      : null;
+  // Si el path anterior es distinto, borramos el archivo viejo. Cuál es "el
+  // anterior" lo dice la base (el logo guardado de ESTA barbería), no la URL
+  // que mande el navegador: con esa URL se podía borrar el logo de otra.
+  void previousLogoUrl;
+  const previousPath = await logoGuardado(supabaseAdmin, barbershopSlug);
   if (previousPath && previousPath !== newPath) {
     await supabaseAdmin.storage.from(LOGO_BUCKET).remove([previousPath]);
   }
@@ -195,7 +177,7 @@ export async function DELETE(request: Request) {
     );
   }
 
-  const auth = await assertAdminOfBarbershop(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );
@@ -213,9 +195,9 @@ export async function DELETE(request: Request) {
   }
 
   const supabaseAdmin = getSupabaseAdminClient();
-  const storagePath = currentLogoUrl
-    ? getStoragePathFromPublicUrl(currentLogoUrl)
-    : null;
+  // Igual que al subir: se borra el logo guardado de ESTA barbería.
+  void currentLogoUrl;
+  const storagePath = await logoGuardado(supabaseAdmin, barbershopSlug);
   if (storagePath) {
     await supabaseAdmin.storage.from(LOGO_BUCKET).remove([storagePath]);
   }

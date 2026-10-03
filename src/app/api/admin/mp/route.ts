@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { assertPlanFeature } from "@/lib/api-plan-guard";
+import { resolveBarbershopAdminAccess } from "@/lib/server/barbershop-admin-access";
 import { testMPConnection } from "@/lib/mercadopago/client";
 
 export const runtime = "nodejs";
@@ -22,35 +23,6 @@ export const runtime = "nodejs";
  *     → Test de conexión SIN guardar. Sirve para "probar antes de guardar".
  */
 
-async function assertAdmin(
-  authHeader: string | null,
-  barbershopSlug: string,
-): Promise<
-  | { ok: true; userId: string }
-  | { ok: false; status: number; error: string }
-> {
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return { ok: false, status: 401, error: "No autorizado." };
-  }
-  const supabase = getSupabaseAdminClient();
-  const { data: userResult, error: userError } = await supabase.auth.getUser(
-    authHeader.slice("Bearer ".length),
-  );
-  if (userError || !userResult.user) {
-    return { ok: false, status: 401, error: "Sesión inválida." };
-  }
-  const { data: adminRow } = await supabase
-    .from("barbershop_admins")
-    .select("user_id")
-    .eq("user_id", userResult.user.id)
-    .eq("barbershop_slug", barbershopSlug)
-    .maybeSingle();
-  if (!adminRow) {
-    return { ok: false, status: 403, error: "No sos admin de esta barbería." };
-  }
-  return { ok: true, userId: userResult.user.id };
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const barbershopSlug = searchParams.get("barbershopSlug") ?? "";
@@ -62,7 +34,7 @@ export async function GET(request: Request) {
       { status: 400 },
     );
   }
-  const auth = await assertAdmin(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );
@@ -154,7 +126,7 @@ export async function PATCH(request: Request) {
   if (!barbershopSlug) {
     return NextResponse.json({ error: "Falta barbershopSlug." }, { status: 400 });
   }
-  const auth = await assertAdmin(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );
@@ -281,7 +253,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const auth = await assertAdmin(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );

@@ -2,43 +2,12 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { assertPlanActive } from "@/lib/api-plan-guard";
+import { resolveBarbershopAdminAccess } from "@/lib/server/barbershop-admin-access";
 
 export const runtime = "nodejs";
 
 const barbershopSelectFields =
   "id, created_at, slug, name, description, whatsapp, instagram, address, logo_url, google_reviews_url, working_hours_start, working_hours_end, slot_interval_minutes, is_active, auto_confirm_appointments, waitlist_enabled, require_client_email, min_booking_notice_minutes, whatsapp_message_template";
-
-async function assertAdminOfBarbershop(
-  authHeader: string | null,
-  barbershopSlug: string,
-): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return { ok: false, status: 401, error: "No autorizado." };
-  }
-  const accessToken = authHeader.slice("Bearer ".length);
-  const supabaseAdmin = getSupabaseAdminClient();
-
-  const { data: userResult, error: userError } =
-    await supabaseAdmin.auth.getUser(accessToken);
-  if (userError || !userResult.user) {
-    return { ok: false, status: 401, error: "Sesión inválida." };
-  }
-
-  const { data: adminRow, error: adminError } = await supabaseAdmin
-    .from("barbershop_admins")
-    .select("user_id")
-    .eq("user_id", userResult.user.id)
-    .eq("barbershop_slug", barbershopSlug)
-    .maybeSingle();
-
-  if (adminError) {
-    return { ok: false, status: 500, error: "Error validando permisos." };
-  }
-  if (!adminRow) {
-    return { ok: false, status: 403, error: "No sos admin de esta barbería." };
-  }
-  return { ok: true };
-}
 
 function asTrimmedOrNull(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -114,7 +83,7 @@ export async function PATCH(request: Request) {
   const intervalValue =
     Number.isFinite(rawInterval) && rawInterval > 0 ? rawInterval : 30;
 
-  const auth = await assertAdminOfBarbershop(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );
@@ -175,11 +144,7 @@ export async function PATCH(request: Request) {
       Sentry.captureException(upsertError);
       console.error("[barbershop-settings] upsert error", upsertError);
       return NextResponse.json(
-        {
-          error: "No pudimos crear la barbería en la base.",
-          debug: upsertError.message,
-          code: upsertError.code,
-        },
+        { error: "No pudimos crear la barbería en la base." },
         { status: 500 },
       );
     }
@@ -216,12 +181,8 @@ export async function PATCH(request: Request) {
     Sentry.captureException(updateError);
     console.error("[barbershop-settings] update error", updateError);
     return NextResponse.json(
-      {
-        error: "No pudimos guardar la configuración.",
-        debug: updateError?.message ?? "no barbershop returned",
-        code: updateError?.code ?? null,
-        details: updateError?.details ?? null,
-      },
+      // El detalle de Postgres va a Sentry, no al navegador.
+      { error: "No pudimos guardar la configuración." },
       { status: 500 },
     );
   }

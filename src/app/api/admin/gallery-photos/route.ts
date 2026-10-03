@@ -2,44 +2,13 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { assertPlanActive } from "@/lib/api-plan-guard";
+import { resolveBarbershopAdminAccess } from "@/lib/server/barbershop-admin-access";
 
 export const runtime = "nodejs";
 
 const GALLERY_BUCKET = "barbershop-gallery";
 const ALLOWED_MIME = ["image/png", "image/jpeg", "image/webp"];
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
-
-async function assertAdminOfBarbershop(
-  authHeader: string | null,
-  barbershopSlug: string,
-): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return { ok: false, status: 401, error: "No autorizado." };
-  }
-  const accessToken = authHeader.slice("Bearer ".length);
-  const supabaseAdmin = getSupabaseAdminClient();
-
-  const { data: userResult, error: userError } =
-    await supabaseAdmin.auth.getUser(accessToken);
-  if (userError || !userResult.user) {
-    return { ok: false, status: 401, error: "Sesión inválida." };
-  }
-
-  const { data: adminRow, error: adminError } = await supabaseAdmin
-    .from("barbershop_admins")
-    .select("user_id")
-    .eq("user_id", userResult.user.id)
-    .eq("barbershop_slug", barbershopSlug)
-    .maybeSingle();
-
-  if (adminError) {
-    return { ok: false, status: 500, error: "Error validando permisos." };
-  }
-  if (!adminRow) {
-    return { ok: false, status: 403, error: "No sos admin de esta barbería." };
-  }
-  return { ok: true };
-}
 
 export async function POST(request: Request) {
   let formData: FormData;
@@ -82,7 +51,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const auth = await assertAdminOfBarbershop(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );
@@ -187,7 +156,7 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const auth = await assertAdminOfBarbershop(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );
@@ -257,7 +226,7 @@ export async function DELETE(request: Request) {
     );
   }
 
-  const auth = await assertAdminOfBarbershop(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );
@@ -275,7 +244,35 @@ export async function DELETE(request: Request) {
   }
 
   const supabaseAdmin = getSupabaseAdminClient();
-  await supabaseAdmin.storage.from(GALLERY_BUCKET).remove([storagePath]);
+
+  // Qué archivo se borra lo dice la BASE, a partir de la foto de esta
+  // barbería. Antes se borraba el `storagePath` que mandaba el navegador sin
+  // mirarlo: con eso el admin de una barbería podía borrar archivos de la
+  // galería de otra.
+  const { data: foto, error: fotoError } = await supabaseAdmin
+    .from("barbershop_gallery_photos")
+    .select("storage_path")
+    .eq("id", photoId)
+    .eq("barbershop_slug", barbershopSlug)
+    .maybeSingle();
+
+  if (fotoError) {
+    Sentry.captureException(fotoError);
+    return NextResponse.json(
+      { error: "No pudimos eliminar la foto." },
+      { status: 500 },
+    );
+  }
+  if (!foto) {
+    return NextResponse.json(
+      { error: "Esa foto no es de tu barbería." },
+      { status: 404 },
+    );
+  }
+
+  if (foto.storage_path) {
+    await supabaseAdmin.storage.from(GALLERY_BUCKET).remove([foto.storage_path]);
+  }
   const { error: deleteError } = await supabaseAdmin
     .from("barbershop_gallery_photos")
     .delete()
