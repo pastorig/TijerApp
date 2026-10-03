@@ -28,9 +28,9 @@ import {
   formatDateForDisplay,
   formatDateWithWeekday,
   formatPrice,
-  getLocalDateInputValue,
   getWeekdayName,
 } from "@/lib/format";
+import { hoyEnArgentina } from "@/lib/hora-argentina";
 import type { BarberRow, BarberServiceRow } from "@/lib/supabase";
 import { createWhatsAppBookingLink } from "@/lib/whatsapp";
 import { CouponInput } from "./booking/CouponInput";
@@ -60,8 +60,11 @@ type BookingFormProps = {
 type BookingBarber = Barber;
 type BookingService = BookingBarber["services"][number];
 
+// El "hoy" es el de la barbería, no el del proceso: este componente se
+// renderiza también en el servidor (UTC) y ahí la fecha local ya es mañana
+// desde las 21:00 de Argentina.
 function getTodayInputValue() {
-  return getLocalDateInputValue();
+  return hoyEnArgentina();
 }
 
 /**

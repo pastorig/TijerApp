@@ -54,3 +54,21 @@ export function ahoraEnArgentina(instante: Date = new Date()): Date {
     valor("second"),
   );
 }
+
+/**
+ * El "hoy" de la barbería como YYYY-MM-DD.
+ *
+ * Existe porque la pantalla de reserva se renderiza dos veces: en el servidor
+ * (UTC) y en el navegador. Entre las 21:00 y las 00:00 de Argentina el servidor
+ * ya está en el día siguiente, así que con la fecha local de cada uno el HTML
+ * salía con "sábado" y el navegador lo pisaba con "viernes": error de
+ * hidratación (#418) y el día preseleccionado saltando. Con esta función los
+ * dos lados dan el mismo día, y además es el día correcto para alguien que
+ * reserva desde otro huso.
+ */
+export function hoyEnArgentina(instante: Date = new Date()): string {
+  const arg = ahoraEnArgentina(instante);
+  const mes = String(arg.getMonth() + 1).padStart(2, "0");
+  const dia = String(arg.getDate()).padStart(2, "0");
+  return `${arg.getFullYear()}-${mes}-${dia}`;
+}

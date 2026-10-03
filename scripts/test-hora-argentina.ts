@@ -11,7 +11,7 @@
  * Correr: node --experimental-strip-types scripts/test-hora-argentina.ts
  */
 import { buildAvailabilitySlots } from "../src/lib/availability.ts";
-import { ahoraEnArgentina } from "../src/lib/hora-argentina.ts";
+import { ahoraEnArgentina, hoyEnArgentina } from "../src/lib/hora-argentina.ts";
 
 let passed = 0;
 let failed = 0;
@@ -81,6 +81,36 @@ check("con el motivo correcto", faltaPoco?.reason, "too-soon");
 // Y lo que ya pasó sigue siendo pasado.
 const yaPaso = buscar(agenda(new Date(2026, 8, 4, 18, 0)), "16:00");
 check("lo que ya pasó sigue marcado como pasado", yaPaso?.reason, "past");
+
+// ─── El "hoy" de la pantalla de reserva ──────────────────────────────────────
+// Entre las 21:00 y las 00:00 de Argentina el servidor (UTC) ya está en el día
+// siguiente. El HTML salía con un día y el navegador lo pisaba con otro
+// (error de hidratación #418, visto el 02/10/2026 a las 23:45).
+check(
+  "a las 23:45 del viernes 2/10 en Argentina, hoy sigue siendo el 2",
+  hoyEnArgentina(new Date("2026-10-03T02:45:00Z")),
+  "2026-10-02",
+);
+check(
+  "un segundo antes de la medianoche argentina todavía es el 2",
+  hoyEnArgentina(new Date("2026-10-03T02:59:59Z")),
+  "2026-10-02",
+);
+check(
+  "a la medianoche argentina (03:00 UTC) pasa al 3",
+  hoyEnArgentina(new Date("2026-10-03T03:00:00Z")),
+  "2026-10-03",
+);
+check(
+  "a la medianoche UTC (21:00 de Argentina) NO cambia de día",
+  hoyEnArgentina(new Date("2026-10-03T00:00:00Z")),
+  "2026-10-02",
+);
+check(
+  "el cambio de año respeta el huso",
+  hoyEnArgentina(new Date("2027-01-01T01:30:00Z")),
+  "2026-12-31",
+);
 
 console.log(`\n${passed}/${passed + failed} OK${failed ? ` · ${failed} FALLARON` : ""}`);
 if (failed) process.exit(1);
