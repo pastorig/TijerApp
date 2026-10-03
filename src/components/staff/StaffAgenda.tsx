@@ -601,7 +601,7 @@ export function StaffAgenda({
             <div className="min-w-0 flex-1">
               <p
                 className={cn(
-                  "truncate text-sm font-bold",
+                  "break-words text-sm font-bold",
                   cancelado
                     ? "text-[color:var(--text-muted)] line-through"
                     : "text-white",
@@ -609,7 +609,7 @@ export function StaffAgenda({
               >
                 {turno.customer_name}
               </p>
-              <p className="truncate text-xs text-[color:var(--text-muted)]">
+              <p className="break-words text-xs text-[color:var(--text-muted)]">
                 {turno.service_name}
                 {turno.service_duration_minutes
                   ? ` · ${turno.service_duration_minutes} min`
@@ -872,7 +872,7 @@ export function StaffAgenda({
                       {b.start_time.slice(0, 5)} a {b.end_time.slice(0, 5)}
                     </p>
                     {b.reason ? (
-                      <p className="truncate text-xs text-[color:var(--text-muted)]">
+                      <p className="break-words text-xs text-[color:var(--text-muted)]">
                         {b.reason}
                       </p>
                     ) : null}
@@ -969,7 +969,7 @@ export function StaffAgenda({
                     <span className="stat-number text-3xl font-black tabular-nums leading-none text-white">
                       {destacado.turno.appointment_time.slice(0, 5)}
                     </span>
-                    <span className="truncate text-base font-bold text-white">
+                    <span className="break-words text-base font-bold text-white">
                       {destacado.turno.customer_name}
                     </span>
                   </div>

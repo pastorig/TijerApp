@@ -797,7 +797,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-white">
+                      <p className="break-words text-sm font-bold text-white">
                         {g.name}
                       </p>
                       <p className="text-[11px] text-[color:var(--text-muted)]">
@@ -990,10 +990,10 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                     )}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-white">
+                    <p className="break-words text-sm font-bold text-white">
                       {appointment.service_name}
                     </p>
-                    <p className="mt-0.5 truncate text-xs text-[color:var(--text-muted)]">
+                    <p className="mt-0.5 break-words text-xs text-[color:var(--text-muted)]">
                       {appointment.barber_name}
                       <span className="mx-1.5 text-[color:var(--text-subtle)]">
                         ·
@@ -1297,7 +1297,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                    <p className="truncate text-sm font-bold text-white sm:text-base">
+                    <p className="break-words text-sm font-bold text-white sm:text-base">
                       {client.name}
                     </p>
                     <span
@@ -1321,7 +1321,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                       </span>
                     ))}
                   </div>
-                  <p className="mt-0.5 truncate font-mono text-xs text-[color:var(--text-muted)]">
+                  <p className="mt-0.5 break-words font-mono text-xs text-[color:var(--text-muted)]">
                     {client.phone_display}
                   </p>
                   {upcoming ? (
