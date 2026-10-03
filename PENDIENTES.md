@@ -4,39 +4,15 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
-## 🗄️ Correr la migración de `appointment_time` (2026-10-02)
+## ✅ Migración de `appointment_time` y CRM — HECHO (2026-10-02)
 
-`supabase/migrations/20261003130000_appointment_time_canonico.sql`, en el SQL
-Editor. Deja la hora de todos los turnos en un solo formato ("HH:MM:SS") y
-desde ahí la base lo mantiene sola (trigger + CHECK).
-
-Por qué importa: la columna es texto y tenía "16:20" y "16:20:00" mezclados.
-Para el índice de horario único son claves distintas, así que dos turnos del
-mismo barbero en el mismo minuto podían entrar los dos. Hoy no hay ninguno
-pisado (verificado el 02/10 sobre 946 turnos: 697 sin segundos, 249 con, ningún
-formato raro).
-
-Es todo o nada: si encuentra algo raro (un trigger desconocido, un formato
-desconocido, dos turnos en el mismo horario) corta y lo nombra, sin tocar nada.
-Al final del archivo hay una consulta para verificar.
-
----
-
-## ⏳ Exportación al CRM — falta una env var (2026-09-07)
-
-El endpoint `GET /api/crm/export` (y `POST /api/crm/activate`) **ya están en
-main y en prod** (PRs #1, #2 y #3). Para que anden hace falta cargar en Vercel:
-
-- `CRM_EXPORT_TOKEN` — el mismo secreto que se configure del lado del CRM.
-  Generar con `openssl rand -hex 32`. **Sin esta variable el endpoint contesta
-  503 y no expone nada**, que es a propósito: un endpoint que se abre solo
-  cuando alguien olvida una variable es un agujero esperando el despiste.
-- `CRM_EXPORT_ENVIRONMENT` — opcional. Qué entorno describe la BASE a la que
-  apunta la app (`test`, `preview` o `production`). Vacío se deduce del
-  despliegue; sólo hace falta si se corre local contra la base de producción.
-
-Ojo: las variables nuevas **no entran en un deploy ya hecho**, hay que
-redeployar.
+- Bautista corrió `20261003130000_appointment_time_canonico.sql`: los 946 turnos
+  quedaron en "HH:MM:SS" (verificado). De acá en adelante lo mantiene la base
+  (trigger + CHECK).
+- `CRM_EXPORT_TOKEN` y `CRM_ACTIVATE_TOKEN` cargados en Vercel, y sus pares
+  `CONNECTOR_TIJERAPP_TOKEN` / `CONNECTOR_TIJERAPP_ACTIVATE_TOKEN` en el CRM.
+  Verificado en prod: export contesta 200 con el token y activate valida el
+  pedido (422 con body vacío, sin activar nada).
 
 ---
 
