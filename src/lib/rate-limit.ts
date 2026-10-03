@@ -27,7 +27,9 @@ export type RateLimitBucket =
   | "contacto"
   | "waitlist"
   | "reserva"
-  | "reserva-telefono";
+  | "reserva-telefono"
+  | "recuperar"
+  | "recuperar-email";
 
 type RateLimitResult = {
   allowed: boolean;
@@ -55,6 +57,11 @@ const LIMITS: Record<RateLimitBucket, { max: number; windowMinutes: number }> = 
   // Mismo teléfono, muchas reservas: 5 por hora deja al padre que saca turno
   // para él y los dos hijos, y corta al script que repite el mismo dato.
   "reserva-telefono": { max: 5, windowMinutes: 60 },
+  // Pedir el link de "olvidé mi contraseña". Por origen es holgado (CGNAT: una
+  // barbería entera puede salir por la misma IP); el freno fino es por
+  // dirección, para que nadie le llene la casilla de mails a un tercero.
+  recuperar: { max: 15, windowMinutes: 60 },
+  "recuperar-email": { max: 4, windowMinutes: 60 },
 };
 
 export async function checkRateLimit(
