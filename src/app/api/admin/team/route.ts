@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { Resend } from "resend";
@@ -11,9 +12,8 @@ const MAX_ADMINS_PER_BARBERSHOP = 5;
 
 /**
  * Genera un password temporal random de 14 chars con mix letras+números+símbolo.
- * El user va a recibirlo por email y debería cambiarlo después de loguearse.
- * NO usamos Math.random crypto-grade pero alcanza para password inicial que
- * el usuario va a rotar.
+ * Solo para cuentas NUEVAS: el user lo recibe por email y lo cambia al entrar.
+ * Sale de `crypto`, no de `Math.random`: es una credencial, aunque dure poco.
  */
 function generateTemporaryPassword(): string {
   const chars =
@@ -21,20 +21,53 @@ function generateTemporaryPassword(): string {
   const symbols = "!@#$%&*";
   let pw = "";
   for (let i = 0; i < 13; i++) {
-    pw += chars[Math.floor(Math.random() * chars.length)];
+    pw += chars[randomInt(chars.length)];
   }
-  pw += symbols[Math.floor(Math.random() * symbols.length)];
+  pw += symbols[randomInt(symbols.length)];
   return pw;
+}
+
+const USUARIOS_POR_PAGINA = 200;
+/** Tope de páginas a recorrer: 50 × 200 = 10.000 cuentas. */
+const MAX_PAGINAS_DE_USUARIOS = 50;
+
+type ResultadoBusqueda =
+  | { ok: true; user: { id: string; email?: string } | null }
+  | { ok: false };
+
+/**
+ * Busca una cuenta por email recorriendo TODAS las páginas de Auth.
+ *
+ * Antes se miraba solo la primera página de 200: con más cuentas que eso, un
+ * email existente "no aparecía", se intentaba crear de nuevo y fallaba. Y si la
+ * consulta falla se devuelve `ok: false` en vez de "no existe": confundir un
+ * error con una cuenta nueva es lo que no puede pasar acá.
+ */
+async function buscarUsuarioPorEmail(email: string): Promise<ResultadoBusqueda> {
+  const supabase = getSupabaseAdminClient();
+  for (let page = 1; page <= MAX_PAGINAS_DE_USUARIOS; page++) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage: USUARIOS_POR_PAGINA,
+    });
+    if (error) return { ok: false };
+    const users = data?.users ?? [];
+    const encontrado = users.find((u) => (u.email ?? "").toLowerCase() === email);
+    if (encontrado) return { ok: true, user: encontrado };
+    if (users.length < USUARIOS_POR_PAGINA) return { ok: true, user: null };
+  }
+  return { ok: false };
 }
 
 /**
  * Envía el email de invitación al nuevo admin.
- * SIEMPRE incluye email + password temporal (sea cuenta nueva o existente con
- * password reseteada). Adicionalmente, si tenemos el resetPasswordLink, lo
- * incluimos como opción para que el user pueda setear su propia password
- * directo desde el email sin loguearse primero con la temporal.
  *
- * Si Resend no está configurado, no rompe — solo loguea.
+ * - Cuenta NUEVA: email + contraseña temporal, y el link para elegir la propia.
+ * - Cuenta que YA EXISTÍA: solo el aviso de que tiene acceso. Entra con la
+ *   contraseña que ya usa; no se le toca ni se le manda ninguna.
+ *
+ * Devuelve si el mail salió. No rompe la invitación si falla —el acceso ya
+ * quedó dado—, pero el dueño tiene que saberlo para avisarle por su cuenta.
  */
 async function sendInvitationEmail(input: {
   toEmail: string;
@@ -43,11 +76,11 @@ async function sendInvitationEmail(input: {
   temporaryPassword: string | null;
   siteUrl: string;
   resetPasswordLink: string | null;
-}): Promise<void> {
+}): Promise<boolean> {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {
     console.warn("[admin/team] RESEND_API_KEY missing — skipping invite email");
-    return;
+    return false;
   }
 
   const loginUrl = `${input.siteUrl.replace(/\/$/, "")}/login?next=${encodeURIComponent(`/${input.barbershopSlug}/admin`)}`;
@@ -57,9 +90,16 @@ async function sendInvitationEmail(input: {
     ? `Te invitaron a administrar una barbería en TijerApp`
     : `Te dieron acceso a una barbería en TijerApp`;
 
-  // Bloque de credenciales — siempre incluido ahora. La password temporal
-  // siempre se setea (creación nueva o reset de usuario existente).
-  const credentialsBlock = `
+  // Bloque de credenciales: SOLO si la cuenta se acaba de crear. A quien ya
+  // tenía cuenta no se le cambia la contraseña, así que no hay nada que mandar.
+  const credentialsBlock = !input.temporaryPassword
+    ? `
+    <tr><td style="padding-top:18px;">
+      <p style="margin:0;font-size:13px;line-height:1.6;color:#c8c8c8;">
+        Entrá con el email <strong style="color:#fff;">${input.toEmail}</strong> y la contraseña que ya usás en TijerApp. No te la cambiamos.
+      </p>
+    </td></tr>`
+    : `
     <tr><td style="padding-top:18px;">
       <table width="100%" cellpadding="0" cellspacing="0" style="background:#161616;border-radius:6px;padding:18px;border:1px solid rgba(201,162,62,0.2);">
         <tr><td>
@@ -68,11 +108,7 @@ async function sendInvitationEmail(input: {
           <p style="margin:4px 0 12px;font-family:monospace;font-size:14px;color:#fff;">${input.toEmail}</p>
           <p style="margin:0;font-size:11px;color:#8a8a8a;">Contraseña temporal</p>
           <p style="margin:4px 0 8px;font-family:monospace;font-size:14px;color:#fff;background:#0a0a0a;padding:8px 10px;border-radius:4px;letter-spacing:0.5px;">${input.temporaryPassword}</p>
-          <p style="margin:10px 0 0;font-size:11px;color:#c8c8c8;">${
-            input.createdNewAccount
-              ? "Cambiala una vez que entres, en Configuración → Seguridad."
-              : "Tu contraseña anterior fue reemplazada. Podés volver a cambiarla en Configuración → Seguridad."
-          }</p>
+          <p style="margin:10px 0 0;font-size:11px;color:#c8c8c8;">Cambiala una vez que entres, en Configuración → Seguridad.</p>
         </td></tr>
       </table>
     </td></tr>
@@ -120,19 +156,30 @@ async function sendInvitationEmail(input: {
 
   try {
     const resend = new Resend(resendKey);
-    await resend.emails.send({
+    // Resend NO tira excepción cuando rechaza un mail: devuelve `error`. Sin
+    // mirarlo, una invitación que nunca salió se informaba como enviada.
+    const { error } = await resend.emails.send({
       from: fromAddress,
       to: input.toEmail,
       subject,
       html,
     });
+    if (error) {
+      console.error("[admin/team] Resend rejected invite email:", error);
+      Sentry.captureException(new Error(`Resend: ${error.message}`), {
+        tags: { route: "admin/team", step: "sendInvitationEmail" },
+      });
+      return false;
+    }
+    return true;
   } catch (err) {
     // No queremos romper el flow de invitación si Resend falla — el user
-    // queda agregado igual y el owner puede reenviar manualmente. Solo log.
+    // queda agregado igual. Se le avisa al dueño que el mail no salió.
     console.error("[admin/team] Failed to send invite email:", err);
     Sentry.captureException(err, {
       tags: { route: "admin/team", step: "sendInvitationEmail" },
     });
+    return false;
   }
 }
 
@@ -175,19 +222,17 @@ async function listAdminsWithEmails(barbershopSlug: string) {
 
   if (!rows) return [];
 
-  // Buscar emails desde auth.admin.listUsers (no podemos joinear directo)
+  // El email de cada admin, pedido por id (no se puede joinear con Auth). Son
+  // 5 como mucho. Antes se listaba la primera página de TODAS las cuentas de
+  // la plataforma: pasadas las 200, los admins salían "usuario desconocido".
   const userIds = (rows as Array<{ user_id: string }>).map((r) => r.user_id);
-  const { data: usersData } = await supabase.auth.admin.listUsers({
-    page: 1,
-    perPage: 200, // suficiente para el MVP, ningún barbero tendrá 200 admins
-  });
-
   const emailByUserId = new Map<string, string>();
-  for (const u of usersData?.users ?? []) {
-    if (userIds.includes(u.id)) {
-      emailByUserId.set(u.id, u.email ?? "(sin email)");
-    }
-  }
+  await Promise.all(
+    userIds.map(async (id) => {
+      const { data } = await supabase.auth.admin.getUserById(id);
+      if (data?.user) emailByUserId.set(id, data.user.email ?? "(sin email)");
+    }),
+  );
 
   return (rows as Array<{
     user_id: string;
@@ -282,22 +327,28 @@ export async function POST(request: Request) {
 
   // Buscar el user por email — si existe, lo agregamos directo; si no,
   // lo creamos con password temporal y mandamos email.
-  const { data: usersData } = await supabase.auth.admin.listUsers({
-    page: 1,
-    perPage: 200,
-  });
-  let targetUser = (usersData?.users ?? []).find(
-    (u) => (u.email ?? "").toLowerCase() === email,
-  );
+  const busqueda = await buscarUsuarioPorEmail(email);
+  if (!busqueda.ok) {
+    return NextResponse.json(
+      { error: "No pudimos verificar ese email. Probá de nuevo en un momento." },
+      { status: 503 },
+    );
+  }
+  let targetUser = busqueda.user;
 
   let createdNewAccount = false;
-  // SIEMPRE generamos password temporal — sea cuenta nueva o existente.
-  // Si el user ya existía, le RESETEAMOS la password con esta temporal.
-  // El user recibe email + password temp y entra. Después puede cambiarla.
-  const temporaryPassword = generateTemporaryPassword();
+  // La contraseña temporal es SOLO para una cuenta nueva.
+  //
+  // Antes, si el email ya tenía cuenta, se le reseteaba la contraseña. Eso
+  // dejaba que el dueño de cualquier barbería le cambiara la clave a un
+  // usuario de OTRA con solo "invitarlo": al dueño de otra barbería, a un
+  // empleado, a quien fuera. Una cuenta que ya existe es de su titular; darle
+  // acceso a una barbería más no es motivo para tocarle la credencial.
+  let temporaryPassword: string | null = null;
 
   if (!targetUser) {
     // El email no tiene cuenta → la creamos automáticamente
+    temporaryPassword = generateTemporaryPassword();
     const { data: newUserData, error: createError } =
       await supabase.auth.admin.createUser({
         email,
@@ -328,47 +379,17 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
-    // BLINDAJE 1: no permitir auto-invitarse (el owner mismo).
-    // Pisarse su propia password = quedar sin acceso al panel.
+    // No permitir auto-invitarse (el owner mismo): ya tiene acceso.
     if (targetUser!.id === userId) {
       return NextResponse.json(
         { error: "No podés invitarte a vos mismo. Ya tenés acceso como owner." },
         { status: 400 },
       );
     }
-    // BLINDAJE 2: no resetear la password de un platform_owner.
-    // Si alguien invita a un user que es OWNER del SaaS (vos, founder),
-    // su password queda intacta — lo agregamos a la barbería como admin
-    // pero NO le tocamos las credenciales. Acceso al panel barbershop
-    // queda igual: usa la misma password que tenía.
-    const { data: ownerCheck } = await supabase
-      .from("platform_owners")
-      .select("user_id")
-      .eq("user_id", targetUser!.id)
-      .maybeSingle();
-    const isInvitedUserPlatformOwner = Boolean(ownerCheck);
-
-    if (isInvitedUserPlatformOwner) {
-      // Lo agregamos al team sin tocar password. El email que se manda
-      // después también va a omitir la sección "credenciales temporales"
-      // porque createdNewAccount=false y no hay tempPassword nueva válida
-      // para mostrar. El platform_owner usa su password normal.
-    } else {
-      // Caso normal: resetear su password con la temporal nueva.
-      const { error: resetError } = await supabase.auth.admin.updateUserById(
-        targetUser.id,
-        { password: temporaryPassword },
-      );
-      if (resetError) {
-        Sentry.captureException(resetError, {
-          tags: { route: "admin/team", step: "resetPassword" },
-        });
-        return NextResponse.json(
-          { error: "No pudimos resetear la contraseña del usuario." },
-          { status: 500 },
-        );
-      }
-    }
+    // La cuenta ya existe: se le suma el acceso y NADA más. Entra con la
+    // contraseña que ya tiene; si no la recuerda, la recupera él desde
+    // /recuperar. (Esto cubre también al owner de la plataforma, que antes
+    // necesitaba una excepción propia.)
   }
 
   const { error: insertError } = await supabase
@@ -399,26 +420,28 @@ export async function POST(request: Request) {
     process.env.NEXT_PUBLIC_SITE_URL ||
     "https://tijerapp.com";
 
-  // Magic link de recovery para incluir como opción adicional. El user
-  // siempre recibe password temporal, pero también el link de reset por
-  // si prefiere setear su propia password directo en lugar de cambiarla
-  // después del login. Link válido 1h (default Supabase).
+  // Link de recovery, SOLO para la cuenta recién creada: por si prefiere
+  // elegir su propia contraseña en vez de entrar con la temporal. Válido 1h.
+  // Para una cuenta que ya existía no se genera: sería mandar un link que
+  // entra a la cuenta de otra persona disparado por un tercero.
   let resetPasswordLink: string | null = null;
-  try {
-    const { data: linkData } = await supabase.auth.admin.generateLink({
-      type: "recovery",
-      email,
-      options: {
-        redirectTo: `${siteUrl}/login?next=${encodeURIComponent(`/${barbershopSlug}/admin`)}`,
-      },
-    });
-    resetPasswordLink = linkData?.properties?.action_link ?? null;
-  } catch (linkError) {
-    console.warn("[admin/team] Failed to generate reset link:", linkError);
-    // No bloqueamos — el email se manda sin el link
+  if (createdNewAccount) {
+    try {
+      const { data: linkData } = await supabase.auth.admin.generateLink({
+        type: "recovery",
+        email,
+        options: {
+          redirectTo: `${siteUrl}/login?next=${encodeURIComponent(`/${barbershopSlug}/admin`)}`,
+        },
+      });
+      resetPasswordLink = linkData?.properties?.action_link ?? null;
+    } catch (linkError) {
+      console.warn("[admin/team] Failed to generate reset link:", linkError);
+      // No bloqueamos — el email se manda sin el link
+    }
   }
 
-  await sendInvitationEmail({
+  const emailSent = await sendInvitationEmail({
     toEmail: email,
     barbershopSlug,
     createdNewAccount,
@@ -430,6 +453,9 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     createdNewAccount,
+    // false = el acceso quedó dado pero el mail no salió: el dueño tiene que
+    // avisarle por su cuenta (y, si la cuenta es nueva, que use /recuperar).
+    emailSent,
     admin: {
       user_id: targetUser.id,
       email: targetUser.email ?? email,

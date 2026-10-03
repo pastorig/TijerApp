@@ -4,6 +4,80 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## 🧪 Para mirar logueado (2026-10-03)
+
+Dos cosas grandes entraron a prod el 03/10 y ninguna la pude ver con sesión:
+
+1. **Remasterización del panel (Codex).** Mergeada tal cual la dejó: es solo
+   visual (cero cambios en `src/lib`, `src/app/api`, hooks o llamadas a la
+   base — verificado sobre el diff). Lo público lo miré en escritorio y celular.
+   Falta que mires el panel: dashboard, turnero, equipo, cobros.
+2. **032 — Calendario en la agenda del empleado.** Entrar con Esteban
+   (`chinitodou@gmail.com`) a `/primebarber/mi-agenda`:
+   - el selector **Lista / Calendario** (arranca en Lista; al elegir Calendario
+     y volver a entrar tiene que seguir en Calendario);
+   - tocar un turno → se abre la hoja con la misma tarjeta de la Lista;
+   - tocar un rato libre → Turno / Sobreturno / Bloquear;
+   - cargar un **sobreturno** de verdad y ver que la reserva pública ya no
+     ofrece ese horario;
+   - sacarle a Esteban "cargar turnos" desde Equipo y ver que el hueco solo
+     ofrece Bloquear.
+
+> El checkout `ProyectG/TijerApp` quedó en la rama `design/admin-shell-remaster`
+> con los cambios de Codex sin commitear. Ya están en main: hay que volverlo a
+> main (`git checkout main && git pull`, descartando lo local) antes de que
+> alguien trabaje ahí, o va a arrancar de una base vieja.
+
+---
+
+## 🔍 Revisión a fondo del 03/10 — qué se arregló y qué queda
+
+Partió de la revisión de Codex (`docs/remasterizacion-2026-10-01/QA-REVISION-2026-10-02.md`).
+Los tres primeros eran bugs que YA estaban en prod, no de la remasterización.
+
+### Arreglado y en prod
+
+- **Invitar un admin le cambiaba la contraseña a cuentas ajenas.** El dueño de
+  cualquier barbería Pro podía "invitar" el email de alguien con cuenta —el
+  dueño de otra barbería, un empleado— y a esa persona se le reemplazaba la
+  clave. No la veía el que invitaba (iba por mail al titular), así que no era
+  robo de cuenta, pero sí dejar afuera a cualquiera. Ahora a una cuenta que ya
+  existe se le suma el acceso y **no se le toca nada**. De paso: la clave
+  temporal sale de `crypto`, y si el mail no sale el dueño se entera.
+- **La disponibilidad se "abría" si fallaba una consulta.** Si la base fallaba
+  al leer los turnos o los bloqueos, el servidor seguía con una lista vacía y
+  el horario salía libre encima de un turno que sí existía. Ahora, ante un
+  fallo, no se ofrece nada y se pide reintentar.
+- **Se podía reservar con un servicio desactivado o un barbero pausado**
+  armando el pedido a mano, y el nombre del barbero lo mandaba el navegador.
+  Ahora el servidor exige servicio activo, barbero activo de esa barbería, y
+  el nombre sale de la base.
+- `AGENTS.md` describía el proyecto como en junio ("no implementar pagos ni
+  panel owner"). Actualizado.
+
+### Queda (nada urgente, por orden)
+
+1. **Dos reservas al mismo tiempo que se pisan sin empezar a la misma hora.**
+   El índice único frena dos turnos en el MISMO minuto, no un 15:00–15:40 y un
+   15:30–16:00 pedidos a la vez. La ventana es de milisegundos y hoy no hay
+   ningún caso; cerrarla bien pide una restricción de rangos en la base
+   (migración con diseño propio).
+2. **El owner de la plataforma entra al panel de cualquier barbería pero
+   algunas acciones le dan 403** (`/api/admin/appointments`, `/api/admin/barbers`
+   miran solo si es admin de ESA barbería). Hay que decidir el contrato y
+   unificarlo en un helper; no abrir permisos a mano.
+3. **Accesibilidad de dos diálogos**: los modales de `/owner/planes` (sin
+   nombre accesible ni trampa de foco) y el menú mobile de la home (no retiene
+   el foco).
+4. **Búsqueda de cuentas por email limitada a la primera página** en el
+   registro (`provision-barbershop.ts`, 200) y en accesos de empleado
+   (`staff-access`, 1000). Hoy hay 19 cuentas. En Equipo ya está resuelto con
+   `buscarUsuarioPorEmail`: cuando se toque, reusar eso.
+5. **Probar con plata real**: MercadoPago, crons y push no se pueden verificar
+   sin aislar destinatarios. Sigue siendo el riesgo más grande.
+
+---
+
 ## ✅ Mails de Supabase Auth en castellano — HECHO (2026-10-02)
 
 SMTP propio con Resend (`no-responder@tijerapp.com`, key `supabase-auth-tijerapp`)

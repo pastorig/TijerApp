@@ -24,9 +24,9 @@ Este proyecto se llama TijerApp. Es un SaaS de turnos para barberias. SV Barber 
 - Las reservas publicas viven en `/[barbershopSlug]/reservar`.
 - El admin de barberia vive en `/[barbershopSlug]/admin`.
 - El login admin vive en `/[barbershopSlug]/admin/login`.
-- En esta fase hay un login admin por barberia.
-- En el futuro existira un panel owner para el dueno de TijerApp.
-- SV Barber debe permanecer como demo en datos, no como marca principal.
+- La agenda del empleado vive en `/[barbershopSlug]/mi-agenda`.
+- El panel owner de la plataforma vive en `/owner`.
+- Ninguna barberia cliente debe condicionar la marca ni la arquitectura.
 
 ## Skills esperadas del agente
 
@@ -103,37 +103,44 @@ Este proyecto se llama TijerApp. Es un SaaS de turnos para barberias. SV Barber 
 - No usar textos innecesarios dentro de la app.
 - Mantener buena legibilidad, contraste y jerarquia.
 
-## Restricciones actuales
+## Estado actual (actualizado 2026-10-03)
 
-Implementado actualmente:
+Todo esto existe y está en producción. No tratarlo como "futuro":
 
-- Home general de TijerApp.
-- Landing publica multi-barberia por slug.
-- Formulario de reserva por slug.
-- Guardado de reservas en Supabase.
-- Bloqueo de horarios ocupados por barbero.
-- Multi-barbero en datos y reservas.
-- WhatsApp demo mediante link `wa.me`.
-- Login admin con Supabase Auth.
-- Panel admin por barberia.
-- Confirmacion, cancelacion y envio separado de WhatsApp.
+- Home comercial, precios, producto y guías de TijerApp.
+- Registro self-serve de barberías con prueba gratis.
+- Página pública por barbería y reserva pública (toda reserva pasa por el
+  servidor: `/api/appointments/book`).
+- Panel del dueño de la barbería: turnero (lista y calendario), clientes,
+  barberos, horarios y excepciones, equipo, reportes, cierre de caja, cobros,
+  recordatorios, lista de espera, reseñas, fidelización, cupones, galería.
+- Cuentas de empleados (`/[barbershopSlug]/mi-agenda`) con siete permisos por
+  empleado. Todo lo del empleado pasa por `/api/staff/*`.
+- Panel owner de la plataforma (`/owner`): barberías, planes, cobros, mensajes.
+- Planes Solo / Esencial / Pro con gating en el servidor y modo lectura al vencer.
+- Seña con MercadoPago, push notifications, mails por Resend, PWA instalable.
+- Exportación y activación desde el CRM (`/api/crm/*`).
+
+Reglas que salen de ese estado:
+
+- `AGENTS.md` describe criterios; el detalle de cada feature vive en `specs/`
+  y lo pendiente en `PENDIENTES.md`.
+- Las features nuevas se planifican con Spec Kit (`specs/NNN-nombre/`).
+- Las migraciones las corre Bautista a mano en el SQL Editor de Supabase.
+- La barbería demo es `primebarber`. El primer cliente real hoy tiene el slug
+  `barber` (`/sv-barber` redirige ahí).
 
 Por ahora no implementar:
 
-- Panel owner.
-- Registro de barberias.
-- Gestion visual de barberos.
-- Roles avanzados.
 - Google Calendar.
-- Pagos online.
-- WhatsApp API real.
+- WhatsApp API real (se usa el link `wa.me`).
 
 ## Criterios antes de finalizar cambios
 
 - Ejecutar `npm run lint`.
 - Ejecutar `npm run build`.
 - Corregir errores si aparecen.
-- Mantener compatibilidad con `/sv-barber`, `/sv-barber/reservar`, `/sv-barber/admin` y `/sv-barber/admin/login`.
+- Mantener compatibilidad con `/[barbershopSlug]`, `/[barbershopSlug]/reservar`, `/[barbershopSlug]/admin` y `/[barbershopSlug]/mi-agenda` (probar con `primebarber`).
 - No romper reservas, Supabase, WhatsApp, admin, login, cancelacion, horarios ocupados ni multi-barbero.
 
 <!-- BEGIN:nextjs-agent-rules -->

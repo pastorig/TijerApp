@@ -5,6 +5,7 @@ import {
   minutosQueOcupa,
   type AvailabilitySlot,
 } from "@/lib/availability";
+import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { motivoDeHorario } from "@/lib/slot-reason";
 import { ahoraEnArgentina } from "@/lib/hora-argentina";
@@ -36,6 +37,24 @@ export type ServerAvailabilityParams = {
   /** Turno a excluir (al reagendar, el propio turno no se pisa a sí mismo). */
   excludeAppointmentId?: string;
 };
+
+/**
+ * No se pudo leer algo de lo que arma la disponibilidad.
+ *
+ * Existe para que un fallo de la base NO se convierta en agenda libre: antes,
+ * si fallaba la consulta de turnos o la de bloqueos, se seguía con una lista
+ * vacía y el horario salía disponible — encima de un turno que sí existía.
+ * Ante la duda, no se ofrece nada y se le pide al cliente que reintente.
+ */
+export class DisponibilidadNoVerificable extends Error {
+  constructor(public readonly consulta: string) {
+    super(`No se pudo leer ${consulta} para calcular la disponibilidad.`);
+    this.name = "DisponibilidadNoVerificable";
+  }
+}
+
+export const ERROR_DISPONIBILIDAD =
+  "No pudimos verificar ese horario. Probá de nuevo en un momento.";
 
 /** Tope de reserva hacia adelante. Sin esto se aceptaba el año 2099. */
 export const MAX_BOOKING_DAYS_AHEAD = 180;
@@ -92,6 +111,24 @@ export async function getServerAvailability(
         .eq("appointment_date", date)
         .in("status", ["pending", "confirmed"]),
     ]);
+
+  // Las cinco tienen que haber respondido. `maybeSingle` sin fila no es error
+  // (un barbero sin excepción ese día es lo normal); un error sí lo es.
+  const consultas = [
+    ["la barbería", shopRes],
+    ["el horario semanal", schedulesRes],
+    ["la excepción del día", overrideRes],
+    ["los bloqueos", blocksRes],
+    ["los turnos", apptsRes],
+  ] as const;
+  for (const [nombre, res] of consultas) {
+    if (res.error) {
+      Sentry.captureException(res.error, {
+        tags: { lib: "slot-availability", consulta: nombre },
+      });
+      throw new DisponibilidadNoVerificable(nombre);
+    }
+  }
 
   const workingHours = {
     start: shopRes.data?.working_hours_start ?? "09:00",
@@ -184,7 +221,16 @@ export async function assertSlotBookable(
     };
   }
 
-  const { available, slots } = await getServerAvailability(params);
+  let disponibilidad: Awaited<ReturnType<typeof getServerAvailability>>;
+  try {
+    disponibilidad = await getServerAvailability(params);
+  } catch (error) {
+    if (error instanceof DisponibilidadNoVerificable) {
+      return { ok: false, status: 503, error: ERROR_DISPONIBILIDAD };
+    }
+    throw error;
+  }
+  const { available, slots } = disponibilidad;
   const buscado = time.slice(0, 5);
 
   if (!available.includes(buscado)) {

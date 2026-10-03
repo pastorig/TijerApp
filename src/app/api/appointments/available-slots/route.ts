@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
-import { getServerAvailability } from "@/lib/server/slot-availability";
+import {
+  DisponibilidadNoVerificable,
+  ERROR_DISPONIBILIDAD,
+  getServerAvailability,
+} from "@/lib/server/slot-availability";
 
 export const runtime = "nodejs";
 
@@ -45,13 +49,19 @@ export async function GET(request: Request) {
     );
   }
 
-  const { available } = await getServerAvailability({
-    barbershopSlug: appointment.barbershop_slug,
-    barberId: appointment.barber_id,
-    date,
-    durationMinutes: appointment.service_duration_minutes ?? 0,
-    excludeAppointmentId: appointment.id,
-  });
-
-  return NextResponse.json({ ok: true, date, available });
+  try {
+    const { available } = await getServerAvailability({
+      barbershopSlug: appointment.barbershop_slug,
+      barberId: appointment.barber_id,
+      date,
+      durationMinutes: appointment.service_duration_minutes ?? 0,
+      excludeAppointmentId: appointment.id,
+    });
+    return NextResponse.json({ ok: true, date, available });
+  } catch (error) {
+    if (error instanceof DisponibilidadNoVerificable) {
+      return NextResponse.json({ error: ERROR_DISPONIBILIDAD }, { status: 503 });
+    }
+    throw error;
+  }
 }

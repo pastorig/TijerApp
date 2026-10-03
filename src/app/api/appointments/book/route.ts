@@ -226,6 +226,9 @@ export async function POST(request: Request) {
     .eq("id", serviceId)
     .eq("barbershop_slug", slug)
     .eq("barber_id", barberId)
+    // Un servicio desactivado no se ofrece en la pantalla; sin este filtro se
+    // podía reservar igual armando el pedido a mano.
+    .eq("is_active", true)
     .is("deleted_at", null)
     .maybeSingle();
 
@@ -240,6 +243,31 @@ export async function POST(request: Request) {
   if (serviceError || !serviceRow) {
     return NextResponse.json(
       { error: "El servicio no es válido para este barbero." },
+      { status: 400 },
+    );
+  }
+
+  // 2a. El barbero, desde la base: que sea de ESTA barbería, que no esté
+  // borrado ni pausado, y su nombre. Antes el nombre llegaba del navegador y
+  // quedaba guardado en el turno tal cual: se podía reservar con un barbero
+  // pausado y escribir cualquier cosa donde el dueño lee quién atiende.
+  const { data: barberRow, error: barberError } = await supabase
+    .from("barbers")
+    .select("id, name, display_name, is_active")
+    .eq("id", barberId)
+    .eq("barbershop_slug", slug)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (barberError) {
+    return NextResponse.json(
+      { error: "No pudimos verificar el barbero. Probá de nuevo en un momento." },
+      { status: 503 },
+    );
+  }
+  if (!barberRow || !barberRow.is_active) {
+    return NextResponse.json(
+      { error: "Ese barbero no está tomando turnos." },
       { status: 400 },
     );
   }
@@ -296,10 +324,7 @@ export async function POST(request: Request) {
     discountAmount = row.discount_amount;
   }
 
-  const barberName =
-    typeof body.barberName === "string" && body.barberName.trim()
-      ? body.barberName.trim()
-      : "Barbero";
+  const barberName = barberRow.display_name?.trim() || barberRow.name || "Barbero";
 
   // ── Camino SIN seña: la mayoría de las barberías ────────────────────────
   // Inserta y termina. El status sale de la config de la barbería, no del

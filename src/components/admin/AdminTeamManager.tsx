@@ -98,17 +98,28 @@ export function AdminTeamManager({ barbershop }: Props) {
       }
       const data = (await res.json()) as {
         createdNewAccount?: boolean;
+        emailSent?: boolean;
       };
-      toast.success(
-        data.createdNewAccount
-          ? "Cuenta creada e invitación enviada"
-          : "Admin agregado",
-        {
+      if (data.emailSent === false) {
+        // El acceso quedó dado, pero el mail no salió: que el dueño no se
+        // quede esperando que el otro "reciba algo".
+        toast.success("Admin agregado, pero el mail no salió", {
           description: data.createdNewAccount
-            ? `Le mandamos el password temporal a ${email}`
-            : email,
-        },
-      );
+            ? `Avisale a ${email} que entre por "Olvidé mi contraseña" para elegir la suya.`
+            : `Avisale a ${email} que ya puede entrar con su contraseña de siempre.`,
+        });
+      } else {
+        toast.success(
+          data.createdNewAccount
+            ? "Cuenta creada e invitación enviada"
+            : "Admin agregado",
+          {
+            description: data.createdNewAccount
+              ? `Le mandamos el password temporal a ${email}`
+              : `${email} ya tenía cuenta: entra con su contraseña de siempre.`,
+          },
+        );
+      }
       setEmail("");
       await load();
     } finally {
