@@ -4,11 +4,28 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## 🗄️ Correr la migración de `appointment_time` (2026-10-02)
+
+`supabase/migrations/20261003130000_appointment_time_canonico.sql`, en el SQL
+Editor. Deja la hora de todos los turnos en un solo formato ("HH:MM:SS") y
+desde ahí la base lo mantiene sola (trigger + CHECK).
+
+Por qué importa: la columna es texto y tenía "16:20" y "16:20:00" mezclados.
+Para el índice de horario único son claves distintas, así que dos turnos del
+mismo barbero en el mismo minuto podían entrar los dos. Hoy no hay ninguno
+pisado (verificado el 02/10 sobre 946 turnos: 697 sin segundos, 249 con, ningún
+formato raro).
+
+Es todo o nada: si encuentra algo raro (un trigger desconocido, un formato
+desconocido, dos turnos en el mismo horario) corta y lo nombra, sin tocar nada.
+Al final del archivo hay una consulta para verificar.
+
+---
+
 ## ⏳ Exportación al CRM — falta una env var (2026-09-07)
 
-El endpoint `GET /api/crm/export` está listo en la rama
-`claude/crm-export-endpoint`, **sin mergear y sin desplegar**. Para que ande
-hace falta cargar en Vercel:
+El endpoint `GET /api/crm/export` (y `POST /api/crm/activate`) **ya están en
+main y en prod** (PRs #1, #2 y #3). Para que anden hace falta cargar en Vercel:
 
 - `CRM_EXPORT_TOKEN` — el mismo secreto que se configure del lado del CRM.
   Generar con `openssl rand -hex 32`. **Sin esta variable el endpoint contesta
@@ -66,10 +83,12 @@ es lo que Bautista confirmó.
 ## ✅ Auditoría del módulo empleado — CERRADA (2026-08-26)
 
 Los 5 hallazgos accionables se arreglaron en las features 020, 021 y 022, todas
-en prod. Quedan dos a propósito:
+en prod.
 
-- **06** (GET/PATCH/DELETE de staff-access sin chequeo de plan): prolijidad. Sin
-  poder invitar no hay a quién editarle permisos.
+- ~~**06** (GET/PATCH/DELETE de staff-access sin chequeo de plan)~~ → **HECHO
+  (02/10)**: GET mira el tier (en modo lectura se sigue viendo), PATCH pide el
+  plan al día. DELETE queda sin chequeo a propósito: revocar un acceso nunca
+  tiene que depender de estar al día.
 
 Con la **023** y la **024** se cerró todo lo que quedaba de capacidades: el
 empleado ya puede **bloquear un horario** y **mover un turno suyo**. De la
