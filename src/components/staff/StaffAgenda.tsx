@@ -1,9 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import {
+  CalendarDays,
   CalendarX2,
   Check,
+  List,
   Clock,
   Plus,
   Ban,
@@ -31,9 +39,21 @@ import { StaffNewAppointmentModal } from "./StaffNewAppointmentModal";
 import { StaffBlockTimeModal } from "./StaffBlockTimeModal";
 import { StaffRescheduleModal } from "./StaffRescheduleModal";
 import {
+  opcionesDeHueco,
   PERMISOS_POR_DEFECTO,
   type StaffPermissions,
 } from "@/lib/staff-permissions";
+import {
+  AgendaCalendarGridView,
+  type AgendaCreateMode,
+  type AgendaTurno,
+} from "@/components/admin/AgendaCalendarGridView";
+import { AgendaSheet } from "@/components/admin/agenda/AgendaSheet";
+import type {
+  BarberDayOverrideRow,
+  BarberTimeBlockRow,
+  BarberWeeklyScheduleRow,
+} from "@/lib/supabase";
 
 /**
  * La agenda del empleado: SUS turnos del día.
@@ -54,6 +74,13 @@ import {
  * una tira de celular estirada. Ahora usa `AgendaCalendar` (feature 018): la
  * semana, el mes completo y el swipe salen gratis, y son exactamente los del
  * turnero.
+ *
+ * ── Lista o Calendario (feature 032) ────────────────────────────────────────
+ * La Lista se lee de corrido; el Calendario muestra cuánto lugar queda: los
+ * ratos libres, lo que se pisa, cuánto le falta al turno en curso. Es el MISMO
+ * componente que la agenda del dueño, con una sola columna —la suya— y con las
+ * acciones recortadas a sus permisos. No se arrastra: mover sigue siendo desde
+ * el detalle, que es el camino que le avisa al cliente.
  */
 
 type Turno = {
@@ -63,6 +90,9 @@ type Turno = {
   service_name: string;
   service_price: number | null;
   service_duration_minutes: number | null;
+  /** Si el barbero ajustó la duración con −5/+5. */
+  actual_duration_minutes?: number | null;
+  is_sobreturno?: boolean | null;
   appointment_time: string;
   comment: string | null;
   status: "pending" | "confirmed" | "cancelled";
@@ -82,9 +112,65 @@ type Bloqueo = {
   reason: string | null;
 };
 
+/** La jornada de SU barbero para el día, cruda: la resuelve el calendario. */
+type Horario = {
+  semanal: BarberWeeklyScheduleRow[];
+  excepcion: BarberDayOverrideRow | null;
+  barberia: { start: string; end: string; intervalMinutes: number };
+};
+
+type Vista = "lista" | "calendario";
+
+const CLAVE_VISTA = "tijerapp:mi-agenda:vista";
+const EVENTO_VISTA = "tijerapp:mi-agenda:vista";
+
+/**
+ * La vista elegida vive en el dispositivo, no en React: así el servidor y el
+ * primer render del navegador coinciden (Lista) y recién después se aplica lo
+ * guardado. `enMemoria` cubre el modo privado, donde el storage no guarda: la
+ * elección igual vale mientras la pantalla esté abierta.
+ */
+let enMemoria: Vista | null = null;
+
+function leerVista(): Vista {
+  if (enMemoria) return enMemoria;
+  try {
+    return window.localStorage.getItem(CLAVE_VISTA) === "calendario"
+      ? "calendario"
+      : "lista";
+  } catch {
+    return "lista";
+  }
+}
+
+function guardarVista(vista: Vista) {
+  enMemoria = vista;
+  try {
+    window.localStorage.setItem(CLAVE_VISTA, vista);
+  } catch {
+    /* modo privado: queda en memoria */
+  }
+  window.dispatchEvent(new Event(EVENTO_VISTA));
+}
+
+function suscribirVista(alCambiar: () => void) {
+  window.addEventListener(EVENTO_VISTA, alCambiar);
+  window.addEventListener("storage", alCambiar);
+  return () => {
+    window.removeEventListener(EVENTO_VISTA, alCambiar);
+    window.removeEventListener("storage", alCambiar);
+  };
+}
+
+const vistaEnElServidor = (): Vista => "lista";
+
 type Respuesta = {
   turnos?: Turno[];
   bloqueos?: Bloqueo[];
+  barbero?: string;
+  barberId?: string;
+  horario?: Horario;
+  soloLectura?: boolean;
   produccionDelDia?: number;
   comisionDelDia?: number | null;
   permisos?: StaffPermissions;
@@ -176,6 +262,30 @@ export function StaffAgenda({
   const [recarga, setRecarga] = useState(0);
   const [conteos, setConteos] = useState<Record<string, number>>({});
   /**
+   * Lista o Calendario. Arranca en Lista —la que el barbero ya conoce— y se
+   * recuerda en el dispositivo.
+   */
+  const vista = useSyncExternalStore(suscribirVista, leerVista, vistaEnElServidor);
+  /** Su barbero, tal como lo resolvió el servidor a partir de la sesión. */
+  const [barbero, setBarbero] = useState<{ id: string; name: string } | null>(
+    null,
+  );
+  const [horario, setHorario] = useState<Horario | null>(null);
+  /** Plan de la barbería vencido: se ve todo, no se carga ni se bloquea. */
+  const [soloLectura, setSoloLectura] = useState(false);
+  /** El turno abierto en la hoja de detalle del calendario. */
+  const [detalleId, setDetalleId] = useState<string | null>(null);
+  /**
+   * Con qué se abre el alta: la hora del hueco tocado y si es sobreturno.
+   * `n` cambia en cada apertura para que el modal arranque limpio.
+   */
+  const [alta, setAlta] = useState<{
+    n: number;
+    hora: string;
+    modo: "turno" | "sobreturno";
+  }>({ n: 0, hora: "", modo: "turno" });
+  const [bloqueoDesde, setBloqueoDesde] = useState({ n: 0, hora: "" });
+  /**
    * Qué le habilitó el dueño (feature 019). Arranca en "todo", que es lo que
    * era la app antes de que existieran los permisos, y lo corrige la primera
    * respuesta. Así no parpadea una pantalla recortada para quien puede todo.
@@ -219,6 +329,13 @@ export function StaffAgenda({
         setBloqueos(payload.bloqueos ?? []);
         setComision(payload.comisionDelDia ?? null);
         if (payload.permisos) setPermisos(payload.permisos);
+        setBarbero(
+          payload.barberId
+            ? { id: payload.barberId, name: payload.barbero ?? "" }
+            : null,
+        );
+        setHorario(payload.horario ?? null);
+        setSoloLectura(Boolean(payload.soloLectura));
       } catch {
         if (vivo) setError("No pudimos traer tus turnos.");
       } finally {
@@ -377,6 +494,61 @@ export function StaffAgenda({
     return proximo ? { turno: proximo, enCurso: false } : null;
   }, [activos, esHoy]);
 
+  // ── Calendario (feature 032) ──────────────────────────────────────────────
+  // Los turnos en la forma que lee el calendario compartido. El barbero es el
+  // que devolvió el servidor: acá no se elige nada.
+  const turnosCalendario = useMemo<AgendaTurno[]>(
+    () =>
+      barbero
+        ? turnos.map((t) => ({
+            id: t.id,
+            status: t.status,
+            appointment_date: fecha,
+            appointment_time: t.appointment_time,
+            customer_name: t.customer_name,
+            service_name: t.service_name,
+            service_duration_minutes:
+              t.service_duration_minutes ?? horario?.barberia.intervalMinutes ?? 30,
+            actual_duration_minutes: t.actual_duration_minutes ?? null,
+            is_sobreturno: Boolean(t.is_sobreturno),
+            barber_id: barbero.id,
+            barber_name: barbero.name,
+          }))
+        : [],
+    [turnos, barbero, fecha, horario],
+  );
+  const opcionesHueco = useMemo(
+    () => opcionesDeHueco(permisos, soloLectura),
+    [permisos, soloLectura],
+  );
+  /** Los turnos en pie del día, para avisar si un sobreturno se va a encimar. */
+  const turnosParaEncimar = useMemo(
+    () =>
+      activos.map((t) => ({
+        appointment_time: t.appointment_time,
+        duracionMin:
+          t.actual_duration_minutes ?? t.service_duration_minutes ?? 30,
+        customer_name: t.customer_name,
+      })),
+    [activos],
+  );
+  const detalle = detalleId
+    ? (turnos.find((t) => t.id === detalleId) ?? null)
+    : null;
+
+  function abrirAlta(hora: string, modo: "turno" | "sobreturno") {
+    setAlta((actual) => ({ n: actual.n + 1, hora, modo }));
+    setCargandoTurno(true);
+  }
+  function abrirBloqueo(hora: string) {
+    setBloqueoDesde((actual) => ({ n: actual.n + 1, hora }));
+    setBloqueandoHorario(true);
+  }
+  function alTocarHueco(args: { time: string; mode: AgendaCreateMode }) {
+    if (args.mode === "bloquear") abrirBloqueo(args.time);
+    else abrirAlta(args.time, args.mode);
+  }
+
   // Mañana y tarde. Si todos los turnos caen del mismo lado no se agrupa:
   // un solo encabezado arriba de la lista entera es ruido, no orden.
   const franjas = useMemo(() => agruparPorFranja(turnos), [turnos]);
@@ -495,7 +667,10 @@ export function StaffAgenda({
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => setPorMover(turno)}
+                  onClick={() => {
+                    setDetalleId(null);
+                    setPorMover(turno);
+                  }}
                   iconLeft={<CalendarClock className="size-3.5" />}
                   className="min-h-11 flex-1 text-xs normal-case tracking-normal sm:flex-initial"
                 >
@@ -524,14 +699,15 @@ export function StaffAgenda({
                   variant="danger"
                   size="sm"
                   disabled={tocando === turno.id}
-                  onClick={() =>
+                  onClick={() => {
+                    setDetalleId(null);
                     setPorCancelar({
                       id: turno.id,
                       customerName: turno.customer_name,
                       appointmentDate: fechaLargaCorta(fecha),
                       appointmentTime: turno.appointment_time.slice(0, 5),
-                    })
-                  }
+                    });
+                  }}
                   aria-label="Cancelar turno"
                   className="min-h-11 min-w-11 shrink-0 text-xs normal-case tracking-normal"
                 >
@@ -633,32 +809,62 @@ export function StaffAgenda({
           {/* Agregar turno encabeza la columna de la lista y no la del
               calendario, porque el turno se carga PARA el día que se está
               mirando: la acción pertenece a lo que hay abajo. */}
-          {permisos.cargarTurno || permisos.bloquearHorario ? (
-            <div className="mb-4 flex flex-wrap justify-end gap-2">
-              {permisos.bloquearHorario ? (
-                <Button
-                  size="sm"
-                  className="min-h-11 text-xs normal-case tracking-normal"
-                  variant="secondary"
-                  onClick={() => setBloqueandoHorario(true)}
-                  iconLeft={<Ban className="size-3.5" />}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div
+              role="group"
+              aria-label="Cómo ver la agenda"
+              className="inline-flex rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-0.5"
+            >
+              {(
+                [
+                  { valor: "lista", texto: "Lista", Icono: List },
+                  { valor: "calendario", texto: "Calendario", Icono: CalendarDays },
+                ] as const
+              ).map(({ valor, texto, Icono }) => (
+                <button
+                  key={valor}
+                  type="button"
+                  aria-pressed={vista === valor}
+                  onClick={() => guardarVista(valor)}
+                  className={cn(
+                    "inline-flex min-h-10 items-center gap-1.5 rounded-[var(--radius-sm)] px-3 text-xs font-semibold transition-colors",
+                    vista === valor
+                      ? "bg-[color:var(--surface-3)] text-white"
+                      : "text-[color:var(--text-muted)] hover:text-white",
+                  )}
                 >
-                  Bloquear horario
-                </Button>
-              ) : null}
-              {permisos.cargarTurno ? (
-                <Button
-                  size="sm"
-                  className="min-h-11 text-xs normal-case tracking-normal"
-                  variant="secondary"
-                  onClick={() => setCargandoTurno(true)}
-                  iconLeft={<Plus className="size-3.5" />}
-                >
-                  Agregar turno
-                </Button>
-              ) : null}
+                  <Icono aria-hidden="true" className="size-3.5" />
+                  {texto}
+                </button>
+              ))}
             </div>
-          ) : null}
+            {!soloLectura && (permisos.cargarTurno || permisos.bloquearHorario) ? (
+              <div className="flex flex-wrap justify-end gap-2">
+                {permisos.bloquearHorario ? (
+                  <Button
+                    size="sm"
+                    className="min-h-11 text-xs normal-case tracking-normal"
+                    variant="secondary"
+                    onClick={() => abrirBloqueo("")}
+                    iconLeft={<Ban className="size-3.5" />}
+                  >
+                    Bloquear horario
+                  </Button>
+                ) : null}
+                {permisos.cargarTurno ? (
+                  <Button
+                    size="sm"
+                    className="min-h-11 text-xs normal-case tracking-normal"
+                    variant="secondary"
+                    onClick={() => abrirAlta("", "turno")}
+                    iconLeft={<Plus className="size-3.5" />}
+                  >
+                    Agregar turno
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
 
           {/* El aviso de los turnos que quedaron adentro del bloqueo. No es un
               error —el bloqueo se creó— pero tampoco un "listo": son turnos
@@ -733,6 +939,32 @@ export function StaffAgenda({
             </div>
           ) : error ? (
             <Button variant="secondary" className="min-h-11 text-xs normal-case tracking-normal" onClick={() => setRecarga((value) => value + 1)}>Reintentar</Button>
+          ) : vista === "calendario" && barbero && horario ? (
+            // Un día sin turnos también se dibuja: ahí es donde más sirve ver
+            // la jornada entera libre.
+            <AgendaCalendarGridView
+              barbershopSlug={barbershopSlug}
+              barbershopName={barbershopName}
+              focusDate={fecha}
+              barbers={[barbero]}
+              appointments={turnosCalendario}
+              weeklySchedulesByBarber={{ [barbero.id]: horario.semanal }}
+              dayOverridesByBarber={{ [barbero.id]: horario.excepcion }}
+              timeBlocksByBarber={{
+                // El calendario lee desde, hasta y motivo: es lo que hay.
+                [barbero.id]: bloqueos as unknown as BarberTimeBlockRow[],
+              }}
+              workingHours={horario.barberia}
+              // Sin arrastre no hay movimiento que confirmar.
+              onMoveComplete={() => {}}
+              onOpenAppointment={setDetalleId}
+              onCreateAt={alTocarHueco}
+              createOptions={opcionesHueco}
+              allowDrag={false}
+              readOnly={soloLectura}
+              // Al empleado no se le habla de "activar el plan": no es suyo.
+              readOnlyReason="La barbería está en modo lectura: podés ver tu agenda, pero no cargar ni bloquear."
+            />
           ) : turnos.length === 0 ? (
             <div className="flex flex-col items-center rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-subtle)] px-6 py-12 text-center">
               <CalendarX2 className="size-7 text-[color:var(--text-subtle)]" />
@@ -782,11 +1014,27 @@ export function StaffAgenda({
         onMovido={() => setRecarga((v) => v + 1)}
       />
 
+      {/* El detalle de un turno tocado en el calendario: la MISMA tarjeta de
+          la Lista, con las mismas acciones y los mismos permisos. */}
+      <AgendaSheet
+        open={detalle !== null}
+        onClose={() => setDetalleId(null)}
+        title={detalle?.customer_name ?? ""}
+        subtitle={
+          detalle
+            ? `${fechaLargaCorta(fecha)} · ${detalle.appointment_time.slice(0, 5)}`
+            : undefined
+        }
+      >
+        {detalle ? <ol>{renderTurno(detalle)}</ol> : null}
+      </AgendaSheet>
+
       <StaffBlockTimeModal
-        key={fecha}
+        key={`${fecha}:${bloqueoDesde.n}`}
         abierto={bloqueandoHorario}
         barbershopSlug={barbershopSlug}
         fecha={fecha}
+        desdeInicial={bloqueoDesde.hora}
         onCerrar={() => setBloqueandoHorario(false)}
         onCreado={(pisados) => {
           setAvisoBloqueo(
@@ -799,10 +1047,13 @@ export function StaffAgenda({
       />
 
       <StaffNewAppointmentModal
-        key={fecha}
+        key={`${fecha}:${alta.n}`}
         abierto={cargandoTurno}
         barbershopSlug={barbershopSlug}
         fecha={fecha}
+        horaInicial={alta.hora}
+        modo={alta.modo}
+        turnosDelDia={turnosParaEncimar}
         onCerrar={() => setCargandoTurno(false)}
         onCreado={() => setRecarga((v) => v + 1)}
       />

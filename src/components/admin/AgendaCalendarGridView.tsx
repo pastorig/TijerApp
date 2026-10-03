@@ -41,7 +41,7 @@ import {
 } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { motion, useReducedMotion } from "framer-motion";
-import { CalendarX, Clock, GripVertical, Plus, TriangleAlert, Zap } from "lucide-react";
+import { Ban, CalendarX, Clock, GripVertical, Plus, TriangleAlert, Zap } from "lucide-react";
 import { useToast } from "@/components/ui";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import {
@@ -78,15 +78,41 @@ import { AgendaBarberSwitcher } from "./agenda/AgendaBarberSwitcher";
 import { AgendaSheet } from "./agenda/AgendaSheet";
 import { UnavailableBand } from "./agenda/UnavailableBand";
 
-export type AgendaCreateMode = "turno" | "sobreturno";
+export type AgendaCreateMode = "turno" | "sobreturno" | "bloquear";
+
+/**
+ * Lo mínimo que el calendario lee de un turno y de un barbero. Los tipos de la
+ * base (`AppointmentRow`, `BarberRow`) entran tal cual; la agenda del empleado
+ * (feature 032) manda solo esto, porque su servidor no le entrega el resto.
+ */
+export type AgendaTurno = Pick<
+  AppointmentRow,
+  | "id"
+  | "status"
+  | "appointment_date"
+  | "appointment_time"
+  | "customer_name"
+  | "service_name"
+  | "service_duration_minutes"
+  | "barber_id"
+  | "barber_name"
+> &
+  Partial<
+    Pick<AppointmentRow, "actual_duration_minutes" | "is_sobreturno" | "customer_email">
+  > & { customer_phone?: string | null };
+
+export type AgendaBarbero = Pick<BarberRow, "id" | "name"> &
+  Partial<Pick<BarberRow, "display_name">>;
+
+const OPCIONES_DEL_DUENO: AgendaCreateMode[] = ["turno", "sobreturno"];
 
 type AgendaCalendarGridViewProps = {
   barbershopSlug: string;
   /** Nombre de la barbería para el subject del email y el WhatsApp. */
   barbershopName: string;
   focusDate: string;
-  barbers: BarberRow[];
-  appointments: AppointmentRow[];
+  barbers: AgendaBarbero[];
+  appointments: AgendaTurno[];
   weeklySchedulesByBarber: Record<string, BarberWeeklyScheduleRow[]>;
   dayOverridesByBarber: Record<string, BarberDayOverrideRow | null>;
   /** Bloqueos activos del día, por barbero. */
@@ -107,6 +133,21 @@ type AgendaCalendarGridViewProps = {
   onOpenAppointment: (appointmentId: string) => void;
   /** Tocar un hueco libre y elegir "Turno" o "Sobreturno". */
   onCreateAt: (args: { barberId: string; time: string; mode: AgendaCreateMode }) => void;
+  /**
+   * Qué se ofrece al tocar un hueco. Por defecto, lo del dueño: turno y
+   * sobreturno. El empleado manda solo lo que sus permisos le dejan; vacío =
+   * los huecos se ven pero no se tocan.
+   */
+  createOptions?: AgendaCreateMode[];
+  /** Arrastrar para mover. El empleado mueve desde el detalle, no arrastrando. */
+  allowDrag?: boolean;
+  /**
+   * Plan vencido. Si no viene, sale del `PlanContext` del panel; el empleado
+   * está fuera de ese contexto y lo manda él.
+   */
+  readOnly?: boolean;
+  /** Cómo se le explica el modo lectura. Por defecto, el texto para el dueño. */
+  readOnlyReason?: string;
 };
 
 const RULER_WIDTH_PX = 58; // Columna de horas (izquierda)
@@ -149,15 +190,15 @@ function formatoMinutos(minutos: number): string {
 }
 
 /** Lo que dura el turno según el barbero: la duración real si la ajustó. */
-function duracionDibujada(appointment: AppointmentRow, fallback: number): number {
+function duracionDibujada(appointment: AgendaTurno, fallback: number): number {
   return appointment.actual_duration_minutes ?? appointment.service_duration_minutes ?? fallback;
 }
 
-function isActive(appointment: AppointmentRow) {
+function isActive(appointment: AgendaTurno) {
   return appointment.status === "pending" || appointment.status === "confirmed";
 }
 
-function barberDisplayName(barber: BarberRow) {
+function barberDisplayName(barber: AgendaBarbero) {
   return barber.display_name?.trim() || barber.name;
 }
 
@@ -172,7 +213,7 @@ function parseDroppableId(id: string): { barberId: string; time: string } | null
   return { barberId: parts[1], time: `${parts[2]}:${parts[3]}` };
 }
 
-function statusOf(status: AppointmentRow["status"]) {
+function statusOf(status: AgendaTurno["status"]) {
   if (status === "confirmed") return { bar: "var(--success)", label: "Confirmado" };
   if (status === "pending") return { bar: "var(--brand-gold)", label: "Pendiente" };
   return { bar: "var(--text-subtle)", label: "Cancelado" };
@@ -197,7 +238,7 @@ function DraggableAppointmentBlock({
   wasRecentlyDropped = false,
   onOpen,
 }: {
-  appointment: AppointmentRow;
+  appointment: AgendaTurno;
   bloque?: BloqueDibujado;
   durationMinutes: number;
   isOverlay?: boolean;
@@ -474,6 +515,7 @@ function DroppableSlot({
   isCovered,
   isDayLocked,
   isDragActive,
+  canCreate,
   onPick,
 }: {
   barberId: string;
@@ -487,6 +529,8 @@ function DroppableSlot({
   isCovered: boolean;
   isDayLocked: boolean;
   isDragActive: boolean;
+  /** Hay algo para ofrecer al tocar (turno, sobreturno o bloquear). */
+  canCreate: boolean;
   onPick: (barberId: string, time: string, top: number) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
@@ -497,7 +541,7 @@ function DroppableSlot({
   const isAvailable = isInWorkingHours && !isOccupied && !isDayLocked;
   // Para cargar un turno el horario tiene que estar libre de verdad: si un
   // turno lo tapa, el "+ 11:30" quedaba medio escondido debajo del bloque.
-  const canPick = isAvailable && !isCovered && !isDragActive;
+  const canPick = isAvailable && !isCovered && !isDragActive && canCreate;
   const showDragHint = isAvailable && isDragActive;
   const showBusyTooltip = isOccupied && isDragActive && !isDayLocked;
 
@@ -532,11 +576,13 @@ function DroppableSlot({
 function SlotMenu({
   time,
   top,
+  options,
   onChoose,
   onClose,
 }: {
   time: string;
   top: number;
+  options: AgendaCreateMode[];
   onChoose: (mode: AgendaCreateMode) => void;
   onClose: () => void;
 }) {
@@ -569,30 +615,45 @@ function SlotMenu({
       style={{ top }}
     >
       <p className="px-2 pb-1 pt-0.5 font-mono text-xs text-[color:var(--text-muted)]">{time}</p>
-      <button
-        type="button"
-        role="menuitem"
-        onClick={() => onChoose("turno")}
-        className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] px-2.5 text-sm font-semibold text-white hover:bg-[color:var(--surface-2)]"
-      >
-        <Plus aria-hidden="true" className="size-4 text-[color:var(--brand-gold)]" />
-        Turno
-      </button>
-      <button
-        type="button"
-        role="menuitem"
-        onClick={() => onChoose("sobreturno")}
-        className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] px-2.5 text-sm font-semibold text-white hover:bg-[color:var(--surface-2)]"
-      >
-        <Zap aria-hidden="true" className="size-4 fill-current text-[color:var(--brand-gold)]" />
-        Sobreturno
-      </button>
+      {options.includes("turno") ? (
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => onChoose("turno")}
+          className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] px-2.5 text-sm font-semibold text-white hover:bg-[color:var(--surface-2)]"
+        >
+          <Plus aria-hidden="true" className="size-4 text-[color:var(--brand-gold)]" />
+          Turno
+        </button>
+      ) : null}
+      {options.includes("sobreturno") ? (
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => onChoose("sobreturno")}
+          className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] px-2.5 text-sm font-semibold text-white hover:bg-[color:var(--surface-2)]"
+        >
+          <Zap aria-hidden="true" className="size-4 fill-current text-[color:var(--brand-gold)]" />
+          Sobreturno
+        </button>
+      ) : null}
+      {options.includes("bloquear") ? (
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => onChoose("bloquear")}
+          className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] px-2.5 text-sm font-semibold text-white hover:bg-[color:var(--surface-2)]"
+        >
+          <Ban aria-hidden="true" className="size-4 text-[color:var(--text-muted)]" />
+          Bloquear
+        </button>
+      ) : null}
     </div>
   );
 }
 
 type Column = {
-  barber: BarberRow;
+  barber: AgendaBarbero;
   schedule: BarberDaySchedule;
   isOffDay: boolean;
 };
@@ -610,12 +671,18 @@ export function AgendaCalendarGridView({
   onMoveComplete,
   onOpenAppointment,
   onCreateAt,
+  createOptions = OPCIONES_DEL_DUENO,
+  allowDrag = true,
+  readOnly,
+  readOnlyReason = READ_ONLY_REASON,
 }: AgendaCalendarGridViewProps) {
   const toast = useToast();
-  const isReadOnly = useIsReadOnly();
+  const planReadOnly = useIsReadOnly();
+  const isReadOnly = readOnly ?? planReadOnly;
+  const canCreate = createOptions.length > 0;
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const reduceMotion = useReducedMotion();
-  const [activeAppointment, setActiveAppointment] = useState<AppointmentRow | null>(null);
+  const [activeAppointment, setActiveAppointment] = useState<AgendaTurno | null>(null);
   const [notifyContext, setNotifyContext] = useState<RescheduleNotifyContext | null>(null);
   const [recentlyDroppedId, setRecentlyDroppedId] = useState<string | null>(null);
   const [slotMenu, setSlotMenu] = useState<{ barberId: string; time: string; top: number } | null>(null);
@@ -654,7 +721,7 @@ export function AgendaCalendarGridView({
     [appointments, focusDate],
   );
   const appointmentById = useMemo(() => {
-    const map = new Map<string, AppointmentRow>();
+    const map = new Map<string, AgendaTurno>();
     for (const a of dayAppointments) if (a.id) map.set(a.id, a);
     return map;
   }, [dayAppointments]);
@@ -748,7 +815,7 @@ export function AgendaCalendarGridView({
 
   // Reparto de los bloques por barbero.
   const layoutByBarber = useMemo(() => {
-    const byBarber = new Map<string, AppointmentRow[]>();
+    const byBarber = new Map<string, AgendaTurno[]>();
     for (const appointment of dayAppointments) {
       const list = byBarber.get(appointment.barber_id) ?? [];
       list.push(appointment);
@@ -947,7 +1014,7 @@ export function AgendaCalendarGridView({
   }
 
   function handleDragStart(event: DragStartEvent) {
-    const data = event.active.data.current as { appointment?: AppointmentRow } | undefined;
+    const data = event.active.data.current as { appointment?: AgendaTurno } | undefined;
     if (data?.appointment) {
       setActiveAppointment(data.appointment);
       setSlotMenu(null);
@@ -969,7 +1036,7 @@ export function AgendaCalendarGridView({
     const { active, over } = event;
     if (!over) return;
 
-    const data = active.data.current as { appointment?: AppointmentRow } | undefined;
+    const data = active.data.current as { appointment?: AgendaTurno } | undefined;
     if (!data?.appointment) return;
     const appointment = data.appointment;
 
@@ -1054,7 +1121,7 @@ export function AgendaCalendarGridView({
       setNotifyContext({
         appointmentId: appointment.id ?? "",
         customerName: appointment.customer_name,
-        customerPhone: appointment.customer_phone,
+        customerPhone: appointment.customer_phone ?? "",
         customerEmail: appointment.customer_email ?? null,
         serviceName: appointment.service_name,
         oldDate: appointment.appointment_date,
@@ -1118,7 +1185,7 @@ export function AgendaCalendarGridView({
   const selectedStats = selectedColumn ? statsByBarber.get(selectedColumn.barber.id) : undefined;
   const columnsMinWidth = isMobile ? undefined : RULER_WIDTH_PX + columns.length * MIN_COL_WIDTH_PX;
   const groupAppointments = openGroup
-    ? openGroup.ids.map((id) => appointmentById.get(id)).filter((a): a is AppointmentRow => Boolean(a))
+    ? openGroup.ids.map((id) => appointmentById.get(id)).filter((a): a is AgendaTurno => Boolean(a))
     : [];
 
   const body = (
@@ -1215,6 +1282,7 @@ export function AgendaCalendarGridView({
                   }
                   isDayLocked={isDayLocked}
                   isDragActive={Boolean(activeAppointment)}
+                  canCreate={canCreate}
                   onPick={(barberId, t, top) => setSlotMenu({ barberId, time: t, top })}
                 />
               );
@@ -1224,18 +1292,37 @@ export function AgendaCalendarGridView({
               ? huecos.map((h) => {
                   const minutos = h.finMin - h.inicioMin;
                   const hora = minutesToTimeLabel(h.inicioMin);
+                  const estilo = { top: h.topPx, height: Math.min(ALTO_HUECO_PX, minutos * PX_POR_MIN - 8) };
+                  const texto = (
+                    <span className="truncate">
+                      Libre · <span className="font-semibold tabular-nums">{formatoMinutos(minutos)}</span>
+                    </span>
+                  );
+                  // Sin nada para ofrecer (empleado sin permiso de cargar ni
+                  // de bloquear) el hueco informa, pero no es un botón.
+                  if (!canCreate) {
+                    return (
+                      <p
+                        key={`hueco-${h.inicioMin}`}
+                        className="pointer-events-none absolute left-1.5 right-1.5 z-[3] flex items-center rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-strong)] px-2.5 text-xs text-[color:var(--text-muted)]"
+                        style={estilo}
+                      >
+                        {texto}
+                      </p>
+                    );
+                  }
                   return (
                     <button
                       key={`hueco-${h.inicioMin}`}
                       type="button"
                       onClick={() => setSlotMenu({ barberId: barber.id, time: hora, top: h.topPx })}
-                      aria-label={`Libre ${minutos} minutos desde las ${hora}. Cargar un turno`}
+                      aria-label={`Libre ${minutos} minutos desde las ${hora}. ${
+                        createOptions.includes("turno") ? "Cargar un turno" : "Bloquear este rato"
+                      }`}
                       className="absolute left-1.5 right-1.5 z-[3] flex items-center justify-between gap-2 rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-strong)] px-2.5 text-xs text-[color:var(--text-muted)] transition-colors hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold-hi)]"
-                      style={{ top: h.topPx, height: Math.min(ALTO_HUECO_PX, minutos * PX_POR_MIN - 8) }}
+                      style={estilo}
                     >
-                      <span className="truncate">
-                        Libre · <span className="font-semibold tabular-nums">{formatoMinutos(minutos)}</span>
-                      </span>
+                      {texto}
                       <Plus aria-hidden="true" className="size-4 shrink-0" />
                     </button>
                   );
@@ -1268,7 +1355,7 @@ export function AgendaCalendarGridView({
                     appointment={appointment}
                     bloque={bloque}
                     durationMinutes={duration}
-                    isLocked={isDayLocked}
+                    isLocked={isDayLocked || !allowDrag}
                     isInProgress={isToday && nowMinutes >= startMin && nowMinutes < startMin + duration}
                     isPast={isToday && nowMinutes >= startMin + duration}
                     progress={
@@ -1304,6 +1391,7 @@ export function AgendaCalendarGridView({
               <SlotMenu
                 time={slotMenu.time}
                 top={slotMenu.top}
+                options={createOptions}
                 onClose={closeSlotMenu}
                 onChoose={(mode) => {
                   onCreateAt({ barberId: slotMenu.barberId, time: slotMenu.time, mode });
@@ -1328,16 +1416,28 @@ export function AgendaCalendarGridView({
       {isDayLocked ? (
         <p className="mb-3 inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 py-1.5 text-xs text-[color:var(--text-secondary)]">
           <CalendarX aria-hidden="true" className="size-3.5 shrink-0 text-[color:var(--text-muted)]" />
-          {isReadOnly ? READ_ONLY_REASON : "Día pasado: se puede consultar, no mover."}
+          {isReadOnly
+            ? readOnlyReason
+            : allowDrag
+              ? "Día pasado: se puede consultar, no mover."
+              : "Día pasado: se puede consultar."}
         </p>
       ) : (
         <p className="mb-2 text-xs text-[color:var(--text-muted)]">
-          <span className="hidden sm:inline">
-            Tocá un turno para ver el detalle, un horario libre para cargar uno y arrastrá para mover.
-          </span>
-          <span className="sm:hidden">
-            Tocá un turno o un horario libre. Mantené apretado un turno para moverlo.
-          </span>
+          {allowDrag ? (
+            <>
+              <span className="hidden sm:inline">
+                Tocá un turno para ver el detalle, un horario libre para cargar uno y arrastrá para mover.
+              </span>
+              <span className="sm:hidden">
+                Tocá un turno o un horario libre. Mantené apretado un turno para moverlo.
+              </span>
+            </>
+          ) : canCreate ? (
+            "Tocá un turno para ver el detalle o un horario libre para usarlo."
+          ) : (
+            "Tocá un turno para ver el detalle."
+          )}
         </p>
       )}
 

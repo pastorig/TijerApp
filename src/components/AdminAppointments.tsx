@@ -2063,7 +2063,8 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         services={services}
         defaultDate={focusDate}
         defaultTime={manualPreset.time}
-        mode={manualPreset.mode}
+        // "bloquear" solo lo ofrece la agenda del empleado; acá nunca llega.
+        mode={manualPreset.mode === "sobreturno" ? "sobreturno" : "turno"}
         existingAppointments={appointments}
         preselectedBarberId={
           manualPreset.barberId ??

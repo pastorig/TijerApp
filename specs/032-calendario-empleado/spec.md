@@ -69,9 +69,8 @@ mismo, sin pasar por el dueño.
   marcados como "fuera de horario".
 - **Turno fuera de la jornada:** se ve y la regla de horas se extiende para mostrarlo.
 - **Encimado con la pausa o con un bloqueo:** el turno queda por encima, no escondido.
-- **Duración real ajustada (−5/+5):** el bloque usa la mayor de las dos duraciones,
-  como en el dueño y en la reserva pública; un alargue que pisa al siguiente se ve
-  como encimado.
+- **Duración real ajustada (−5/+5):** el bloque refleja la duración ajustada, igual
+  que en la agenda del dueño; un alargue que pisa al siguiente se ve como encimado.
 - **Sobreturno encima de un turno existente** (no en un hueco): se permite, con
   confirmación explícita de que se va a encimar.
 - **Tres o más turnos en el mismo momento:** dos bloques y "+N", como en el dueño.

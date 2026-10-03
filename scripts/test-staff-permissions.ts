@@ -7,6 +7,7 @@ import {
   aColumnas,
   COLUMNA_DE_PERMISO,
   normalizarPermisos,
+  opcionesDeHueco,
   permisosDesdeBody,
   PERMISOS_POR_DEFECTO,
   puedeCambiarEstado,
@@ -149,6 +150,41 @@ check(
   "se traduce a las columnas de la base",
   aColumnas({ verGanancias: false, contactarCliente: true }),
   { can_see_earnings: false, can_contact_client: true },
+);
+
+// ── Qué ofrece un hueco del calendario (feature 032) ────────────────────────
+check(
+  "con todos los permisos: turno, sobreturno y bloquear",
+  opcionesDeHueco(PERMISOS_POR_DEFECTO, false),
+  ["turno", "sobreturno", "bloquear"],
+);
+check(
+  "solo cargar turnos: turno y sobreturno, sin bloquear",
+  opcionesDeHueco({ ...PERMISOS_POR_DEFECTO, bloquearHorario: false }, false),
+  ["turno", "sobreturno"],
+);
+check(
+  "solo bloquear: no se le ofrece cargar ni sobreturno",
+  opcionesDeHueco({ ...PERMISOS_POR_DEFECTO, cargarTurno: false }, false),
+  ["bloquear"],
+);
+check(
+  "sin ninguno de los dos: el hueco no ofrece nada",
+  opcionesDeHueco(
+    { ...PERMISOS_POR_DEFECTO, cargarTurno: false, bloquearHorario: false },
+    false,
+  ),
+  [],
+);
+check(
+  "plan vencido: no ofrece nada aunque tenga todos los permisos",
+  opcionesDeHueco(PERMISOS_POR_DEFECTO, true),
+  [],
+);
+check(
+  "ver lo que gana no cambia lo que ofrece un hueco",
+  opcionesDeHueco({ ...PERMISOS_POR_DEFECTO, verGanancias: false }, false),
+  ["turno", "sobreturno", "bloquear"],
 );
 
 console.log(`\n${passed} pasaron, ${failed} fallaron`);

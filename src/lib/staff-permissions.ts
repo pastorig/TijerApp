@@ -167,3 +167,25 @@ export function aColumnas(
   }
   return columnas;
 }
+
+/** Qué se le puede ofrecer al empleado cuando toca un rato libre del calendario. */
+export type OpcionDeHueco = "turno" | "sobreturno" | "bloquear";
+
+/**
+ * Las acciones de un hueco del calendario del empleado (feature 032).
+ *
+ * El sobreturno no tiene permiso propio: es cargar un turno, corto y a
+ * propósito, así que va con "cargar turnos". Con el plan vencido no se ofrece
+ * nada — la barbería está en modo lectura para el empleado igual que para el
+ * dueño. Esto decide qué se DIBUJA; el que frena de verdad es el servidor.
+ */
+export function opcionesDeHueco(
+  permisos: StaffPermissions,
+  soloLectura: boolean,
+): OpcionDeHueco[] {
+  if (soloLectura) return [];
+  const opciones: OpcionDeHueco[] = [];
+  if (permisos.cargarTurno) opciones.push("turno", "sobreturno");
+  if (permisos.bloquearHorario) opciones.push("bloquear");
+  return opciones;
+}

@@ -2,7 +2,13 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
-import { Loader2, X } from "lucide-react";
+import { Loader2, TriangleAlert, X } from "lucide-react";
+import { cn } from "@/lib/cn";
+import { pisaAOtro } from "@/lib/agenda-layout";
+import {
+  DURACIONES_SOBRETURNO,
+  DURACION_SOBRETURNO_POR_DEFECTO,
+} from "@/lib/staff-sobreturno";
 import { useStaffDialogFocus } from "./useStaffDialogFocus";
 import { getCurrentSession } from "@/lib/auth";
 import { formatPrice } from "@/lib/format";
@@ -31,10 +37,25 @@ type Servicio = {
   duration_minutes: number;
 };
 
+/** Lo que hace falta de los turnos del día para avisar que se va a encimar. */
+export type TurnoDelDia = {
+  appointment_time: string;
+  duracionMin: number;
+  customer_name: string;
+};
+
+function aMinutos(hhmm: string): number {
+  const [h, m] = hhmm.slice(0, 5).split(":").map(Number);
+  return h * 60 + m;
+}
+
 export function StaffNewAppointmentModal({
   abierto,
   barbershopSlug,
   fecha,
+  horaInicial = "",
+  modo = "turno",
+  turnosDelDia = [],
   onCerrar,
   onCreado,
 }: {
@@ -42,9 +63,20 @@ export function StaffNewAppointmentModal({
   barbershopSlug: string;
   /** El día que el barbero está mirando: es el que va a querer casi siempre. */
   fecha: string;
+  /** "HH:MM" ya puesto: cuando se abre tocando un hueco del calendario. */
+  horaInicial?: string;
+  /**
+   * "sobreturno" (feature 032): turno corto metido a propósito en un rato
+   * libre o encima de otro. El servicio pasa a ser opcional y se elige cuánto
+   * dura.
+   */
+  modo?: "turno" | "sobreturno";
+  /** Los turnos activos de `fecha`, para avisar si el sobreturno se encima. */
+  turnosDelDia?: TurnoDelDia[];
   onCerrar: () => void;
   onCreado: () => void;
 }) {
+  const esSobreturno = modo === "sobreturno";
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
   const [servicesError, setServicesError] = useState("");
@@ -54,7 +86,10 @@ export function StaffNewAppointmentModal({
   const [telefono, setTelefono] = useState("");
   const dialogRef = useStaffDialogFocus(abierto);
   const [dia, setDia] = useState(fecha);
-  const [hora, setHora] = useState("");
+  const [hora, setHora] = useState(horaInicial);
+  const [duracion, setDuracion] = useState<number>(DURACION_SOBRETURNO_POR_DEFECTO);
+  /** El barbero ya vio el aviso de que se encima y eligió cargarlo igual. */
+  const [encimarConfirmado, setEncimarConfirmado] = useState(false);
   const [comentario, setComentario] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
@@ -108,9 +143,21 @@ export function StaffNewAppointmentModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [abierto, guardando, onCerrar]);
 
+  // Con qué turno se pisa el sobreturno, si se pisa. Solo se puede saber para
+  // el día que está cargado en la agenda; en otro día manda el servidor.
+  const pisado =
+    esSobreturno && hora && dia === fecha
+      ? (turnosDelDia.find((t) =>
+          pisaAOtro(
+            { inicioMin: aMinutos(hora), duracionMin: duracion },
+            [{ inicioMin: aMinutos(t.appointment_time), duracionMin: t.duracionMin }],
+          ),
+        ) ?? null)
+      : null;
+
   async function guardar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!serviceId) {
+    if (!serviceId && !esSobreturno) {
       setError("Elegí el servicio.");
       return;
     }
@@ -120,6 +167,12 @@ export function StaffNewAppointmentModal({
     }
     if (!hora) {
       setError("Poné el horario.");
+      return;
+    }
+    // Encimar a propósito es válido, pero no por accidente: la primera vez se
+    // muestra con quién se pisa y el botón pasa a decir "Cargar igual".
+    if (pisado && !encimarConfirmado) {
+      setEncimarConfirmado(true);
       return;
     }
 
@@ -146,6 +199,7 @@ export function StaffNewAppointmentModal({
           date: dia,
           time: hora,
           comment: comentario,
+          ...(esSobreturno ? { sobreturno: true, duracion } : {}),
         }),
       });
       const payload = (await res.json().catch(() => ({}))) as {
@@ -183,11 +237,12 @@ export function StaffNewAppointmentModal({
         <header className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-4 py-3">
           <div>
             <h2 id="staff-new-title" className="text-lg font-semibold tracking-normal text-white">
-              Agregar turno
+              {esSobreturno ? "Agregar sobreturno" : "Agregar turno"}
             </h2>
             <p className="mt-1 text-xs text-[color:var(--text-muted)]">
-              Para el que entró sin reservar. Queda pendiente hasta que lo
-              confirmes.
+              {esSobreturno
+                ? "Un corte corto metido en un rato libre. Ocupa ese horario para las reservas online."
+                : "Para el que entró sin reservar. Queda pendiente hasta que lo confirmes."}
             </p>
           </div>
           <button
@@ -203,14 +258,24 @@ export function StaffNewAppointmentModal({
         </header>
 
         <div className="flex flex-col gap-3 px-4 py-3">
-          <Field label="Servicio" htmlFor="staff-turno-servicio">
+          <Field
+            label="Servicio"
+            htmlFor="staff-turno-servicio"
+            optional={esSobreturno}
+          >
             <Select
               id="staff-turno-servicio"
               disabled={servicesLoading || Boolean(servicesError)}
               value={serviceId}
               onChange={(e) => setServiceId(e.target.value)}
             >
-              <option value="">{servicesLoading ? "Cargando servicios…" : "Elegí un servicio"}</option>
+              <option value="">
+                {servicesLoading
+                  ? "Cargando servicios…"
+                  : esSobreturno
+                    ? "Sin servicio (sobreturno)"
+                    : "Elegí un servicio"}
+              </option>
               {servicios.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name} · {s.duration_minutes} min · {formatPrice(s.price)}
@@ -224,8 +289,37 @@ export function StaffNewAppointmentModal({
               <p>{servicesError}</p>
               <Button type="button" variant="secondary" size="sm" onClick={() => setServicesReload(value => value + 1)}>Reintentar servicios</Button>
             </div>
-          ) : !servicesLoading && servicios.length === 0 ? (
+          ) : !servicesLoading && servicios.length === 0 && !esSobreturno ? (
             <p className="text-xs text-[color:var(--text-secondary)]">No tenés servicios activos para agregar un turno.</p>
+          ) : null}
+
+          {esSobreturno ? (
+            <fieldset>
+              <legend className="mb-1.5 text-xs text-[color:var(--text-secondary)]">
+                Cuánto dura
+              </legend>
+              <div className="grid grid-cols-4 gap-2">
+                {DURACIONES_SOBRETURNO.map((min) => (
+                  <button
+                    key={min}
+                    type="button"
+                    aria-pressed={duracion === min}
+                    onClick={() => {
+                      setDuracion(min);
+                      setEncimarConfirmado(false);
+                    }}
+                    className={cn(
+                      "rounded-[var(--radius-sm)] border text-sm font-semibold tabular-nums transition-colors",
+                      duracion === min
+                        ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] text-white"
+                        : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:text-white",
+                    )}
+                  >
+                    {min} min
+                  </button>
+                ))}
+              </div>
+            </fieldset>
           ) : null}
 
           <Field label="Cliente" htmlFor="staff-turno-nombre">
@@ -260,7 +354,10 @@ export function StaffNewAppointmentModal({
                 id="staff-turno-dia"
                 type="date"
                 value={dia}
-                onChange={(e) => setDia(e.target.value)}
+                onChange={(e) => {
+                  setDia(e.target.value);
+                  setEncimarConfirmado(false);
+                }}
               />
             </Field>
             <Field label="Horario" htmlFor="staff-turno-hora">
@@ -268,7 +365,10 @@ export function StaffNewAppointmentModal({
                 id="staff-turno-hora"
                 type="time"
                 value={hora}
-                onChange={(e) => setHora(e.target.value)}
+                onChange={(e) => {
+                  setHora(e.target.value);
+                  setEncimarConfirmado(false);
+                }}
               />
             </Field>
           </div>
@@ -283,6 +383,23 @@ export function StaffNewAppointmentModal({
               placeholder="Algo para acordarte"
             />
           </Field>
+
+          {pisado ? (
+            <p
+              role={encimarConfirmado ? "alert" : undefined}
+              className="flex items-start gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-3 py-2 text-xs text-[color:var(--text-secondary)]"
+            >
+              <TriangleAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-[color:var(--brand-gold)]" />
+              <span>
+                Se va a encimar con el turno de las{" "}
+                <span className="font-semibold tabular-nums text-white">
+                  {pisado.appointment_time.slice(0, 5)}
+                </span>{" "}
+                ({pisado.customer_name}).
+                {encimarConfirmado ? " Tocá de nuevo para cargarlo igual." : ""}
+              </span>
+            </p>
+          ) : null}
 
           {error ? (
             <p
@@ -307,14 +424,21 @@ export function StaffNewAppointmentModal({
           <Button
             type="submit"
             style={{ backgroundImage: "none", backgroundColor: "var(--brand-gold)" }}
-            disabled={servicesLoading || Boolean(servicesError) || servicios.length === 0}
+            disabled={
+              !esSobreturno &&
+              (servicesLoading || Boolean(servicesError) || servicios.length === 0)
+            }
             size="sm"
             loading={guardando}
             iconLeft={
               guardando ? <Loader2 className="size-3.5 animate-spin" /> : null
             }
           >
-            Agregar turno
+            {pisado && encimarConfirmado
+              ? "Cargar igual"
+              : esSobreturno
+                ? "Agregar sobreturno"
+                : "Agregar turno"}
           </Button>
         </footer>
       </form>

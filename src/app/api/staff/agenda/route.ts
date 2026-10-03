@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { calculateCommissions } from "@/lib/commissions";
+import { getBarbershopPlan } from "@/lib/plan-access";
 import { recortarTurno } from "@/lib/staff-permissions";
 import {
   barberIdForAppointments,
@@ -53,7 +54,10 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("appointments")
     .select(
-      "id, customer_name, customer_phone, service_name, service_price, service_duration_minutes, appointment_date, appointment_time, comment, status, deposit_status",
+      // `actual_duration_minutes` e `is_sobreturno` los necesita el calendario
+      // (feature 032): sin ellos un turno alargado se dibuja corto y un
+      // sobreturno parece una doble reserva.
+      "id, customer_name, customer_phone, service_name, service_price, service_duration_minutes, actual_duration_minutes, is_sobreturno, appointment_date, appointment_time, comment, status, deposit_status",
     )
     .eq("barbershop_slug", slug)
     .eq("barber_id", barberIdForAppointments(access.access))
@@ -87,6 +91,39 @@ export async function GET(request: Request) {
     status: string;
   }>;
 
+  // La jornada del día, para dibujar el calendario (feature 032): horario,
+  // pausa y excepción. Son las MISMAS consultas que usa la disponibilidad
+  // (`slot-availability.ts`) y van crudas, para que la pantalla las resuelva
+  // con la misma función que la agenda del dueño: si acá se calculara aparte,
+  // tarde o temprano las dos agendas dibujarían días distintos.
+  //
+  // Solo las filas de SU barbero. Si alguna consulta falla, el calendario cae
+  // al horario general: es un dibujo, no decide qué se puede reservar.
+  const [shopRes, semanalRes, excepcionRes, plan] = await Promise.all([
+    supabase
+      .from("barbershops")
+      .select("working_hours_start, working_hours_end, slot_interval_minutes")
+      .eq("slug", slug)
+      .maybeSingle(),
+    supabase
+      .from("barber_weekly_schedules")
+      .select(
+        "day_of_week, start_time, end_time, is_working, break_start, break_end",
+      )
+      .eq("barbershop_slug", slug)
+      .eq("barber_id", access.access.barberId),
+    supabase
+      .from("barber_day_overrides")
+      .select(
+        "override_date, start_time, end_time, is_working, hereda_pausa, break_start, break_end",
+      )
+      .eq("barbershop_slug", slug)
+      .eq("barber_id", access.access.barberId)
+      .eq("override_date", date)
+      .maybeSingle(),
+    getBarbershopPlan(slug),
+  ]);
+
   // Lo que va a ganar HOY, con la misma función que el resto (feature 014).
   // Es el dato que un barbero mira mientras labura, y tenía que estar en la
   // agenda y no escondido en otra pestaña. Cuenta confirmados y pendientes: un
@@ -109,7 +146,21 @@ export async function GET(request: Request) {
     ok: true,
     barbero: access.access.barberName,
     barberia: access.access.barbershopSlug,
+    // El id de SU barbero, resuelto del token. Va de vuelta para que el
+    // calendario arme su columna; nunca se recibe.
+    barberId: access.access.barberId,
     permisos,
+    horario: {
+      semanal: semanalRes.data ?? [],
+      excepcion: excepcionRes.data ?? null,
+      barberia: {
+        start: shopRes.data?.working_hours_start ?? "09:00",
+        end: shopRes.data?.working_hours_end ?? "21:00",
+        intervalMinutes: shopRes.data?.slot_interval_minutes ?? 30,
+      },
+    },
+    // Plan vencido: se ve todo y no se escribe nada, igual que el dueño.
+    soloLectura: plan.isReadOnly,
     bloqueos: bloqueos ?? [],
     turnos: (data ?? []).map((turno) => recortarTurno(turno, permisos)),
     // La plata solo si la puede ver. `undefined` no llega al JSON, así que la

@@ -33,6 +33,7 @@ export function StaffBlockTimeModal({
   abierto,
   barbershopSlug,
   fecha,
+  desdeInicial = "",
   onCerrar,
   onCreado,
 }: {
@@ -40,13 +41,15 @@ export function StaffBlockTimeModal({
   barbershopSlug: string;
   /** El día que está mirando: es el que va a querer bloquear casi siempre. */
   fecha: string;
+  /** "HH:MM" ya puesto: cuando se abre tocando un hueco del calendario. */
+  desdeInicial?: string;
   onCerrar: () => void;
   /** Recibe cuántos turnos quedaron adentro del bloqueo, para avisarle. */
   onCreado: (turnosEnElRango: number) => void;
 }) {
   const dialogRef = useStaffDialogFocus(abierto);
   const [dia, setDia] = useState(fecha);
-  const [desde, setDesde] = useState("");
+  const [desde, setDesde] = useState(desdeInicial);
   const [hasta, setHasta] = useState("");
   const [motivo, setMotivo] = useState<string>(MOTIVOS[0]);
   const [guardando, setGuardando] = useState(false);
