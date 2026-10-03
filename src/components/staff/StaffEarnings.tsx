@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
 import { formatPrice } from "@/lib/format";
-import { Button, Card } from "@/components/ui";
+import { MetricCard } from "@/components/admin/MetricCard";
+import { Button, Card, Eyebrow } from "@/components/ui";
 
 /**
  * Lo que el empleado lleva ganado en el período.
@@ -67,7 +68,6 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
   const [datos, setDatos] = useState<Ganancias | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
-  const [recarga, setRecarga] = useState(0);
   /**
    * El dueño le sacó el permiso de ver lo que gana (feature 019).
    *
@@ -121,7 +121,7 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
     return () => {
       vivo = false;
     };
-  }, [barbershopSlug, offset, recarga]);
+  }, [barbershopSlug, offset]);
 
   const { desde } = rangoDelMes(offset);
 
@@ -129,7 +129,7 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
     return (
       <Card className="max-w-md">
         <Lock className="size-6 text-[color:var(--text-muted)]" />
-        <h1 className="mt-3 text-lg font-semibold tracking-normal text-white">
+        <h1 className="mt-3 text-lg font-black tracking-tight text-white">
           Esta pantalla no está habilitada
         </h1>
         <p className="mt-2 text-sm leading-5 text-[color:var(--text-secondary)]">
@@ -146,8 +146,8 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
           mes que se está mirando y las flechas para moverlo van juntos. */}
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold text-[color:var(--brand-gold)]">Mis ganancias</p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-normal text-white sm:text-3xl">
+          <Eyebrow>Mis ganancias</Eyebrow>
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">
             {nombreDelMes(desde)}
           </h1>
         </div>
@@ -156,17 +156,13 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
             variant="secondary"
             size="sm"
             onClick={() => setOffset((o) => o - 1)}
-            aria-label="Mes anterior"
-            title="Mes anterior"
-            className="size-11 shrink-0 p-0"
-
+            iconLeft={<ChevronLeft className="size-3.5" />}
           >
-            <ChevronLeft className="size-4" aria-hidden="true" />
+            Anterior
           </Button>
           <Button
             variant="secondary"
             size="sm"
-            className="min-h-11 text-xs normal-case tracking-normal"
             onClick={() => setOffset(0)}
             disabled={offset === 0}
           >
@@ -177,12 +173,9 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
             size="sm"
             onClick={() => setOffset((o) => Math.min(0, o + 1))}
             disabled={offset === 0}
-            aria-label="Mes siguiente"
-            title="Mes siguiente"
-            className="size-11 shrink-0 p-0"
-
+            iconRight={<ChevronRight className="size-3.5" />}
           >
-            <ChevronRight className="size-4" aria-hidden="true" />
+            Siguiente
           </Button>
         </div>
       </header>
@@ -197,15 +190,12 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
       ) : null}
 
       {cargando ? (
-        <div role="status" aria-label="Cargando ganancias" className="flex justify-center py-10">
+        <div className="flex justify-center py-10">
           <Loader2 className="size-5 animate-spin text-[color:var(--text-muted)]" />
         </div>
-      ) : error ? (
-        <Button variant="secondary" className="min-h-11 self-start text-xs normal-case tracking-normal" onClick={() => setRecarga(value => value + 1)}>Reintentar</Button>
       ) : datos ? (
         <div className="flex flex-col gap-4">
-          <Card variant="flat" padding="sm" className="border-[color:var(--brand-gold)]/40">
-            <p className="mb-3 flex items-center gap-2 text-xs font-semibold text-[color:var(--brand-gold)]"><Wallet className="size-4" aria-hidden="true" />Tu comisión</p>
+          <MetricCard label="Tu comisión" icon={Wallet}>
             {datos.comision === null ? (
               /* Sin comisión configurada NO se muestra $0: "cero" se lee como
                  "no ganaste nada", y lo que pasa es que falta un dato. */
@@ -216,7 +206,7 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
               </p>
             ) : (
               <>
-                <p className="break-words text-3xl font-semibold tabular-nums leading-tight text-[color:var(--brand-gold)] sm:text-4xl">
+                <p className="stat-number w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-4xl font-black tabular-nums leading-none text-transparent">
                   {formatPrice(datos.comision)}
                 </p>
                 <p className="mt-2 text-xs text-[color:var(--text-muted)]">
@@ -224,25 +214,23 @@ export function StaffEarnings({ barbershopSlug }: { barbershopSlug: string }) {
                 </p>
               </>
             )}
-          </Card>
+          </MetricCard>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Card variant="flat" padding="sm">
-              <p className="mb-2 flex items-center gap-2 text-xs text-[color:var(--text-muted)]"><TrendingUp className="size-4" aria-hidden="true" />Producción</p>
-              <p className="break-words text-xl font-semibold tabular-nums text-white">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <MetricCard label="Producción" icon={TrendingUp}>
+              <p className="stat-number text-xl font-black tabular-nums text-white">
                 {formatPrice(datos.produccion)}
               </p>
-            </Card>
-            <Card variant="flat" padding="sm">
-              <p className="mb-2 flex items-center gap-2 text-xs text-[color:var(--text-muted)]"><Scissors className="size-4" aria-hidden="true" />Turnos</p>
-              <p className="stat-number text-xl font-semibold tabular-nums text-white">
+            </MetricCard>
+            <MetricCard label="Turnos" icon={Scissors}>
+              <p className="stat-number text-xl font-black tabular-nums text-white">
                 {datos.turnos}
               </p>
-            </Card>
+            </MetricCard>
           </div>
 
           <Card variant="flat" padding="sm">
-            <p className="text-xs leading-4 text-[color:var(--text-subtle)]">
+            <p className="text-[11px] leading-4 text-[color:var(--text-subtle)]">
               Cuenta los turnos confirmados y los pendientes. Los cancelados no
               suman.
             </p>

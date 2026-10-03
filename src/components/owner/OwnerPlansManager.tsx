@@ -73,9 +73,9 @@ function formatShortDate(iso: string | null): string | null {
 }
 
 export function OwnerPlansManager() {
+  const toast = useToast();
   const [plans, setPlans] = useState<PlanRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
   const [editing, setEditing] = useState<PlanRow | null>(null);
   const [paying, setPaying] = useState<PlanRow | null>(null);
   // Se incrementa al registrar un pago para que el historial se recargue.
@@ -129,29 +129,27 @@ export function OwnerPlansManager() {
 
   const load = useCallback(async () => {
     setIsLoading(true);
-    setLoadError("");
     try {
       const { data: sessionData } = await getCurrentSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
-        setLoadError("Tu sesión expiró. Volvé a iniciar sesión.");
+        toast.error("Sesión expirada");
         return;
       }
       const res = await fetch("/api/owner/plans", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!res.ok) {
-        setLoadError("No pudimos cargar los planes.");
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        toast.error("Error cargando planes", { description: err.error });
         return;
       }
       const data = (await res.json()) as { plans: PlanRow[] };
       setPlans(data.plans);
-    } catch {
-      setLoadError("No pudimos cargar los planes. Revisá tu conexión.");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     // Carga inicial del panel owner al montar. Acá sí queremos disparar el
@@ -162,28 +160,24 @@ export function OwnerPlansManager() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)] sm:tracking-normal">
+      <header className="animate-fade-up">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
           Planes
         </p>
-        <h1 className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+        <h1 className="mt-4 text-3xl font-black uppercase leading-tight tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
           Planes por barbería
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)]">
-          Administrá suscripciones y registrá los pagos de cada barbería.
+          Asigná plan, status y duración de trial a cada barbería. Los cambios
+          aplican inmediato — las features Pro/Esencial que el plan no incluye
+          se ocultan del sidebar del barbero.
         </p>
       </header>
 
-      <section>
+      <section className="card-premium overflow-hidden">
         {isLoading ? (
-          <div role="status" className="flex min-h-40 items-center justify-center gap-2 py-10 text-sm">
-            <Loader2 aria-hidden="true" className="size-5 animate-spin motion-reduce:animate-none text-[color:var(--brand-gold)]" />
-            Cargando planes…
-          </div>
-        ) : loadError ? (
-          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-red-400/30 p-4 text-sm">
-            <p className="text-red-200">{loadError}</p>
-            <button type="button" onClick={() => void load()} className="min-h-11 rounded-md border border-white/20 px-4 font-semibold">Reintentar</button>
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="size-5 animate-spin text-[color:var(--brand-gold)]" />
           </div>
         ) : plans.length === 0 ? (
           <p className="py-10 text-center text-sm text-[color:var(--text-muted)]">
@@ -194,7 +188,7 @@ export function OwnerPlansManager() {
              abajo: esta pantalla se mira desde el celular y una tabla de 5
              columnas obliga a scrollear para el costado. Era la única
              pantalla del owner que quedaba con ese problema. */
-          <div className="grid gap-3">
+          <div className="grid gap-3 px-3 pb-3 sm:px-4 sm:pb-4">
             {GROUP_ORDER.map((group) => {
               const rows = grouped[group.key];
               if (rows.length === 0) return null;
@@ -206,8 +200,7 @@ export function OwnerPlansManager() {
                       <button
                         type="button"
                         onClick={() => setShowDemo((v) => !v)}
-                        aria-expanded={!isCollapsed}
-                        className="inline-flex min-h-11 items-center gap-2 text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)] transition-colors hover:text-white"
+                        className="inline-flex min-h-8 items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)] transition-colors hover:text-white"
                       >
                         {isCollapsed ? (
                           <ChevronRight className="size-3" />
@@ -217,7 +210,7 @@ export function OwnerPlansManager() {
                         {group.label} ({rows.length})
                       </button>
                     ) : (
-                      <span className="text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)]">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
                         {group.label}{" "}
                         <span className="text-[color:var(--text-muted)]">
                           ({rows.length})
@@ -296,15 +289,15 @@ function PlanCard({
     <div className="rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-3.5 transition-colors hover:border-[color:var(--border-strong)] sm:p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="break-words font-bold text-white">{p.name}</p>
-          <code className="text-xs text-[color:var(--text-muted)]">
+          <p className="truncate font-bold text-white">{p.name}</p>
+          <code className="text-[10px] text-[color:var(--text-muted)]">
             {p.slug}
           </code>
         </div>
         {statusMeta ? (
           <span
             className={cn(
-              "shrink-0 rounded-[var(--radius-xs)] border bg-[color:var(--surface-0)] px-2 py-0.5 text-xs font-bold uppercase tracking-normal",
+              "shrink-0 rounded-[var(--radius-xs)] border bg-[color:var(--surface-0)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]",
               statusMeta.classes,
             )}
           >
@@ -313,13 +306,13 @@ function PlanCard({
         ) : null}
       </div>
 
-      <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs">
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[11px]">
         {tierMeta ? (
-          <span className="inline-flex items-center rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-2 py-0.5 text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)]">
+          <span className="inline-flex items-center rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
             {tierMeta.name} · ${tierMeta.priceArs.toLocaleString("es-AR")}
           </span>
         ) : (
-          <span className="text-xs text-[color:var(--text-muted)]">
+          <span className="text-[10px] text-[color:var(--text-muted)]">
             sin plan
           </span>
         )}
@@ -344,11 +337,11 @@ function PlanCard({
 
       {/* En el celular los botones ocupan toda la fila: son el objetivo táctil
           principal de la pantalla. */}
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
         <button
           type="button"
           onClick={() => onPay()}
-          className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[var(--radius-xs)] border border-[color:var(--success)]/50 bg-[color:var(--success-soft)] px-3 text-xs font-bold uppercase tracking-normal text-[color:var(--success)] transition-colors hover:bg-[color:var(--success)] hover:text-black sm:min-h-11"
+          className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-[var(--radius-xs)] border border-[color:var(--success)]/50 bg-[color:var(--success-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors hover:bg-[color:var(--success)] hover:text-black sm:min-h-9"
         >
           <Wallet className="size-3" />
           Registrar pago
@@ -356,7 +349,7 @@ function PlanCard({
         <button
           type="button"
           onClick={() => onEdit()}
-          className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-3 text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)] transition-colors hover:bg-[color:var(--brand-gold)] hover:text-black sm:min-h-11"
+          className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-gold-grad hover:text-black sm:min-h-9"
         >
           Editar
         </button>
@@ -427,10 +420,10 @@ function PaymentsHistory({
   }, [load, reloadKey]);
 
   return (
-    <section className="border-t border-white/10 pt-4">
+    <section className="card-premium p-4 sm:p-5">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
             Cobros registrados
           </p>
           <p className="mt-1 text-xs text-[color:var(--text-muted)]">
@@ -438,7 +431,7 @@ function PaymentsHistory({
           </p>
         </div>
         {payments.length > 0 ? (
-          <p className="text-sm font-black text-[color:var(--brand-gold)]">
+          <p className="text-sm font-black text-gold-gradient">
             ${totalAmount.toLocaleString("es-AR")} cobrados
           </p>
         ) : null}
@@ -464,14 +457,14 @@ function PaymentsHistory({
                   {nameBySlug[payment.barbershop_slug] ??
                     payment.barbershop_slug}
                 </p>
-                <p className="text-xs text-[color:var(--text-muted)]">
+                <p className="text-[11px] text-[color:var(--text-muted)]">
                   {formatShortDate(payment.created_at)} · {payment.method}
                   {payment.period_end
                     ? ` · cubre hasta ${formatShortDate(payment.period_end)}`
                     : ""}
                 </p>
                 {payment.note ? (
-                  <p className="mt-0.5 text-xs italic text-[color:var(--text-subtle)]">
+                  <p className="mt-0.5 text-[11px] italic text-[color:var(--text-subtle)]">
                     {payment.note}
                   </p>
                 ) : null}
@@ -545,22 +538,22 @@ function EditPlanModal({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-2 sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
       onClick={onClose}
     >
       <div
-        className="max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto rounded-md border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-4 sm:p-5"
+        className="w-full max-w-lg rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
               Editar plan
             </p>
             <h2 className="mt-1 text-xl font-black uppercase tracking-tight text-white">
               {row.name}
             </h2>
-            <code className="text-xs text-[color:var(--text-muted)]">
+            <code className="text-[11px] text-[color:var(--text-muted)]">
               {row.slug}
             </code>
           </div>
@@ -568,7 +561,7 @@ function EditPlanModal({
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="rounded-[var(--radius-xs)] border border-[color:var(--border-default)] inline-flex size-11 shrink-0 items-center justify-center text-[color:var(--text-muted)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+            className="rounded-[var(--radius-xs)] border border-[color:var(--border-default)] p-1.5 text-[color:var(--text-muted)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
           >
             <X className="size-4" />
           </button>
@@ -576,7 +569,7 @@ function EditPlanModal({
 
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)]">
+            <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
               Plan
             </label>
             <div className="mt-2 grid grid-cols-3 gap-2">
@@ -591,12 +584,12 @@ function EditPlanModal({
                     className={cn(
                       "rounded-[var(--radius-sm)] border p-2 text-center transition-colors",
                       isActive
-                        ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                        ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                         : "border-[color:var(--border-default)] bg-[color:var(--surface-0)] text-white hover:border-[color:var(--brand-gold)]",
                     )}
                   >
                     <p className="text-xs font-black uppercase">{meta.name}</p>
-                    <p className="text-xs opacity-80">
+                    <p className="text-[10px] opacity-80">
                       ${meta.priceArs.toLocaleString("es-AR")}/mes
                     </p>
                   </button>
@@ -606,7 +599,7 @@ function EditPlanModal({
           </div>
 
           <div>
-            <label className="text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)]">
+            <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
               Status
             </label>
 
@@ -616,9 +609,9 @@ function EditPlanModal({
                 type="button"
                 onClick={() => setStatus("trial")}
                 className={cn(
-                  "rounded-[var(--radius-sm)] border px-3 py-2 text-xs font-bold uppercase tracking-normal transition-colors",
+                  "rounded-[var(--radius-sm)] border px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] transition-colors",
                   status === "trial"
-                    ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                    ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                     : "border-[color:var(--border-default)] bg-[color:var(--surface-0)] text-white hover:border-[color:var(--brand-gold)]",
                 )}
               >
@@ -628,7 +621,7 @@ function EditPlanModal({
                 type="button"
                 onClick={() => setStatus("active")}
                 className={cn(
-                  "rounded-[var(--radius-sm)] border px-3 py-2 text-xs font-bold uppercase tracking-normal transition-colors",
+                  "rounded-[var(--radius-sm)] border px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] transition-colors",
                   status === "active"
                     ? "border-[color:var(--success)] bg-[color:var(--success)] text-black"
                     : "border-[color:var(--border-default)] bg-[color:var(--surface-0)] text-white hover:border-[color:var(--success)]",
@@ -650,9 +643,9 @@ function EditPlanModal({
                     type="button"
                     onClick={() => setStatus(s)}
                     className={cn(
-                      "rounded-[var(--radius-xs)] border px-2 py-1.5 text-xs font-bold uppercase tracking-normal transition-colors",
+                      "rounded-[var(--radius-xs)] border px-2 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors",
                       isActive
-                        ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                        ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                         : "border-[color:var(--border-default)] bg-[color:var(--surface-0)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)]",
                     )}
                   >
@@ -667,7 +660,7 @@ function EditPlanModal({
             <div>
               <label
                 htmlFor="trial-days"
-                className="text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)]"
+                className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]"
               >
                 Duración trial (días)
               </label>
@@ -678,15 +671,15 @@ function EditPlanModal({
                 max={365}
                 value={trialDays}
                 onChange={(e) => setTrialDays(e.target.value)}
-                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-base sm:text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
               />
-              <p className="mt-1 text-xs text-[color:var(--text-muted)]">
+              <p className="mt-1 text-[10px] text-[color:var(--text-muted)]">
                 Se resetean las fechas: la prueba vence en {trialDays || "?"}d y
                 después queda en modo lectura.
               </p>
             </div>
           ) : status === "active" ? (
-            <p className="rounded-[var(--radius-sm)] border border-[color:var(--success)]/30 bg-[color:var(--success-soft)]/40 px-3 py-2 text-xs leading-5 text-[color:var(--text-secondary)]">
+            <p className="rounded-[var(--radius-sm)] border border-[color:var(--success)]/30 bg-[color:var(--success-soft)]/40 px-3 py-2 text-[11px] leading-5 text-[color:var(--text-secondary)]">
               💵 Al guardar, las fechas de trial se borran. El barbero pasa a
               estado pagado sin countdown.
             </p>
@@ -695,7 +688,7 @@ function EditPlanModal({
           <div>
             <label
               htmlFor="notes"
-              className="text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)]"
+              className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]"
             >
               Notas <span className="text-[color:var(--text-muted)]">— opcional</span>
             </label>
@@ -706,7 +699,7 @@ function EditPlanModal({
               rows={2}
               maxLength={500}
               placeholder="Ej. Founder customer, descuento manual, etc."
-              className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-base sm:text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+              className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
             />
           </div>
 
@@ -714,7 +707,7 @@ function EditPlanModal({
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-xs font-bold uppercase tracking-normal text-white"
+              className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-xs font-bold uppercase tracking-[0.14em] text-white"
             >
               Cancelar
             </button>
@@ -722,7 +715,7 @@ function EditPlanModal({
               type="button"
               onClick={() => void handleSave()}
               disabled={isSaving}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-xs font-bold uppercase tracking-normal text-black hover:bg-[color:var(--brand-gold-hi)] disabled:opacity-50"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-4 text-xs font-bold uppercase tracking-[0.14em] text-black hover:bg-[color:var(--brand-gold-hi)] disabled:opacity-50"
             >
               {isSaving ? <Loader2 className="size-3.5 animate-spin" /> : <Crown className="size-3.5" />}
               {isSaving ? "Guardando…" : "Guardar"}
@@ -828,22 +821,22 @@ function RegisterPaymentModal({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-2 sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
       onClick={onClose}
     >
       <div
-        className="max-h-[calc(100dvh-1rem)] w-full max-w-md overflow-y-auto rounded-md border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-4 sm:p-5"
+        className="w-full max-w-md rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <header className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--success)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--success)]">
               Registrar pago
             </p>
             <h2 className="mt-1 text-xl font-black uppercase tracking-tight text-white">
               {row.name}
             </h2>
-            <p className="text-xs text-[color:var(--text-muted)]">
+            <p className="text-[11px] text-[color:var(--text-muted)]">
               {row.current_period_ends_at
                 ? `Pagado hasta ${formatShortDate(row.current_period_ends_at)} — suma 1 mes`
                 : "Activa la barbería por 1 mes"}
@@ -853,7 +846,7 @@ function RegisterPaymentModal({
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="rounded-[var(--radius-xs)] border border-[color:var(--border-default)] inline-flex size-11 shrink-0 items-center justify-center text-[color:var(--text-muted)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+            className="rounded-[var(--radius-xs)] border border-[color:var(--border-default)] p-1.5 text-[color:var(--text-muted)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
           >
             <X className="size-4" />
           </button>
@@ -863,7 +856,7 @@ function RegisterPaymentModal({
           <div>
             <label
               htmlFor="pay-amount"
-              className="text-xs font-bold uppercase tracking-normal text-[color:var(--success)]"
+              className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--success)]"
             >
               Monto (ARS)
             </label>
@@ -876,16 +869,16 @@ function RegisterPaymentModal({
                 setAmount(e.target.value);
                 setUnusualAmount(null);
               }}
-              className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 font-mono text-base sm:text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+              className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 font-mono text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
             />
-            <p className="mt-1 text-xs text-[color:var(--text-muted)]">
+            <p className="mt-1 text-[10px] text-[color:var(--text-muted)]">
               Prefill: precio del plan{" "}
               {row.plan_tier ? PLAN_META[row.plan_tier].name : "—"}.
             </p>
             {unusualAmount ? (
               <p
                 role="alert"
-                className="mt-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold-ring)] bg-[color:var(--brand-gold-soft)] px-3 py-2 text-xs leading-4 text-[color:var(--brand-gold)]"
+                className="mt-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold-ring)] bg-[color:var(--brand-gold-soft)] px-3 py-2 text-[11px] leading-4 text-[color:var(--brand-gold)]"
               >
                 {unusualAmount} Fijate que no falte un cero — si el monto es
                 correcto, tocá &ldquo;Registrar igual&rdquo;.
@@ -894,7 +887,7 @@ function RegisterPaymentModal({
           </div>
 
           <div>
-            <label className="text-xs font-bold uppercase tracking-normal text-[color:var(--success)]">
+            <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--success)]">
               Método
             </label>
             <div className="mt-2 grid grid-cols-3 gap-2">
@@ -904,7 +897,7 @@ function RegisterPaymentModal({
                   type="button"
                   onClick={() => setMethod(m.value)}
                   className={cn(
-                    "rounded-[var(--radius-sm)] border px-2 py-1.5 text-xs font-bold uppercase tracking-[0.12em] transition-colors",
+                    "rounded-[var(--radius-sm)] border px-2 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors",
                     method === m.value
                       ? "border-[color:var(--success)] bg-[color:var(--success)] text-black"
                       : "border-[color:var(--border-default)] bg-[color:var(--surface-0)] text-white hover:border-[color:var(--success)]",
@@ -919,7 +912,7 @@ function RegisterPaymentModal({
           <div>
             <label
               htmlFor="pay-note"
-              className="text-xs font-bold uppercase tracking-normal text-[color:var(--success)]"
+              className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--success)]"
             >
               Nota{" "}
               <span className="text-[color:var(--text-muted)]">— opcional</span>
@@ -931,7 +924,7 @@ function RegisterPaymentModal({
               onChange={(e) => setNote(e.target.value)}
               maxLength={200}
               placeholder="Ej. Transferencia Naranja X 07/07"
-              className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-base sm:text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+              className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
             />
           </div>
 
@@ -939,7 +932,7 @@ function RegisterPaymentModal({
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-xs font-bold uppercase tracking-normal text-white"
+              className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-xs font-bold uppercase tracking-[0.14em] text-white"
             >
               Cancelar
             </button>
@@ -947,7 +940,7 @@ function RegisterPaymentModal({
               type="button"
               onClick={() => void handleSave(unusualAmount !== null)}
               disabled={isSaving}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--success)] px-4 text-xs font-bold uppercase tracking-normal text-black hover:brightness-110 disabled:opacity-50"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--success)] px-4 text-xs font-bold uppercase tracking-[0.14em] text-black hover:brightness-110 disabled:opacity-50"
             >
               {isSaving ? (
                 <Loader2 className="size-3.5 animate-spin" />

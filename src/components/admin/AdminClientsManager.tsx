@@ -223,7 +223,6 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
 
   const filteredClients = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    const phoneQuery = query.replace(/\D/g, "");
     return clientsWithStats.filter((entry) => {
       if (segmentFilter !== "all" && entry.segment !== segmentFilter) {
         return false;
@@ -231,8 +230,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
       if (!query) return true;
       return (
         entry.client.name.toLowerCase().includes(query) ||
-        (phoneQuery.length > 0 &&
-          entry.client.phone_normalized.includes(phoneQuery))
+        entry.client.phone_normalized.includes(query.replace(/\D/g, ""))
       );
     });
   }, [clientsWithStats, searchQuery, segmentFilter]);
@@ -615,21 +613,21 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
         })
       : null;
     return (
-      <div role="region" aria-label="Ficha de cliente" className="min-w-0 space-y-5 sm:space-y-6">
+      <div className="space-y-6 sm:space-y-8">
         <button
           type="button"
           onClick={() => setSelectedClientId(null)}
-          className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--brand-gold)]"
+          className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
         >
           <ArrowLeft className="size-3" />
           Volver a clientes
         </button>
 
-        <header>
-          <h2 className="text-xs font-medium text-[color:var(--brand-gold)]">
+        <header className="animate-fade-up">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
             Ficha de cliente
-          </h2>
-          <h1 className="mt-2 break-words text-2xl font-semibold text-white sm:text-3xl">
+          </p>
+          <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
             {client.name}
           </h1>
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -639,7 +637,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
             </p>
             <span
               className={cn(
-                "inline-flex items-center rounded-[var(--radius-xs)] border px-2 py-0.5 text-xs font-bold normal-case tracking-normal",
+                "inline-flex items-center rounded-[var(--radius-xs)] border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em]",
                 segmentTagClasses(segmentMeta.tone),
               )}
               title={segmentMeta.description}
@@ -651,13 +649,13 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
 
         {/* CTA reactivación cuando corresponde */}
         {reactivationLink ? (
-          <div className="flex flex-wrap items-start gap-3 rounded-lg border border-amber-400/30 bg-amber-400/5 p-4">
+          <div className="flex flex-wrap items-start gap-3 rounded-[var(--radius-md)] border border-amber-400/30 bg-amber-400/5 p-4">
             <AlertTriangle
               aria-hidden="true"
               className="size-5 shrink-0 text-amber-300"
             />
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold normal-case tracking-normal text-amber-300">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300">
                 {segment === "inactivo"
                   ? "Cliente inactivo"
                   : "Cliente por reactivar"}
@@ -670,7 +668,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 href={reactivationLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-md border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-sm font-medium text-[color:var(--success)] transition-colors hover:bg-[color:var(--success)]/15"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--success)]/15"
               >
                 Mandar WhatsApp de reactivación
               </a>
@@ -679,17 +677,17 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
         ) : null}
 
         {/* KPIs */}
-        <section aria-label="Resumen del cliente" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <div className="rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-4">
-            <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
               Visitas
             </p>
-            <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-[color:var(--brand-gold)] sm:text-2xl">
+            <p className="mt-1 font-mono text-2xl font-black tabular-nums text-[color:var(--brand-gold)] sm:text-3xl">
               {visits}
             </p>
           </div>
           <div className="rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] p-4">
-            <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
               Última visita
             </p>
             <p className="mt-1 text-sm font-bold text-white">
@@ -697,7 +695,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
             </p>
           </div>
           <div className="rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] p-4">
-            <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
               Cliente desde
             </p>
             <p className="mt-1 text-sm font-bold text-white">
@@ -710,14 +708,14 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
 
         {/* Insights derivados */}
         {selectedClientInsights ? (
-          <section className="border-b border-[color:var(--border-subtle)] py-4">
-            <p className="text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)]">
+          <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
               Comportamiento
             </p>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
               <InsightCard
                 icon={<Wallet className="size-4" aria-hidden="true" />}
-                label="Total consumido"
+                label="Lifetime value"
                 value={
                   selectedClientInsights.lifetimeValue > 0
                     ? formatPrice(selectedClientInsights.lifetimeValue)
@@ -751,7 +749,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
               />
             </div>
             {selectedClientInsights.cancelledCount > 0 ? (
-              <p className="mt-4 text-xs text-[color:var(--text-muted)]">
+              <p className="mt-4 text-[11px] text-[color:var(--text-muted)]">
                 <span className="font-bold text-[color:var(--danger)]">
                   {selectedClientInsights.cancelledCount}
                 </span>{" "}
@@ -766,14 +764,14 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
 
         {/* Número compartido: separar cada persona a su propio cliente */}
         {selectedClientNameGroups.length > 1 ? (
-          <div className="rounded-lg border border-amber-400/30 bg-amber-400/5 p-4">
+          <div className="rounded-[var(--radius-md)] border border-amber-400/30 bg-amber-400/5 p-4">
             <div className="flex items-start gap-3">
               <AlertTriangle
                 aria-hidden="true"
                 className="size-5 shrink-0 text-amber-300"
               />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold normal-case tracking-normal text-amber-300">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300">
                   Número compartido · {selectedClientNameGroups.length} personas
                 </p>
                 <p className="mt-1 text-xs leading-5 text-[color:var(--text-secondary)] sm:text-sm">
@@ -795,7 +793,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                       <p className="truncate text-sm font-bold text-white">
                         {g.name}
                       </p>
-                      <p className="text-xs text-[color:var(--text-muted)]">
+                      <p className="text-[11px] text-[color:var(--text-muted)]">
                         {g.count} turno{g.count === 1 ? "" : "s"}
                       </p>
                     </div>
@@ -807,7 +805,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                           setSplitPhone("");
                         }}
                         disabled={isSaving}
-                        className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)] transition-colors hover:bg-[color:var(--brand-gold-soft)] disabled:opacity-50"
+                        className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand-gold)] transition-colors hover:bg-[color:var(--brand-gold-soft)] disabled:opacity-50"
                       >
                         <UserRound aria-hidden="true" className="size-3.5" />
                         Separar
@@ -824,14 +822,14 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                         autoFocus
                         placeholder={`Teléfono real de ${g.name}`}
                         disabled={isSaving}
-                        className="min-h-11 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+                        className="min-h-10 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
                       />
                       <div className="flex gap-2">
                         <button
                           type="button"
                           onClick={() => handleReassign(g)}
                           disabled={isSaving}
-                          className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-xs font-bold normal-case tracking-normal text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:opacity-50"
+                          className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.12em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:opacity-50"
                         >
                           {isSaving ? "Moviendo…" : "Mover"}
                         </button>
@@ -842,7 +840,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                             setSplitPhone("");
                           }}
                           disabled={isSaving}
-                          className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--text-secondary)] transition-colors hover:text-white disabled:opacity-50"
+                          className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--text-secondary)] transition-colors hover:text-white disabled:opacity-50"
                         >
                           Cancelar
                         </button>
@@ -856,15 +854,15 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
         ) : null}
 
         {/* Editar nombre + notas */}
-          <section className="border-b border-[color:var(--border-subtle)] py-4">
-          <p className="text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)]">
+        <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
             Datos del cliente
           </p>
           <div className="mt-4 grid gap-3">
             <div>
               <label
                 htmlFor="client-name"
-                className="text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)]"
+                className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
               >
                 Nombre
               </label>
@@ -873,13 +871,13 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 value={editedName}
                 disabled={isSaving}
                 onChange={(e) => setEditedName(e.target.value)}
-                className="mt-2 min-h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-base text-white sm:text-sm outline-none transition focus:border-[color:var(--brand-gold)]"
+                className="mt-2 min-h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
               />
             </div>
             <div>
               <label
                 htmlFor="client-notes"
-                className="text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)]"
+                className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
               >
                 Notas privadas
               </label>
@@ -888,16 +886,16 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 value={editedNotes}
                 disabled={isSaving}
                 onChange={(e) => setEditedNotes(e.target.value)}
-                rows={3}
+                rows={4}
                 placeholder="Notas que solo vos ves: preferencias, alergias, comportamiento…"
-                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 py-3 text-base text-white sm:text-sm outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
+                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 py-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
               />
             </div>
             <div>
-              <p className="text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)]">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
                 Tags
               </p>
-              <div className="mt-2">
+              <div className="mt-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black p-3">
                 <ClientTagsEditor
                   tags={editedTags}
                   disabled={isSaving}
@@ -923,7 +921,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving}
-                className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-xs font-bold normal-case tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSaving ? "Guardando…" : "Guardar"}
               </button>
@@ -931,7 +929,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 href={`/${barbershop.slug}/reservar`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-xs font-bold normal-case tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+                className="inline-flex min-h-10 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
               >
                 Reservar nuevo turno
               </Link>
@@ -939,7 +937,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 type="button"
                 onClick={handleDelete}
                 disabled={isSaving}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 px-4 text-xs font-bold normal-case tracking-normal text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60 sm:ml-auto"
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60 sm:ml-auto"
               >
                 <Trash2 aria-hidden="true" className="size-3.5" />
                 Eliminar cliente
@@ -950,7 +948,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
 
         {/* Historial */}
         <section>
-          <p className="text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
             Historial ({selectedClientAppointments.length})
           </p>
           {selectedClientAppointments.length === 0 ? (
@@ -968,7 +966,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                     <p className="font-mono text-base font-bold tabular-nums leading-none text-white">
                       {normalizeTimeValue(appointment.appointment_time)}
                     </p>
-                    <p className="mt-1 font-mono text-xs text-[color:var(--text-muted)]">
+                    <p className="mt-1 font-mono text-[10px] text-[color:var(--text-muted)]">
                       {formatDateForDisplay(
                         normalizeDateValue(appointment.appointment_date),
                       )}
@@ -981,14 +979,14 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                         ? "bg-[color:var(--success)]"
                         : appointment.status === "cancelled"
                           ? "bg-[color:var(--danger)]"
-                          : "bg-[color:var(--brand-gold)]",
+                          : "bg-gold-grad",
                     )}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="break-words text-sm font-semibold text-white">
+                    <p className="truncate text-sm font-bold text-white">
                       {appointment.service_name}
                     </p>
-                    <p className="mt-0.5 break-words text-xs text-[color:var(--text-muted)]">
+                    <p className="mt-0.5 truncate text-xs text-[color:var(--text-muted)]">
                       {appointment.barber_name}
                       <span className="mx-1.5 text-[color:var(--text-subtle)]">
                         ·
@@ -1018,36 +1016,39 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
 
   // ─── Listado ─────────────────────────────────────────────────
   return (
-    <div role="region" aria-label="Clientes" className="min-w-0 space-y-5 sm:space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold text-white sm:text-3xl">
+    <div className="space-y-6 sm:space-y-8">
+      <header className="animate-fade-up">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
           Clientes
+        </p>
+        <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
+          Tu lista
         </h1>
-        <p className="mt-2 text-sm text-[color:var(--text-muted)]">
-          {barbershop.name}
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
+          Todos los clientes que pasaron por tu barbería. Click en cualquiera
+          para ver su ficha completa con historial y notas privadas.
         </p>
       </header>
 
-      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="relative min-w-0">
+      <div className="flex flex-wrap items-stretch gap-2">
+        <div className="relative flex-1 min-w-[14rem]">
           <Search
             aria-hidden="true"
             className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[color:var(--text-subtle)]"
           />
           <input
             type="search"
-            aria-label="Buscar clientes"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar por nombre o teléfono…"
-            className="h-11 w-full appearance-none rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] pl-9 pr-3 text-base text-white sm:text-sm placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)] focus:outline-none [&::-webkit-search-cancel-button]:appearance-none"
+            className="h-11 w-full appearance-none rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] pl-9 pr-3 text-sm text-white placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)] focus:outline-none [&::-webkit-search-cancel-button]:appearance-none"
           />
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="flex gap-2">
           <button
             type="button"
             onClick={() => setIsImportOpen(true)}
-            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
           >
             <Upload className="size-3.5" aria-hidden="true" />
             Importar CSV
@@ -1056,7 +1057,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
             type="button"
             onClick={handleExportCsv}
             disabled={filteredClients.length === 0}
-            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download className="size-3.5" aria-hidden="true" />
             Exportar CSV
@@ -1066,13 +1067,13 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
 
       {/* Alerta de turnos huérfanos — teléfonos inválidos que no generaron cliente */}
       {orphanAppointments.length > 0 && !isLoading ? (
-        <div className="flex flex-wrap items-start gap-3 rounded-lg border border-[color:var(--text-subtle)]/30 bg-[color:var(--surface-1)] p-4">
+        <div className="flex flex-wrap items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--text-subtle)]/30 bg-[color:var(--surface-1)] p-4">
           <AlertTriangle
             aria-hidden="true"
             className="size-5 shrink-0 text-[color:var(--text-muted)]"
           />
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
               Turnos sin cliente asociado
             </p>
             <p className="mt-1 text-xs text-[color:var(--text-secondary)] sm:text-sm">
@@ -1098,7 +1099,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 </li>
               ))}
             </ul>
-            <p className="mt-2 text-xs leading-5 text-[color:var(--text-muted)]">
+            <p className="mt-2 text-[11px] leading-5 text-[color:var(--text-muted)]">
               Para incluirlo{orphanAppointments.length === 1 ? "" : "s"} en tus
               clientes, editá ese turno y cargá un teléfono válido. Las próximas
               reservas ya validan el teléfono automáticamente.
@@ -1109,13 +1110,13 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
 
       {/* Alerta de inactivos / por reactivar */}
       {(inactivosCount > 0 || porReactivarCount > 0) && !isLoading ? (
-        <div className="flex flex-wrap items-start gap-3 rounded-lg border border-amber-400/30 bg-amber-400/5 p-4">
+        <div className="flex flex-wrap items-start gap-3 rounded-[var(--radius-md)] border border-amber-400/30 bg-amber-400/5 p-4">
           <AlertTriangle
             aria-hidden="true"
             className="size-5 shrink-0 text-amber-300"
           />
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold normal-case tracking-normal text-amber-300">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300">
               Clientes que se están perdiendo
             </p>
             <p className="mt-1 text-xs text-[color:var(--text-secondary)] sm:text-sm">
@@ -1139,7 +1140,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 <button
                   type="button"
                   onClick={() => setSegmentFilter("inactivo")}
-                  className="inline-flex items-center rounded-[var(--radius-xs)] border border-[color:var(--danger)]/40 px-2.5 py-1 text-xs font-bold normal-case tracking-normal text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)]"
+                  className="inline-flex items-center rounded-[var(--radius-xs)] border border-[color:var(--danger)]/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)]"
                 >
                   Ver inactivos ({inactivosCount})
                 </button>
@@ -1148,7 +1149,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 <button
                   type="button"
                   onClick={() => setSegmentFilter("por-reactivar")}
-                  className="inline-flex items-center rounded-[var(--radius-xs)] border border-amber-400/40 px-2.5 py-1 text-xs font-bold normal-case tracking-normal text-amber-300 transition-colors duration-[var(--duration-fast)] hover:bg-amber-400/10"
+                  className="inline-flex items-center rounded-[var(--radius-xs)] border border-amber-400/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-300 transition-colors duration-[var(--duration-fast)] hover:bg-amber-400/10"
                 >
                   Ver por reactivar ({porReactivarCount})
                 </button>
@@ -1160,7 +1161,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
 
       {/* Filtros por segmento */}
       {!isLoading && clients.length > 0 ? (
-        <div role="group" aria-label="Filtrar clientes por segmento" className="flex gap-2 overflow-x-auto pb-1">
+        <div className="-mx-1 flex flex-wrap gap-1.5 overflow-x-auto px-1">
           {(
             [
               "all",
@@ -1183,18 +1184,17 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 key={value}
                 type="button"
                 onClick={() => setSegmentFilter(value)}
-                aria-pressed={isActive}
                 className={cn(
-                  "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md border px-3 text-sm font-medium transition-colors",
+                  "inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-xs)] border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
                   isActive
-                    ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                    ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                     : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)]/50 hover:text-[color:var(--brand-gold)]",
                 )}
               >
                 {label}
                 <span
                   className={cn(
-                    "rounded-[var(--radius-xs)] px-1 font-mono text-xs tabular-nums",
+                    "rounded-[var(--radius-xs)] px-1 font-mono text-[10px] tabular-nums",
                     isActive
                       ? "bg-black/10 text-black"
                       : "text-[color:var(--text-subtle)]",
@@ -1218,12 +1218,12 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
       ) : null}
 
       {isLoading ? (
-        <ul role="status" aria-label="Cargando clientes" className="grid gap-2">
+        <ul className="grid gap-2">
           {Array.from({ length: 4 }).map((_, i) => (
             <li
               key={i}
               aria-hidden="true"
-              className="flex items-center gap-3 rounded-lg border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4"
+              className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4"
             >
               <div className="skeleton size-11 shrink-0 rounded-full" />
               <div className="min-w-0 flex-1 space-y-2">
@@ -1237,8 +1237,8 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
             </li>
           ))}
         </ul>
-      ) : errorMessage ? null : clients.length === 0 ? (
-        <div className="border-y border-[color:var(--border-subtle)] py-8 text-center">
+      ) : clients.length === 0 ? (
+        <div className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-subtle)] p-10 text-center">
           <Users className="mx-auto size-8 text-[color:var(--text-subtle)]" />
           <p className="mt-3 text-sm font-bold text-white">
             Sin clientes todavía
@@ -1248,14 +1248,14 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
           </p>
         </div>
       ) : filteredClients.length === 0 ? (
-        <div className="border-y border-[color:var(--border-subtle)] py-8 text-center">
+        <div className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-subtle)] p-10 text-center">
           <p className="text-sm font-bold text-white">Sin resultados</p>
           <p className="mt-2 text-xs text-[color:var(--text-muted)]">
             No encontramos ningún cliente para &quot;{searchQuery}&quot;.
           </p>
         </div>
       ) : (
-        <ul aria-label="Listado de clientes" className="grid gap-2">
+        <ul className="grid gap-2 animate-stagger">
           {filteredClients.map(
             ({
               client,
@@ -1271,11 +1271,11 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
               <button
                 type="button"
                 onClick={() => handleSelectClient(client)}
-                className=" group flex w-full items-center gap-3 rounded-lg border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-3 py-3 text-left sm:px-4  transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40"
+                className="hover-lift group flex w-full items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 text-left shadow-card transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40"
               >
                 <div
                   aria-hidden="true"
-                  className="flex size-11 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] font-mono text-xs font-bold normal-case text-[color:var(--brand-gold)]"
+                  className="flex size-11 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] font-mono text-xs font-bold uppercase text-[color:var(--brand-gold)]"
                 >
                   {client.name
                     .split(/\s+/)
@@ -1285,12 +1285,12 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                    <p className="max-w-full break-words text-sm font-bold text-white sm:text-base">
+                    <p className="truncate text-sm font-bold text-white sm:text-base">
                       {client.name}
                     </p>
                     <span
                       className={cn(
-                        "inline-flex shrink-0 items-center rounded-[var(--radius-xs)] border px-1.5 py-0.5 text-xs font-bold normal-case tracking-normal",
+                        "inline-flex shrink-0 items-center rounded-[var(--radius-xs)] border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em]",
                         segmentTagClasses(segmentMeta.tone),
                       )}
                       title={segmentMeta.description}
@@ -1301,7 +1301,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                       <span
                         key={tag}
                         className={cn(
-                          "inline-flex shrink-0 items-center rounded-[var(--radius-xs)] border px-1.5 py-0.5 text-xs font-bold normal-case tracking-normal",
+                          "inline-flex shrink-0 items-center rounded-[var(--radius-xs)] border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em]",
                           tagClassesFor(getTagTone(tag)),
                         )}
                       >
@@ -1309,11 +1309,11 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                       </span>
                     ))}
                   </div>
-                  <p className="mt-0.5 break-all font-mono text-xs text-[color:var(--text-muted)]">
+                  <p className="mt-0.5 truncate font-mono text-xs text-[color:var(--text-muted)]">
                     {client.phone_display}
                   </p>
                   {upcoming ? (
-                    <p className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-xs font-semibold normal-case tracking-normal text-[color:var(--brand-gold)]">
+                    <p className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
                       <CalendarDays className="size-3" />
                       Próximo:{" "}
                       {formatDateForDisplay(
@@ -1326,13 +1326,13 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                   <p className="font-mono text-base font-bold tabular-nums text-white">
                     {visits}
                   </p>
-                  <p className="text-xs normal-case tracking-normal text-[color:var(--text-muted)]">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
                     {visits === 1 ? "visita" : "visitas"}
                   </p>
                   {daysSinceLastVisit !== null ? (
                     <p
                       className={cn(
-                        "mt-1 font-mono text-xs",
+                        "mt-1 font-mono text-[10px]",
                         daysSinceLastVisit > 60
                           ? "text-[color:var(--danger)]"
                           : daysSinceLastVisit > 30
@@ -1343,7 +1343,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                       Hace {daysSinceLastVisit}d
                     </p>
                   ) : lastVisit ? (
-                    <p className="mt-1 font-mono text-xs text-[color:var(--text-subtle)]">
+                    <p className="mt-1 font-mono text-[10px] text-[color:var(--text-subtle)]">
                       Últ. {formatDateForDisplay(lastVisit)}
                     </p>
                   ) : null}
@@ -1394,7 +1394,7 @@ function InsightCard({
           : "border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]/60",
       )}
     >
-      <div className="flex items-center gap-1.5 text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
+      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
         <span
           className={cn(
             accent
@@ -1408,7 +1408,7 @@ function InsightCard({
       </div>
       <p
         className={cn(
-          "mt-1.5 min-w-0 break-words text-sm font-semibold",
+          "mt-1.5 truncate text-sm font-bold",
           accent ? "text-[color:var(--brand-gold)]" : "text-white",
         )}
         title={value}
@@ -1416,7 +1416,7 @@ function InsightCard({
         {value}
       </p>
       {hint ? (
-        <p className="mt-0.5 text-xs text-[color:var(--text-subtle)]">
+        <p className="mt-0.5 text-[10px] text-[color:var(--text-subtle)]">
           {hint}
         </p>
       ) : null}

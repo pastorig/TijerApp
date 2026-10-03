@@ -463,13 +463,13 @@ export function OwnerDashboard() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)] sm:tracking-normal">
+      <header className="animate-fade-up">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
           Owner TijerApp
         </p>
-        <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white sm:text-3xl">
+            <h1 className="text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
               Dashboard
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
@@ -479,7 +479,7 @@ export function OwnerDashboard() {
           </div>
           <Link
             href="/owner/create-barbershop"
-            className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-xs font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
+            className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
           >
             Crear barbería
           </Link>
@@ -507,7 +507,7 @@ export function OwnerDashboard() {
           </div>
         ) : null}
 
-        {!isLoading && !errorMessage ? (
+        {!isLoading ? (
           <>
             {/* WEEKLY RANKING — últimos 7 días, podio + lista */}
             {metrics.weeklyRanking.length > 0 ? (
@@ -516,7 +516,7 @@ export function OwnerDashboard() {
 
             {/* PLATFORM TOTALS — métricas históricas, ribbon compacto */}
             <section className="mt-6 sm:mt-8">
-              <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
                 Totales de plataforma
               </p>
               <div className="card-premium mt-3 grid grid-cols-2 overflow-hidden sm:grid-cols-4">
@@ -532,14 +532,14 @@ export function OwnerDashboard() {
                       i >= 2 ? "border-t border-white/[0.04] sm:border-t-0" : "",
                     )}
                   >
-                    <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
                       {card.label}
                     </p>
                     <p className="font-mono text-2xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-3xl">
                       {card.value}
                     </p>
                     {card.hint ? (
-                      <p className="text-xs text-[color:var(--text-subtle)]">
+                      <p className="text-[10px] text-[color:var(--text-subtle)]">
                         {card.hint}
                       </p>
                     ) : null}
@@ -551,7 +551,7 @@ export function OwnerDashboard() {
             <section className="mt-6 sm:mt-8">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)]">
                     Barberías activas
                   </p>
                   <p className="mt-1 text-xs text-[color:var(--text-muted)]">
@@ -580,7 +580,7 @@ export function OwnerDashboard() {
                 {/* Segmented control — ordenamiento. Solo se muestra si hay 2+ */}
                 {activeBarbershops.length >= 2 ? (
                   <div
-                    role="group"
+                    role="radiogroup"
                     aria-label="Ordenar barberías"
                     className="inline-flex self-start overflow-hidden rounded-[var(--radius-sm)] border border-white/[0.06] bg-[color:var(--surface-1)]"
                   >
@@ -591,18 +591,18 @@ export function OwnerDashboard() {
                         <button
                           key={mode}
                           type="button"
-                          aria-label={SORT_LABELS[mode].label}
-                          aria-pressed={isActive}
+                          role="radio"
+                          aria-checked={isActive}
                           onClick={() => setSortMode(mode)}
                           className={cn(
-                            "inline-flex min-h-11 items-center gap-1.5 px-3 text-xs font-semibold transition-colors",
+                            "inline-flex min-h-9 items-center gap-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)] press-shrink",
                             isActive
                               ? "bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
                               : "text-[color:var(--text-muted)] hover:text-[color:var(--text-secondary)]",
                           )}
                         >
                           <Icon className="size-3.5" aria-hidden="true" />
-                          <span className="inline">
+                          <span className="hidden sm:inline">
                             {SORT_LABELS[mode].label}
                           </span>
                         </button>
@@ -626,7 +626,7 @@ export function OwnerDashboard() {
                     placeholder="Buscar barbería por nombre o slug…"
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
-                    className="block w-full rounded-[var(--radius-sm)] border border-white/[0.06] bg-[color:var(--surface-1)] py-2.5 pl-9 pr-12 text-base sm:text-base sm:text-sm text-white placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]/60 focus:outline-none focus:ring-0"
+                    className="block w-full rounded-[var(--radius-sm)] border border-white/[0.06] bg-[color:var(--surface-1)] py-2.5 pl-9 pr-9 text-sm text-white placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]/60 focus:outline-none focus:ring-0"
                     aria-label="Buscar barbería"
                   />
                   {searchQuery ? (
@@ -634,7 +634,7 @@ export function OwnerDashboard() {
                       type="button"
                       onClick={() => setSearchQuery("")}
                       aria-label="Limpiar búsqueda"
-                      className="absolute right-2 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-[color:var(--text-muted)] transition-colors hover:bg-white/[0.04] hover:text-[color:var(--text-secondary)] press-shrink"
+                      className="absolute right-2 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-[color:var(--text-muted)] transition-colors hover:bg-white/[0.04] hover:text-[color:var(--text-secondary)] press-shrink"
                     >
                       <X className="size-3.5" aria-hidden="true" />
                     </button>
@@ -658,7 +658,7 @@ export function OwnerDashboard() {
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
-                    className="text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)] hover:underline"
+                    className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] hover:underline"
                   >
                     Limpiar búsqueda
                   </button>
@@ -679,19 +679,19 @@ export function OwnerDashboard() {
                     return (
                       <article
                         key={barbershop.slug}
-                        className="min-w-0 rounded-md border border-white/10 bg-[#101012]"
+                        className="card-premium card-premium-hover overflow-hidden"
                       >
-                        <div className="p-3 sm:p-4">
+                        <div className="p-4 sm:p-5">
                           {/* Header: nombre + health badge + kebab */}
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="break-words text-base font-bold text-white sm:text-lg">
+                                <h3 className="truncate text-lg font-black tracking-tight text-white sm:text-xl">
                                   {barbershop.name}
                                 </h3>
                                 <span
                                   className={cn(
-                                    "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-bold uppercase tracking-normal",
+                                    "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]",
                                     HEALTH_PILL[health.status].classes,
                                   )}
                                   title={
@@ -712,7 +712,7 @@ export function OwnerDashboard() {
                                   {health.label}
                                 </span>
                               </div>
-                              <p className="mt-1 font-mono text-xs text-[color:var(--text-subtle)]">
+                              <p className="mt-1 font-mono text-[11px] text-[color:var(--text-subtle)]">
                                 /{barbershop.slug}
                                 {barbershop.isDemo ? " · demo" : ""}
                               </p>
@@ -738,7 +738,7 @@ export function OwnerDashboard() {
                               <span className="font-mono text-base font-black tabular-nums text-white">
                                 {barbershop.barberCount}
                               </span>
-                              <span className="text-xs uppercase tracking-normal text-[color:var(--text-muted)]">
+                              <span className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
                                 {barbershop.barberCount === 1
                                   ? "barbero"
                                   : "barberos"}
@@ -749,7 +749,7 @@ export function OwnerDashboard() {
                               <span className="font-mono text-base font-black tabular-nums text-white">
                                 {barbershop.appointmentCount}
                               </span>
-                              <span className="text-xs uppercase tracking-normal text-[color:var(--text-muted)]">
+                              <span className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
                                 reservas
                               </span>
                             </span>
@@ -760,7 +760,7 @@ export function OwnerDashboard() {
                                   <span className="font-mono text-base font-black tabular-nums text-[color:var(--brand-gold)]">
                                     {barbershop.todayAppointmentCount}
                                   </span>
-                                  <span className="text-xs uppercase tracking-normal text-[color:var(--brand-gold)]/80">
+                                  <span className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--brand-gold)]/80">
                                     hoy
                                   </span>
                                 </span>
@@ -769,10 +769,10 @@ export function OwnerDashboard() {
                           </div>
 
                           {/* Primary CTA: Abrir Admin + secondary Pública */}
-                          <div className="mt-3 grid grid-cols-2 gap-2">
+                          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                             <Link
                               href={`/${barbershop.slug}/admin`}
-                              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-4 text-xs font-bold uppercase tracking-normal text-black transition-all duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--brand-gold-hi)] hover:shadow-[0_0_0_3px_var(--brand-gold-ring)]"
+                              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-all duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--brand-gold-hi)] hover:shadow-[0_0_0_3px_var(--brand-gold-ring)]"
                             >
                               Abrir admin
                               <ArrowUpRight
@@ -784,7 +784,7 @@ export function OwnerDashboard() {
                               href={`/${barbershop.slug}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-white/[0.06] bg-[color:var(--surface-0)] px-4 text-xs font-bold uppercase tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)]/40 hover:text-[color:var(--brand-gold)]"
+                              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] border border-white/[0.06] bg-[color:var(--surface-0)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)]/40 hover:text-[color:var(--brand-gold)]"
                             >
                               <ExternalLink
                                 className="size-3.5"
@@ -796,7 +796,7 @@ export function OwnerDashboard() {
 
                           {/* Busy state */}
                           {isBusy ? (
-                            <p className="mt-3 text-xs font-semibold uppercase tracking-normal text-[color:var(--text-subtle)]">
+                            <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
                               {isResetting
                                 ? "Reseteando acceso…"
                                 : "Eliminando…"}
@@ -806,7 +806,7 @@ export function OwnerDashboard() {
 
                         {resetCredentials ? (
                           <div className="border-t border-[color:var(--success)]/30 bg-[color:var(--success-soft)] px-4 py-3 text-xs text-[color:var(--success)] sm:px-5">
-                            <p className="text-xs font-bold uppercase tracking-[0.16em]">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.16em]">
                               Acceso admin actualizado
                             </p>
                             <p className="mt-1.5">
@@ -840,8 +840,8 @@ export function OwnerDashboard() {
                   className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-[var(--duration-fast)] hover:bg-white/[0.02] sm:px-5"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-subtle)]">
-                      Archivadas
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-subtle)]">
+                      Soft-deleted
                     </p>
                     <p className="mt-0.5 text-sm font-bold text-[color:var(--text-secondary)]">
                       Barberías inactivas
@@ -879,7 +879,7 @@ export function OwnerDashboard() {
                               <h3 className="text-base font-bold text-[color:var(--text-secondary)] line-through decoration-[color:var(--text-subtle)]">
                                 {barbershop.name}
                               </h3>
-                              <p className="mt-1 font-mono text-xs text-[color:var(--text-subtle)]">
+                              <p className="mt-1 font-mono text-[11px] text-[color:var(--text-subtle)]">
                                 /{barbershop.slug}
                               </p>
                             </div>
@@ -890,7 +890,7 @@ export function OwnerDashboard() {
                                 onClick={() =>
                                   handleReactivateBarbershop(barbershop.slug)
                                 }
-                                className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 px-3 text-xs font-bold uppercase tracking-normal text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--success-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--success-soft)] disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 {reactivatingSlug === barbershop.slug
                                   ? "Reactivando…"
@@ -902,7 +902,7 @@ export function OwnerDashboard() {
                                 onClick={() =>
                                   handleHardDeleteBarbershop(barbershop.slug)
                                 }
-                                className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 px-3 text-xs font-bold uppercase tracking-normal text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 {hardDeletingSlug === barbershop.slug
                                   ? "Eliminando…"
@@ -1020,13 +1020,13 @@ function PlatformPulse({ metrics }: { metrics: OwnerDashboardMetrics }) {
           <p className="text-[13px] font-bold tracking-tight text-white sm:text-sm">
             {pulseLabel}
           </p>
-          <p className="mt-0.5 text-xs text-[color:var(--text-secondary)] sm:text-xs">
+          <p className="mt-0.5 text-[11px] text-[color:var(--text-secondary)] sm:text-xs">
             {pulseHint}
           </p>
         </div>
         {metrics.todayEstimatedRevenue > 0 ? (
           <div className="hidden shrink-0 text-right sm:block">
-            <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
+            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
               Ingresos est. hoy
             </p>
             <p className="mt-0.5 font-mono text-base font-black tabular-nums text-[color:var(--brand-gold)]">
@@ -1048,7 +1048,7 @@ function PlatformPulse({ metrics }: { metrics: OwnerDashboardMetrics }) {
                 <Clock3 className="size-4" aria-hidden="true" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
                   Próxima reserva global
                 </p>
                 <p className="mt-0.5 text-sm font-bold text-white">
@@ -1057,7 +1057,7 @@ function PlatformPulse({ metrics }: { metrics: OwnerDashboardMetrics }) {
                   </span>{" "}
                   · {metrics.nextGlobalAppointment.customerName}
                 </p>
-                <p className="truncate text-xs text-[color:var(--text-secondary)]">
+                <p className="truncate text-[11px] text-[color:var(--text-secondary)]">
                   en {metrics.nextGlobalAppointment.barbershopName}
                 </p>
               </div>
@@ -1077,13 +1077,13 @@ function PlatformPulse({ metrics }: { metrics: OwnerDashboardMetrics }) {
                 <TrendingUp className="size-4" aria-hidden="true" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
                   Top del día
                 </p>
                 <p className="mt-0.5 truncate text-sm font-bold text-white">
                   {metrics.mostActiveBarbershopToday.name}
                 </p>
-                <p className="text-xs text-[color:var(--text-secondary)]">
+                <p className="text-[11px] text-[color:var(--text-secondary)]">
                   {metrics.mostActiveBarbershopToday.count} reserva
                   {metrics.mostActiveBarbershopToday.count === 1 ? "" : "s"} hoy
                 </p>
@@ -1102,7 +1102,7 @@ function PlatformPulse({ metrics }: { metrics: OwnerDashboardMetrics }) {
       !metrics.mostActiveBarbershopToday &&
       metrics.todayEstimatedRevenue === 0 &&
       activeBarbershopsCount > 0 ? (
-        <div className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] px-4 py-3 text-xs text-[color:var(--text-muted)] sm:text-xs">
+        <div className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] px-4 py-3 text-[11px] text-[color:var(--text-muted)] sm:text-xs">
           <Sparkles
             className="size-4 shrink-0 text-[color:var(--text-subtle)]"
             aria-hidden="true"
@@ -1171,7 +1171,7 @@ function OwnerCardKebab({
         aria-expanded={isOpen}
         title="Más acciones"
         className={cn(
-          "inline-flex size-11 items-center justify-center rounded-[var(--radius-sm)] border transition-all duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed disabled:opacity-40",
+          "inline-flex size-9 items-center justify-center rounded-[var(--radius-sm)] border transition-all duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed disabled:opacity-40",
           isOpen
             ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
             : "border-white/[0.06] bg-[color:var(--surface-0)] text-[color:var(--text-muted)] hover:border-[color:var(--brand-gold)]/40 hover:text-[color:var(--brand-gold)]",
@@ -1213,7 +1213,7 @@ function OwnerCardKebab({
               {isDeleting ? "Eliminando…" : "Eliminar barbería"}
             </button>
           ) : (
-            <div className="border-t border-[color:var(--border-default)] px-3 py-2 text-xs uppercase tracking-normal text-[color:var(--text-subtle)]">
+            <div className="border-t border-[color:var(--border-default)] px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
               {isDemo ? `Demo · /${barbershopSlug}` : "Sin eliminación"}
             </div>
           )}
@@ -1250,7 +1250,7 @@ function WeeklyRanking({ ranking }: { ranking: OwnerWeeklyRankingEntry[] }) {
       accentBg: "bg-[color:var(--brand-gold-soft)]",
       border: "border-[color:var(--brand-gold)]/40",
       label: "1°",
-      bar: "bg-[color:var(--brand-gold)]",
+      bar: "bg-gold-grad",
     },
     {
       medal: "🥈",
@@ -1274,7 +1274,7 @@ function WeeklyRanking({ ranking }: { ranking: OwnerWeeklyRankingEntry[] }) {
     <section className="mt-6 sm:mt-8 animate-fade-up">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)]">
             Ranking semanal
           </p>
           <p className="mt-1 text-xs text-[color:var(--text-muted)]">
@@ -1313,7 +1313,7 @@ function WeeklyRanking({ ranking }: { ranking: OwnerWeeklyRankingEntry[] }) {
                 <div className="min-w-0 flex-1">
                   <p
                     className={cn(
-                      "text-xs font-bold uppercase tracking-normal",
+                      "text-[9px] font-bold uppercase tracking-[0.18em]",
                       meta.accent,
                     )}
                   >
@@ -1323,7 +1323,7 @@ function WeeklyRanking({ ranking }: { ranking: OwnerWeeklyRankingEntry[] }) {
                   <p className="mt-0.5 truncate text-sm font-bold text-white">
                     {entry.name}
                   </p>
-                  <p className="font-mono text-xs text-[color:var(--text-subtle)]">
+                  <p className="font-mono text-[10px] text-[color:var(--text-subtle)]">
                     /{entry.slug}
                   </p>
                 </div>
@@ -1352,7 +1352,7 @@ function WeeklyRanking({ ranking }: { ranking: OwnerWeeklyRankingEntry[] }) {
                 href={`/${entry.slug}/admin`}
                 className="group flex items-center gap-3 px-3 py-2 transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]/30"
               >
-                <span className="w-6 shrink-0 font-mono text-xs font-bold uppercase tracking-normal text-[color:var(--text-subtle)]">
+                <span className="w-6 shrink-0 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
                   {i + 4}°
                 </span>
                 <span className="w-24 shrink-0 truncate text-xs font-semibold text-[color:var(--text-secondary)] group-hover:text-white sm:w-40">
@@ -1364,7 +1364,7 @@ function WeeklyRanking({ ranking }: { ranking: OwnerWeeklyRankingEntry[] }) {
                   fillClass="bg-[color:var(--brand-gold)]/60"
                   className="h-1.5 flex-1"
                 />
-                <span className="w-6 shrink-0 text-right font-mono text-xs font-bold tabular-nums text-[color:var(--brand-gold)]">
+                <span className="w-6 shrink-0 text-right font-mono text-[11px] font-bold tabular-nums text-[color:var(--brand-gold)]">
                   {entry.count}
                 </span>
               </Link>

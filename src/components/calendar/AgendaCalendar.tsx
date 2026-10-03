@@ -252,14 +252,14 @@ export function AgendaCalendar({
   return (
     <div className="bg-[color:var(--surface-0)]">
       {/* Header — día activo o mes */}
-      <header className="flex items-center justify-between gap-2 px-1 pb-2">
+      <header className="flex items-center justify-between gap-3 px-1 pb-4">
         {isMonthExpanded ? (
           <button
             type="button"
             onClick={() => setIsMonthExpanded(false)}
             className={cn(
-              "min-h-11 min-w-0 flex-1 text-left font-semibold text-white",
-              compact ? "text-base" : "text-lg sm:text-xl",
+              "min-w-0 flex-1 text-left font-black uppercase tracking-tight text-white",
+              compact ? "text-base sm:text-lg" : "text-xl sm:text-2xl",
             )}
           >
             <span className="truncate">{formatMonthYear(visibleMonth)}</span>
@@ -267,8 +267,8 @@ export function AgendaCalendar({
         ) : (
           <h2
             className={cn(
-              "min-w-0 flex-1 truncate font-semibold text-white",
-              compact ? "text-base" : "text-lg sm:text-xl",
+              "min-w-0 flex-1 truncate font-black uppercase tracking-tight text-white",
+              compact ? "text-base sm:text-lg" : "text-xl sm:text-2xl",
             )}
           >
             {formatDayHeading(focusDate)}
@@ -295,7 +295,7 @@ export function AgendaCalendar({
             <button
               type="button"
               onClick={handleGoToToday}
-              className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-sm font-medium text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+              className="inline-flex min-h-9 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
             >
               Hoy
             </button>
@@ -308,7 +308,7 @@ export function AgendaCalendar({
         {WEEKDAY_LABELS_SHORT.map((label) => (
           <div
             key={label}
-            className="text-center text-xs font-medium text-[color:var(--text-muted)]"
+            className="text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-subtle)]"
           >
             {label}
           </div>
@@ -321,7 +321,7 @@ export function AgendaCalendar({
         onTouchEnd={handleCalendarTouchEnd}
         onMouseDown={handleCalendarMouseDown}
         onClickCapture={handleCalendarClickCapture}
-        className="select-none overflow-hidden transition-[max-height] duration-200 motion-reduce:transition-none cursor-grab active:cursor-grabbing"
+        className="select-none overflow-hidden transition-[max-height] duration-[500ms] ease-[var(--ease-out-soft)] cursor-grab active:cursor-grabbing"
         style={{
           // Collapsed: alcanza para h-12 (mobile) y h-14 (desktop) de DayCell.
           // Expanded: 6 rows × h-14 (56px) + 5 gaps × 4px ≈ 356px → 380 con margen.
@@ -363,14 +363,14 @@ export function AgendaCalendar({
 
       {/* Quick action contextual al día enfocado */}
       {onQuickBlock ? (
-        <div className="flex items-center justify-between gap-2 border-t border-[color:var(--border-subtle)] px-1 pt-2">
-          <p className="min-w-0 text-xs text-[color:var(--text-muted)]">
+        <div className="flex items-center justify-between gap-2 border-t border-[color:var(--border-subtle)] px-3 py-2">
+          <p className="truncate text-[10px] uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
             Acción rápida del día
           </p>
           <button
             type="button"
             onClick={() => onQuickBlock(focusDate)}
-            className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md border border-[color:var(--border-default)] px-3 text-sm font-medium text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+            className="inline-flex items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
           >
             <CalendarX className="size-3" aria-hidden="true" />
             Bloquear hora
@@ -382,7 +382,6 @@ export function AgendaCalendar({
       <div
         role="button"
         tabIndex={0}
-        aria-expanded={isMonthExpanded}
         aria-label={
           isMonthExpanded ? "Colapsar a vista semanal" : "Expandir a vista mensual"
         }
@@ -395,14 +394,13 @@ export function AgendaCalendar({
             setIsMonthExpanded((prev) => !prev);
           }
         }}
-        className="flex min-h-11 w-full cursor-pointer select-none items-center justify-center gap-2 text-xs text-[color:var(--text-muted)] hover:text-white active:opacity-60"
+        className="flex w-full cursor-pointer select-none justify-center py-3 active:opacity-60"
       >
         <span
           aria-hidden="true"
           className="h-[3px] rounded-full bg-[color:var(--border-strong)] transition-all duration-[var(--duration-fast)]"
           style={{ width: isMonthExpanded ? "44px" : "32px" }}
         />
-        <span>{isMonthExpanded ? "Ver semana" : "Ver mes"}</span>
       </div>
     </div>
   );
@@ -430,7 +428,6 @@ function DayCell({
     <button
       type="button"
       onClick={onClick}
-      aria-pressed={isFocused}
       className={cn(
         // Altura fija (no aspect-square) — garantiza centrado consistente entre
         // vista semanal colapsada y mensual expandida. Antes el aspect-square
@@ -438,7 +435,7 @@ function DayCell({
         // del contenedor, dejando el número visualmente en la parte inferior.
         "relative flex h-12 items-center justify-center rounded-[var(--radius-sm)] font-mono text-xs font-bold tabular-nums transition-all duration-[var(--duration-fast)] sm:h-14 sm:text-sm",
         isFocused
-          ? "z-10 bg-[color:var(--brand-gold)] text-black"
+          ? "z-10 scale-[1.04] bg-gold-grad text-black shadow-[0_8px_18px_-6px_var(--brand-gold-ring)] ring-1 ring-[color:var(--brand-gold-hi)]/60"
           : isToday
             ? "border border-[color:var(--brand-gold)] text-[color:var(--brand-gold)]"
             : inCurrentMonth
@@ -475,7 +472,7 @@ function IconButton({
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
-      className="inline-flex size-11 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+      className="inline-flex size-9 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
     >
       {children}
     </button>

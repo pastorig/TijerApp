@@ -1497,10 +1497,10 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
 
   return (
     <div className="min-w-0">
-      <section className="min-w-0" aria-label="Agenda de turnos">
-        <header className="mb-5">
+      <section className="min-w-0">
+        <header className="mb-8 animate-fade-up">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-medium text-[color:var(--brand-gold)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
               Turnero
             </p>
             <button
@@ -1509,16 +1509,20 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
               disabled={isReadOnly}
               title={isReadOnly ? READ_ONLY_REASON : undefined}
               aria-label="Agregar turno"
-              className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md bg-[color:var(--brand-gold)] px-3.5 text-sm font-semibold text-black transition-colors hover:brightness-110 disabled:pointer-events-none disabled:opacity-40"
+              className="bg-gold-grad inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-bold uppercase tracking-[0.12em] text-black shadow-[0_8px_20px_-10px_var(--brand-gold-ring)] transition-all duration-[var(--duration-fast)] press-shrink hover:brightness-110 disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none"
             >
               <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
               <span className="sm:hidden">Turno</span>
               <span className="hidden sm:inline">Agregar turno</span>
             </button>
           </div>
-          <h1 className="mt-2 text-2xl font-semibold text-balance text-white sm:text-3xl">
+          <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
             Agenda de {barbershop.name}
           </h1>
+          <p className="mt-3 max-w-xl text-sm text-[color:var(--text-secondary)] sm:text-base">
+            Gestiona las reservas del dia. Confirmar y enviar WhatsApp son
+            acciones separadas.
+          </p>
         </header>
 
         {isLoading ? <AppointmentRowSkeletonList count={3} /> : null}
@@ -1535,7 +1539,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         {!isLoading && !errorMessage ? (
           <>
             {/* Calendario */}
-            <div className="mb-5 border-b border-[color:var(--border-subtle)] pb-2">
+            <div className="mb-8">
               <AgendaCalendar
                 focusDate={focusDate}
                 onFocusDateChange={(date) => {
@@ -1554,11 +1558,10 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                   onClick={() =>
                     setIsOptimizationExpanded((currentValue) => !currentValue)
                   }
-                  aria-expanded={isOptimizationExpanded}
                   className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
                 >
                   <div>
-                    <p className="text-sm font-semibold text-[color:var(--brand-gold)]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
                       Aprovechamiento del horario
                     </p>
                     <p className="mt-1 text-xs text-[color:var(--text-muted)]">
@@ -1681,14 +1684,14 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Buscar cliente por nombre o telefono..."
                     aria-label="Buscar cliente"
-                    className="h-11 w-full appearance-none rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] pl-9 pr-12 text-base text-white placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)] focus:outline-none sm:text-sm [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none"
+                    className="h-11 w-full appearance-none rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] pl-9 pr-9 text-sm text-white placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)] focus:outline-none [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none"
                   />
                   {searchQuery ? (
                     <button
                       type="button"
                       onClick={() => setSearchQuery("")}
                       aria-label="Limpiar busqueda"
-                      className="absolute right-0 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-[var(--radius-xs)] text-[color:var(--text-subtle)] transition-colors duration-[var(--duration-fast)] hover:text-white"
+                      className="absolute right-2 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-[var(--radius-xs)] text-[color:var(--text-subtle)] transition-colors duration-[var(--duration-fast)] hover:text-white"
                     >
                       <X className="size-3.5" />
                     </button>
@@ -1714,7 +1717,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
 
               {/* Chips de estado: ocultos durante busqueda */}
               {!isSearching ? (
-                <div role="group" aria-label="Filtrar turnos por estado" className="flex gap-2 overflow-x-auto pb-1">
+                <div className="flex gap-2 overflow-x-auto pb-1">
                   {FILTER_OPTIONS.map((opt) => {
                     const isActive = activeFilter === opt.value;
                     return (
@@ -1722,18 +1725,17 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                         key={opt.value}
                         type="button"
                         onClick={() => setActiveFilter(opt.value)}
-                        aria-pressed={isActive}
                         className={cn(
-                          "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[var(--radius-sm)] border px-3 text-sm font-medium transition-colors duration-[var(--duration-fast)]",
+                          "inline-flex min-h-9 shrink-0 items-center gap-2 rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
                           isActive
-                            ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+                            ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                             : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
                         )}
                       >
                         {opt.label}
                         <span
                           className={cn(
-                            "rounded-[var(--radius-xs)] px-1.5 font-mono text-xs tabular-nums",
+                            "rounded-[var(--radius-xs)] px-1 font-mono text-[10px] tabular-nums",
                             isActive
                               ? "bg-black/10 text-black"
                               : "text-[color:var(--text-subtle)]",
@@ -1746,7 +1748,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                   })}
                 </div>
               ) : (
-                <p role="status" className="text-xs font-medium text-[color:var(--text-muted)]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
                   Resultados de busqueda - {filteredAppointments.length}
                 </p>
               )}
@@ -1795,9 +1797,9 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                         aria-selected={isActive}
                         onClick={() => changeAgendaViewMode(opt.value)}
                         className={cn(
-                          "inline-flex min-h-11 items-center justify-center rounded-[var(--radius-xs)] px-4 text-sm font-medium transition-colors duration-[var(--duration-fast)]",
+                          "inline-flex min-h-8 items-center justify-center rounded-[var(--radius-xs)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
                           isActive
-                            ? "bg-[color:var(--brand-gold)] text-black"
+                            ? "bg-gold-grad text-black"
                             : "text-[color:var(--text-secondary)] hover:text-white",
                         )}
                       >
@@ -1823,7 +1825,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                   role="switch"
                   aria-checked={effectiveGroupByBarber}
                   className={cn(
-                    "inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border px-3 text-sm font-medium transition-colors duration-[var(--duration-fast)]",
+                    "inline-flex min-h-8 items-center gap-2 rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
                     effectiveGroupByBarber
                       ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                       : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",

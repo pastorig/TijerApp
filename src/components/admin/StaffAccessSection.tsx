@@ -63,18 +63,15 @@ export function StaffAccessSection({
    * cuánto le sacaron. Igual que en Dentidad.
    */
   const [abierto, setAbierto] = useState<string | null>(null);
-  const [errorCarga, setErrorCarga] = useState("");
 
   useEffect(() => {
     let vivo = true;
     async function cargar() {
       setCargando(true);
-      setErrorCarga("");
       try {
         const { data: sessionData } = await getCurrentSession();
         const token = sessionData.session?.access_token;
-        if (!vivo) return;
-        if (!token) { setErrorCarga("Tu sesion expiro. Volve a iniciar sesion."); return; }
+        if (!vivo || !token) return;
         const res = await fetch(
           `/api/admin/staff-access?bs=${encodeURIComponent(barbershop.slug)}`,
           { headers: { Authorization: `Bearer ${token}` } },
@@ -82,8 +79,7 @@ export function StaffAccessSection({
         const payload = (await res.json().catch(() => ({}))) as {
           accesos?: Array<{ barber_id: string; permisos?: StaffPermissions }>;
         };
-        if (!vivo) return;
-        if (!res.ok) { setErrorCarga("No pudimos cargar los accesos de empleados."); return; }
+        if (!vivo || !res.ok) return;
         const accesos = payload.accesos ?? [];
         setConAcceso(accesos.map((a) => a.barber_id));
         setPermisos(
@@ -94,8 +90,6 @@ export function StaffAccessSection({
             ]),
           ),
         );
-      } catch {
-        if (vivo) setErrorCarga("No pudimos cargar los accesos de empleados.");
       } finally {
         if (vivo) setCargando(false);
       }
@@ -254,14 +248,14 @@ export function StaffAccessSection({
   const barberos = barbershop.barbers ?? [];
 
   return (
-    <section aria-label="Accesos de empleados" className="min-w-0 border-t border-[color:var(--border-subtle)] py-5">
+    <section className="card-premium p-4 sm:p-5">
       <header>
-        <p className="flex items-center gap-2 text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)]">
+        <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)]">
           <KeyRound className="size-3.5" />
           Acceso de tus barberos
         </p>
-        <h2 className="mt-1 text-lg font-semibold tracking-normal text-white">
-          Empleados y permisos
+        <h2 className="mt-1 text-lg font-black tracking-tight text-white">
+          Que cada uno maneje su agenda
         </h2>
         <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">
           Ve <strong>solo sus turnos</strong>, y de ahí para abajo elegís vos.
@@ -271,13 +265,8 @@ export function StaffAccessSection({
       </header>
 
       {cargando ? (
-        <div role="status" aria-label="Cargando accesos" className="flex justify-center py-6">
+        <div className="flex justify-center py-6">
           <Loader2 className="size-4 animate-spin text-[color:var(--text-muted)]" />
-        </div>
-      ) : errorCarga ? (
-        <div className="mt-4">
-          <p role="alert" className="text-sm text-[color:var(--danger)]">{errorCarga}</p>
-          <button type="button" onClick={() => setRecarga((v) => v + 1)} className="mt-2 min-h-11 rounded-md border border-[color:var(--border-default)] px-3 text-sm">Reintentar</button>
         </div>
       ) : barberos.length === 0 ? (
         <p className="mt-4 text-xs text-[color:var(--text-muted)]">
@@ -293,9 +282,9 @@ export function StaffAccessSection({
             return (
               <li
                 key={barbero.id}
-                className="rounded-lg border border-[color:var(--border-subtle)] p-3"
+                className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] p-3"
               >
-                <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="flex min-w-0 items-center gap-2 text-sm font-bold text-white">
                       <span className="truncate">{barbero.name}</span>
@@ -334,7 +323,6 @@ export function StaffAccessSection({
                           )
                         }
                         aria-expanded={estaAbierto}
-                        className="min-h-11"
                         iconRight={
                           estaAbierto ? (
                             <ChevronUp className="size-3.5" />
@@ -357,7 +345,7 @@ export function StaffAccessSection({
                 ) : tiene ? (
                   estaAbierto ? (
                     <>
-                      <p className="mt-3 text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)]">
+                      <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
                         Qué puede hacer
                       </p>
                       {/* Dos columnas cuando hay ancho: con siete permisos, una
@@ -399,7 +387,6 @@ export function StaffAccessSection({
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                     <Input
                       type="email"
-                      aria-label={`Email de ${barbero.name}`}
                       inputMode="email"
                       value={emails[barbero.id] ?? ""}
                       onChange={(e) =>
@@ -409,11 +396,10 @@ export function StaffAccessSection({
                         }))
                       }
                       placeholder="email del barbero"
-                      className="min-w-0 flex-1 text-base sm:text-sm"
+                      className="flex-1 text-sm"
                     />
                     <Input
                       type="text"
-                      aria-label={`Contraseña inicial de ${barbero.name}`}
                       value={claves[barbero.id] ?? ""}
                       onChange={(e) =>
                         setClaves((prev) => ({
@@ -422,11 +408,10 @@ export function StaffAccessSection({
                         }))
                       }
                       placeholder="contraseña (mín. 8)"
-                      className="min-w-0 flex-1 text-base sm:text-sm"
+                      className="flex-1 text-sm"
                     />
                     <Button
                       size="sm"
-                      className="min-h-11"
                       loading={invitando === barbero.id}
                       onClick={() => void invitar(barbero.id)}
                       iconLeft={<Mail className="size-3.5" />}
@@ -441,7 +426,7 @@ export function StaffAccessSection({
         </ul>
       )}
 
-      <p className="mt-4 text-xs leading-4 text-[color:var(--text-subtle)]">
+      <p className="mt-4 text-[11px] leading-4 text-[color:var(--text-subtle)]">
         Le ponés vos la contraseña y se la pasás en persona: entra en el
         momento, sin mails. Tené en cuenta que{" "}
         <strong>vos la vas a saber</strong>; si el barbero prefiere que no,
@@ -473,7 +458,7 @@ function TildePermiso({
   onChange: (valor: boolean) => void;
 }) {
   return (
-    <label className="flex min-h-11 cursor-pointer items-start gap-2.5 py-1">
+    <label className="flex cursor-pointer items-start gap-2.5">
       <input
         type="checkbox"
         checked={marcado}
@@ -487,7 +472,7 @@ function TildePermiso({
           "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-[var(--radius-xs)] border transition-colors duration-[var(--duration-fast)]",
           "peer-focus-visible:outline peer-focus-visible:outline-1 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[color:var(--brand-gold)]",
           marcado
-            ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
+            ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
             : "border-[color:var(--border-default)] text-transparent",
         )}
       >
@@ -506,7 +491,7 @@ function TildePermiso({
         >
           {label}
         </span>
-        <span className="block text-xs leading-4 text-[color:var(--text-subtle)]">
+        <span className="block text-[11px] leading-4 text-[color:var(--text-subtle)]">
           {detalle}
         </span>
       </span>

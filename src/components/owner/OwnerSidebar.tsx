@@ -1,13 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CreditCard, Inbox, LayoutDashboard, LogOut, Menu, Plus, X } from "lucide-react";
-import { Logo, useToast } from "@/components/ui";
+import {
+  CreditCard,
+  Inbox,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Plus,
+  X,
+} from "lucide-react";
+import { Logo } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { signOut } from "@/lib/auth";
-import styles from "../admin/AdminShell.module.css";
 
 type NavItem = {
   label: string;
@@ -17,59 +24,39 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", href: "/owner", icon: LayoutDashboard, exact: true },
-  { label: "Planes", href: "/owner/planes", icon: CreditCard },
-  { label: "Crear barbería", href: "/owner/create-barbershop", icon: Plus },
-  { label: "Mensajes", href: "/owner/mensajes", icon: Inbox },
+  {
+    label: "Dashboard",
+    href: "/owner",
+    icon: LayoutDashboard,
+    exact: true,
+  },
+  {
+    label: "Planes",
+    href: "/owner/planes",
+    icon: CreditCard,
+  },
+  {
+    label: "Crear barbería",
+    href: "/owner/create-barbershop",
+    icon: Plus,
+  },
+  {
+    label: "Mensajes",
+    href: "/owner/mensajes",
+    icon: Inbox,
+  },
 ];
 
 export function OwnerSidebar() {
+  const pathname = usePathname();
   const router = useRouter();
-  const toast = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const closeMenu = useCallback(() => setIsOpen(false), []);
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog || !isOpen) return;
-    const desktop = window.matchMedia("(min-width: 1024px)");
-    if (desktop.matches) {
-      const frame = window.requestAnimationFrame(closeMenu);
-      return () => window.cancelAnimationFrame(frame);
-    }
-    const previousFocus = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
-    dialog.showModal();
-    document.body.style.overflow = "hidden";
-    function containFocus(event: KeyboardEvent) {
-      if (event.key !== "Tab" || !dialog) return;
-      const controls = Array.from(dialog.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), [tabindex="0"]',
-      )).filter(element => element.getClientRects().length > 0);
-      const first = controls[0];
-      const last = controls.at(-1);
-      if (!first || !last) return;
-      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-    const resize = () => { if (desktop.matches) closeMenu(); };
-    dialog.addEventListener("keydown", containFocus);
-    desktop.addEventListener("change", resize);
-    return () => {
-      dialog.removeEventListener("keydown", containFocus);
-      desktop.removeEventListener("change", resize);
-      dialog.close();
-      document.body.style.overflow = previousOverflow;
-      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
-    };
-  }, [isOpen, closeMenu]);
+  function isActive(item: NavItem) {
+    if (item.exact) return pathname === item.href;
+    return pathname.startsWith(item.href);
+  }
 
   async function handleSignOut() {
     setIsSigningOut(true);
@@ -78,70 +65,115 @@ export function OwnerSidebar() {
       router.replace("/");
     } catch {
       setIsSigningOut(false);
-      toast.error("No pudimos cerrar la sesión. Intentá nuevamente.");
     }
   }
 
-  const content = (mobile: boolean) => (
-    <OwnerSidebarContent mobile={mobile} onClose={closeMenu} onSignOut={handleSignOut} isSigningOut={isSigningOut} />
-  );
-
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b border-white/10 bg-black/95 px-4 backdrop-blur-md lg:hidden">
-        <button type="button" onClick={() => setIsOpen(true)} aria-label="Abrir menú owner" aria-expanded={isOpen} aria-controls="owner-navigation-drawer" className={cn(styles.focus, "inline-flex size-11 items-center justify-center rounded-md border border-white/10 text-neutral-300 hover:text-white")}>
-          <Menu className="size-5" aria-hidden="true" />
+      {/* Mobile top bar */}
+      <div className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 py-3 backdrop-blur-md lg:hidden">
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          aria-label="Abrir menú"
+          className="inline-flex size-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+        >
+          <Menu className="size-4" />
         </button>
-        <div className="flex flex-col items-center gap-1"><Logo size="sm" /><span className="text-xs text-neutral-400">Panel owner</span></div>
-        <div className="size-11" aria-hidden="true" />
-      </header>
-      <aside aria-label="Panel owner" className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-white/10 bg-[#101012] lg:flex">{content(false)}</aside>
-      <dialog
-        ref={dialogRef}
-        id="owner-navigation-drawer"
-        aria-label="Navegación owner"
-        onCancel={closeMenu}
-        onClose={closeMenu}
-        onClick={event => {
-          if (event.target !== event.currentTarget) return;
-          const rect = event.currentTarget.getBoundingClientRect();
-          if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) closeMenu();
-        }}
-        className={cn(styles.drawer, "fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[min(288px,calc(100vw-48px))] max-w-none border-r border-white/10 bg-[#101012] p-0 text-white backdrop:bg-black/70")}
-      ><div className="flex h-full flex-col">{content(true)}</div></dialog>
-    </>
-  );
-}
+        <Logo size="sm" />
+        <div className="size-10" aria-hidden="true" />
+      </div>
 
-function OwnerSidebarContent({ mobile, onClose, onSignOut, isSigningOut }: {
-  mobile: boolean;
-  onClose: () => void;
-  onSignOut: () => void;
-  isSigningOut: boolean;
-}) {
-  const pathname = usePathname();
-  return (
-    <>
-      <div className="flex min-h-20 items-center justify-between gap-2 px-5">
-        <Link href="/owner" onClick={onClose} aria-label="TijerApp, inicio owner" className={cn(styles.focus, "inline-flex min-h-11 items-center rounded-md")}><Logo size="md" /></Link>
-        {mobile ? <button type="button" onClick={onClose} aria-label="Cerrar menú owner" className={cn(styles.focus, "inline-flex size-11 items-center justify-center rounded-md text-neutral-400 hover:text-white")}><X className="size-5" aria-hidden="true" /></button> : null}
-      </div>
-      <div className="mx-5 border-t border-white/10" />
-      <nav aria-label="Gestión de la plataforma" className="min-h-0 flex-1 overflow-y-auto px-3 py-5">
-        <p className="mb-3 px-3 text-xs font-medium text-neutral-400">Owner TijerApp</p>
-        <ul className="grid gap-1">{NAV_ITEMS.map(item => {
-          const active = item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/");
-          const Icon = item.icon;
-          return <li key={item.href}><Link href={item.href} onClick={onClose} aria-current={active ? "page" : undefined} className={cn(styles.focus, "relative flex min-h-12 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors duration-150", active ? "bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold-hi)]" : "text-neutral-300 hover:bg-white/5 hover:text-white")}>
-            {active ? <span aria-hidden="true" className="absolute inset-y-3 left-0 w-0.5 rounded-full bg-[color:var(--brand-gold)]" /> : null}
-            <Icon className="size-[18px] shrink-0" aria-hidden="true" /><span className="min-w-0 flex-1">{item.label}</span>
-          </Link></li>;
-        })}</ul>
-      </nav>
-      <div className="border-t border-white/10 px-3 pb-[max(16px,env(safe-area-inset-bottom))] pt-3">
-        <p className="mb-2 px-3 text-xs text-neutral-400">Administración de la plataforma</p>
-        <button type="button" onClick={onSignOut} disabled={isSigningOut} className={cn(styles.focus, "flex min-h-11 w-full items-center gap-3 rounded-md px-3 text-sm font-medium text-neutral-300 hover:bg-white/5 hover:text-[color:var(--danger)] disabled:opacity-50")}><LogOut className="size-4 shrink-0" aria-hidden="true" /><span>{isSigningOut ? "Cerrando…" : "Cerrar sesión"}</span></button>
-      </div>
+      {isOpen ? (
+        <button
+          type="button"
+          aria-label="Cerrar menú"
+          onClick={() => setIsOpen(false)}
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+        />
+      ) : null}
+
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] transition-transform duration-[var(--duration-base)] ease-[var(--ease-out-soft)]",
+          "lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        )}
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-[color:var(--border-subtle)] px-5 py-5">
+          <Link
+            href="/owner"
+            onClick={() => setIsOpen(false)}
+            className="inline-flex"
+          >
+            <Logo size="md" />
+          </Link>
+          <button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            aria-label="Cerrar menú"
+            className="inline-flex size-9 items-center justify-center rounded-[var(--radius-sm)] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] lg:hidden"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div className="border-b border-[color:var(--border-subtle)] px-5 py-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+            Panel
+          </p>
+          <p className="mt-1 truncate text-sm font-bold text-[color:var(--brand-gold)]">
+            Owner TijerApp
+          </p>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
+          <ul className="grid gap-1">
+            {NAV_ITEMS.map((item) => {
+              const active = isActive(item);
+              const Icon = item.icon;
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    onClick={() => setIsOpen(false)}
+                    className={cn(
+                      "inline-flex w-full items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-sm font-semibold transition-colors duration-[var(--duration-fast)]",
+                      active
+                        ? "bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
+                        : "text-[color:var(--text-secondary)] hover:bg-[color:var(--surface-1)] hover:text-white",
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "size-4 shrink-0",
+                        active
+                          ? "text-[color:var(--brand-gold)]"
+                          : "text-[color:var(--text-muted)]",
+                      )}
+                    />
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        <div className="border-t border-[color:var(--border-subtle)] px-3 py-4">
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+            className="inline-flex w-full items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--surface-1)] hover:text-[color:var(--danger)] disabled:opacity-50"
+          >
+            <LogOut className="size-3.5 shrink-0" />
+            <span className="truncate">
+              {isSigningOut ? "Cerrando…" : "Cerrar sesión"}
+            </span>
+          </button>
+        </div>
+      </aside>
     </>
   );
 }

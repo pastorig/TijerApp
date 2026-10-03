@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  Activity,
   AlertTriangle,
   ArrowUpRight,
   CalendarDays,
   Check,
   Clock3,
+  DollarSign,
   Gift,
   LineChart,
   MessageCircle,
@@ -37,7 +39,7 @@ import type { AppointmentRow } from "@/lib/supabase";
 import { createWhatsAppClientContactLink } from "@/lib/whatsapp";
 import { formatDayHeading, getTodayYmd } from "./date-utils";
 import { OnboardingChecklist } from "./OnboardingChecklist";
-import { DashboardSummary } from "./DashboardSummary";
+import { DistributionBar, MetricCard, RadialGauge } from "./MetricCard";
 import { useCurrentPlan } from "./PlanContext";
 import { hasFeature } from "@/lib/plans";
 
@@ -477,13 +479,13 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
   ]);
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div className="space-y-6 sm:space-y-8">
       {/* ─────────────── HEADER útil ─────────────── */}
-      <header>
-        <h1 className="break-words text-2xl font-semibold text-white sm:text-3xl">
+      <header className="animate-fade-up">
+        <h1 className="text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
           {barbershop.name}
         </h1>
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-neutral-400">
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[color:var(--text-secondary)] sm:text-base">
           <span className="capitalize">{formatDayHeading(today)}</span>
           <span className="text-[color:var(--text-subtle)]">·</span>
           <span className="text-[color:var(--text-muted)]">
@@ -528,18 +530,6 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
           {/* ─────────────── DAY STATUS BANNER ─────────────── */}
           <DayStatusBanner status={dayStatus} />
 
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-            <NextAppointmentHero
-              appointment={upcomingAppointment}
-              currentMinutes={currentMinutes}
-              barbershopSlug={barbershop.slug}
-              barbershopName={barbershop.name}
-              whatsappMessageTemplate={barbershop.whatsappMessageTemplate ?? null}
-            />
-            <DashboardSummary stats={stats} activeCount={activeAppointments.length}
-              closingTime={formatMinutesToTime(stats.effectiveClosingMin)} />
-          </div>
-
           {/* ─────────────── ALERTAS operativas (solo si hay) ─────────────── */}
           {operationalAlerts.length > 0 ? (
             <section className="grid gap-2 sm:grid-cols-2">
@@ -583,12 +573,90 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
             </section>
           ) : null}
 
+          {/* ─────────────── KPIs HERO (premium) ─────────────── */}
+          <section className="relative">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 -top-6 -z-10 h-40"
+              style={{
+                background:
+                  "radial-gradient(55% 90% at 25% 0%, color-mix(in oklab, var(--brand-gold) 9%, transparent), transparent 70%)",
+              }}
+            />
+            <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
+              <MetricCard label="Turnos hoy" icon={CalendarDays}>
+                <p className="stat-number text-4xl font-black tabular-nums leading-none text-white">
+                  {stats.total}
+                </p>
+                <div className="mt-4">
+                  <DistributionBar
+                    total={stats.total}
+                    segments={[
+                      {
+                        label: "Confirmados",
+                        value: stats.confirmed,
+                        barClass: "bg-[color:var(--success)]",
+                      },
+                      {
+                        label: "Pendientes",
+                        value: stats.pending,
+                        barClass: "bg-amber-400",
+                      },
+                      {
+                        label: "Cancelados",
+                        value: stats.cancelled,
+                        barClass: "bg-[color:var(--danger)]",
+                      },
+                    ]}
+                  />
+                </div>
+              </MetricCard>
+
+              <MetricCard label="Ingresos estimados" icon={DollarSign}>
+                <p className="stat-number w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-4xl font-black tabular-nums leading-none text-transparent">
+                  {formatPrice(stats.estimatedRevenue)}
+                </p>
+                <p className="mt-3 text-[11px] text-[color:var(--text-muted)]">
+                  hoy · {activeAppointments.length} turno
+                  {activeAppointments.length === 1 ? "" : "s"} activo
+                  {activeAppointments.length === 1 ? "" : "s"}
+                </p>
+              </MetricCard>
+
+              <MetricCard label="Ocupación" icon={Activity}>
+                <div className="flex items-center gap-4">
+                  <RadialGauge value={stats.occupancyPct} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-white">
+                      {stats.occupancyPct >= 70
+                        ? "Día lleno"
+                        : stats.occupancyPct >= 30
+                          ? "Día activo"
+                          : "Tranquilo"}
+                    </p>
+                    <p className="mt-1 text-[11px] text-[color:var(--text-subtle)]">
+                      Cierre est. {formatMinutesToTime(stats.effectiveClosingMin)}
+                    </p>
+                  </div>
+                </div>
+              </MetricCard>
+            </div>
+          </section>
+
+          {/* ─────────────── PRÓXIMO TURNO (hero, full width) ─────────────── */}
+          <NextAppointmentHero
+            appointment={upcomingAppointment}
+            currentMinutes={currentMinutes}
+            barbershopSlug={barbershop.slug}
+            barbershopName={barbershop.name}
+            whatsappMessageTemplate={barbershop.whatsappMessageTemplate ?? null}
+          />
 
           {/* ─────────────── AGENDA DEL DÍA enriquecida ─────────────── */}
           <section>
             <div className="flex items-end justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-neutral-300">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)]">
                   Agenda del día
                 </p>
                 <p className="mt-1 text-xs text-[color:var(--text-muted)]">
@@ -599,7 +667,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
               </div>
               <Link
                 href={`/${barbershop.slug}/admin/turnero`}
-                className="inline-flex min-h-11 items-center gap-2 rounded-md border border-white/10 px-3 text-sm font-medium text-neutral-300 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand-gold)]"
+                className="inline-flex min-h-9 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
               >
                 Ver todo
                 <ArrowUpRight className="size-3.5" aria-hidden="true" />
@@ -613,7 +681,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
                 </p>
               </div>
             ) : (
-              <ul className="mt-3 grid min-w-0 gap-2">
+              <ul className="mt-4 grid gap-2 animate-stagger">
                 {nextFewAppointments.map((appointment) => {
                   const startMin = timeValueToMinutes(
                     appointment.appointment_time,
@@ -628,10 +696,10 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
                   const statusMeta =
                     STATUS_META[appointment.status ?? "pending"];
                   return (
-                    <li key={appointment.id} className="min-w-0">
+                    <li key={appointment.id}>
                       <Link
                         href={`/${barbershop.slug}/admin/turnero`}
-                        className="block min-w-0 rounded-lg border border-white/10 bg-[#121214] p-3 transition-colors hover:border-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand-gold)]"
+                        className="hover-lift block rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] p-3"
                       >
                         <div className="flex items-center gap-3 sm:gap-4">
                           {/* Hora */}
@@ -639,7 +707,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
                             <p className="font-mono text-base font-black tabular-nums leading-none text-white sm:text-lg">
                               {normalizeTimeValue(appointment.appointment_time)}
                             </p>
-                            <p className="mt-1 font-mono text-xs text-neutral-400">
+                            <p className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.18em] text-[color:var(--text-subtle)]">
                               {appointment.service_duration_minutes} min
                             </p>
                           </div>
@@ -670,7 +738,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
                             {statusMeta ? (
                               <span
                                 className={cn(
-                                  "inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-medium",
+                                  "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em]",
                                   statusMeta.pillClasses,
                                 )}
                               >
@@ -686,7 +754,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
                             ) : null}
                             <span
                               className={cn(
-                                "inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium",
+                                "inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em]",
                                 TONE_CHIP[rel.tone],
                               )}
                             >
@@ -700,7 +768,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
                           {statusMeta ? (
                             <span
                               className={cn(
-                                "inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-medium",
+                                "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em]",
                                 statusMeta.pillClasses,
                               )}
                             >
@@ -716,7 +784,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
                           ) : null}
                           <span
                             className={cn(
-                              "inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium",
+                              "inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em]",
                               TONE_CHIP[rel.tone],
                             )}
                           >
@@ -733,7 +801,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
 
           {/* ─────────────── ACCIONES RÁPIDAS ─────────────── */}
           <section>
-            <p className="text-sm font-semibold text-neutral-300">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
               Acciones rápidas
             </p>
 
@@ -742,14 +810,14 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
               href={`/${barbershop.slug}/reservar`}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-[color:var(--brand-gold)] px-4 text-sm font-semibold text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand-gold)]"
+              className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] px-4 text-[12px] font-bold uppercase tracking-[0.16em] text-black shadow-[0_12px_26px_-10px_var(--brand-gold-ring)] transition-all duration-[var(--duration-fast)] press-shrink hover:brightness-110 hover:shadow-[0_0_0_3px_var(--brand-gold-ring)]"
             >
               <Plus className="size-4" aria-hidden="true" />
               Nuevo turno
             </Link>
 
-            {/* Accesos secundarios compactos, con nombre visible. */}
-            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {/* Secondary: grid de íconos compactos — 3 cols mobile, 6 cols sm+ */}
+            <div className="mt-2.5 grid grid-cols-3 gap-2 sm:grid-cols-6">
               <QuickActionIcon
                 href={`/${barbershop.slug}/admin/turnero`}
                 icon={<CalendarDays className="size-5" aria-hidden="true" />}
@@ -799,7 +867,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
               <QuickActionIcon
                 href={`/${barbershop.slug}/admin/settings`}
                 icon={<Settings className="size-5" aria-hidden="true" />}
-                label="Configuración"
+                label="Settings"
               />
             </div>
           </section>
@@ -812,7 +880,11 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
 /* ──────────────────────────────────────────────────────────── */
 
 function NextAppointmentHero({
-  appointment, currentMinutes, barbershopSlug, barbershopName, whatsappMessageTemplate,
+  appointment,
+  currentMinutes,
+  barbershopSlug,
+  barbershopName,
+  whatsappMessageTemplate,
 }: {
   appointment: AppointmentRow | undefined;
   currentMinutes: number;
@@ -822,16 +894,23 @@ function NextAppointmentHero({
 }) {
   if (!appointment) {
     return (
-      <section aria-label="Próximo turno">
-        <h2 className="mb-3 text-sm font-semibold text-neutral-300">Próximo turno</h2>
-        <div className="flex min-h-44 flex-col items-center justify-center rounded-lg border border-dashed border-white/15 p-5 text-center">
-          <Clock3 className="size-6 text-neutral-400" aria-hidden="true" />
-          <p className="mt-3 text-sm font-medium text-white">No hay próximos turnos</p>
-          <Link href={`/${barbershopSlug}/admin/turnero`} className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-sm text-[color:var(--brand-gold-hi)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand-gold)]">
-            Ver agenda <ArrowUpRight className="size-4" aria-hidden="true" />
-          </Link>
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)]">
+          Próximo turno
+        </p>
+        <div className="mt-3 rounded-[var(--radius-md)] border border-dashed border-white/[0.06] p-6 text-center">
+          <Clock3
+            className="mx-auto size-7 text-[color:var(--text-subtle)]"
+            aria-hidden="true"
+          />
+          <p className="mt-3 text-sm font-bold text-white">
+            No hay próximos turnos
+          </p>
+          <p className="mt-1 text-xs text-[color:var(--text-muted)]">
+            Día tranquilo. Aprovechá para ordenar otras cosas.
+          </p>
         </div>
-      </section>
+      </div>
     );
   }
 
@@ -854,59 +933,133 @@ function NextAppointmentHero({
       })
     : null;
 
-
   return (
-    <section aria-label="Próximo turno" className="flex min-w-0 flex-col">
-      <h2 className="mb-3 text-sm font-semibold text-neutral-300">Próximo turno</h2>
-      <div className="flex flex-1 flex-col rounded-lg border border-[color:var(--brand-gold)]/35 bg-[#151410] p-4 sm:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)]">
+        Próximo turno
+      </p>
+      <div className="mt-3 rounded-[var(--radius-md)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] p-5 ring-1 ring-[color:var(--brand-gold)]/20 sm:p-6">
+        {/* Top row: hora + status pill */}
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="font-mono text-4xl font-semibold leading-none tabular-nums text-[color:var(--brand-gold-hi)]">
+            <p className="font-mono text-5xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-6xl">
               {normalizeTimeValue(appointment.appointment_time)}
             </p>
-            <p className={cn("mt-2 inline-flex items-center rounded border px-2 py-1 text-xs font-medium", TONE_CHIP[rel.tone])}>{rel.text}</p>
+            <p
+              className={cn(
+                "mt-2 inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]",
+                TONE_CHIP[rel.tone],
+              )}
+            >
+              {rel.text}
+            </p>
           </div>
           {statusMeta ? (
-            <span className={cn("inline-flex items-center gap-1.5 rounded border px-2 py-1 text-xs font-medium", statusMeta.pillClasses)}>
-              <span aria-hidden="true" className={cn("size-1.5 rounded-full", statusMeta.dotColor)} />
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em]",
+                statusMeta.pillClasses,
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "inline-block size-1.5 rounded-full",
+                  statusMeta.dotColor,
+                )}
+              />
               {statusMeta.label}
             </span>
           ) : null}
         </div>
-        <h3 className="mt-4 break-words text-xl font-semibold leading-tight text-white">{appointment.customer_name}</h3>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm">
-          <span className="inline-flex min-w-0 items-center gap-2 text-neutral-300">
-            <Scissors className="size-4 shrink-0 text-neutral-400" aria-hidden="true" />
-            <span className="break-words">{appointment.service_name} · {appointment.service_duration_minutes} min</span>
+
+        {/* Cliente — HERO secundario */}
+        <h2 className="mt-5 truncate text-2xl font-black tracking-tight text-white sm:text-3xl">
+          {appointment.customer_name}
+        </h2>
+
+        {/* Servicio + duración + precio */}
+        <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <span className="inline-flex items-center gap-2 text-[15px] font-semibold text-white sm:text-base">
+            <Scissors
+              className="size-4 text-[color:var(--text-subtle)]"
+              aria-hidden="true"
+            />
+            {appointment.service_name}
+            <span className="text-[color:var(--text-subtle)]">·</span>
+            <span className="font-medium text-[color:var(--text-muted)]">
+              {appointment.service_duration_minutes} min
+            </span>
           </span>
-          <span className="font-mono font-semibold tabular-nums text-white">{formatPrice(appointment.service_price)}</span>
+          <span className="font-mono text-lg font-black tabular-nums text-[color:var(--brand-gold)] sm:text-xl">
+            {formatPrice(appointment.service_price)}
+          </span>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 text-sm text-neutral-400">
-          <span className="inline-flex min-w-0 items-center gap-1.5"><User className="size-4 shrink-0" aria-hidden="true" /><span className="break-words">{appointment.barber_name}</span></span>
-          {appointment.customer_phone ? phoneWaHref ? (
-            <a href={phoneWaHref} target="_blank" rel="noopener noreferrer" title="Abrir en WhatsApp"
-              className="inline-flex min-h-11 items-center gap-1.5 rounded font-mono transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand-gold)]">
-              <Phone className="size-4 shrink-0" aria-hidden="true" />{appointment.customer_phone}
-            </a>
-          ) : <span className="inline-flex items-center gap-1.5 font-mono"><Phone className="size-4" aria-hidden="true" />{appointment.customer_phone}</span> : null}
+
+        {/* Barbero + tel */}
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 text-[13px] text-[color:var(--text-muted)] sm:text-sm">
+          <span className="inline-flex items-center gap-1.5">
+            <User
+              className="size-4 text-[color:var(--text-subtle)]"
+              aria-hidden="true"
+            />
+            {appointment.barber_name}
+          </span>
+          {appointment.customer_phone ? (
+            <>
+              <span className="text-[color:var(--text-subtle)]">•</span>
+              {phoneWaHref ? (
+                <a
+                  href={phoneWaHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 font-mono text-[color:var(--text-secondary)] transition-colors hover:text-[color:var(--brand-gold)]"
+                  title="Abrir en WhatsApp"
+                >
+                  <Phone
+                    className="size-4 text-[color:var(--text-subtle)]"
+                    aria-hidden="true"
+                  />
+                  {appointment.customer_phone}
+                </a>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 font-mono">
+                  <Phone
+                    className="size-4 text-[color:var(--text-subtle)]"
+                    aria-hidden="true"
+                  />
+                  {appointment.customer_phone}
+                </span>
+              )}
+            </>
+          ) : null}
         </div>
-        <div className="mt-auto flex flex-wrap gap-2 pt-4">
-          <Link href={`/${barbershopSlug}/admin/turnero`}
-            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-md bg-[color:var(--brand-gold)] px-3 text-sm font-semibold text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand-gold)]">
-            Abrir en turnero <ArrowUpRight className="size-4" aria-hidden="true" />
+
+        {/* Acciones rápidas del próximo turno */}
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <Link
+            href={`/${barbershopSlug}/admin/turnero`}
+            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--surface-1)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-all duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)] hover:bg-[color:var(--brand-gold-soft)]"
+          >
+            Abrir en turnero
+            <ArrowUpRight className="size-4" aria-hidden="true" />
           </Link>
           {phoneWaHref ? (
-            <a href={phoneWaHref} target="_blank" rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[color:var(--success)]/30 px-3 text-sm font-medium text-[color:var(--success)] transition-colors hover:bg-[color:var(--success-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--success)]">
-              <MessageCircle className="size-4" aria-hidden="true" /> WhatsApp
+            <a
+              href={phoneWaHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-all duration-[var(--duration-fast)] press-shrink hover:bg-[color:var(--success)]/20"
+            >
+              <MessageCircle className="size-4" aria-hidden="true" />
+              WhatsApp
             </a>
           ) : null}
         </div>
       </div>
-    </section>
+    </div>
   );
 }
-
 
 function QuickActionIcon({
   href,
@@ -921,12 +1074,12 @@ function QuickActionIcon({
     <Link
       href={href}
       title={label}
-      className="group flex min-h-12 min-w-0 items-center gap-2.5 rounded-md border border-white/10 bg-[#121214] px-3 py-2 text-neutral-300 transition-colors hover:border-white/20 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand-gold)]"
+      className="hover-lift group flex aspect-square min-h-[68px] flex-col items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-2 py-2 text-[color:var(--text-secondary)] shadow-card transition-colors duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)]/40 hover:text-[color:var(--brand-gold)] sm:aspect-auto sm:min-h-[80px]"
     >
-      <span className="flex size-5 shrink-0 items-center justify-center text-neutral-400 transition-colors group-hover:text-[color:var(--brand-gold)]">
+      <span className="flex size-9 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/25 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105">
         {icon}
       </span>
-      <span className="min-w-0 break-words text-xs font-medium leading-5 sm:text-sm">
+      <span className="text-center text-[9px] font-bold uppercase tracking-[0.14em] leading-tight sm:text-[10px]">
         {label}
       </span>
     </Link>
@@ -935,39 +1088,38 @@ function QuickActionIcon({
 
 function DashboardSkeleton() {
   return (
-    <div role="status" aria-label="Cargando resumen de hoy" className="space-y-5">
-      <span className="sr-only">Cargando resumen de hoy</span>
-      <div aria-hidden="true" className="skeleton h-16 rounded-md" />
-      <div aria-hidden="true" className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-        <div>
-          <div className="skeleton mb-3 h-5 w-28 rounded" />
-          <div className="h-64 rounded-lg border border-white/10 bg-[#121214] p-4 sm:p-5">
-            <div className="skeleton h-10 w-32 rounded" />
-            <div className="skeleton mt-5 h-6 w-48 max-w-full rounded" />
-            <div className="skeleton mt-3 h-4 w-40 max-w-full rounded" />
-            <div className="skeleton mt-9 h-11 w-full rounded" />
+    <div className="space-y-6">
+      {/* KPIs skeleton */}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            aria-hidden="true"
+            className="rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] p-3"
+          >
+            <div className="skeleton h-3 w-16 rounded" />
+            <div className="skeleton mt-2 h-7 w-12 rounded" />
           </div>
-        </div>
-        <div>
-          <div className="skeleton mb-3 h-5 w-28 rounded" />
-          <div className="grid grid-cols-2 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="min-h-28 rounded-lg border border-white/10 bg-[#121214] p-3.5">
-                <div className="skeleton h-4 w-20 max-w-full rounded" />
-                <div className="skeleton mt-3 h-7 w-16 rounded" />
-                <div className="skeleton mt-3 h-3 w-24 max-w-full rounded" />
-              </div>
-            ))}
-          </div>
-        </div>
+        ))}
       </div>
-      <div aria-hidden="true" className="grid gap-2">
+      {/* Hero skeleton */}
+      <div className="rounded-[var(--radius-md)] border border-white/[0.04] bg-[color:var(--surface-1)] p-6">
+        <div className="skeleton h-12 w-32 rounded" />
+        <div className="skeleton mt-4 h-6 w-48 rounded" />
+        <div className="skeleton mt-2 h-4 w-40 rounded" />
+      </div>
+      {/* List skeleton */}
+      <div className="grid gap-2">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-lg border border-white/10 bg-[#121214] p-3">
+          <div
+            key={i}
+            aria-hidden="true"
+            className="flex items-center gap-3 rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] p-3"
+          >
             <div className="skeleton h-10 w-12 rounded" />
             <div className="min-w-0 flex-1 space-y-2">
-              <div className="skeleton h-4 w-32 max-w-full rounded" />
-              <div className="skeleton h-3 w-48 max-w-full rounded" />
+              <div className="skeleton h-4 w-32 rounded" />
+              <div className="skeleton h-3 w-48 rounded" />
             </div>
           </div>
         ))}
@@ -975,7 +1127,6 @@ function DashboardSkeleton() {
     </div>
   );
 }
-
 
 function formatMinutesToTime(totalMinutes: number): string {
   const hours = Math.floor(totalMinutes / 60)
@@ -1067,14 +1218,14 @@ function DayStatusBanner({
       <div className="min-w-0 flex-1">
         <p
           className={cn(
-            "text-sm font-medium",
+            "text-[13px] font-bold tracking-tight sm:text-sm",
             labelColors[status.tone],
           )}
         >
           {status.label}
         </p>
         {status.hint ? (
-          <p className="mt-0.5 text-xs text-neutral-400">
+          <p className="mt-0.5 text-[11px] text-[color:var(--text-muted)] sm:text-xs">
             {status.hint}
           </p>
         ) : null}

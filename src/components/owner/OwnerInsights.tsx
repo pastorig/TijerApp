@@ -105,8 +105,6 @@ export function OwnerInsights() {
   const [plans, setPlans] = useState<OwnerPlanRow[]>([]);
   const [plansFailed, setPlansFailed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [metricsFailed, setMetricsFailed] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
   // "Ahora" se captura al cargar (no en render: Date.now() es impuro y React
   // lo prohíbe durante el render).
   const [nowMs, setNowMs] = useState(0);
@@ -117,19 +115,15 @@ export function OwnerInsights() {
       try {
         // Los planes viven detrás de /api/owner/plans (service role): las
         // suscripciones no se pueden leer desde el browser por RLS.
-        const [metricsResult, planResult] = await Promise.all([
+        const [{ data: metrics }, planResult] = await Promise.all([
           getOwnerDashboardMetrics(),
           loadOwnerPlans(),
         ]);
         if (cancelled) return;
-        const { data: metrics, error } = metricsResult;
-        setMetricsFailed(Boolean(error) || !metrics);
         if (metrics) setBarbershops(metrics.barbershops);
         setPlans(planResult.plans);
         setPlansFailed(!planResult.ok);
         setNowMs(Date.now());
-      } catch {
-        if (!cancelled) setMetricsFailed(true);
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -138,13 +132,7 @@ export function OwnerInsights() {
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
-
-  function retryLoad() {
-    setIsLoading(true);
-    setMetricsFailed(false);
-    setReloadKey(value => value + 1);
-  }
+  }, []);
 
   const buckets = useMemo(() => bucketByHealth(barbershops), [barbershops]);
 
@@ -228,28 +216,21 @@ export function OwnerInsights() {
 
   if (isLoading) {
     return (
-      <section role="status" aria-live="polite" className="min-h-48 py-5 text-sm text-[color:var(--text-secondary)]">
-        Cargando resumen de la plataforma…
+      <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 text-xs text-[color:var(--text-muted)]">
+        Cargando insights…
       </section>
     );
-  }
-
-  if (metricsFailed) {
-    return <section role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-red-400/30 bg-red-400/5 p-4">
-      <p className="text-sm text-red-200">No pudimos cargar el resumen de la plataforma.</p>
-      <button type="button" onClick={retryLoad} className="min-h-11 rounded-md border border-white/20 px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--brand-gold)]">Reintentar</button>
-    </section>;
   }
 
   return (
     <section className="space-y-3">
       <header className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold text-[color:var(--brand-gold)]">
-            TijerApp Owner
+          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+            Insights estratégicos
           </p>
-          <h2 className="mt-1 text-xl font-bold text-white">
-            Resumen de la plataforma
+          <h2 className="mt-0.5 text-base font-black uppercase tracking-tight text-white sm:text-lg">
+            Health del SaaS
           </h2>
         </div>
         <Activity
@@ -259,10 +240,10 @@ export function OwnerInsights() {
       </header>
 
       {/* KPIs financieros + Health Status — 1 sola fila en desktop, stack en mobile */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
         <InsightCard
           icon={DollarSign}
-          label="Ingreso mensual"
+          label="MRR"
           value={plansFailed ? "—" : `$${billing.mrr.toLocaleString("es-AR")}`}
           hint={
             plansFailed
@@ -275,9 +256,9 @@ export function OwnerInsights() {
         />
         <InsightCard
           icon={TrendingUp}
-          label="Proyección anual"
+          label="ARR"
           value={plansFailed ? "—" : `$${billing.arr.toLocaleString("es-AR")}`}
-          hint={plansFailed ? "Sin datos de plan" : "Ingreso mensual × 12"}
+          hint={plansFailed ? "Sin datos de plan" : "MRR × 12"}
         />
         <InsightCard
           icon={Users2}
@@ -299,16 +280,11 @@ export function OwnerInsights() {
         />
       </div>
 
-      {plansFailed ? <div role="alert" className="flex flex-wrap items-center justify-between gap-2 border-l-2 border-amber-400 pl-3">
-        <p className="text-sm text-amber-200">Los importes no están disponibles: falló la carga de planes.</p>
-        <button type="button" onClick={retryLoad} className="min-h-11 px-3 text-sm font-semibold text-white underline underline-offset-4">Reintentar</button>
-      </div> : null}
-
       {/* Potencial de las que están en prueba + aviso de pagos atrasados */}
       {billing.potencial > 0 || billing.atrasadas > 0 ? (
-        <div className="space-y-2 border-l-2 border-[color:var(--brand-gold)] pl-3 py-1">
+        <div className="space-y-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-3.5 py-2.5">
           {billing.potencial > 0 ? (
-            <p className="text-sm text-[color:var(--text-secondary)]">
+            <p className="text-[11px] text-[color:var(--text-muted)]">
               Potencial:{" "}
               <strong className="text-[color:var(--brand-gold)]">
                 ${billing.potencial.toLocaleString("es-AR")}/mes
@@ -318,7 +294,7 @@ export function OwnerInsights() {
             </p>
           ) : null}
           {billing.atrasadas > 0 ? (
-            <p className="text-sm text-amber-300">
+            <p className="text-[11px] text-amber-300">
               {billing.atrasadas} de las que pagan{" "}
               {billing.atrasadas === 1 ? "está" : "están"} sin el pago del mes
               registrado — cobrale y registralo en Planes.
@@ -348,8 +324,8 @@ export function OwnerInsights() {
 
       {/* Distribución visual — barra apilada proporcional (activas/quiet/inactivas) */}
       {barbershops.length > 0 ? (
-        <div className="border-y border-white/10 py-3 [&_li]:text-xs">
-          <p className="mb-2.5 text-xs font-semibold text-[color:var(--text-secondary)]">
+        <div className="rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-3.5 py-3">
+          <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
             Distribución de barberías
           </p>
           <StackedBar
@@ -389,7 +365,7 @@ export function OwnerInsights() {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-white">
                 {buckets.inactive.length} barbería
-                {buckets.inactive.length !== 1 ? "s" : ""} sin actividad reciente
+                {buckets.inactive.length !== 1 ? "s" : ""} en riesgo de churn
                 <span className="ml-1 font-normal text-[color:var(--text-muted)]">
                   · 14d+ inactivas
                 </span>
@@ -398,13 +374,13 @@ export function OwnerInsights() {
                 {buckets.inactive.slice(0, 6).map((bs) => (
                   <span
                     key={bs.slug}
-                    className="inline-flex max-w-full break-words rounded-md border border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] px-2.5 py-1 text-xs text-white"
+                    className="inline-flex items-center rounded-full border border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] px-2.5 py-0.5 text-[11px] text-white"
                   >
                     {bs.name}
                   </span>
                 ))}
                 {buckets.inactive.length > 6 ? (
-                  <span className="text-xs text-[color:var(--text-muted)]">
+                  <span className="text-[10px] text-[color:var(--text-muted)]">
                     + {buckets.inactive.length - 6} más
                   </span>
                 ) : null}
@@ -412,17 +388,17 @@ export function OwnerInsights() {
             </div>
           </div>
         </div>
-      ) : barbershops.length > 0 ? (
+      ) : (
         <div className="flex items-center gap-2.5 rounded-[var(--radius-sm)] border border-[color:var(--success)]/30 bg-[color:var(--success-soft)]/10 px-3 py-2">
           <Activity
             aria-hidden="true"
             className="size-4 shrink-0 text-[color:var(--success)]"
           />
           <p className="text-xs font-semibold text-white">
-            Todas las barberías tienen actividad en los últimos 14 días.
+            Ninguna barbería en riesgo de churn (todas activas en los últimos 14 días)
           </p>
         </div>
-      ) : <p className="py-3 text-sm text-[color:var(--text-secondary)]">Todavía no hay barberías para mostrar.</p>}
+      )}
     </section>
   );
 }
@@ -443,35 +419,35 @@ function InsightCard({
   return (
     <div
       className={cn(
-        "min-w-0 rounded-md border border-white/10 bg-[#101012] p-3",
-        highlight && "border-[color:var(--brand-gold)]/40 col-span-2 lg:col-span-1",
+        "card-premium card-premium-hover px-3 py-2.5",
+        highlight && "card-premium-glow",
       )}
     >
-      <div className="flex items-start gap-2.5">
+      <div className="flex items-center gap-2.5">
         <Icon
           aria-hidden="true"
           className={cn(
-            "mt-0.5 size-4 shrink-0",
+            "size-3.5 shrink-0",
             highlight
               ? "text-[color:var(--brand-gold)]"
               : "text-[color:var(--text-muted)]",
           )}
         />
         <div className="min-w-0 flex-1">
-          <div className="space-y-1">
-            <p className="text-xs text-[color:var(--text-secondary)]">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
               {label}
             </p>
             <p
               className={cn(
-                "break-words text-xl font-bold tabular-nums sm:text-2xl",
-                highlight ? "text-[color:var(--brand-gold)]" : "text-white",
+                "stat-number text-base font-black tracking-tight sm:text-lg",
+                highlight ? "text-gold-gradient" : "text-white",
               )}
             >
               {value}
             </p>
           </div>
-          <p className="mt-1 text-xs text-[color:var(--text-secondary)]">{hint}</p>
+          <p className="text-[10px] text-[color:var(--text-muted)]">{hint}</p>
         </div>
       </div>
     </div>
@@ -498,11 +474,11 @@ function HealthBlock({
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-col items-start gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between",
+        "flex items-center justify-between gap-2 rounded-[var(--radius-sm)] border px-3 py-2",
         toneClasses[tone],
       )}
     >
-      <p className="text-xs font-semibold">
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em]">
         {label}
       </p>
       <p className="stat-number text-xl font-black leading-none tabular-nums">

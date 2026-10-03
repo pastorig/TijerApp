@@ -98,7 +98,7 @@ export function ClientTagsEditor({
               <span
                 key={tag}
                 className={cn(
-                  "inline-flex min-h-11 max-w-full items-center gap-1 break-words rounded-md border pl-2 text-xs font-medium",
+                  "inline-flex items-center gap-1 rounded-[var(--radius-xs)] border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em]",
                   tagClassesFor(tone),
                 )}
               >
@@ -108,7 +108,7 @@ export function ClientTagsEditor({
                     type="button"
                     onClick={() => removeTag(tag)}
                     aria-label={`Quitar tag ${tag}`}
-                    className="inline-flex size-11 shrink-0 items-center justify-center opacity-70 hover:opacity-100"
+                    className="inline-flex size-3 items-center justify-center opacity-70 hover:opacity-100"
                   >
                     <X className="size-3" />
                   </button>
@@ -122,7 +122,7 @@ export function ClientTagsEditor({
       {/* Sugerencias */}
       {!disabled && availableSuggestions.length > 0 ? (
         <div className="grid gap-2">
-          <p className="text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
             Sugerencias
           </p>
           <div className="flex flex-wrap gap-2">
@@ -132,7 +132,7 @@ export function ClientTagsEditor({
                 type="button"
                 onClick={() => addTag(name)}
                 className={cn(
-                  "inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-xs)] border px-2 py-1 text-xs font-medium normal-case tracking-normal transition-opacity duration-[var(--duration-fast)] hover:opacity-100",
+                  "inline-flex items-center gap-1 rounded-[var(--radius-xs)] border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] opacity-60 transition-opacity duration-[var(--duration-fast)] hover:opacity-100",
                   tagClassesFor(tone),
                 )}
               >
@@ -147,23 +147,22 @@ export function ClientTagsEditor({
       {/* Custom */}
       {!disabled ? (
         <form onSubmit={handleAddCustom} className="grid gap-2">
-          <p className="text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
             Agregar tag propio
           </p>
           <div className="flex gap-2">
             <input
               type="text"
-              aria-label="Etiqueta personalizada"
               value={customInput}
               onChange={(e) => setCustomInput(e.target.value)}
               placeholder="Ej: Cumple en mayo"
               maxLength={30}
-              className="min-h-11 min-w-0 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-base text-white sm:text-sm outline-none placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
+              className="min-h-9 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-xs text-white outline-none placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
             />
             <button
               type="submit"
               disabled={!customInput.trim()}
-              className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]/80 disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex min-h-9 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]/80 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Plus className="size-3" />
               Agregar

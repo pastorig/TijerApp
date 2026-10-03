@@ -31,7 +31,6 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
   const [customers, setCustomers] = useState<LoyaltyCustomerSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Form fields (controlled)
   const [isActive, setIsActive] = useState(true);
@@ -42,12 +41,10 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
   // Reload program + customers
   async function load() {
     setIsLoading(true);
-    setLoadError(null);
     try {
       const { data: sessionData } = await getCurrentSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
-        setLoadError("Tu sesión expiró, volvé a iniciar sesión.");
         toast.error("Tu sesión expiró, volvé a iniciar sesión.");
         return;
       }
@@ -57,7 +54,6 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
       );
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string };
-        setLoadError(err.error ?? "No pudimos cargar el programa.");
         toast.error("Error cargando fidelización", {
           description: err.error ?? `HTTP ${res.status}`,
         });
@@ -76,7 +72,6 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
         setRewardDescription(data.program.reward_description ?? "");
       }
     } catch (err) {
-      setLoadError("No pudimos cargar el programa. Intentá nuevamente.");
       toast.error("Error inesperado", {
         description: err instanceof Error ? err.message : "Error desconocido.",
       });
@@ -175,12 +170,12 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
   const customersWithReward = customers.filter((c) => c.can_redeem).length;
 
   return (
-    <section aria-label="Fidelización" className="mx-auto w-full max-w-5xl space-y-6">
+    <main className="mx-auto w-full max-w-5xl space-y-8 px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
       <header className="relative">
-        <p className="text-xs font-semibold tracking-normal text-[color:var(--brand-gold)]">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
           Feature Pro
         </p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-normal sm:text-3xl lg:text-3xl">
+        <h1 className="mt-2 text-2xl font-black uppercase leading-tight tracking-tight sm:text-3xl lg:text-4xl">
           Fidelización
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)]">
@@ -196,42 +191,35 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
         />
       </header>
 
-      {loadError ? (
-        <div role="alert" className="rounded-lg border border-red-400/30 p-4 text-sm">
-          <p>{loadError}</p>
-          <button type="button" onClick={() => void load()} className="mt-2 min-h-11 px-3 font-semibold text-[color:var(--brand-gold)]">Reintentar</button>
-        </div>
-      ) : null}
-      {!loadError ? <>
       {/* Stats summary */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <StatCard
           icon={Users}
           label="Clientes con sellos"
-          value={isLoading ? "—" : String(customers.length)}
+          value={String(customers.length)}
         />
         <StatCard
           icon={TrendingUp}
           label="Sellos activos"
-          value={isLoading ? "—" : String(totalActiveStamps)}
+          value={String(totalActiveStamps)}
         />
         <StatCard
           icon={Sparkles}
           label="Premios disponibles"
-          value={isLoading ? "—" : String(customersWithReward)}
+          value={String(customersWithReward)}
           highlight={customersWithReward > 0}
         />
         <StatCard
           icon={Gift}
           label="Estado"
-          value={isLoading ? "—" : !program ? "Sin configurar" : program.is_active ? "Activo" : "Pausado"}
+          value={program?.is_active ? "Activo" : "Pausado"}
           highlight={program?.is_active}
         />
       </div>
 
       {/* Form config */}
-      <section className="border-t border-[color:var(--border-subtle)] pt-5">
-        <h2 className="text-lg font-semibold tracking-normal">
+      <section className="card-premium p-5 sm:p-6">
+        <h2 className="text-lg font-black uppercase tracking-tight">
           Configuración del programa
         </h2>
         <p className="mt-1 text-xs text-[color:var(--text-muted)]">
@@ -240,7 +228,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
         </p>
 
         {isLoading ? (
-          <div role="status" aria-label="Cargando fidelización" className="flex items-center justify-center py-10">
+          <div className="flex items-center justify-center py-10">
             <Loader2 className="size-5 animate-spin text-[color:var(--brand-gold)]" />
           </div>
         ) : (
@@ -268,7 +256,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
               <div>
                 <label
                   htmlFor="visitsRequired"
-                  className="text-xs font-bold tracking-normal text-[color:var(--brand-gold)]"
+                  className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]"
                 >
                   Visitas para el premio
                 </label>
@@ -280,13 +268,13 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
                   step={1}
                   value={visitsRequired}
                   onChange={(e) => setVisitsRequired(Number(e.target.value))}
-                  className="mt-2 min-h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-base text-white outline-none focus:border-[color:var(--brand-gold)]"
+                  className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-base text-white outline-none focus:border-[color:var(--brand-gold)]"
                 />
               </div>
               <div>
                 <label
                   htmlFor="rewardName"
-                  className="text-xs font-bold tracking-normal text-[color:var(--brand-gold)]"
+                  className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]"
                 >
                   Nombre del premio
                 </label>
@@ -296,7 +284,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
                   value={rewardName}
                   onChange={(e) => setRewardName(e.target.value)}
                   maxLength={80}
-                  className="mt-2 min-h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-base text-white outline-none focus:border-[color:var(--brand-gold)]"
+                  className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-base text-white outline-none focus:border-[color:var(--brand-gold)]"
                 />
               </div>
             </div>
@@ -304,7 +292,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
             <div>
               <label
                 htmlFor="rewardDescription"
-                className="text-xs font-bold tracking-normal text-[color:var(--brand-gold)]"
+                className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]"
               >
                 Descripción del premio <span className="text-[color:var(--text-muted)]">— opcional</span>
               </label>
@@ -315,14 +303,14 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
                 rows={2}
                 maxLength={200}
                 placeholder="Ej. Incluye lavado y peinado básico."
-                className="mt-2 min-h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-base sm:text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
               />
             </div>
 
             <button
               type="submit"
               disabled={isSaving}
-              className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 py-3 text-sm font-bold tracking-normal text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-6 py-3 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving ? "Guardando…" : "Guardar cambios"}
             </button>
@@ -331,8 +319,8 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
       </section>
 
       {/* Customer list */}
-      <section className="border-t border-[color:var(--border-subtle)] pt-5">
-        <h2 className="text-lg font-semibold tracking-normal">
+      <section className="card-premium p-5 sm:p-6">
+        <h2 className="text-lg font-black uppercase tracking-tight">
           Clientes
         </h2>
         <p className="mt-1 text-xs text-[color:var(--text-muted)]">
@@ -340,7 +328,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
         </p>
 
         {isLoading ? (
-          <div role="status" aria-label="Cargando fidelización" className="flex items-center justify-center py-10">
+          <div className="flex items-center justify-center py-10">
             <Loader2 className="size-5 animate-spin text-[color:var(--brand-gold)]" />
           </div>
         ) : customers.length === 0 ? (
@@ -362,17 +350,17 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="break-words text-sm font-bold text-white">
+                    <p className="truncate text-sm font-bold text-white">
                       {c.customer_name ?? c.customer_phone}
                     </p>
-                    <p className="break-words text-xs text-[color:var(--text-muted)]">
+                    <p className="truncate text-[11px] text-[color:var(--text-muted)]">
                       {c.customer_phone}
                     </p>
                   </div>
                   <div className="text-right">
                     <p
                       className={cn(
-                        "font-mono text-lg font-semibold tabular-nums",
+                        "font-mono text-lg font-black tabular-nums",
                         c.can_redeem
                           ? "text-[color:var(--brand-gold)]"
                           : "text-white",
@@ -381,18 +369,17 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
                       {c.active_stamps}
                       {program ? `/${program.visits_required}` : ""}
                     </p>
-                    <p className="text-xs text-[color:var(--text-muted)]">
+                    <p className="text-[10px] uppercase text-[color:var(--text-muted)]">
                       Sellos activos
                     </p>
                   </div>
                 </div>
 
-                {program ? <p className="mt-2 text-xs text-[color:var(--text-secondary)]">{c.can_redeem ? `Premio disponible: ${program.reward_name}` : `Faltan ${Math.max(0, program.visits_required - c.active_stamps)} sellos para el premio`}</p> : null}
                 {c.can_redeem && program ? (
                   <button
                     type="button"
                     onClick={() => void handleRedeem(c)}
-                    className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-3 text-xs font-bold tracking-normal text-[color:var(--brand-gold)] transition-colors hover:bg-[color:var(--brand-gold)] hover:text-black sm:w-auto sm:self-end"
+                    className="mt-3 inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-3 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-gold-grad hover:text-black sm:w-auto sm:self-end"
                   >
                     <Check className="size-3.5" />
                     Canjear {program.reward_name}
@@ -403,8 +390,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
           </ul>
         )}
       </section>
-      </> : null}
-    </section>
+    </main>
   );
 }
 
@@ -422,25 +408,26 @@ function StatCard({
   return (
     <div
       className={cn(
-        "rounded-lg border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-3 sm:p-4",
-        highlight && "border-[color:var(--brand-gold)]/40",
+        "card-premium card-premium-hover group p-3 sm:p-4",
+        highlight && "card-premium-glow",
       )}
     >
       <div className="flex items-start gap-2">
         <span
           aria-hidden="true"
-          className="flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] "
+          className="flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105"
+          style={{ boxShadow: "0 0 18px -8px rgba(201,162,62,0.6)" }}
         >
           <Icon className="size-4" />
         </span>
         <div>
-          <p className="text-xs tracking-normal text-[color:var(--text-muted)] sm:text-xs">
+          <p className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)] sm:text-[11px]">
             {label}
           </p>
           <p
             className={cn(
-              "mt-1 stat-number text-xl font-semibold tracking-normal sm:text-2xl",
-              highlight ? "text-[color:var(--brand-gold)]" : "text-white",
+              "mt-1 stat-number text-xl font-black tracking-tight sm:text-2xl",
+              highlight ? "text-gold-gradient" : "text-white",
             )}
           >
             {value}

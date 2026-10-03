@@ -14,7 +14,6 @@ import { usePushSubscription } from "@/lib/pwa/usePushSubscription";
 
 type PushNotificationsCardProps = {
   barbershopSlug: string;
-  compact?: boolean;
 };
 
 /**
@@ -33,7 +32,6 @@ type PushNotificationsCardProps = {
  */
 export function PushNotificationsCard({
   barbershopSlug,
-  compact = false,
 }: PushNotificationsCardProps) {
   const toast = useToast();
   const { state, subscribe, unsubscribe, sendTest } =
@@ -94,8 +92,8 @@ export function PushNotificationsCard({
   }
 
   return (
-    <section className={compact ? "min-w-0 [&_button]:min-h-11 [&_button]:normal-case [&_button]:tracking-normal [&_button]:bg-none [&_button.bg-gold-grad]:bg-[color:var(--brand-gold)] [&_p]:text-xs" : "rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 sm:p-6"}>
-      {!compact ? <header>
+    <section className="rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 sm:p-6">
+      <header>
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
           Notificaciones push
         </p>
@@ -106,7 +104,7 @@ export function PushNotificationsCard({
           Cuando entra una reserva nueva, te llega una notif al dispositivo
           donde tengas TijerApp instalado o abierto en el navegador.
         </p>
-      </header> : null}
+      </header>
 
       <div className="mt-5">
         {state === "checking" && (
@@ -180,7 +178,6 @@ export function PushNotificationsCard({
           <button
             type="button"
             onClick={handleSubscribe}
-            style={compact ? { backgroundImage: "none", backgroundColor: "var(--brand-gold)" } : undefined}
             disabled={isWorking}
             className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
@@ -200,7 +197,6 @@ export function PushNotificationsCard({
             <button
               type="button"
               onClick={handleSubscribe}
-              style={compact ? { backgroundImage: "none", backgroundColor: "var(--brand-gold)" } : undefined}
               disabled={isWorking}
               className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >

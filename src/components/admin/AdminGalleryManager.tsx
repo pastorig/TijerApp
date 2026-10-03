@@ -23,8 +23,6 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
   const [busyPhotoId, setBusyPhotoId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -32,24 +30,19 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
     async function load() {
       setIsLoading(true);
       setErrorMessage("");
-      setLoadFailed(false);
       try {
         const { data, error } = await listGalleryPhotosByBarbershop(
           barbershop.slug,
         );
         if (!isMounted) return;
         if (error) {
-          setLoadFailed(true);
           setErrorMessage("No pudimos cargar las fotos.");
           setPhotos([]);
           return;
         }
         setPhotos(data ?? []);
       } catch {
-        if (isMounted) {
-          setLoadFailed(true);
-          setErrorMessage("No pudimos cargar las fotos.");
-        }
+        if (isMounted) setErrorMessage("No pudimos cargar las fotos.");
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -58,7 +51,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
     return () => {
       isMounted = false;
     };
-  }, [barbershop.slug, reloadKey]);
+  }, [barbershop.slug]);
 
   async function getAccessToken(): Promise<string | null> {
     const { data } = await getCurrentSession();
@@ -243,12 +236,12 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
   );
 
   return (
-    <div className="min-w-0 space-y-6">
-      <header>
-        <p className="text-xs font-semibold text-[color:var(--brand-gold)]">
+    <div className="space-y-6 sm:space-y-8">
+      <header className="animate-fade-up">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
           Galería
         </p>
-        <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
+        <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
           Fotos del local
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
@@ -258,7 +251,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
       </header>
 
       {/* Upload */}
-      <section className="border-y border-[color:var(--border-subtle)] py-4">
+      <section className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5">
         <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]">
@@ -271,42 +264,40 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
               </p>
             </div>
           </div>
-          <button type="button" onClick={() => inputRef.current?.click()} disabled={isLoading || loadFailed || isUploading} className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg bg-[color:var(--brand-gold)] px-4 text-sm font-semibold text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:opacity-50">
+          <label className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]">
             {isUploading ? "Subiendo…" : "Elegir archivos"}
-          </button>
             <input
               ref={inputRef}
               type="file"
               accept="image/png,image/jpeg,image/webp"
               multiple
               onChange={handleUpload}
-              disabled={isLoading || loadFailed || isUploading}
-              aria-label="Subir fotos de la barberia"
-              className="hidden"
+              disabled={isUploading}
+              className="sr-only"
             />
+          </label>
         </div>
       </section>
 
       {errorMessage ? (
-        <div
+        <p
           role="alert"
           className="border-l-2 border-[color:var(--danger)] pl-4 text-sm font-semibold text-[color:var(--danger)]"
         >
           {errorMessage}
-          {loadFailed ? <button type="button" onClick={() => setReloadKey((value) => value + 1)} className="mt-3 flex min-h-11 items-center rounded-lg border border-[color:var(--border-default)] px-4 text-white">Reintentar</button> : null}
-        </div>
+        </p>
       ) : null}
       {successMessage ? (
-        <p role="status" className="border-l-2 border-[color:var(--success)] pl-4 text-sm font-semibold text-[color:var(--success)]">
+        <p className="border-l-2 border-[color:var(--success)] pl-4 text-sm font-semibold text-[color:var(--success)]">
           {successMessage}
         </p>
       ) : null}
 
       {/* Grid */}
       {isLoading ? (
-        <p role="status" aria-label="Cargando galeria" className="min-h-32 py-6 text-sm text-[color:var(--text-muted)]">Cargando fotos…</p>
-      ) : loadFailed ? null : sortedPhotos.length === 0 ? (
-        <div className="border-b border-[color:var(--border-subtle)] py-8 text-center">
+        <p className="text-sm text-[color:var(--text-muted)]">Cargando fotos…</p>
+      ) : sortedPhotos.length === 0 ? (
+        <div className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-subtle)] p-10 text-center">
           <p className="text-sm font-bold text-white">Sin fotos todavía</p>
           <p className="mt-2 text-xs text-[color:var(--text-muted)]">
             Subí tu primera foto desde el botón de arriba.
@@ -321,7 +312,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
             return (
               <li
                 key={photo.id}
-                className="min-w-0 overflow-hidden rounded-lg border border-[color:var(--border-subtle)]"
+                className="card-premium overflow-hidden"
               >
                 <div className="relative aspect-[4/3] w-full bg-black">
                   <Image
@@ -332,20 +323,19 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
                     className="object-cover"
                     unoptimized
                   />
-                  <span className="absolute top-2 left-2 rounded-[var(--radius-xs)] bg-black/70 px-2 py-1 font-mono text-xs font-bold text-[color:var(--brand-gold)]">
+                  <span className="absolute top-2 left-2 rounded-[var(--radius-xs)] bg-black/70 px-2 py-1 font-mono text-[10px] font-bold text-[color:var(--brand-gold)]">
                     #{index + 1}
                   </span>
                 </div>
                 <div className="grid gap-2 p-3">
                   <input
                     type="text"
-                    aria-label={`Descripcion de la foto ${index + 1}`}
                     value={photo.caption ?? ""}
                     onChange={(event) =>
                       handleCaptionChange(photo, event.target.value)
                     }
                     placeholder="Descripción (opcional)"
-                    className="min-h-11 min-w-0 w-full rounded-lg border border-[color:var(--border-default)] bg-black px-3 text-base text-white outline-none placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)] sm:text-sm"
+                    className="min-h-9 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-xs text-white outline-none placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                   />
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex gap-1">
@@ -354,7 +344,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
                         onClick={() => handleMove(photo, -1)}
                         disabled={isBusy || isFirst}
                         aria-label="Mover arriba"
-                        className="inline-flex size-11 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="inline-flex size-8 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <ArrowUp className="size-3.5" />
                       </button>
@@ -363,7 +353,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
                         onClick={() => handleMove(photo, 1)}
                         disabled={isBusy || isLast}
                         aria-label="Mover abajo"
-                        className="inline-flex size-11 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="inline-flex size-8 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <ArrowDown className="size-3.5" />
                       </button>
@@ -372,7 +362,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
                       type="button"
                       onClick={() => handleDelete(photo)}
                       disabled={isBusy}
-                      className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--danger)]/40 px-2 text-xs font-bold normal-case tracking-normal text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex min-h-8 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--danger)]/40 px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Trash2 className="size-3" />
                       Eliminar

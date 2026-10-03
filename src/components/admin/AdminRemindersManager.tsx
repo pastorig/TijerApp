@@ -78,7 +78,6 @@ export function AdminRemindersManager({
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-  const [reloadKey, setReloadKey] = useState(0);
   const [sentMap, setSentMap] = useState<Record<string, string>>(() =>
     loadSentMap(),
   );
@@ -108,7 +107,7 @@ export function AdminRemindersManager({
     return () => {
       isMounted = false;
     };
-  }, [barbershop.slug, reloadKey]);
+  }, [barbershop.slug]);
 
   const today = todayYmd();
   const tomorrow = tomorrowYmd();
@@ -226,32 +225,33 @@ export function AdminRemindersManager({
   }
 
   return (
-    <div className="space-y-6">
-      <header className="">
-        <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--brand-gold)] sm:tracking-normal">
+    <div className="space-y-8">
+      <header className="animate-fade-up">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
           Recordatorios
         </p>
-        <h1 className="mt-2 text-2xl font-semibold normal-case tracking-normal text-balance text-white sm:text-3xl">
+        <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
           Turnos próximos
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
-          La marca de WhatsApp queda en este navegador. No confirma el envio ni la entrega del mensaje.
+          Mandales un recordatorio por WhatsApp con un click. Los marcados
+          como enviados quedan grabados en tu navegador para que no los mandes
+          dos veces.
         </p>
       </header>
 
       {errorMessage ? (
-        <div
+        <p
           role="alert"
           className="border-l-2 border-[color:var(--danger)] pl-4 text-sm font-semibold text-[color:var(--danger)]"
         >
           {errorMessage}
-          <button type="button" onClick={() => setReloadKey((value) => value + 1)} className="mt-3 flex min-h-11 items-center rounded-lg border border-[color:var(--border-default)] px-4 text-white">Reintentar</button>
-        </div>
+        </p>
       ) : null}
 
       {isLoading ? (
-        <p role="status" aria-label="Cargando recordatorios" className="min-h-32 py-6 text-sm text-[color:var(--text-muted)]">Cargando…</p>
-      ) : !errorMessage ? (
+        <p className="text-sm text-[color:var(--text-muted)]">Cargando…</p>
+      ) : (
         <>
           <ReminderSection
             title="En las próximas 2 horas"
@@ -290,7 +290,7 @@ export function AdminRemindersManager({
             isSent={isSent}
           />
         </>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -347,12 +347,12 @@ function ReminderSection({
         <div className="min-w-0">
           <p
             className={cn(
-              "text-xs font-bold normal-case tracking-normal",
+              "text-[10px] font-bold uppercase tracking-[0.18em]",
               toneClasses.label,
             )}
           >
             {title}
-            <span className="ml-2 font-mono text-xs text-[color:var(--text-muted)]">
+            <span className="ml-2 font-mono text-[10px] text-[color:var(--text-muted)]">
               {appointments.length}
             </span>
           </p>
@@ -378,49 +378,48 @@ function ReminderSection({
                   `${appointment.customer_phone}-${appointment.appointment_date}-${appointment.appointment_time}`
                 }
                 className={cn(
-                  "grid grid-cols-[5rem_minmax(0,1fr)] items-center gap-3 rounded-lg border bg-[color:var(--surface-1)] p-3 transition-colors duration-[var(--duration-fast)] sm:grid-cols-[5rem_minmax(0,1fr)_auto]",
+                  "flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] border bg-[color:var(--surface-1)] p-3 transition-colors duration-[var(--duration-fast)]",
                   sent
-                    ? "border-[color:var(--success)]/30 "
+                    ? "border-[color:var(--success)]/30 opacity-70"
                     : "border-[color:var(--border-subtle)]",
                 )}
               >
-                <div className="w-20 shrink-0">
+                <div className="w-16 shrink-0">
                   <p className="font-mono text-base font-bold tabular-nums leading-none text-white">
                     {normalizeTimeValue(appointment.appointment_time)}
                   </p>
-                  <p className="mt-1 font-mono text-xs text-[color:var(--text-muted)]">
+                  <p className="mt-1 font-mono text-[10px] text-[color:var(--text-muted)]">
                     {formatDateForDisplay(
                       normalizeDateValue(appointment.appointment_date),
                     )}
                   </p>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="break-words text-sm font-bold text-white">
+                  <p className="truncate text-sm font-bold text-white">
                     {appointment.customer_name}
                   </p>
-                  <p className="mt-0.5 break-words text-xs text-[color:var(--text-muted)]">
+                  <p className="mt-0.5 truncate text-xs text-[color:var(--text-muted)]">
                     {appointment.service_name} · {appointment.barber_name}
                   </p>
-                  <p className="mt-0.5 font-mono text-xs text-[color:var(--text-subtle)]">
+                  <p className="mt-0.5 font-mono text-[10px] text-[color:var(--text-subtle)]">
                     {appointment.customer_phone}
                   </p>
                 </div>
-                <div className="col-start-2 sm:col-start-auto">
+                <div className="shrink-0">
                   {sent ? (
                     <button
                       type="button"
                       onClick={() => id && onUnmark(id, kind)}
-                      title="Quitar la marca local de WhatsApp"
-                      className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
+                      className="inline-flex min-h-9 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
                     >
                       <CheckCircle2 className="size-3" />
-                      WhatsApp abierto
+                      Enviado
                     </button>
                   ) : (
                     <button
                       type="button"
                       onClick={() => onSend(appointment, kind)}
-                      className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
+                      className="inline-flex min-h-9 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
                     >
                       <MessageCircle className="size-3" />
                       WhatsApp

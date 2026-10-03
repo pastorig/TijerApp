@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
@@ -64,7 +64,6 @@ export function OwnerCreateBarbershopForm() {
   const [services, setServices] = useState<ServiceInput[]>([
     createEmptyService("service-1"),
   ]);
-  const nextServiceId = useRef(2);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [createdSlug, setCreatedSlug] = useState("");
@@ -74,10 +73,9 @@ export function OwnerCreateBarbershopForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleAddService() {
-    const id = `service-${nextServiceId.current++}`;
     setServices((currentServices) => [
       ...currentServices,
-      createEmptyService(id),
+      createEmptyService(`service-${currentServices.length + 1}`),
     ]);
   }
 
@@ -235,11 +233,11 @@ export function OwnerCreateBarbershopForm() {
   return (
     <div className="space-y-6 sm:space-y-8">
       <div>
-        <header>
-          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)] sm:tracking-normal">
+        <header className="animate-fade-up">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
             Owner TijerApp
           </p>
-          <h1 className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+          <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
             Nueva barbería
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
@@ -248,7 +246,7 @@ export function OwnerCreateBarbershopForm() {
           </p>
         </header>
 
-        <form onSubmit={handleSubmit} className="mt-5 grid gap-5 sm:gap-6 [&_input]:min-h-11 [&_input]:text-base [&_select]:min-h-11 [&_select]:text-base [&_textarea]:text-base [&_label]:tracking-normal sm:[&_input]:text-sm sm:[&_select]:text-sm sm:[&_textarea]:text-sm">
+        <form onSubmit={handleSubmit} className="grid gap-10">
           {/* Datos de la barbería */}
           <FormSection
             eyebrow="Datos de la barbería"
@@ -272,7 +270,7 @@ export function OwnerCreateBarbershopForm() {
               />
             </Field>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-5 sm:grid-cols-2">
               <Field
                 label="Slug"
                 htmlFor="barbershop-slug"
@@ -314,7 +312,7 @@ export function OwnerCreateBarbershopForm() {
                   setDescription(event.target.value);
                   setErrorMessage("");
                 }}
-                rows={2}
+                rows={3}
                 placeholder="Descripción breve de la barbería"
               />
             </Field>
@@ -338,7 +336,7 @@ export function OwnerCreateBarbershopForm() {
             eyebrow="Horarios de atención"
             description="Rango horario en el que la barbería recibe turnos y duración base de cada slot. Esto inicializa el horario semanal del primer barbero (Lun-Sáb). Ajustable después por día desde el admin."
           >
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-3">
               <Field label="Apertura" htmlFor="working-hours-start" required>
                 <Input
                   id="working-hours-start"
@@ -413,7 +411,7 @@ export function OwnerCreateBarbershopForm() {
               />
             </Field>
 
-            <label className="flex min-h-11 items-center gap-3">
+            <label className="flex items-center gap-3">
               <input
                 type="checkbox"
                 checked={generateAutoPassword}
@@ -434,8 +432,8 @@ export function OwnerCreateBarbershopForm() {
             </label>
 
             {!generateAutoPassword ? (
-              <div className="grid gap-3">
-                <div className="grid items-start gap-3 sm:grid-cols-2">
+              <div className="grid gap-5">
+                <div className="grid items-start gap-5 sm:grid-cols-2">
                   <Field
                     label="Contraseña"
                     htmlFor="admin-password"
@@ -459,14 +457,14 @@ export function OwnerCreateBarbershopForm() {
                       />
                       <button
                         type="button"
-                        aria-pressed={showPassword}
+                        tabIndex={-1}
                         onClick={() => setShowPassword((v) => !v)}
                         aria-label={
                           showPassword
                             ? "Ocultar contraseña"
                             : "Mostrar contraseña"
                         }
-                        className="absolute inset-y-0 right-0 flex min-w-11 items-center justify-center px-3 text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--brand-gold)]"
+                        className="absolute inset-y-0 right-0 flex items-center px-3 text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--brand-gold)]"
                       >
                         {showPassword ? (
                           <EyeOff className="size-4" />
@@ -539,7 +537,7 @@ export function OwnerCreateBarbershopForm() {
                 type="button"
                 onClick={handleAddService}
                 disabled={isSubmitting}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-xs font-bold uppercase tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:opacity-40"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:opacity-40"
               >
                 <Plus className="size-3.5" />
                 Agregar
@@ -553,23 +551,22 @@ export function OwnerCreateBarbershopForm() {
                   className="grid gap-3 rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] p-3 sm:p-4"
                 >
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
                       Servicio {index + 1}
                     </p>
                     {services.length > 1 ? (
                       <button
                         type="button"
                         onClick={() => handleRemoveService(service.id)}
-                        className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold uppercase tracking-normal text-[color:var(--text-subtle)] transition-colors hover:text-[color:var(--danger)]"
+                        className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--text-subtle)] transition-colors hover:text-[color:var(--danger)]"
                       >
                         <Trash2 className="size-3" />
                         Quitar
                       </button>
                     ) : null}
                   </div>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_120px_120px]">
+                  <div className="grid gap-3 sm:grid-cols-[1fr_120px_120px]">
                     <Input
-                      className="col-span-2 sm:col-span-1"
                       value={service.name}
                       disabled={isSubmitting}
                       onChange={(event) =>
@@ -633,7 +630,7 @@ export function OwnerCreateBarbershopForm() {
 
           {successMessage ? (
             <div className="rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] p-5">
-              <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--success)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--success)]">
                 Listo
               </p>
               <p className="mt-2 text-base font-bold text-white">
@@ -650,7 +647,7 @@ export function OwnerCreateBarbershopForm() {
 
               {temporaryPassword ? (
                 <div className="mt-4 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-black/50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
                     Contraseña generada automáticamente
                   </p>
                   <p className="mt-2 font-mono text-lg font-black tabular-nums text-[color:var(--brand-gold)]">
@@ -728,13 +725,13 @@ function FormSection({
   return (
     <section
       className={cn(
-        "border-t border-[color:var(--border-subtle)] pt-4",
+        "border-t border-[color:var(--border-subtle)] pt-8",
         className,
       )}
     >
-      <div className="mb-3 flex flex-row gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)]">
             {eyebrow}
           </p>
           {description ? (
@@ -745,7 +742,7 @@ function FormSection({
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
-      <div className="grid gap-3">{children}</div>
+      <div className="grid gap-5">{children}</div>
     </section>
   );
 }

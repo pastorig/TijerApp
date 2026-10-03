@@ -6,12 +6,16 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ## 🧪 Para mirar logueado (2026-10-03)
 
-Dos cosas grandes entraron a prod el 03/10 y ninguna la pude ver con sesión:
+Lo que entró a prod el 03/10 y no pude ver con sesión:
 
-1. **Remasterización del panel (Codex).** Mergeada tal cual la dejó: es solo
-   visual (cero cambios en `src/lib`, `src/app/api`, hooks o llamadas a la
-   base — verificado sobre el diff). Lo público lo miré en escritorio y celular.
-   Falta que mires el panel: dashboard, turnero, equipo, cobros.
+1. **Remasterización de Codex: quedó SOLO en lo público.** A Bautista no le
+   gustó cómo quedó el panel, así que el 03/10 se volvió atrás en el panel del
+   dueño, el del empleado y el owner (47 archivos, idénticos a como estaban
+   antes de Codex salvo el calendario 031/032 y los arreglos de seguridad). Las
+   páginas públicas —home, precios, producto, guías, la página de la barbería,
+   la reserva, login/registro y los links del cliente— siguen con el rediseño.
+   El trabajo completo de Codex está guardado en la rama
+   `codex/remaster-2026-10-02`, por si se quiere rescatar una pantalla.
 2. **032 — Calendario en la agenda del empleado.** Entrar con Esteban
    (`chinitodou@gmail.com`) a `/primebarber/mi-agenda`:
    - el selector **Lista / Calendario** (arranca en Lista; al elegir Calendario

@@ -6,9 +6,7 @@ import { hasFeature } from "@/lib/plans";
 import { AdminUserMenu } from "./AdminUserMenu";
 import { FounderBadge } from "./FounderBadge";
 import { useCurrentPlan } from "./PlanContext";
-import { getActiveGroup, itemIsActive, visibleItems } from "./admin-nav";
-import { cn } from "@/lib/cn";
-import styles from "./AdminShell.module.css";
+import { getActiveGroup } from "./admin-nav";
 
 /**
  * Barra superior del admin. Sticky (top-0). A la IZQUIERDA muestra el nombre de
@@ -22,12 +20,10 @@ import styles from "./AdminShell.module.css";
 export function AdminTopBar({
   barbershopSlug,
   barbershopName,
-  drawerOpen,
   onOpenDrawer,
 }: {
   barbershopSlug: string;
   barbershopName: string;
-  drawerOpen: boolean;
   onOpenDrawer: () => void;
 }) {
   const pathname = usePathname();
@@ -36,37 +32,29 @@ export function AdminTopBar({
     hasFeature(plan.tier, feature),
   );
   const SectionIcon = activeGroup?.icon;
-  const activeItem = activeGroup
-    ? visibleItems(activeGroup, (feature) => hasFeature(plan.tier, feature)).find((item) => itemIsActive(item, pathname))
-    : undefined;
-  const title = activeGroup?.key === "inicio" ? "Inicio" : activeItem?.label ?? activeGroup?.label;
 
   return (
-    <header className="sticky top-0 z-40 flex h-[var(--admin-header-height)] items-center gap-3 border-b border-white/10 bg-[#101012]/95 px-4 backdrop-blur-md sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 backdrop-blur-md sm:px-6">
       <button
         type="button"
         onClick={onOpenDrawer}
-        aria-label="Abrir menu"
-        aria-controls="admin-navigation-drawer"
-        aria-expanded={drawerOpen}
-        aria-haspopup="dialog"
-        className={cn(styles.focus, "inline-flex size-11 shrink-0 items-center justify-center rounded-md border border-white/10 text-neutral-300 transition-colors duration-150 hover:bg-white/5 hover:text-white lg:hidden")}
+        aria-label="Abrir menú"
+        className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] lg:hidden"
       >
-        <Menu className="size-5" aria-hidden="true" />
+        <Menu className="size-4" />
       </button>
 
       {activeGroup ? (
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 items-center gap-2">
           {SectionIcon ? (
             <SectionIcon
               aria-hidden="true"
-              className="hidden size-[18px] shrink-0 text-[color:var(--brand-gold)] sm:block"
+              className="size-4 shrink-0 text-[color:var(--brand-gold)]"
             />
           ) : null}
-          <div className="min-w-0">
-            <p className="truncate text-xs text-neutral-400">{activeGroup.key === "inicio" ? "Panel de administracion" : activeGroup.label}</p>
-            <p className="truncate text-sm font-semibold text-white">{title}</p>
-          </div>
+          <p className="truncate text-sm font-bold tracking-tight text-white sm:text-base">
+            {activeGroup.label}
+          </p>
         </div>
       ) : null}
 

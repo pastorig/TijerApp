@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { updateCurrentUserPassword } from "@/lib/auth";
-import { Button, Card, Field, Input, useToast } from "@/components/ui";
+import { Button, Card, Eyebrow, Field, Input, useToast } from "@/components/ui";
 
 const MINIMO = 8;
 
@@ -50,10 +50,10 @@ export function StaffPassword() {
   }
 
   return (
-    <section className="flex min-w-0 flex-col gap-4">
+    <section className="flex flex-col gap-4">
       <header>
-        <p className="text-xs font-semibold text-[color:var(--brand-gold)]">Seguridad</p>
-        <h2 className="mt-2 text-xl font-semibold tracking-normal text-white sm:text-2xl">
+        <Eyebrow>Mi contraseña</Eyebrow>
+        <h2 className="mt-2 text-xl font-black tracking-tight text-white sm:text-2xl">
           Cambiar mi contraseña
         </h2>
         <p className="mt-2 max-w-prose text-xs leading-5 text-[color:var(--text-muted)]">
@@ -66,16 +66,15 @@ export function StaffPassword() {
         <Card
           variant="flat"
           padding="sm"
-          role="status"
           className="flex items-center gap-2 text-sm text-[color:var(--success)]"
         >
           <ShieldCheck className="size-4 shrink-0" />
-          Contraseña actualizada correctamente.
+          Listo: ahora la contraseña la sabés solo vos.
         </Card>
       ) : null}
 
-      <Card variant="flat" padding="sm">
-        <form onSubmit={guardar} className="flex flex-col gap-4 [&_label]:text-xs [&_label]:normal-case [&_label]:tracking-normal">
+      <Card padding="sm" className="max-w-md">
+        <form onSubmit={guardar} className="flex flex-col gap-4">
           <Field label="Contraseña nueva" htmlFor="staff-password-nueva">
             <div className="relative">
               <Input
@@ -84,15 +83,13 @@ export function StaffPassword() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="new-password"
-                className="min-h-11 pr-12 text-base sm:text-sm"
+                className="pr-11"
               />
               <button
                 type="button"
                 onClick={() => setVerla((v) => !v)}
-                aria-label={verla ? "Ocultar contraseñas" : "Mostrar contraseñas"}
-                title={verla ? "Ocultar contraseñas" : "Mostrar contraseñas"}
-                aria-pressed={verla}
-                className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
+                aria-label={verla ? "Ocultar" : "Mostrar"}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
               >
                 {verla ? (
                   <EyeOff className="size-4" />
@@ -106,7 +103,6 @@ export function StaffPassword() {
           <Field label="Repetila" htmlFor="staff-password-repetida">
             <Input
               id="staff-password-repetida"
-              className="min-h-11 text-base sm:text-sm"
               type={verla ? "text" : "password"}
               value={repetida}
               onChange={(e) => setRepetida(e.target.value)}
@@ -114,7 +110,7 @@ export function StaffPassword() {
             />
           </Field>
 
-          <Button type="submit" loading={guardando} fullWidth className="min-h-11 bg-[color:var(--brand-gold)] text-xs normal-case tracking-normal">
+          <Button type="submit" loading={guardando} fullWidth>
             {guardando ? "Guardando…" : "Cambiar contraseña"}
           </Button>
         </form>

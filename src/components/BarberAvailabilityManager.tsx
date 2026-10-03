@@ -553,7 +553,7 @@ export function BarberAvailabilityManager({
           type="button"
           disabled={deletingBlockId === block.id}
           onClick={() => handleDeleteBlock(block.id)}
-          className="inline-flex min-h-11 items-center justify-center rounded-md border border-[color:var(--danger)]/40 px-3 py-2 text-xs font-bold normal-case text-[color:var(--danger)] transition hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-8 items-center justify-center rounded-md border border-[color:var(--danger)]/40 px-3 py-2 text-[11px] font-bold uppercase text-[color:var(--danger)] transition hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {deletingBlockId === block.id ? "Eliminando..." : "Eliminar"}
         </button>
@@ -562,12 +562,12 @@ export function BarberAvailabilityManager({
   }
 
   return (
-    <section className="min-w-0">
+    <section className="mt-4 rounded-md border border-[color:var(--border-default)] bg-black/60 p-3 sm:p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-[color:var(--brand-gold)]">
-            Horario semanal
-          </h3>
+          <p className="text-[11px] font-bold uppercase text-[color:var(--brand-gold)]">
+            Disponibilidad
+          </p>
           <p className="mt-1 text-sm text-[color:var(--text-muted)]">
             Horarios semanales y bloqueos manuales por barbero.
           </p>
@@ -575,13 +575,13 @@ export function BarberAvailabilityManager({
       </div>
 
       {errorMessage ? (
-        <p role="alert" className="mt-3 rounded-md border border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] px-3 py-2 text-sm font-semibold text-[color:var(--danger)]">
+        <p className="mt-3 rounded-md border border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] px-3 py-2 text-sm font-semibold text-[color:var(--danger)]">
           {errorMessage}
         </p>
       ) : null}
 
       {successMessage ? (
-        <p role="status" className="mt-3 rounded-md border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 py-2 text-sm font-semibold text-[color:var(--success)]">
+        <p className="mt-3 rounded-md border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 py-2 text-sm font-semibold text-[color:var(--success)]">
           {successMessage}
         </p>
       ) : null}
@@ -624,16 +624,16 @@ export function BarberAvailabilityManager({
                           )
                         }
                         className={cn(
-                          "relative h-11 w-11 shrink-0 before:absolute before:inset-x-0 before:top-3 before:h-5 before:rounded-full before:content-[''] disabled:opacity-60",
+                          "relative h-5 w-9 shrink-0 rounded-full transition disabled:opacity-60",
                           schedule.isWorking
-                            ? "before:bg-[color:var(--brand-gold)]"
-                            : "before:bg-white/15",
+                            ? "bg-gold-grad"
+                            : "bg-white/15",
                         )}
                       >
                         <span
                           className={cn(
-                            "absolute top-3.5 size-4 rounded-full bg-white transition-transform motion-reduce:transition-none",
-                            schedule.isWorking ? "left-[26px]" : "left-0.5",
+                            "absolute top-0.5 size-4 rounded-full bg-white transition-all",
+                            schedule.isWorking ? "left-[18px]" : "left-0.5",
                           )}
                         />
                       </button>
@@ -643,8 +643,8 @@ export function BarberAvailabilityManager({
                     {schedule.isWorking ? (
                       <div className="mt-3 flex flex-col gap-2.5 sm:mt-0 sm:flex-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-5 sm:gap-y-2">
                         {/* Horario */}
-                        <div className="flex min-w-0 flex-wrap items-center gap-2">
-                          <span className="w-12 shrink-0 text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)] sm:w-auto">
+                        <div className="flex items-center gap-2">
+                          <span className="w-12 shrink-0 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--text-muted)] sm:w-auto">
                             Horario
                           </span>
                           <input
@@ -658,7 +658,7 @@ export function BarberAvailabilityManager({
                                 event.target.value,
                               )
                             }
-                            className="min-h-11 min-w-0 w-[104px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-base text-white sm:text-sm outline-none transition focus:border-[color:var(--brand-gold)]"
+                            className="min-h-9 w-[104px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
                           />
                           <span className="text-[color:var(--text-subtle)]">
                             →
@@ -674,13 +674,13 @@ export function BarberAvailabilityManager({
                                 event.target.value,
                               )
                             }
-                            className="min-h-11 min-w-0 w-[104px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-base text-white sm:text-sm outline-none transition focus:border-[color:var(--brand-gold)]"
+                            className="min-h-9 w-[104px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
                           />
                         </div>
 
                         {/* Pausa */}
-                        <div className="flex min-w-0 flex-wrap items-center gap-2">
-                          <span className="w-12 shrink-0 text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)] sm:w-auto">
+                        <div className="flex items-center gap-2">
+                          <span className="w-12 shrink-0 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--text-muted)] sm:w-auto">
                             Pausa
                           </span>
                           {hasBreak ? (
@@ -696,9 +696,9 @@ export function BarberAvailabilityManager({
                                     event.target.value,
                                   )
                                 }
-                                className="min-h-11 min-w-0 w-[92px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-base text-white sm:text-sm outline-none transition focus:border-[color:var(--brand-gold)]"
+                                className="min-h-9 w-[92px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
                               />
-                              <span className="text-xs normal-case tracking-normal text-[color:var(--text-muted)]">
+                              <span className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
                                 a
                               </span>
                               <input
@@ -712,7 +712,7 @@ export function BarberAvailabilityManager({
                                     event.target.value,
                                   )
                                 }
-                                className="min-h-11 min-w-0 w-[92px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-base text-white sm:text-sm outline-none transition focus:border-[color:var(--brand-gold)]"
+                                className="min-h-9 w-[92px] rounded-md border border-[color:var(--border-default)] bg-black px-2 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
                               />
                               <button
                                 type="button"
@@ -730,7 +730,7 @@ export function BarberAvailabilityManager({
                                     "",
                                   );
                                 }}
-                                className="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-[color:var(--text-muted)] transition hover:text-[color:var(--danger)] disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex size-7 items-center justify-center rounded-md text-[color:var(--text-muted)] transition hover:text-[color:var(--danger)] disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 <X className="size-3.5" />
                               </button>
@@ -768,7 +768,7 @@ export function BarberAvailabilityManager({
                                   toTime(Math.min(endMin, breakEnd)),
                                 );
                               }}
-                              className="inline-flex min-h-11 items-center gap-1 rounded-md border border-dashed border-[color:var(--border-default)] px-2.5 text-xs font-bold normal-case text-[color:var(--text-muted)] transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex min-h-8 items-center gap-1 rounded-md border border-dashed border-[color:var(--border-default)] px-2.5 text-[10px] font-bold uppercase text-[color:var(--text-muted)] transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               <Plus className="size-3" /> Pausa
                             </button>
@@ -788,7 +788,7 @@ export function BarberAvailabilityManager({
             <button
               type="submit"
               disabled={isSavingSchedules}
-              className="mt-3 inline-flex min-h-11 items-center justify-center rounded-md bg-[color:var(--brand-gold)] px-3 py-2 text-xs font-bold normal-case text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-3 inline-flex min-h-9 items-center justify-center rounded-md bg-gold-grad px-3 py-2 text-[11px] font-bold uppercase text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSavingSchedules ? "Guardando..." : "Guardar horarios"}
             </button>
@@ -796,7 +796,7 @@ export function BarberAvailabilityManager({
 
           {horarioAnalysis.length > 0 ? (
             <div className="mt-5">
-              <p className="text-xs font-bold normal-case text-[color:var(--brand-gold)]">
+              <p className="text-[11px] font-bold uppercase text-[color:var(--brand-gold)]">
                 Aprovechamiento del horario
               </p>
               <p className="mt-1 text-xs text-[color:var(--text-muted)]">
@@ -813,7 +813,7 @@ export function BarberAvailabilityManager({
                       <p className="text-sm font-bold text-white">
                         {service.name}
                       </p>
-                      <p className="font-mono text-xs normal-case tracking-normal text-[color:var(--text-muted)]">
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
                         {service.duration_minutes} min
                       </p>
                     </div>
@@ -827,16 +827,16 @@ export function BarberAvailabilityManager({
                             className="grid gap-1.5"
                           >
                             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                              <span className="font-mono text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)]">
+                              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
                                 {row.daysLabel}
                               </span>
-                              <span className="font-mono text-xs text-[color:var(--text-muted)]">
+                              <span className="font-mono text-[10px] text-[color:var(--text-muted)]">
                                 {row.startTime}–{row.endTime}
                               </span>
                               {/* Sin esto, "19 cortes" para una jornada de 13
                                   horas se lee como un error de cuenta. */}
                               {row.breakStart && row.breakEnd ? (
-                                <span className="font-mono text-xs text-[color:var(--text-subtle)]">
+                                <span className="font-mono text-[10px] text-[color:var(--text-subtle)]">
                                   pausa {row.breakStart}–{row.breakEnd}
                                 </span>
                               ) : null}
@@ -848,7 +848,7 @@ export function BarberAvailabilityManager({
                                   {row.cutsFitting === 1 ? "corte" : "cortes"}
                                 </span>
                                 {isExact ? null : (
-                                  <span className="ml-2 text-xs text-[color:var(--text-muted)]">
+                                  <span className="ml-2 text-[10px] text-[color:var(--text-muted)]">
                                     · sobran{" "}
                                     <span className="font-bold text-[color:var(--brand-gold)]">
                                       {row.leftoverMinutes}min
@@ -878,7 +878,7 @@ export function BarberAvailabilityManager({
                                         style={{
                                           width: `${(service.duration_minutes / segment.minutes) * 100}%`,
                                         }}
-                                        className="h-full bg-[color:var(--brand-gold)]"
+                                        className="h-full bg-gold-grad"
                                       />
                                     ),
                                   )}
@@ -897,7 +897,7 @@ export function BarberAvailabilityManager({
 
                             {row.suggestedEndTime ? (
                               <div className="flex flex-wrap items-center justify-between gap-2">
-                                <p className="text-xs text-[color:var(--text-secondary)]">
+                                <p className="text-[11px] text-[color:var(--text-secondary)]">
                                   Cerrá a las{" "}
                                   <span className="font-mono font-bold text-[color:var(--brand-gold)]">
                                     {row.suggestedEndTime}
@@ -920,7 +920,7 @@ export function BarberAvailabilityManager({
                                       row.suggestedEndTime,
                                     )
                                   }
-                                  className="inline-flex min-h-7 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 px-2 text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                                  className="inline-flex min-h-7 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   {isApplyingSuggestion
                                     ? "Aplicando…"
@@ -928,7 +928,7 @@ export function BarberAvailabilityManager({
                                 </button>
                               </div>
                             ) : (
-                              <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--success)]">
+                              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--success)]">
                                 Aprovechás el 100%
                               </p>
                             )}
@@ -943,7 +943,7 @@ export function BarberAvailabilityManager({
           ) : null}
 
           <div className="mt-5">
-            <p className="text-xs font-bold normal-case text-[color:var(--brand-gold)]">
+            <p className="text-[11px] font-bold uppercase text-[color:var(--brand-gold)]">
               Bloqueos manuales
             </p>
 
@@ -962,7 +962,7 @@ export function BarberAvailabilityManager({
                       blockDate: event.target.value,
                     }))
                   }
-                  className="min-h-11 min-w-0 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-base text-white sm:text-sm outline-none transition focus:border-[color:var(--brand-gold)]"
+                  className="min-h-9 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
                   required
                 />
                 <input
@@ -975,7 +975,7 @@ export function BarberAvailabilityManager({
                       startTime: event.target.value,
                     }))
                   }
-                  className="min-h-11 min-w-0 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-base text-white sm:text-sm outline-none transition focus:border-[color:var(--brand-gold)]"
+                  className="min-h-9 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
                   required
                 />
                 <input
@@ -988,7 +988,7 @@ export function BarberAvailabilityManager({
                       endTime: event.target.value,
                     }))
                   }
-                  className="min-h-11 min-w-0 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-base text-white sm:text-sm outline-none transition focus:border-[color:var(--brand-gold)]"
+                  className="min-h-9 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]"
                   required
                 />
               </div>
@@ -1002,13 +1002,13 @@ export function BarberAvailabilityManager({
                       reason: event.target.value,
                     }))
                   }
-                  className="min-h-11 min-w-0 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-base text-white sm:text-sm outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
+                  className="min-h-9 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                   placeholder="Motivo opcional"
                 />
                 <button
                   type="submit"
                   disabled={isCreatingBlock}
-                  className="inline-flex min-h-11 items-center justify-center rounded-md border border-[color:var(--border-default)] px-3 py-2 text-xs font-bold normal-case text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex min-h-9 items-center justify-center rounded-md border border-[color:var(--border-default)] px-3 py-2 text-[11px] font-bold uppercase text-white transition hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isCreatingBlock ? "Agregando..." : "Agregar bloqueo"}
                 </button>
@@ -1031,7 +1031,7 @@ export function BarberAvailabilityManager({
                   librería para un acordeón de una sección. */}
               {pastBlocks.length > 0 ? (
                 <details className="group mt-1 rounded-md border border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]">
-                  <summary className="cursor-pointer list-none px-3 py-2.5 text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)] transition-colors hover:text-white">
+                  <summary className="cursor-pointer list-none px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)] transition-colors hover:text-white">
                     Anteriores ({pastBlocks.length})
                   </summary>
                   <div className="grid gap-2 px-3 pb-3">

@@ -3,7 +3,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { MessageCircle, X } from "lucide-react";
-import { useStaffDialogFocus } from "./useStaffDialogFocus";
 import { getCurrentSession } from "@/lib/auth";
 import { createWhatsAppRescheduleLink } from "@/lib/whatsapp";
 import { Button, Field, Input } from "@/components/ui";
@@ -51,7 +50,6 @@ export function StaffRescheduleModal({
   onCerrar: () => void;
   onMovido: () => void;
 }) {
-  const dialogRef = useStaffDialogFocus(turno !== null);
   const [dia, setDia] = useState(fecha);
   const [hora, setHora] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -143,20 +141,15 @@ export function StaffRescheduleModal({
   return createPortal(
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-6">
       <form
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="staff-move-title"
-        tabIndex={-1}
         onSubmit={mover}
-        className="flex max-h-[calc(100dvh-1rem)] w-full max-w-md flex-col overflow-y-auto [&_label]:text-xs [&_label]:normal-case [&_label]:tracking-normal [&_input]:min-h-11 [&_input]:text-base [&_select]:min-h-11 [&_select]:text-base [&_textarea]:text-base [&_button]:min-h-11 [&_button]:text-xs [&_button]:normal-case [&_button]:tracking-normal sm:[&_input]:text-sm sm:[&_select]:text-sm sm:[&_textarea]:text-sm rounded-t-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] sm:rounded-[var(--radius-md)]"
+        className="flex max-h-[92vh] w-full max-w-md flex-col overflow-y-auto rounded-t-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] sm:rounded-[var(--radius-md)]"
       >
-        <header className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-4 py-3">
+        <header className="flex items-start justify-between gap-3 border-b border-[color:var(--border-subtle)] px-5 py-4">
           <div className="min-w-0">
-            <h2 id="staff-move-title" className="text-lg font-semibold tracking-normal text-white">
+            <h2 className="text-lg font-black tracking-tight text-white">
               {resultado ? "Turno movido" : "Mover turno"}
             </h2>
-            <p className="mt-1 break-words text-xs text-[color:var(--text-muted)]">
+            <p className="mt-1 truncate text-xs text-[color:var(--text-muted)]">
               {turno.customer_name} · {turno.appointment_time.slice(0, 5)} ·{" "}
               {turno.service_name}
             </p>
@@ -164,17 +157,15 @@ export function StaffRescheduleModal({
           <button
             type="button"
             onClick={cerrar}
-            disabled={guardando}
             aria-label="Cerrar"
-            title="Cerrar"
-            className="flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[color:var(--text-muted)] transition-colors hover:text-white"
+            className="shrink-0 rounded-[var(--radius-sm)] p-1.5 text-[color:var(--text-muted)] transition-colors hover:text-white"
           >
             <X className="size-4" />
           </button>
         </header>
 
         {resultado ? (
-          <div className="flex flex-col gap-3 px-4 py-3">
+          <div className="flex flex-col gap-4 px-5 py-4">
             {resultado.aviso.sent ? (
               <p className="rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 py-2.5 text-sm text-[color:var(--success)]">
                 Le avisamos por mail al cliente del horario nuevo.
@@ -205,14 +196,14 @@ export function StaffRescheduleModal({
                 Avisarle por WhatsApp
               </Button>
             ) : !resultado.aviso.sent ? (
-              <p className="text-xs leading-5 text-[color:var(--text-secondary)]">
+              <p className="text-xs leading-5 text-[color:var(--text-subtle)]">
                 Este cliente tampoco dejó teléfono, así que no hay forma de
                 escribirle desde acá.
               </p>
             ) : null}
           </div>
         ) : (
-          <div className="flex flex-col gap-3 px-4 py-3">
+          <div className="flex flex-col gap-4 px-5 py-4">
             <div className="grid grid-cols-2 gap-3">
               <Field label="Nuevo día" htmlFor="staff-mover-dia">
                 <Input
@@ -232,7 +223,7 @@ export function StaffRescheduleModal({
               </Field>
             </div>
 
-            <p className="text-xs leading-4 text-[color:var(--text-secondary)]">
+            <p className="text-[11px] leading-4 text-[color:var(--text-subtle)]">
               Al cliente le llega un mail con el horario nuevo, si dejó uno
               cuando reservó. El turno queda con vos: no se le puede pasar a
               otro barbero.
@@ -249,9 +240,9 @@ export function StaffRescheduleModal({
           </div>
         )}
 
-        <footer className="sticky bottom-0 z-10 flex justify-end gap-2 border-t border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <footer className="flex justify-end gap-2 border-t border-[color:var(--border-subtle)] px-5 py-4">
           {resultado ? (
-            <Button type="button" size="sm" onClick={cerrar} style={{ backgroundImage: "none", backgroundColor: "var(--brand-gold)" }}>
+            <Button type="button" size="sm" onClick={cerrar}>
               Listo
             </Button>
           ) : (
@@ -265,8 +256,7 @@ export function StaffRescheduleModal({
               >
                 Volver
               </Button>
-              <Button type="submit"
-            style={{ backgroundImage: "none", backgroundColor: "var(--brand-gold)" }} size="sm" loading={guardando}>
+              <Button type="submit" size="sm" loading={guardando}>
                 Mover turno
               </Button>
             </>
