@@ -263,30 +263,18 @@ Spec en `specs/015-aviso-vencimiento-plan/`.
 
 ---
 
-## 📅 OCTUBRE 2026 — dos cosas con fecha, sin recordatorio automático
+## 📅 21/10/2026 — a Leo Cuts se le termina el Fundador (y se le cobra)
 
-> Ojo al llegar esa fecha: el precio que ve el barbero sale de
-> `billedMonthlyArs(tier, isFounder)`, que baja un escalón si la barbería es
-> fundadora. Cuando a Leo se le termine el upgrade y vuelva a Solo, ya no hay
-> escalón para abajo y pasa a ver el precio de Solo, que es lo correcto. Si
-> además se baja Solo a $19.000, va a ver $19.000 — revisar que eso sea lo que
-> se le quiere cobrar.
+Sin recordatorio automático en el producto. Ese día pasa de Esencial (gratis
+desde el 21/07) a Solo, **pagando lo mismo: $22.000**, y es también el día que
+se le cobra. Menos producto por igual precio es el momento típico en que un
+cliente se va: llegar ANTES con una oferta armada (tipo Esencial a precio de
+Fundador, ~$26–28k).
 
-**21/10/2026 — se le termina el programa Fundador a Leo Cuts.** Ese día pasa de
-Esencial (que tiene gratis desde el 21/07) a Solo, **pagando lo mismo: $22.000**.
-Menos producto por igual precio es el momento típico en que un cliente se va, así
-que no dejarlo caer solo: llegar con una oferta armada, tipo Esencial a precio de
-Fundador (~$26–28k), antes de esa fecha y no después.
+El precio que ve sale de `billedMonthlyArs(tier, isFounder)`: al volver a Solo
+ya no hay escalón para abajo y ve el precio de Solo, que es lo correcto.
 
-**Recién ahí decidir el precio de Solo.** Quedó sobre la mesa bajarlo de $22.000 a
-$19.000 (relevamiento del 12/08/2026: la mediana del mercado argentino en el tramo
-"1 barbero" es ~$14.500, o sea Solo está ~50% arriba). No se hizo ahora **a
-propósito**: $22.000 es el precio congelado de Leo Cuts, y bajar el público por
-debajo dejaría su "precio de Fundador" peor que el de cualquiera.
-
-Con el -15% anual, $19.000 queda en $16.150/mes — prácticamente la mediana, lo que
-convierte al plan anual en argumento de venta. Si se cambia, se toca **solo**
-`src/lib/plans.ts`: desde el commit `6f2c445` toda la landing deriva de ahí.
+> Bajar Solo a $19.000: **descartado por ahora** (decisión del 02/10/2026).
 
 ---
 
