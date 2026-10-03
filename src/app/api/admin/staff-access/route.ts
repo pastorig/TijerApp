@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
-import { assertPlanFeature } from "@/lib/api-plan-guard";
+import {
+  assertPlanFeature,
+  assertTierIncludesFeature,
+} from "@/lib/api-plan-guard";
 import {
   aColumnas,
   normalizarPermisos,
@@ -76,6 +79,13 @@ export async function GET(request: Request) {
   const owner = await assertOwner(request.headers.get("authorization"), slug);
   if (!owner.ok) {
     return NextResponse.json({ error: owner.error }, { status: owner.status });
+  }
+
+  // Leer mira el tier y no el vencimiento: en modo lectura el dueño sigue
+  // viendo quién tiene acceso, igual que ve todo lo demás.
+  const tier = await assertTierIncludesFeature(slug, "cuentas_empleados");
+  if (!tier.ok) {
+    return NextResponse.json({ error: tier.error }, { status: tier.status });
   }
 
   const supabase = getSupabaseAdminClient();
@@ -269,6 +279,14 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: owner.error }, { status: owner.status });
   }
 
+  const feature = await assertPlanFeature(slug, "cuentas_empleados");
+  if (!feature.ok) {
+    return NextResponse.json(
+      { error: feature.error },
+      { status: feature.status },
+    );
+  }
+
   if (!barberId) {
     return NextResponse.json({ error: "Falta el barbero." }, { status: 400 });
   }
@@ -339,6 +357,10 @@ export async function DELETE(request: Request) {
   if (!owner.ok) {
     return NextResponse.json({ error: owner.error }, { status: owner.status });
   }
+
+  // Revocar NO pasa por el chequeo de plan, a propósito: una barbería que bajó
+  // de plan o quedó vencida tiene que poder sacarle el acceso a alguien que se
+  // fue. Cerrar una puerta nunca debería depender de estar al día.
 
   const supabase = getSupabaseAdminClient();
   // Se marca revocado, no se borra: el historial de la barbería queda intacto.
