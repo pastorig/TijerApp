@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { AdminAuthGuard } from "@/components/AdminAuthGuard";
 import { AdminSettingsForm } from "@/components/AdminSettingsForm";
+import { AdminShell } from "@/components/admin/AdminShell";
 import {
   listKnownBarbershops,
   resolveManagedBarbershopBySlug,
@@ -38,7 +39,9 @@ export default async function AdminSettingsPage({
 
   return (
     <AdminAuthGuard barbershopSlug={barbershop.slug}>
-      <AdminSettingsForm barbershop={barbershop} />
+      <AdminShell barbershopSlug={barbershop.slug} barbershopName={barbershop.name}>
+        <AdminSettingsForm barbershop={barbershop} />
+      </AdminShell>
     </AdminAuthGuard>
   );
 }

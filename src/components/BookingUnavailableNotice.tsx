@@ -36,10 +36,10 @@ export function BookingUnavailableNotice({
         />
       </div>
 
-      <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+      <p className="mt-5 text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
         Reserva online pausada
       </p>
-      <h1 className="mt-3 text-2xl font-black uppercase leading-tight tracking-tight text-balance text-white sm:text-3xl">
+      <h1 className="mt-3 text-2xl font-black uppercase leading-tight tracking-normal text-balance text-white sm:text-3xl">
         Sacá tu turno por WhatsApp
       </h1>
       <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
@@ -53,7 +53,7 @@ export function BookingUnavailableNotice({
             href={waHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
           >
             <MessageCircle aria-hidden="true" className="size-4" />
             Escribir por WhatsApp
@@ -61,7 +61,7 @@ export function BookingUnavailableNotice({
         ) : null}
         <Link
           href={`/${barbershopSlug}`}
-          className="inline-flex min-h-12 w-full items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] sm:w-auto"
+          className="inline-flex min-h-12 w-full items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-6 text-sm font-bold uppercase tracking-normal text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] sm:w-auto"
         >
           Volver
         </Link>

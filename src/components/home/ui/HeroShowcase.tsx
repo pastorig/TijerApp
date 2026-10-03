@@ -122,15 +122,15 @@ export function HeroShowcase() {
             <div className="flex items-center gap-2">
               <span
                 aria-hidden="true"
-                className="flex size-7 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
+                className="flex size-11 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
               >
                 <CalendarDays className="size-4" />
               </span>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white">
+                <p className="text-xs font-bold uppercase tracking-normal text-white">
                   Turnero de hoy
                 </p>
-                <p className="text-[9px] text-[color:var(--text-muted)]">
+                <p className="text-xs text-[color:var(--text-muted)]">
                   2 barberos · en vivo
                 </p>
               </div>
@@ -148,7 +148,7 @@ export function HeroShowcase() {
           {/* KPIs mini */}
           <div className="mt-3 grid grid-cols-2 gap-2">
             <div className="rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-2)]/50 p-2.5">
-              <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+              <p className="text-[8px] font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
                 Turnos hoy
               </p>
               <p
@@ -159,12 +159,12 @@ export function HeroShowcase() {
               </p>
             </div>
             <div className="rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-2)]/50 p-2.5">
-              <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+              <p className="text-[8px] font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
                 Ocupación
               </p>
               <p
                 ref={occupancyRef}
-                className="mt-0.5 text-xl font-black leading-none tabular-nums text-gold-gradient"
+                className="mt-0.5 text-xl font-black leading-none tabular-nums text-[color:var(--brand-gold)]"
               >
                 82%
               </p>
@@ -179,7 +179,7 @@ export function HeroShowcase() {
           style={{ "--parallax-depth": "-22px" } as React.CSSProperties}
         >
           <div className="flex items-center justify-between">
-            <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+            <p className="text-[8px] font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
               Ingresos · 7 días
             </p>
             <TrendingUp
@@ -187,7 +187,7 @@ export function HeroShowcase() {
               className="size-3 text-[color:var(--success)]"
             />
           </div>
-          <p className="mt-0.5 text-lg font-black leading-none text-gold-gradient">
+          <p className="mt-0.5 text-lg font-black leading-none text-[color:var(--brand-gold)]">
             $284.500
           </p>
           <div className="mt-2 flex h-8 items-end gap-1">

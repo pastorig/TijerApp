@@ -31,10 +31,10 @@ export function HomeHowItWorks() {
     <section className="border-t border-[color:var(--border-subtle)]">
       <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
         <header className="text-center sm:text-left">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Cómo funciona
           </p>
-          <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
             Tres pasos y tu barbería online
           </h2>
         </header>
@@ -47,10 +47,10 @@ export function HomeHowItWorks() {
                 as="li"
                 key={step.number}
                 delay={index * 90}
-                className="card-premium card-premium-hover group relative p-6"
+                className="card-premium  group relative p-6"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-mono text-3xl font-black tabular-nums leading-none text-gold-gradient">
+                  <span className="font-mono text-3xl font-black tabular-nums leading-none text-[color:var(--brand-gold)]">
                     {step.number}
                   </span>
                   <span
@@ -66,7 +66,7 @@ export function HomeHowItWorks() {
                     <Icon className="size-5" />
                   </span>
                 </div>
-                <h3 className="mt-4 text-lg font-bold uppercase tracking-tight text-white sm:text-xl">
+                <h3 className="mt-4 text-lg font-bold uppercase tracking-normal text-white sm:text-xl">
                   {step.title}
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-[color:var(--text-muted)]">

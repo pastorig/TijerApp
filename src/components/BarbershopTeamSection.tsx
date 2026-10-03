@@ -57,10 +57,10 @@ export function BarbershopTeamSection({
     <section className="border-t border-[color:var(--border-subtle)]">
       <div className="mx-auto w-full max-w-6xl px-4 py-7 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
         <header className="text-center sm:text-left">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Equipo
           </p>
-          <h2 className="mt-3 text-2xl font-black uppercase tracking-tight text-white sm:mt-4 sm:text-3xl lg:text-4xl">
+          <h2 className="mt-3 text-2xl font-black uppercase tracking-normal text-white sm:mt-4 sm:text-3xl lg:text-4xl">
             Nuestros barberos
           </h2>
         </header>
@@ -90,7 +90,7 @@ export function BarbershopTeamSection({
                     {displayName}
                   </p>
                   {barber.role ? (
-                    <p className="mt-1 truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                    <p className="mt-1 truncate text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
                       {barber.role}
                     </p>
                   ) : null}

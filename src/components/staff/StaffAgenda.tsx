@@ -21,7 +21,6 @@ import { agruparPorFranja } from "@/lib/staff-agenda-grouping";
 import { createWhatsAppClientContactLink } from "@/lib/whatsapp";
 import { AgendaCalendar } from "@/components/calendar/AgendaCalendar";
 import { addDays } from "@/components/calendar/date-utils";
-import { MetricCard } from "@/components/admin/MetricCard";
 import { Badge, Button, Card } from "@/components/ui";
 import {
   CancelAppointmentDialog,
@@ -407,7 +406,7 @@ export function StaffAgenda({
           padding="none"
           className={cn(
             "p-3 transition-colors",
-            cancelado && "opacity-45",
+            cancelado && "border-[color:var(--border-subtle)]",
             esDestacado &&
               !cancelado &&
               "border-[color:var(--brand-gold-ring)]",
@@ -418,7 +417,7 @@ export function StaffAgenda({
                 Antes competía con el nombre del cliente. */}
             <span
               className={cn(
-                "shrink-0 text-lg font-black tabular-nums leading-tight",
+                "shrink-0 text-lg font-semibold tabular-nums leading-tight",
                 cancelado
                   ? "text-[color:var(--text-subtle)] line-through"
                   : "text-[color:var(--brand-gold)]",
@@ -429,7 +428,7 @@ export function StaffAgenda({
             <div className="min-w-0 flex-1">
               <p
                 className={cn(
-                  "truncate text-sm font-bold",
+                  "break-words text-sm font-bold",
                   cancelado
                     ? "text-[color:var(--text-muted)] line-through"
                     : "text-white",
@@ -437,7 +436,7 @@ export function StaffAgenda({
               >
                 {turno.customer_name}
               </p>
-              <p className="truncate text-xs text-[color:var(--text-muted)]">
+              <p className="break-words text-xs text-[color:var(--text-muted)]">
                 {turno.service_name}
                 {turno.service_duration_minutes
                   ? ` · ${turno.service_duration_minutes} min`
@@ -479,12 +478,12 @@ export function StaffAgenda({
             permisos.cancelar ||
             permisos.reprogramar ||
             waLink) ? (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
               {turno.status !== "confirmed" && permisos.confirmar ? (
                 <Button
                   variant="success"
                   size="sm"
-                  className="flex-1 sm:flex-initial"
+                  className="min-h-11 flex-1 text-xs normal-case tracking-normal sm:flex-initial"
                   disabled={tocando === turno.id}
                   onClick={() => void cambiarEstado(turno.id, "confirmed")}
                   iconLeft={<Check className="size-3.5" />}
@@ -498,7 +497,7 @@ export function StaffAgenda({
                   size="sm"
                   onClick={() => setPorMover(turno)}
                   iconLeft={<CalendarClock className="size-3.5" />}
-                  className="flex-1 sm:flex-initial"
+                  className="min-h-11 flex-1 text-xs normal-case tracking-normal sm:flex-initial"
                 >
                   Mover
                 </Button>
@@ -514,7 +513,7 @@ export function StaffAgenda({
                   rel="noopener noreferrer"
                   variant="secondary"
                   size="sm"
-                  className="flex-1 sm:flex-initial"
+                  className="min-h-11 flex-1 text-xs normal-case tracking-normal sm:flex-initial"
                   iconLeft={<MessageCircle className="size-3.5" />}
                 >
                   WhatsApp
@@ -534,7 +533,7 @@ export function StaffAgenda({
                     })
                   }
                   aria-label="Cancelar turno"
-                  className="shrink-0"
+                  className="min-h-11 min-w-11 shrink-0 text-xs normal-case tracking-normal"
                 >
                   <X className="size-3.5" />
                 </Button>
@@ -553,6 +552,36 @@ export function StaffAgenda({
         en el mismo orden de siempre. */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] lg:items-start">
         <div className="flex flex-col gap-4 lg:sticky lg:top-32">
+              {!cargando && !error && destacado ? (
+                <section
+                  aria-label="Próximo turno"
+                  className={cn(
+                    "rounded-lg border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] p-4",
+                    destacado.enCurso && "border-[color:var(--brand-gold)]",
+                  )}
+                >
+                  <p className="flex items-center gap-1.5 text-xs font-bold tracking-normal text-[color:var(--brand-gold)]">
+                    <Clock className="size-3" />
+                    {destacado.enCurso
+                      ? "Atendiendo ahora"
+                      : "Tu próximo turno"}
+                  </p>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="stat-number text-3xl font-semibold tabular-nums leading-none text-white">
+                      {destacado.turno.appointment_time.slice(0, 5)}
+                    </span>
+                    <span className="break-words text-base font-bold text-white">
+                      {destacado.turno.customer_name}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-[color:var(--text-muted)]">
+                    {destacado.turno.service_name}
+                    {destacado.turno.service_duration_minutes
+                      ? ` · ${destacado.turno.service_duration_minutes} min`
+                      : ""}
+                  </p>
+                </section>
+              ) : null}
           <Card padding="sm">
             <AgendaCalendar
               focusDate={fecha}
@@ -576,24 +605,26 @@ export function StaffAgenda({
               permisos.verGanancias ? "grid-cols-2" : "grid-cols-1",
             )}
           >
-            <MetricCard label="Turnos" icon={Scissors}>
-              <p className="stat-number text-2xl font-black tabular-nums leading-none text-white">
-                {activos.length}
+            <div className="rounded-lg border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-3">
+              <p className="flex items-center gap-2 text-xs text-[color:var(--text-muted)]"><Scissors className="size-4" aria-hidden="true" />Turnos</p>
+              <p className="stat-number text-2xl font-semibold tabular-nums leading-none text-white">
+                {cargando || error ? "—" : activos.length}
               </p>
-            </MetricCard>
+            </div>
             {permisos.verGanancias ? (
-              <MetricCard label="Te llevás" icon={Wallet}>
+              <div className="rounded-lg border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-3">
+                <p className="flex items-center gap-2 text-xs text-[color:var(--text-muted)]"><Wallet className="size-4" aria-hidden="true" />Te llevás</p>
                 <p
                   className={cn(
-                    "stat-number text-2xl font-black tabular-nums leading-none",
+                    "stat-number text-2xl font-semibold tabular-nums leading-none",
                     comision === null
                       ? "text-[color:var(--text-subtle)]"
-                      : "w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-transparent",
+                      : "text-[color:var(--brand-gold)]",
                   )}
                 >
-                  {comision === null ? "—" : formatPrice(comision)}
+                  {cargando || error || comision === null ? "—" : formatPrice(comision)}
                 </p>
-              </MetricCard>
+              </div>
             ) : null}
           </div>
         </div>
@@ -607,6 +638,7 @@ export function StaffAgenda({
               {permisos.bloquearHorario ? (
                 <Button
                   size="sm"
+                  className="min-h-11 text-xs normal-case tracking-normal"
                   variant="secondary"
                   onClick={() => setBloqueandoHorario(true)}
                   iconLeft={<Ban className="size-3.5" />}
@@ -617,6 +649,7 @@ export function StaffAgenda({
               {permisos.cargarTurno ? (
                 <Button
                   size="sm"
+                  className="min-h-11 text-xs normal-case tracking-normal"
                   variant="secondary"
                   onClick={() => setCargandoTurno(true)}
                   iconLeft={<Plus className="size-3.5" />}
@@ -664,7 +697,7 @@ export function StaffAgenda({
                       {b.start_time.slice(0, 5)} a {b.end_time.slice(0, 5)}
                     </p>
                     {b.reason ? (
-                      <p className="truncate text-xs text-[color:var(--text-muted)]">
+                      <p className="break-words text-xs text-[color:var(--text-muted)]">
                         {b.reason}
                       </p>
                     ) : null}
@@ -675,7 +708,7 @@ export function StaffAgenda({
                       size="sm"
                       onClick={() => void sacarBloqueo(b.id)}
                       aria-label="Sacar el bloqueo"
-                      className="shrink-0"
+                      className="min-h-11 min-w-11 shrink-0 text-xs normal-case tracking-normal"
                     >
                       <X className="size-3.5" />
                     </Button>
@@ -695,9 +728,11 @@ export function StaffAgenda({
           ) : null}
 
           {cargando ? (
-            <div className="flex justify-center py-12">
+            <div role="status" aria-label="Cargando mi agenda" className="flex justify-center py-12">
               <Loader2 className="size-5 animate-spin text-[color:var(--text-muted)]" />
             </div>
+          ) : error ? (
+            <Button variant="secondary" className="min-h-11 text-xs normal-case tracking-normal" onClick={() => setRecarga((value) => value + 1)}>Reintentar</Button>
           ) : turnos.length === 0 ? (
             <div className="flex flex-col items-center rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-subtle)] px-6 py-12 text-center">
               <CalendarX2 className="size-7 text-[color:var(--text-subtle)]" />
@@ -710,35 +745,6 @@ export function StaffAgenda({
             </div>
           ) : (
             <>
-              {destacado ? (
-                <section
-                  className={cn(
-                    "card-premium card-premium-glow p-4",
-                    destacado.enCurso && "border-[color:var(--brand-gold)]",
-                  )}
-                >
-                  <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)]">
-                    <Clock className="size-3" />
-                    {destacado.enCurso
-                      ? "Atendiendo ahora"
-                      : "Tu próximo turno"}
-                  </p>
-                  <div className="mt-2 flex items-baseline gap-2">
-                    <span className="stat-number text-3xl font-black tabular-nums leading-none text-white">
-                      {destacado.turno.appointment_time.slice(0, 5)}
-                    </span>
-                    <span className="truncate text-base font-bold text-white">
-                      {destacado.turno.customer_name}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-[color:var(--text-muted)]">
-                    {destacado.turno.service_name}
-                    {destacado.turno.service_duration_minutes
-                      ? ` · ${destacado.turno.service_duration_minutes} min`
-                      : ""}
-                  </p>
-                </section>
-              ) : null}
 
               {franjas.agrupar ? (
                 <>
@@ -767,6 +773,7 @@ export function StaffAgenda({
         apariciones, así el motivo elegido no queda pegado del turno anterior:
         cancelar por "no vino" el turno de otro cliente sería un dato falso. */}
       <StaffRescheduleModal
+        key={`${fecha}:${porMover?.id ?? "closed"}`}
         turno={porMover}
         barbershopSlug={barbershopSlug}
         barbershopName={barbershopName}
@@ -776,6 +783,7 @@ export function StaffAgenda({
       />
 
       <StaffBlockTimeModal
+        key={fecha}
         abierto={bloqueandoHorario}
         barbershopSlug={barbershopSlug}
         fecha={fecha}
@@ -791,6 +799,7 @@ export function StaffAgenda({
       />
 
       <StaffNewAppointmentModal
+        key={fecha}
         abierto={cargandoTurno}
         barbershopSlug={barbershopSlug}
         fecha={fecha}
@@ -829,10 +838,10 @@ function ListaDeTurnos({
   return (
     <section className="mt-5">
       <p className="mb-2 flex items-baseline gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)]">
+        <span className="text-xs font-bold tracking-normal text-[color:var(--brand-gold)]">
           {titulo}
         </span>
-        <span className="text-[10px] font-semibold text-[color:var(--text-subtle)]">
+        <span className="text-xs font-semibold text-[color:var(--text-subtle)]">
           {enPie} turno{enPie === 1 ? "" : "s"}
         </span>
       </p>

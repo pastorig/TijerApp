@@ -110,10 +110,10 @@ export default function PricingPage() {
         />
         <div className="mx-auto w-full max-w-6xl px-4 pb-8 pt-8 sm:px-8 sm:pb-16 sm:pt-16 lg:px-12 lg:pb-20 lg:pt-20">
           <div className="animate-fade-up text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+            <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
               Precios
             </p>
-            <h1 className="mx-auto mt-4 max-w-3xl text-[1.75rem] font-black uppercase leading-[1] tracking-tight text-balance sm:mt-8 sm:text-5xl lg:text-6xl">
+            <h1 className="mx-auto mt-4 max-w-3xl text-[1.75rem] font-black uppercase leading-[1] tracking-normal text-balance sm:mt-8 sm:text-5xl lg:text-6xl">
               Planes claros para barberías que{" "}
               <span className="text-[color:var(--brand-gold)]">crecen</span>.
             </h1>
@@ -129,7 +129,7 @@ export default function PricingPage() {
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:mt-9 sm:flex-row">
               <Link
                 href="#planes"
-                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
               >
                 Ver planes
                 <ArrowUpRight aria-hidden="true" className="size-4" />
@@ -171,10 +171,10 @@ export default function PricingPage() {
       <section className="border-t border-[color:var(--border-subtle)] bg-black">
         <div className="mx-auto w-full max-w-4xl px-4 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
           <header className="text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+            <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
               Preguntas frecuentes
             </p>
-            <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl">
+            <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl">
               Lo que querés saber antes de empezar
             </h2>
           </header>

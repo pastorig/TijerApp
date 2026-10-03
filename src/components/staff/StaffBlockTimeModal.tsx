@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { useStaffDialogFocus } from "./useStaffDialogFocus";
 import { getCurrentSession } from "@/lib/auth";
 import { Button, Field, Input, Select } from "@/components/ui";
 
@@ -43,6 +44,7 @@ export function StaffBlockTimeModal({
   /** Recibe cuántos turnos quedaron adentro del bloqueo, para avisarle. */
   onCreado: (turnosEnElRango: number) => void;
 }) {
+  const dialogRef = useStaffDialogFocus(abierto);
   const [dia, setDia] = useState(fecha);
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
@@ -115,12 +117,17 @@ export function StaffBlockTimeModal({
   return createPortal(
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-6">
       <form
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="staff-block-title"
+        tabIndex={-1}
         onSubmit={guardar}
-        className="flex max-h-[92vh] w-full max-w-md flex-col overflow-y-auto rounded-t-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] sm:rounded-[var(--radius-md)]"
+        className="flex max-h-[calc(100dvh-1rem)] w-full max-w-md flex-col overflow-y-auto [&_label]:text-xs [&_label]:normal-case [&_label]:tracking-normal [&_input]:min-h-11 [&_input]:text-base [&_select]:min-h-11 [&_select]:text-base [&_textarea]:text-base [&_button]:min-h-11 [&_button]:text-xs [&_button]:normal-case [&_button]:tracking-normal sm:[&_input]:text-sm sm:[&_select]:text-sm sm:[&_textarea]:text-sm rounded-t-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] sm:rounded-[var(--radius-md)]"
       >
-        <header className="flex items-start justify-between gap-3 border-b border-[color:var(--border-subtle)] px-5 py-4">
+        <header className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-4 py-3">
           <div>
-            <h2 className="text-lg font-black tracking-tight text-white">
+            <h2 id="staff-block-title" className="text-lg font-semibold tracking-normal text-white">
               Bloquear horario
             </h2>
             <p className="mt-1 text-xs text-[color:var(--text-muted)]">
@@ -130,14 +137,16 @@ export function StaffBlockTimeModal({
           <button
             type="button"
             onClick={onCerrar}
+            disabled={guardando}
             aria-label="Cerrar"
-            className="shrink-0 rounded-[var(--radius-sm)] p-1.5 text-[color:var(--text-muted)] transition-colors hover:text-white"
+            title="Cerrar"
+            className="flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[color:var(--text-muted)] transition-colors hover:text-white"
           >
             <X className="size-4" />
           </button>
         </header>
 
-        <div className="flex flex-col gap-4 px-5 py-4">
+        <div className="flex flex-col gap-3 px-4 py-3">
           <Field label="Día" htmlFor="staff-bloqueo-dia">
             <Input
               id="staff-bloqueo-dia"
@@ -180,7 +189,7 @@ export function StaffBlockTimeModal({
             </Select>
           </Field>
 
-          <p className="text-[11px] leading-4 text-[color:var(--text-subtle)]">
+          <p className="text-xs leading-4 text-[color:var(--text-secondary)]">
             Los turnos que ya tengas en ese rango <strong>no se cancelan</strong>.
             Si hay alguno, te lo avisamos.
           </p>
@@ -195,7 +204,7 @@ export function StaffBlockTimeModal({
           ) : null}
         </div>
 
-        <footer className="flex justify-end gap-2 border-t border-[color:var(--border-subtle)] px-5 py-4">
+        <footer className="sticky bottom-0 z-10 flex justify-end gap-2 border-t border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <Button
             type="button"
             variant="secondary"
@@ -205,7 +214,8 @@ export function StaffBlockTimeModal({
           >
             Volver
           </Button>
-          <Button type="submit" size="sm" loading={guardando}>
+          <Button type="submit"
+            style={{ backgroundImage: "none", backgroundColor: "var(--brand-gold)" }} size="sm" loading={guardando}>
             Bloquear
           </Button>
         </footer>

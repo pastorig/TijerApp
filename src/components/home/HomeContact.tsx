@@ -86,7 +86,7 @@ export function HomeContact() {
           >
             <CheckCircle2 className="size-7" />
           </div>
-          <h2 className="mt-6 text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
+          <h2 className="mt-6 text-3xl font-black uppercase tracking-normal text-white sm:text-4xl">
             Recibimos tu mensaje
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-[color:var(--text-secondary)] sm:text-lg">
@@ -96,7 +96,7 @@ export function HomeContact() {
           <button
             type="button"
             onClick={() => setSuccess(false)}
-            className="mt-8 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold-hi)]"
+            className="mt-8 text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold-hi)]"
           >
             Enviar otro mensaje
           </button>
@@ -113,10 +113,10 @@ export function HomeContact() {
       <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
         <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           <header>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+            <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
               Contacto
             </p>
-            <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
+            <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
               ¿Listo para sumar tu barbería?
             </h2>
             <p className="mt-4 text-base leading-7 text-[color:var(--text-secondary)] sm:text-lg">
@@ -127,7 +127,7 @@ export function HomeContact() {
               href={`https://wa.me/${FOUNDER.whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--success-soft)]/80"
+              className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-4 text-xs font-bold uppercase tracking-normal text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--success-soft)]/80"
             >
               <MessageCircle className="size-4" />
               Escribinos por WhatsApp
@@ -142,7 +142,7 @@ export function HomeContact() {
               <div>
                 <label
                   htmlFor="contact-name"
-                  className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
+                  className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]"
                 >
                   Nombre y barbería *
                 </label>
@@ -160,7 +160,7 @@ export function HomeContact() {
               </div>
 
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
                   Dejanos al menos un contacto *
                 </p>
               </div>
@@ -168,7 +168,7 @@ export function HomeContact() {
                 <div>
                   <label
                     htmlFor="contact-email"
-                    className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
+                    className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]"
                   >
                     Email
                   </label>
@@ -188,7 +188,7 @@ export function HomeContact() {
                 <div>
                   <label
                     htmlFor="contact-phone"
-                    className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
+                    className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]"
                   >
                     Teléfono / WhatsApp
                   </label>
@@ -210,7 +210,7 @@ export function HomeContact() {
               <div>
                 <label
                   htmlFor="contact-message"
-                  className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
+                  className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]"
                 >
                   Mensaje *
                 </label>
@@ -240,7 +240,7 @@ export function HomeContact() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-5 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-5 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting ? "Enviando…" : "Enviar mensaje"}
               </button>

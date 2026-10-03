@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { Loader2, Plus, Tag, Trash2 } from "lucide-react";
+import { Copy, Loader2, Plus, Tag, Trash2 } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { useConfirm, useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
@@ -11,12 +11,22 @@ import { OnboardingTip } from "./OnboardingTip";
 
 type Props = { barbershop: DemoBarbershop };
 
+function couponStatus(coupon: CouponRow) {
+  if (!coupon.is_active) return "Pausado";
+  const now = Date.now();
+  if (coupon.valid_from && now < Date.parse(coupon.valid_from)) return "Próximamente";
+  if (coupon.valid_until && now > Date.parse(coupon.valid_until)) return "Vencido";
+  if (coupon.usage_limit !== null && coupon.usage_count >= coupon.usage_limit) return "Agotado";
+  return "Vigente";
+}
+
 export function AdminCouponsManager({ barbershop }: Props) {
   const toast = useToast();
   const confirm = useConfirm();
   const [coupons, setCoupons] = useState<CouponRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Form fields para nuevo cupón
   const [code, setCode] = useState("");
@@ -30,10 +40,12 @@ export function AdminCouponsManager({ barbershop }: Props) {
 
   async function load() {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const { data: sessionData } = await getCurrentSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
+        setLoadError("Sesión expirada. Volvé a iniciar sesión.");
         toast.error("Sesión expirada");
         return;
       }
@@ -43,6 +55,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
       );
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string };
+        setLoadError(err.error ?? "No pudimos cargar los cupones.");
         toast.error("Error cargando cupones", {
           description: err.error ?? `HTTP ${res.status}`,
         });
@@ -50,6 +63,8 @@ export function AdminCouponsManager({ barbershop }: Props) {
       }
       const data = (await res.json()) as { coupons: CouponRow[] };
       setCoupons(data.coupons);
+    } catch {
+      setLoadError("No pudimos cargar los cupones. Intentá nuevamente.");
     } finally {
       setIsLoading(false);
     }
@@ -155,13 +170,22 @@ export function AdminCouponsManager({ barbershop }: Props) {
     await load();
   }
 
+  async function handleCopy(code: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success("Código copiado", { description: code });
+    } catch {
+      toast.error("No pudimos copiar el código.");
+    }
+  }
+
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-8 px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
+    <section aria-label="Cupones" className="mx-auto w-full max-w-5xl space-y-6">
       <header className="relative">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+        <p className="text-xs font-semibold tracking-normal text-[color:var(--brand-gold)]">
           Feature Pro
         </p>
-        <h1 className="mt-2 text-2xl font-black uppercase leading-tight tracking-tight sm:text-3xl lg:text-4xl">
+        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-normal sm:text-3xl lg:text-3xl">
           Cupones de descuento
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)]">
@@ -179,17 +203,18 @@ export function AdminCouponsManager({ barbershop }: Props) {
       </header>
 
       {/* Formulario crear cupón */}
-      <section className="card-premium p-5 sm:p-6">
-        <h2 className="text-lg font-black uppercase tracking-tight">
+      <section className="border-t border-[color:var(--border-subtle)] pt-5">
+        <h2 className="text-lg font-semibold tracking-normal">
           Nuevo cupón
         </h2>
         <form onSubmit={handleCreate} className="mt-4 space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
+              <label htmlFor="coupon-code" className="text-xs font-bold tracking-normal text-[color:var(--brand-gold)]">
                 Código <span className="text-[color:var(--danger)]">*</span>
               </label>
               <input
+                id="coupon-code"
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
@@ -197,37 +222,40 @@ export function AdminCouponsManager({ barbershop }: Props) {
                 minLength={3}
                 maxLength={30}
                 placeholder="VERANO20"
-                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 font-mono uppercase tracking-wider text-white outline-none focus:border-[color:var(--brand-gold)]"
+                className="mt-2 min-h-11 w-full text-base sm:text-sm rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 font-mono tracking-normal text-white outline-none focus:border-[color:var(--brand-gold)]"
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
+              <label htmlFor="coupon-description" className="text-xs font-bold tracking-normal text-[color:var(--brand-gold)]">
                 Descripción <span className="text-[color:var(--text-muted)]">— opcional</span>
               </label>
               <input
+                id="coupon-description"
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={100}
                 placeholder="Promo verano"
-                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
+                className="mt-2 min-h-11 w-full text-base sm:text-sm rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
               />
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
+              <label className="text-xs font-bold tracking-normal text-[color:var(--brand-gold)]">
                 Tipo de descuento
               </label>
-              <div className="mt-2 inline-flex rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] p-0.5">
+              <div role="group" aria-label="Tipo de descuento" className="mt-2 inline-flex rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] p-0.5">
                 <button
                   type="button"
+                  aria-pressed={discountType === "percent"}
+                  aria-label="Descuento porcentual"
                   onClick={() => setDiscountType("percent")}
                   className={cn(
-                    "min-h-10 rounded-[var(--radius-xs)] px-4 text-xs font-bold uppercase tracking-[0.14em] transition-colors",
+                    "min-h-11 rounded-[var(--radius-xs)] px-4 text-xs font-bold tracking-normal transition-colors",
                     discountType === "percent"
-                      ? "bg-gold-grad text-black"
+                      ? "bg-[color:var(--brand-gold)] text-black"
                       : "text-[color:var(--text-secondary)]",
                   )}
                 >
@@ -235,11 +263,13 @@ export function AdminCouponsManager({ barbershop }: Props) {
                 </button>
                 <button
                   type="button"
+                  aria-pressed={discountType === "fixed"}
+                  aria-label="Descuento fijo en pesos"
                   onClick={() => setDiscountType("fixed")}
                   className={cn(
-                    "min-h-10 rounded-[var(--radius-xs)] px-4 text-xs font-bold uppercase tracking-[0.14em] transition-colors",
+                    "min-h-11 rounded-[var(--radius-xs)] px-4 text-xs font-bold tracking-normal transition-colors",
                     discountType === "fixed"
-                      ? "bg-gold-grad text-black"
+                      ? "bg-[color:var(--brand-gold)] text-black"
                       : "text-[color:var(--text-secondary)]",
                   )}
                 >
@@ -248,10 +278,11 @@ export function AdminCouponsManager({ barbershop }: Props) {
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
-                Valor <span className="text-[color:var(--danger)]">*</span>
+              <label htmlFor="coupon-value" className="text-xs font-bold tracking-normal text-[color:var(--brand-gold)]">
+                Valor ({discountType === "percent" ? "%" : "ARS"}) <span className="text-[color:var(--danger)]">*</span>
               </label>
               <input
+                id="coupon-value"
                 type="number"
                 value={discountValue}
                 onChange={(e) => setDiscountValue(Number(e.target.value))}
@@ -259,34 +290,36 @@ export function AdminCouponsManager({ barbershop }: Props) {
                 min={1}
                 max={discountType === "percent" ? 100 : undefined}
                 step={discountType === "percent" ? 1 : 100}
-                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
+                className="mt-2 min-h-11 w-full text-base sm:text-sm rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
               />
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
+              <label htmlFor="coupon-expiry" className="text-xs font-bold tracking-normal text-[color:var(--brand-gold)]">
                 Vence el <span className="text-[color:var(--text-muted)]">— opcional</span>
               </label>
               <input
+                id="coupon-expiry"
                 type="date"
                 value={validUntil}
                 onChange={(e) => setValidUntil(e.target.value)}
-                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
+                className="mt-2 min-h-11 w-full text-base sm:text-sm rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
+              <label htmlFor="coupon-limit" className="text-xs font-bold tracking-normal text-[color:var(--brand-gold)]">
                 Límite de usos <span className="text-[color:var(--text-muted)]">— opcional</span>
               </label>
               <input
+                id="coupon-limit"
                 type="number"
                 value={usageLimit}
                 onChange={(e) => setUsageLimit(e.target.value)}
                 min={1}
                 placeholder="Ej. 50"
-                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
+                className="mt-2 min-h-11 w-full text-base sm:text-sm rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
               />
             </div>
           </div>
@@ -294,7 +327,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
           <button
             type="submit"
             disabled={isCreating}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold tracking-normal text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="size-4" />
             {isCreating ? "Creando…" : "Crear cupón"}
@@ -303,12 +336,17 @@ export function AdminCouponsManager({ barbershop }: Props) {
       </section>
 
       {/* Lista de cupones */}
-      <section className="card-premium p-5 sm:p-6">
-        <h2 className="text-lg font-black uppercase tracking-tight">
+      <section className="border-t border-[color:var(--border-subtle)] pt-5">
+        <h2 className="text-lg font-semibold tracking-normal">
           Cupones existentes
         </h2>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-10">
+        {loadError ? (
+          <div role="alert" className="mt-4 rounded-lg border border-red-400/30 p-4 text-sm">
+            <p>{loadError}</p>
+            <button type="button" onClick={() => void load()} className="mt-2 min-h-11 px-3 font-semibold text-[color:var(--brand-gold)]">Reintentar</button>
+          </div>
+        ) : isLoading ? (
+          <div role="status" aria-label="Cargando cupones" className="flex items-center justify-center py-10">
             <Loader2 className="size-5 animate-spin text-[color:var(--brand-gold)]" />
           </div>
         ) : coupons.length === 0 ? (
@@ -324,19 +362,20 @@ export function AdminCouponsManager({ barbershop }: Props) {
                   "rounded-[var(--radius-sm)] border bg-[color:var(--surface-0)] p-4",
                   c.is_active
                     ? "border-[color:var(--border-default)]"
-                    : "border-[color:var(--border-subtle)] opacity-60",
+                    : "border-[color:var(--border-subtle)]",
                 )}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <Tag className="size-4 shrink-0 text-[color:var(--brand-gold)]" />
-                      <code className="font-mono text-lg font-black tracking-wider text-white">
+                      <code className="break-all font-mono text-base font-semibold tracking-normal text-white">
                         {c.code}
                       </code>
+                      <button type="button" title="Copiar código" aria-label={`Copiar código ${c.code}`} onClick={() => void handleCopy(c.code)} className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-[color:var(--border-subtle)] text-[color:var(--text-secondary)] hover:text-[color:var(--brand-gold)]"><Copy className="size-4" /></button>
                     </div>
                     {c.description ? (
-                      <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
+                      <p className="mt-1 break-words text-xs text-[color:var(--text-secondary)]">
                         {c.description}
                       </p>
                     ) : null}
@@ -362,18 +401,21 @@ export function AdminCouponsManager({ barbershop }: Props) {
                       )}
                     </p>
                   </div>
-                  <div className="flex shrink-0 gap-2">
+                  <div className="flex w-full flex-wrap items-center gap-2 border-t border-[color:var(--border-subtle)] pt-3">
+                    <span className="mr-auto text-xs font-semibold text-[color:var(--text-secondary)]">{couponStatus(c)}</span>
                     <button
                       type="button"
                       onClick={() => void handleToggleActive(c)}
-                      className="inline-flex min-h-10 items-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+                      className="inline-flex min-h-11 items-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-xs font-bold tracking-normal transition-colors hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
                     >
                       {c.is_active ? "Pausar" : "Activar"}
                     </button>
                     <button
                       type="button"
+                      aria-label={`Eliminar cupón ${c.code}`}
+                      title="Eliminar cupón"
                       onClick={() => void handleDelete(c)}
-                      className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 px-3 text-[color:var(--danger)] transition-colors hover:bg-[color:var(--danger-soft)]"
+                      className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 px-3 text-[color:var(--danger)] transition-colors hover:bg-[color:var(--danger-soft)]"
                     >
                       <Trash2 className="size-4" />
                     </button>
@@ -384,6 +426,6 @@ export function AdminCouponsManager({ barbershop }: Props) {
           </ul>
         )}
       </section>
-    </main>
+    </section>
   );
 }

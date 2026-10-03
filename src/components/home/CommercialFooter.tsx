@@ -17,7 +17,7 @@ export function CommercialFooter() {
           </div>
 
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+            <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
               Producto
             </p>
             <ul className="mt-3 grid gap-2">
@@ -65,7 +65,7 @@ export function CommercialFooter() {
           </div>
 
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+            <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
               Contacto
             </p>
             <ul className="mt-3 grid gap-2">
@@ -100,10 +100,10 @@ export function CommercialFooter() {
         </div>
 
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-[color:var(--border-subtle)] pt-6 sm:flex-row">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
             © {year} TijerApp · Todos los derechos reservados
           </p>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
             Hecho en Argentina 🇦🇷
           </p>
         </div>

@@ -161,13 +161,13 @@ export function ClientPushOptIn({ token }: Props) {
             type="button"
             onClick={() => void handleOptIn()}
             disabled={isLoading}
-            className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-4 text-xs font-bold uppercase tracking-[0.14em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-4 text-xs font-bold uppercase tracking-normal text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Bell className="size-3.5" />
             {isLoading ? "Activando…" : "Activar"}
           </button>
         ) : (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)]">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 py-1 text-xs font-bold uppercase tracking-normal text-[color:var(--success)]">
             <BellOff className="size-3" />
             Listo
           </span>

@@ -115,6 +115,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
   const [errorMessage, setErrorMessage] = useState("");
   const [period, setPeriod] = useState<PeriodKey>("month");
   const [selectedBarber, setSelectedBarber] = useState("all");
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -146,7 +147,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
     return () => {
       isMounted = false;
     };
-  }, [barbershop.slug]);
+  }, [barbershop.slug, reloadKey]);
 
   // Rangos
   const currentRange = useMemo(
@@ -408,13 +409,13 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
   }, [barbers]);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       {/* Hero */}
-      <header className="animate-fade-up">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
+      <header className="">
+        <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--brand-gold)] sm:tracking-normal">
           Reportes
         </p>
-        <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
+        <h1 className="mt-2 text-2xl font-semibold normal-case tracking-normal text-balance text-white sm:text-3xl">
           Análisis y métricas
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
@@ -423,7 +424,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
       </header>
 
       {isLoading ? (
-        <div className="rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] p-6 text-sm text-[color:var(--text-secondary)]">
+        <div role="status" aria-label="Cargando reportes" className="min-h-32 rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] p-6 text-sm text-[color:var(--text-secondary)]">
           Cargando reportes…
         </div>
       ) : null}
@@ -434,6 +435,9 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
           className="border-l-2 border-[color:var(--danger)] pl-4 text-sm font-semibold text-[color:var(--danger)]"
         >
           {errorMessage}
+          <button type="button" onClick={() => setReloadKey((value) => value + 1)} className="mt-3 flex min-h-11 items-center rounded-lg border border-[color:var(--border-default)] px-4 text-sm text-white">
+            Reintentar
+          </button>
         </div>
       ) : null}
 
@@ -441,18 +445,19 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
         <>
           {/* Controles: período + barbero */}
           <section className="grid gap-3 sm:grid-cols-[1fr_minmax(0,16rem)]">
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div className="grid grid-cols-3 gap-2">
               {PERIOD_OPTIONS.map((opt) => {
                 const isActive = period === opt.value;
                 return (
                   <button
                     key={opt.value}
                     type="button"
+                    aria-pressed={isActive}
                     onClick={() => setPeriod(opt.value)}
                     className={cn(
-                      "inline-flex min-h-9 shrink-0 items-center rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
+                      "inline-flex min-h-11 shrink-0 items-center rounded-[var(--radius-sm)] border px-3 text-xs font-bold normal-case tracking-normal transition-colors duration-[var(--duration-fast)]",
                       isActive
-                        ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
+                        ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
                         : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
                     )}
                   >
@@ -465,20 +470,20 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
             {/* Qué días se están contando. Sin esto, "esta semana" y "este mes"
                 son dos cajas negras que dan números distintos y el barbero no
                 tiene cómo saber por qué: es justo lo que pasó con SV Barber. */}
-            <p className="text-[11px] leading-4 text-[color:var(--text-muted)] sm:col-span-2">
+            <p className="order-last text-xs leading-5 text-[color:var(--text-muted)] sm:col-span-2">
               Contando del <strong className="text-white">{formatDateForDisplay(currentRange.start)}</strong>{" "}
               al <strong className="text-white">{formatDateForDisplay(currentRange.end)}</strong>
               {currentRange.days > 1 ? ` · ${currentRange.days} días` : ""} — hasta hoy.
               Lo que ya está reservado para más adelante se ve en la Agenda.
             </p>
 
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               {barberOptions.length > 1 ? (
                 <Select
                   aria-label="Filtrar por barbero"
                   value={selectedBarber}
                   onChange={(e) => setSelectedBarber(e.target.value)}
-                  className="flex-1"
+                  className="min-w-0 flex-1 text-base sm:text-sm"
                 >
                   <option value="all">Todos los barberos</option>
                   {barberOptions.map((b) => (
@@ -502,7 +507,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
 
           {/* KPIs · Operación */}
           <section>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+            <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
               Operación
             </p>
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -541,7 +546,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
 
           {/* KPIs · Ingresos */}
           <section>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+            <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
               Ingresos
             </p>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -577,7 +582,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
 
           {/* KPIs · Tasas */}
           <section>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+            <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
               Tasas
             </p>
             <div className="mt-4 grid grid-cols-2 gap-3">
@@ -604,13 +609,13 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
           {/* Producción por barbero */}
           {byBarber.length > 0 ? (
             <section>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+              <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
                 Producción por barbero
               </p>
-              <div className="mt-4 overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)]">
+              <div className="mt-4 overflow-x-auto rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)]">
                 <table className="w-full text-left text-xs sm:text-sm">
                   <thead className="bg-[color:var(--surface-1)]">
-                    <tr className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
+                    <tr className="text-xs normal-case tracking-normal text-[color:var(--text-muted)]">
                       <th className="px-3 py-2 sm:px-4">Barbero</th>
                       <th className="px-3 py-2 text-right sm:px-4">Turnos</th>
                       <th className="hidden px-3 py-2 text-right sm:table-cell sm:px-4">
@@ -651,7 +656,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
           {/* Comisiones del período */}
           {commissions.rows.length > 0 || commissions.unconfigured.length > 0 ? (
             <section>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+              <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
                 Comisiones del período
               </p>
               {/* El porcentaje que se aplica es el que está cargado HOY, no el
@@ -662,10 +667,10 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
               </p>
 
               {commissions.rows.length > 0 ? (
-                <div className="mt-4 overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)]">
+                <div className="mt-4 overflow-x-auto rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)]">
                   <table className="w-full text-left text-xs sm:text-sm">
                     <thead className="bg-[color:var(--surface-1)]">
-                      <tr className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
+                      <tr className="text-xs normal-case tracking-normal text-[color:var(--text-muted)]">
                         <th className="px-3 py-2 sm:px-4">Barbero</th>
                         <th className="px-3 py-2 text-right sm:px-4">Produjo</th>
                         <th className="px-3 py-2 text-right sm:px-4">%</th>
@@ -693,7 +698,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                           <td className="px-3 py-2 text-right tabular-nums text-[color:var(--text-muted)] sm:px-4">
                             {row.commissionPercent}%
                           </td>
-                          <td className="px-3 py-2 text-right font-black tabular-nums text-[color:var(--brand-gold)] sm:px-4">
+                          <td className="px-3 py-2 text-right font-semibold tabular-nums text-[color:var(--brand-gold)] sm:px-4">
                             {formatPrice(row.commission)}
                           </td>
                           <td className="hidden px-3 py-2 text-right tabular-nums text-[color:var(--text-secondary)] sm:table-cell sm:px-4">
@@ -714,7 +719,7 @@ Te corresponde: ${formatPrice(row.commission)}`;
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   aria-label={`Mandarle la liquidación a ${row.name}`}
-                                  className="inline-flex min-h-8 items-center rounded-[var(--radius-xs)] border border-[color:var(--border-subtle)] px-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--text-secondary)] transition-colors hover:border-[color:var(--brand-gold-ring)] hover:text-white"
+                                  className="inline-flex min-h-11 items-center rounded-[var(--radius-xs)] border border-[color:var(--border-subtle)] px-2 text-xs font-bold normal-case tracking-normal text-[color:var(--text-secondary)] transition-colors hover:border-[color:var(--brand-gold-ring)] hover:text-white"
                                 >
                                   Enviar
                                 </a>
@@ -724,17 +729,17 @@ Te corresponde: ${formatPrice(row.commission)}`;
                         </tr>
                       ))}
                       <tr className="border-t-2 border-[color:var(--border-default)] bg-[color:var(--surface-1)]">
-                        <td className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)] sm:px-4">
+                        <td className="px-3 py-2 text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)] sm:px-4">
                           Total
                         </td>
-                        <td className="px-3 py-2 text-right font-black tabular-nums text-white sm:px-4">
+                        <td className="px-3 py-2 text-right font-semibold tabular-nums text-white sm:px-4">
                           {formatPrice(commissions.totalRevenue)}
                         </td>
                         <td className="px-3 py-2 sm:px-4" />
-                        <td className="px-3 py-2 text-right font-black tabular-nums text-[color:var(--brand-gold)] sm:px-4">
+                        <td className="px-3 py-2 text-right font-semibold tabular-nums text-[color:var(--brand-gold)] sm:px-4">
                           {formatPrice(commissions.totalCommission)}
                         </td>
-                        <td className="hidden px-3 py-2 text-right font-black tabular-nums text-white sm:table-cell sm:px-4">
+                        <td className="hidden px-3 py-2 text-right font-semibold tabular-nums text-white sm:table-cell sm:px-4">
                           {formatPrice(commissions.totalBarbershopShare)}
                         </td>
                         <td className="px-3 py-2 sm:px-4" />
@@ -749,7 +754,7 @@ Te corresponde: ${formatPrice(row.commission)}`;
                   creer que no les debe nada. */}
               {commissions.unconfigured.length > 0 ? (
                 <div className="mt-3 rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] p-3">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+                  <p className="text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)]">
                     Sin comisión configurada
                   </p>
                   {/* Cada barbero linkea a SU perfil: el % de comisión vive en
@@ -785,9 +790,9 @@ Te corresponde: ${formatPrice(row.commission)}`;
           ) : null}
 
           {/* Top servicios + Horarios pico */}
-          <section className="grid gap-8 lg:grid-cols-2">
+          <section className="grid gap-6 lg:grid-cols-2">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+              <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
                 Top servicios
               </p>
               {topServices.length === 0 ? (
@@ -808,7 +813,7 @@ Te corresponde: ${formatPrice(row.commission)}`;
                         <p className="truncate text-sm font-bold text-white">
                           {service.name}
                         </p>
-                        <p className="mt-0.5 text-[11px] text-[color:var(--text-muted)]">
+                        <p className="mt-0.5 text-xs text-[color:var(--text-muted)]">
                           {service.count} {service.count === 1 ? "turno" : "turnos"}
                           <span className="mx-1.5 text-[color:var(--text-subtle)]">·</span>
                           <span className="font-mono font-bold text-[color:var(--brand-gold)]">
@@ -823,7 +828,7 @@ Te corresponde: ${formatPrice(row.commission)}`;
             </div>
 
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+              <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
                 Horarios pico
               </p>
               {peakHours.length === 0 ? (
@@ -842,7 +847,7 @@ Te corresponde: ${formatPrice(row.commission)}`;
                       </span>
                       <div className="relative h-6 flex-1 overflow-hidden rounded-[var(--radius-xs)] bg-[color:var(--surface-1)]">
                         <div
-                          className="h-full bg-gold-grad"
+                          className="h-full bg-[color:var(--brand-gold)]"
                           style={{ width: `${row.ratio * 100}%` }}
                         />
                       </div>
@@ -857,9 +862,9 @@ Te corresponde: ${formatPrice(row.commission)}`;
           </section>
 
           {/* Día más activo + Clientes nuevos vs recurrentes */}
-          <section className="grid gap-8 lg:grid-cols-2">
+          <section className="grid gap-6 lg:grid-cols-2">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+              <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
                 Día más activo
               </p>
               {weekDayStats.top.count === 0 ? (
@@ -868,7 +873,7 @@ Te corresponde: ${formatPrice(row.commission)}`;
                 </p>
               ) : (
                 <>
-                  <p className="mt-4 font-mono text-2xl font-black tabular-nums leading-none text-[color:var(--brand-gold)]">
+                  <p className="mt-4 font-mono text-2xl font-semibold tabular-nums leading-none text-[color:var(--brand-gold)]">
                     {weekDayStats.top.label}
                     <span className="ml-3 text-base font-bold text-white">
                       {weekDayStats.top.count}{" "}
@@ -878,7 +883,7 @@ Te corresponde: ${formatPrice(row.commission)}`;
                   <ul className="mt-4 grid gap-1.5">
                     {weekDayStats.rows.map((row) => (
                       <li key={row.dow} className="flex items-center gap-3">
-                        <span className="w-10 shrink-0 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                        <span className="w-10 shrink-0 text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)]">
                           {row.label}
                         </span>
                         <div className="relative h-5 flex-1 overflow-hidden rounded-[var(--radius-xs)] bg-[color:var(--surface-1)]">
@@ -886,7 +891,7 @@ Te corresponde: ${formatPrice(row.commission)}`;
                             className={cn(
                               "h-full",
                               row.dow === weekDayStats.top.dow
-                                ? "bg-gold-grad"
+                                ? "bg-[color:var(--brand-gold)]"
                                 : "bg-[color:var(--brand-silver)]/40",
                             )}
                             style={{ width: `${row.ratio * 100}%` }}
@@ -903,7 +908,7 @@ Te corresponde: ${formatPrice(row.commission)}`;
             </div>
 
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+              <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
                 Clientes en el período
               </p>
               {clientMix.total === 0 ? (
@@ -914,24 +919,24 @@ Te corresponde: ${formatPrice(row.commission)}`;
                 <>
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <div className="rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] p-4">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--brand-gold)]">
+                      <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--brand-gold)]">
                         Nuevos
                       </p>
-                      <p className="mt-1 font-mono text-2xl font-black tabular-nums leading-none text-[color:var(--brand-gold)]">
+                      <p className="mt-1 font-mono text-2xl font-semibold tabular-nums leading-none text-[color:var(--brand-gold)]">
                         {clientMix.nuevos}
                       </p>
-                      <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+                      <p className="mt-2 text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
                         {clientMix.nuevosPct.toFixed(0)}% del total
                       </p>
                     </div>
                     <div className="rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] p-4">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
+                      <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
                         Recurrentes
                       </p>
-                      <p className="mt-1 font-mono text-2xl font-black tabular-nums leading-none text-white">
+                      <p className="mt-1 font-mono text-2xl font-semibold tabular-nums leading-none text-white">
                         {clientMix.recurrentes}
                       </p>
-                      <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+                      <p className="mt-2 text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
                         {clientMix.recurrentesPct.toFixed(0)}% del total
                       </p>
                     </div>
@@ -939,7 +944,7 @@ Te corresponde: ${formatPrice(row.commission)}`;
                   <div className="mt-4 h-2 overflow-hidden rounded-full bg-[color:var(--surface-1)]">
                     <div className="flex h-full">
                       <div
-                        className="h-full bg-gold-grad"
+                        className="h-full bg-[color:var(--brand-gold)]"
                         style={{ width: `${clientMix.nuevosPct}%` }}
                       />
                       <div
@@ -955,7 +960,7 @@ Te corresponde: ${formatPrice(row.commission)}`;
 
           {/* Clientes recurrentes (histórico) */}
           <section>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+            <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
               Clientes recurrentes
             </p>
             {topClients.length === 0 ? (
@@ -976,7 +981,7 @@ Te corresponde: ${formatPrice(row.commission)}`;
                       <p className="truncate text-sm font-bold text-white">
                         {client.name}
                       </p>
-                      <p className="mt-0.5 text-[11px] text-[color:var(--text-muted)]">
+                      <p className="mt-0.5 text-xs text-[color:var(--text-muted)]">
                         {client.count} turnos
                         {client.lastDate ? (
                           <>
@@ -1019,45 +1024,27 @@ function KpiCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-[var(--radius-md)] border p-4 shadow-card transition-all duration-[var(--duration-fast)] ease-[var(--ease-out-soft)] hover:-translate-y-0.5",
+        "min-w-0 rounded-lg border p-3 sm:p-4",
         highlight
           ? "border-[color:var(--brand-gold)]/25 bg-[color:var(--surface-1)] hover:border-[color:var(--brand-gold)]/40"
           : "border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] hover:border-[color:var(--brand-gold)]/25",
       )}
-      style={
-        highlight
-          ? {
-              backgroundImage:
-                "radial-gradient(120% 130% at 0% 0%, rgba(201,162,62,0.14), rgba(201,162,62,0.03) 26%, transparent 52%)",
-            }
-          : undefined
-      }
     >
-      {highlight ? (
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-px"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, rgba(226,194,102,0.7), transparent)",
-          }}
-        />
-      ) : null}
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
+      <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
         {label}
       </p>
       <p
         className={cn(
-          "mt-1 font-mono text-2xl font-black tabular-nums leading-none sm:text-3xl",
+          "mt-2 break-words font-mono text-xl font-semibold tabular-nums leading-tight sm:text-2xl",
           highlight
-            ? "w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-transparent"
+            ? "text-[color:var(--brand-gold)]"
             : "text-white",
         )}
       >
         {value}
       </p>
       {hint ? (
-        <p className="mt-1 text-[10px] text-[color:var(--text-subtle)]">
+        <p className="mt-1 text-xs text-[color:var(--text-subtle)]">
           {hint}
         </p>
       ) : null}
@@ -1075,7 +1062,7 @@ function ChangeBadge({
 }) {
   if (change === null) {
     return (
-      <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
+      <p className="mt-2 text-xs font-semibold normal-case tracking-normal text-[color:var(--text-subtle)]">
         Sin período anterior
       </p>
     );
@@ -1090,7 +1077,7 @@ function ChangeBadge({
   return (
     <p
       className={cn(
-        "mt-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
+        "mt-2 inline-flex items-center gap-1 text-xs font-semibold normal-case tracking-normal",
         isPositive
           ? "text-[color:var(--success)]"
           : isNegative

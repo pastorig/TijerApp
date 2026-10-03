@@ -110,12 +110,12 @@ export function ProductFeatures() {
       />
       <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
         <header className="text-center sm:text-left">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Qué incluye
           </p>
-          <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
             Todo lo que tu barbería{" "}
-            <span className="text-gold-gradient">necesita</span>
+            <span className="text-[color:var(--brand-gold)]">necesita</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[color:var(--text-secondary)] sm:mx-0 sm:text-lg">
             Una plataforma pensada para usarla mientras se trabaja: rápida,
@@ -132,13 +132,13 @@ export function ProductFeatures() {
                 as="li"
                 key={feature.title}
                 delay={(index % 3) * 80}
-                className="card-premium card-premium-hover group flex flex-col p-4 sm:p-5"
+                className="card-premium  group flex flex-col p-4 sm:p-5"
               >
                 <Viz />
                 <div className="mt-4 flex items-center gap-2.5">
                   <span
                     aria-hidden="true"
-                    className="flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105"
+                    className="flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105"
                     style={{
                       boxShadow: "0 0 20px -8px rgba(201,162,62,0.6)",
                     }}

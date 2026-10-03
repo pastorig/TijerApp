@@ -55,18 +55,18 @@ export function HomeStats() {
                 as="li"
                 key={benefit.title}
                 delay={(index % 4) * 70}
-                className="card-premium card-premium-hover group flex flex-col items-start gap-2 p-4 sm:p-5"
+                className="card-premium  group flex flex-col items-start gap-2 p-4 sm:p-5"
               >
                 <div
                   aria-hidden="true"
-                  className="icon-pop flex size-9 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105 sm:size-10"
+                  className="icon-pop flex size-11 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105 sm:size-10"
                   style={{ boxShadow: "0 0 20px -8px rgba(201,162,62,0.6)" }}
                 >
                   <Icon className="size-4 sm:size-5" />
                 </div>
                 {/* h2 y no h3: esta sección va pegada al hero (h1) y no tiene
                     título propio, así que un h3 se saltaba un nivel. */}
-                <h2 className="mt-1 text-base font-black tracking-tight text-white sm:text-lg">
+                <h2 className="mt-1 text-base font-black tracking-normal text-white sm:text-lg">
                   {benefit.title}
                 </h2>
                 <p className="text-xs leading-5 text-[color:var(--text-secondary)] sm:text-sm">

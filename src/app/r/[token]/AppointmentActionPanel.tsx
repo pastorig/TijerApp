@@ -125,11 +125,11 @@ export function AppointmentActionPanel({
 
   return (
     <article className="animate-fade-up">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+      <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
         Tu turno · {appointment.barbershop_name}
       </p>
 
-      <h1 className="mt-4 text-3xl font-black uppercase leading-[0.95] tracking-tight text-balance break-words sm:text-4xl lg:text-5xl">
+      <h1 className="mt-4 text-3xl font-black uppercase leading-[0.95] tracking-normal text-balance break-words sm:text-4xl lg:text-5xl">
         Hola {firstName(appointment.customer_name)}
       </h1>
 
@@ -302,7 +302,7 @@ export function AppointmentActionPanel({
       ) : null}
 
       {/* Footer */}
-      <p className="mt-12 text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
+      <p className="mt-12 text-xs uppercase tracking-normal text-[color:var(--text-subtle)]">
         Powered by TijerApp
       </p>
     </article>
@@ -334,7 +334,7 @@ function DetailRow({
 }) {
   return (
     <div className="grid grid-cols-[auto_1fr] items-baseline gap-4">
-      <dt className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--text-muted)]">
+      <dt className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
         {label}
       </dt>
       <dd
@@ -387,7 +387,7 @@ function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-[var(--radius-xs)] border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em]",
+        "inline-flex items-center rounded-[var(--radius-xs)] border px-3 py-1.5 text-xs font-bold uppercase tracking-normal",
         meta.classes,
       )}
     >

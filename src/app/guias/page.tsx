@@ -37,10 +37,10 @@ export default function GuiasPage() {
         />
         <div className="mx-auto w-full max-w-5xl px-4 pb-12 pt-12 sm:px-8 sm:pb-16 sm:pt-16 lg:px-12 lg:pt-20">
           <div className="animate-fade-up">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+            <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
               Guías
             </p>
-            <h1 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
+            <h1 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
               Cómo se maneja
               <br className="hidden sm:block" /> una barbería hoy
             </h1>
@@ -60,18 +60,18 @@ export default function GuiasPage() {
               <li key={guia.slug}>
                 <Link
                   href={`/guias/${guia.slug}`}
-                  className="card-premium card-premium-hover group flex h-full flex-col p-5 sm:p-6"
+                  className="card-premium  group flex h-full flex-col p-5 sm:p-6"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="chip-gold !px-2 !py-1 !text-[9px]">
+                    <span className="chip-gold !px-2 !py-1 !text-xs">
                       {guia.category}
                     </span>
-                    <span className="text-[11px] text-[color:var(--text-muted)]">
+                    <span className="text-xs text-[color:var(--text-muted)]">
                       {guia.readingMinutes} min de lectura
                     </span>
                   </div>
 
-                  <h2 className="mt-4 text-xl font-black uppercase tracking-tight text-balance text-white sm:text-2xl">
+                  <h2 className="mt-4 text-xl font-black uppercase tracking-normal text-balance text-white sm:text-2xl">
                     {guia.cardTitle}
                   </h2>
 
@@ -79,7 +79,7 @@ export default function GuiasPage() {
                     {guia.description}
                   </p>
 
-                  <span className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
+                  <span className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)]">
                     Leer
                     <ArrowUpRight
                       aria-hidden="true"

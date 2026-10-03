@@ -128,17 +128,17 @@ export function AppointmentRescheduleDrawer({
       <button
         type="button"
         onClick={onCancel}
-        className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
+        className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
       >
         <ArrowLeft className="size-3" />
         Volver
       </button>
 
       <header>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+        <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
           Reagendar turno
         </p>
-        <h2 className="mt-3 text-2xl font-black uppercase tracking-tight text-balance text-white sm:text-3xl">
+        <h2 className="mt-3 text-2xl font-black uppercase tracking-normal text-balance text-white sm:text-3xl">
           Elegí nueva fecha y hora
         </h2>
         <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
@@ -150,7 +150,7 @@ export function AppointmentRescheduleDrawer({
       <div>
         <label
           htmlFor="reschedule-date"
-          className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
+          className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]"
         >
           Fecha
         </label>
@@ -170,7 +170,7 @@ export function AppointmentRescheduleDrawer({
 
       {/* Slots disponibles */}
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+        <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
           Horario
         </p>
         {isLoadingSlots ? (

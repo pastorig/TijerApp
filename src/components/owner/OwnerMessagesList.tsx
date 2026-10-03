@@ -44,6 +44,8 @@ export function OwnerMessagesList() {
   const [requests, setRequests] = useState<ContactRequestRow[]>([]);
   const [filter, setFilter] = useState<Filter>("pending");
   const [isLoading, setIsLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -51,18 +53,23 @@ export function OwnerMessagesList() {
     let isMounted = true;
     async function load() {
       setIsLoading(true);
+      setLoadFailed(false);
       setErrorMessage("");
       try {
         const { data, error } = await listContactRequests();
         if (!isMounted) return;
         if (error) {
+          setLoadFailed(true);
           setErrorMessage("No pudimos cargar los mensajes.");
           setRequests([]);
           return;
         }
         setRequests(data ?? []);
       } catch {
-        if (isMounted) setErrorMessage("No pudimos cargar los mensajes.");
+        if (isMounted) {
+          setLoadFailed(true);
+          setErrorMessage("No pudimos cargar los mensajes.");
+        }
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -71,7 +78,7 @@ export function OwnerMessagesList() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [reloadKey]);
 
   async function handleMarkHandled(request: ContactRequestRow) {
     setUpdatingId(request.id);
@@ -193,11 +200,11 @@ export function OwnerMessagesList() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <header className="animate-fade-up">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
+      <header>
+        <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)] sm:tracking-normal">
           Mensajes
         </p>
-        <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
+        <h1 className="mt-2 text-2xl font-bold text-white sm:text-3xl">
           Bandeja de entrada
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
@@ -207,7 +214,7 @@ export function OwnerMessagesList() {
       </header>
 
       <section className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           {FILTER_OPTIONS.map((opt) => {
             const isActive = filter === opt.value;
             return (
@@ -215,10 +222,11 @@ export function OwnerMessagesList() {
                 key={opt.value}
                 type="button"
                 onClick={() => setFilter(opt.value)}
+                aria-pressed={isActive}
                 className={cn(
-                  "inline-flex min-h-9 shrink-0 items-center rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
+                  "inline-flex min-h-11 shrink-0 items-center rounded-[var(--radius-sm)] border px-3 text-xs font-bold uppercase tracking-normal transition-colors duration-[var(--duration-fast)]",
                   isActive
-                    ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
+                    ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
                     : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
                 )}
               >
@@ -227,8 +235,8 @@ export function OwnerMessagesList() {
             );
           })}
         </div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
-          {pendingCount} sin responder
+        <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
+          {isLoading || loadFailed ? "Pendientes: —" : `${pendingCount} sin responder`}
         </p>
       </section>
 
@@ -242,9 +250,14 @@ export function OwnerMessagesList() {
       ) : null}
 
       {isLoading ? (
-        <p className="text-sm text-[color:var(--text-muted)]">
+        <p role="status" className="min-h-32 py-5 text-sm text-[color:var(--text-muted)]">
           Cargando mensajes…
         </p>
+      ) : loadFailed ? (
+        <button type="button" onClick={() => {
+          setIsLoading(true);
+          setReloadKey(value => value + 1);
+        }} className="min-h-11 rounded-md border border-white/20 px-4 text-sm font-semibold">Reintentar</button>
       ) : visibleRequests.length === 0 ? (
         <div className="rounded-[var(--radius-sm)] border border-dashed border-[color:var(--border-subtle)] p-10 text-center">
           <p className="text-sm font-bold text-white">No hay mensajes acá</p>
@@ -264,12 +277,12 @@ export function OwnerMessagesList() {
               <li
                 key={request.id}
                 className={cn(
-                  "relative card-premium p-5",
+                  "relative min-w-0 break-words rounded-md border border-white/10 bg-[#101012] p-3 sm:p-4",
                   isDeleted
-                    ? "opacity-50"
+                    ? "border-white/10"
                     : isHandled
-                      ? "opacity-60"
-                      : "card-premium-hover",
+                      ? "border-[color:var(--success)]/20"
+                      : "border-[color:var(--brand-gold)]/30",
                 )}
               >
                 {/* X para eliminar (solo en mensajes no eliminados) */}
@@ -280,7 +293,7 @@ export function OwnerMessagesList() {
                     disabled={isBusy}
                     aria-label="Eliminar mensaje"
                     title="Eliminar"
-                    className="absolute right-3 top-3 inline-flex size-7 items-center justify-center rounded-full border border-[color:var(--border-subtle)] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--danger)] hover:text-[color:var(--danger)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="absolute right-2 top-2 inline-flex size-11 items-center justify-center rounded-full border border-[color:var(--border-subtle)] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--danger)] hover:text-[color:var(--danger)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <X className="size-3.5" />
                   </button>
@@ -291,27 +304,27 @@ export function OwnerMessagesList() {
                     <p className="text-base font-bold text-white">
                       {request.name}
                     </p>
-                    <p className="mt-1 font-mono text-[11px] text-[color:var(--text-muted)]">
+                    <p className="mt-1 font-mono text-xs text-[color:var(--text-muted)]">
                       {formatDate(request.created_at)}
                     </p>
                   </div>
                   {isDeleted ? (
-                    <span className="inline-flex items-center rounded-[var(--radius-xs)] border border-[color:var(--border-default)] bg-black/40 px-2 py-1 text-[10px] font-bold uppercase text-[color:var(--text-subtle)]">
+                    <span className="inline-flex items-center rounded-[var(--radius-xs)] border border-[color:var(--border-default)] bg-black/40 px-2 py-1 text-xs font-bold uppercase text-[color:var(--text-subtle)]">
                       Eliminado
                     </span>
                   ) : isHandled ? (
-                    <span className="inline-flex items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-2 py-1 text-[10px] font-bold uppercase text-[color:var(--success)]">
+                    <span className="inline-flex items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-2 py-1 text-xs font-bold uppercase text-[color:var(--success)]">
                       <CheckCircle2 className="size-3" />
                       Atendido
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-2 py-1 text-[10px] font-bold uppercase text-[color:var(--brand-gold)]">
+                    <span className="inline-flex items-center rounded-[var(--radius-xs)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-2 py-1 text-xs font-bold uppercase text-[color:var(--brand-gold)]">
                       Pendiente
                     </span>
                   )}
                 </div>
 
-                <p className="mt-4 whitespace-pre-line text-sm leading-6 text-[color:var(--text-secondary)]">
+                <p className="mt-3 break-words whitespace-pre-line text-sm leading-6 text-[color:var(--text-secondary)]">
                   {request.message}
                 </p>
 
@@ -319,7 +332,7 @@ export function OwnerMessagesList() {
                   {request.email ? (
                     <a
                       href={`mailto:${request.email}`}
-                      className="font-mono text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold-hi)]"
+                      className="inline-flex min-h-11 max-w-full items-center break-all font-mono text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold-hi)]"
                     >
                       {request.email}
                     </a>
@@ -329,20 +342,20 @@ export function OwnerMessagesList() {
                       href={`https://wa.me/${request.phone.replace(/\D+/g, "")}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 font-mono text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
+                      className="inline-flex min-h-11 items-center gap-1 font-mono text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
                     >
                       <MessageCircle className="size-3" />
                       {request.phone}
                     </a>
                   ) : null}
-                  <span className="ml-auto inline-flex flex-wrap items-center gap-2">
+                  <span className="inline-flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
                     {isDeleted ? (
                       <>
                         <button
                           type="button"
                           onClick={() => handleRestore(request)}
                           disabled={isBusy}
-                          className="inline-flex min-h-8 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--border-default)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
+                          className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--border-default)] px-3 text-xs font-bold uppercase tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <RotateCcw className="size-3" />
                           Restaurar
@@ -351,7 +364,7 @@ export function OwnerMessagesList() {
                           type="button"
                           onClick={() => handleHardDelete(request)}
                           disabled={isBusy}
-                          className="inline-flex min-h-8 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] px-3 text-xs font-bold uppercase tracking-normal text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <Trash2 className="size-3" />
                           Eliminar definitivo
@@ -362,7 +375,7 @@ export function OwnerMessagesList() {
                         type="button"
                         onClick={() => handleUnmark(request)}
                         disabled={isBusy}
-                        className="inline-flex min-h-8 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--border-default)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--border-default)] px-3 text-xs font-bold uppercase tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <RotateCcw className="size-3" />
                         Reabrir
@@ -372,7 +385,7 @@ export function OwnerMessagesList() {
                         type="button"
                         onClick={() => handleMarkHandled(request)}
                         disabled={isBusy}
-                        className="inline-flex min-h-8 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-xs font-bold uppercase tracking-normal text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <CheckCircle2 className="size-3" />
                         Marcar atendido

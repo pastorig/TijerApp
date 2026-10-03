@@ -105,7 +105,7 @@ export default function Home() {
               Programa Fundadores abierto · Primeros 10
             </div>
 
-            <h1 className="mt-5 max-w-3xl text-[2.25rem] font-black uppercase leading-[0.95] tracking-tight text-balance sm:mt-8 sm:text-5xl lg:text-6xl xl:text-7xl">
+            <h1 className="mt-5 max-w-3xl text-[2.25rem] font-black uppercase leading-[0.95] tracking-normal text-balance sm:mt-8 sm:text-5xl lg:text-6xl xl:text-7xl">
               Turnos online{" "}
               <span className="text-[color:var(--brand-gold)]">
                 para barberías
@@ -128,7 +128,7 @@ export default function Home() {
             <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row">
               <Link
                 href="/registro"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
               >
                 Empezar prueba gratis
                 <ArrowUpRight className="size-4" />

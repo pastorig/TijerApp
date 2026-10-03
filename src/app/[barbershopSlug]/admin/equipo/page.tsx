@@ -54,13 +54,9 @@ export default async function AdminTeamPage({ params }: Props) {
               <StaffAccessSection barbershop={barbershop} />
             </>
           ) : (
-            // Sin la lista de admins arriba, la tarjeta se queda sin el `main`
-            // que le daba el ancho y el aire: los trae ella misma. (No se puede
-            // envolver siempre porque `AdminTeamManager` ya trae su propio
-            // `main` y anidarlos sería HTML inválido.)
-            <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
+            <div className="min-w-0">
               <StaffAccessSection barbershop={barbershop} />
-            </main>
+            </div>
           )}
         </RequirePlan>
       </AdminShell>

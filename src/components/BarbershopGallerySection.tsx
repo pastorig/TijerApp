@@ -50,10 +50,10 @@ export function BarbershopGallerySection({
     >
       <div className="mx-auto w-full max-w-6xl px-4 py-7 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
         <header className="text-center sm:text-left">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Galería
           </p>
-          <h2 className="mt-3 text-2xl font-black uppercase tracking-tight text-white sm:mt-4 sm:text-3xl lg:text-4xl">
+          <h2 className="mt-3 text-2xl font-black uppercase tracking-normal text-white sm:mt-4 sm:text-3xl lg:text-4xl">
             Mirá nuestro local
           </h2>
         </header>
@@ -78,7 +78,7 @@ export function BarbershopGallerySection({
                   unoptimized
                 />
                 {photo.caption ? (
-                  <span className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/80 to-transparent px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
+                  <span className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/80 to-transparent px-3 py-2 text-left text-xs font-semibold uppercase tracking-normal text-white">
                     {photo.caption}
                   </span>
                 ) : null}

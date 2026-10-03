@@ -52,10 +52,10 @@ export function BarbershopInfoSection({
     <section className="border-t border-[color:var(--border-subtle)]">
       <div className="mx-auto w-full max-w-6xl px-4 py-7 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
         <header className="text-center sm:text-left">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Información
           </p>
-          <h2 className="mt-3 text-2xl font-black uppercase tracking-tight text-white sm:mt-4 sm:text-3xl lg:text-4xl">
+          <h2 className="mt-3 text-2xl font-black uppercase tracking-normal text-white sm:mt-4 sm:text-3xl lg:text-4xl">
             Cómo encontrarnos
           </h2>
         </header>
@@ -70,7 +70,7 @@ export function BarbershopInfoSection({
               <Clock className="size-4" />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+              <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
                 Horario base
               </p>
               <p className="mt-1 font-mono text-lg font-bold tabular-nums text-white">
@@ -92,7 +92,7 @@ export function BarbershopInfoSection({
                 <MapPin className="size-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
                   Dirección
                 </p>
                 <p className="mt-1 text-sm font-bold text-white">
@@ -102,7 +102,7 @@ export function BarbershopInfoSection({
                   href={mapsLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 inline-flex items-center text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold-hi)]"
+                  className="mt-2 inline-flex items-center text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold-hi)]"
                 >
                   Ver en Google Maps →
                 </a>
@@ -120,7 +120,7 @@ export function BarbershopInfoSection({
                 <MessageCircle className="size-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
                   WhatsApp
                 </p>
                 <p className="mt-1 font-mono text-sm font-bold text-white">
@@ -130,7 +130,7 @@ export function BarbershopInfoSection({
                   href={whatsappLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 inline-flex items-center text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
+                  className="mt-2 inline-flex items-center text-xs font-semibold uppercase tracking-normal text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
                 >
                   Escribir →
                 </a>
@@ -148,7 +148,7 @@ export function BarbershopInfoSection({
                 <InstagramGlyph className="size-4" />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
                   Instagram
                 </p>
                 <p className="mt-1 truncate text-sm font-bold text-white">
@@ -161,7 +161,7 @@ export function BarbershopInfoSection({
                   href={barbershop.instagram}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 inline-flex items-center text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold-hi)]"
+                  className="mt-2 inline-flex items-center text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold-hi)]"
                 >
                   Ver perfil →
                 </a>

@@ -40,10 +40,10 @@ export function HomePersonas() {
     <section className="border-t border-[color:var(--border-subtle)] bg-black">
       <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
         <header className="text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Para tu barbería
           </p>
-          <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
             Da igual si tenés{" "}
             <span className="text-[color:var(--brand-gold)]">1 sillón o 5</span>
           </h2>
@@ -60,7 +60,7 @@ export function HomePersonas() {
                 as="li"
                 key={item.problem}
                 delay={(index % 3) * 80}
-                className="card-premium card-premium-hover flex w-[85%] shrink-0 snap-center flex-col gap-4 p-5 sm:w-auto sm:shrink sm:snap-align-none sm:p-6"
+                className="card-premium  flex w-[85%] shrink-0 snap-center flex-col gap-4 p-5 sm:w-auto sm:shrink sm:snap-align-none sm:p-6"
               >
                 <div className="flex items-start gap-3">
                   <div
@@ -75,7 +75,7 @@ export function HomePersonas() {
                 </div>
 
                 <div className="mt-auto rounded-[var(--radius-sm)] border-l-2 border-[color:var(--brand-gold)]/60 bg-[color:var(--brand-gold-soft)] p-3">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)]">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[color:var(--brand-gold)]">
                     Con TijerApp
                   </p>
                   <p className="mt-1 text-sm leading-5 text-[color:var(--text-secondary)]">
@@ -90,7 +90,7 @@ export function HomePersonas() {
         <div className="mt-10 flex justify-center sm:mt-12">
           <Link
             href="/precios"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-7 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-7 text-sm font-bold uppercase tracking-normal text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
           >
             Ver planes y precios
             <ArrowUpRight aria-hidden="true" className="size-4" />

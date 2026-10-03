@@ -55,7 +55,7 @@ export function PublicBarbershopLanding({
           {bookingEnabled ? (
             <Link
               href={`/${barbershop.slug}/reservar`}
-              className="inline-flex min-h-9 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-gold-grad px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
+              className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-gold-grad px-3 text-xs font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
             >
               Reservar
             </Link>

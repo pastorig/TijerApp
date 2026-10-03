@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
@@ -136,7 +137,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
-  const api: ToastApi = {
+  const api = useMemo<ToastApi>(() => ({
     success: (message, opts) => push("success", message, opts),
     error: (message, opts) => push("error", message, opts),
     info: (message, opts) => push("info", message, opts),
@@ -166,7 +167,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         throw err;
       }
     },
-  };
+  }), [push, dismiss]);
 
   // Auto-dismiss timers — recalcula cada vez que cambian los toasts.
   useEffect(() => {

@@ -81,7 +81,7 @@ function CellValue({ value }: { value: boolean | string }) {
     );
   }
   return (
-    <span className="text-center text-[10px] font-semibold leading-tight text-white sm:text-sm sm:leading-normal">
+    <span className="text-center text-xs font-semibold leading-tight text-white sm:text-sm sm:leading-normal">
       {value}
     </span>
   );
@@ -92,10 +92,10 @@ export function PricingCompareTable() {
     <section className="border-t border-[color:var(--border-subtle)] bg-black">
       <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
         <header className="text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Comparativa completa
           </p>
-          <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
             Todos los features,{" "}
             <span className="text-[color:var(--brand-gold)]">lado a lado</span>
           </h2>
@@ -107,13 +107,13 @@ export function PricingCompareTable() {
         <div className="mt-10 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] sm:mt-12">
           {/* Header row — sticky en mobile para que se vea durante el scroll */}
           <div className="sticky top-0 z-10 grid grid-cols-[1.4fr_repeat(3,_minmax(0,_1fr))] gap-1.5 border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-2)] px-2.5 py-3 sm:gap-4 sm:px-6 sm:py-4">
-            <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)] sm:text-xs sm:tracking-[0.18em]">
+            <div className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)] sm:text-xs sm:tracking-normal">
               Feature
             </div>
             {(["solo", "esencial", "pro"] as const).map((tier) => (
               <div key={tier} className="text-center">
                 <div
-                  className={`text-[11px] font-black uppercase tracking-tight sm:text-sm ${
+                  className={`text-xs font-black uppercase tracking-normal sm:text-sm ${
                     tier === "esencial"
                       ? "text-[color:var(--brand-gold)]"
                       : "text-white"
@@ -121,7 +121,7 @@ export function PricingCompareTable() {
                 >
                   {PLAN_META[tier].name}
                 </div>
-                <div className="text-[9px] text-[color:var(--text-muted)] sm:text-[10px]">
+                <div className="text-xs text-[color:var(--text-muted)] sm:text-xs">
                   {formatArs(PLAN_META[tier].priceArs)}
                 </div>
               </div>
@@ -132,7 +132,7 @@ export function PricingCompareTable() {
           {ROWS.map((row) => (
             <div key={row.category}>
               <div className="border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] px-2.5 py-1.5 sm:px-6 sm:py-2.5">
-                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] sm:text-[11px] sm:tracking-[0.18em]">
+                <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)] sm:text-xs sm:tracking-normal">
                   {row.category}
                 </p>
               </div>
@@ -145,7 +145,7 @@ export function PricingCompareTable() {
                       : "bg-transparent"
                   }`}
                 >
-                  <div className="text-[11px] leading-tight text-[color:var(--text-secondary)] sm:text-sm sm:leading-normal">
+                  <div className="text-xs leading-tight text-[color:var(--text-secondary)] sm:text-sm sm:leading-normal">
                     {feature.label}
                   </div>
                   <div className="flex justify-center">

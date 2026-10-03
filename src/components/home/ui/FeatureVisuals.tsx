@@ -160,7 +160,7 @@ export function VizReservas() {
       <div className="w-[128px] rounded-[10px] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-2 shadow-[0_10px_24px_-12px_rgba(0,0,0,0.9)]">
         <div className="mb-1.5 flex items-center gap-1">
           <span className="size-1 rounded-full bg-[color:var(--brand-gold)]" />
-          <span className="text-[7px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+          <span className="text-[7px] font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
             Elegí tu horario
           </span>
         </div>
@@ -180,7 +180,7 @@ export function VizReservas() {
             </span>
           ))}
         </div>
-        <div className="mt-1.5 rounded-[3px] bg-gold-grad py-1 text-center text-[7px] font-black uppercase tracking-[0.1em] text-black">
+        <div className="mt-1.5 rounded-[3px] bg-gold-grad py-1 text-center text-[7px] font-black uppercase tracking-normal text-black">
           Reservar
         </div>
       </div>
@@ -240,13 +240,13 @@ export function VizOcupacion() {
         </span>
       </span>
       <div className="min-w-0">
-        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+        <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
           Ocupación de hoy
         </p>
         <p className="mt-1 text-sm font-black leading-tight text-white">
-          <span className="text-gold-gradient">13 cortes</span> entran
+          <span className="text-[color:var(--brand-gold)]">13 cortes</span> entran
         </p>
-        <p className="mt-1 text-[9px] leading-tight text-[color:var(--text-muted)]">
+        <p className="mt-1 text-xs leading-tight text-[color:var(--text-muted)]">
           Cerrá 30′ más tarde y metés{" "}
           <span className="font-bold text-[color:var(--brand-gold)]">
             2 más
@@ -276,12 +276,12 @@ export function VizWhatsApp() {
             />
           </svg>
         </span>
-        <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+        <span className="text-[8px] font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
           WhatsApp
         </span>
       </div>
       <div className="max-w-[86%] self-end rounded-[8px] rounded-br-[2px] border border-[color:var(--success)]/25 bg-[color:var(--success-soft)] px-2.5 py-1.5">
-        <p className="text-[9px] font-bold leading-tight text-white">
+        <p className="text-xs font-bold leading-tight text-white">
           ¡Hola Nahuel! 💈
         </p>
         <p className="mt-0.5 text-[8px] leading-snug text-[color:var(--text-secondary)]">
@@ -313,10 +313,10 @@ export function VizReportes() {
     <div className="viz-screen p-3" style={{ height: VIZ_HEIGHT }}>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+          <p className="text-[8px] font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
             Ingresos · 7 días
           </p>
-          <p className="mt-0.5 text-lg font-black leading-none text-gold-gradient">
+          <p className="mt-0.5 text-lg font-black leading-none text-[color:var(--brand-gold)]">
             $284.500
           </p>
         </div>

@@ -80,7 +80,7 @@ export function StaffShell({
       <div className="grid min-h-screen place-items-center bg-[color:var(--surface-0)] px-6">
         <Card className="max-w-sm text-center">
           <ShieldOff className="mx-auto size-8 text-[color:var(--text-muted)]" />
-          <h1 className="mt-4 text-lg font-black text-white">
+          <h1 className="mt-4 text-lg font-semibold text-white">
             No tenés acceso a esta barbería
           </h1>
           <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
@@ -88,7 +88,7 @@ export function StaffShell({
           </p>
           <Button
             size="sm"
-            className="mt-5"
+            className="mt-5 min-h-11 text-xs normal-case tracking-normal"
             onClick={() => router.replace("/login")}
           >
             Ir al login
@@ -134,7 +134,7 @@ export function StaffShell({
             aria-hidden="true"
             className="size-4 shrink-0 text-[color:var(--brand-gold)]"
           />
-          <p className="truncate text-sm font-bold tracking-tight text-white sm:text-base">
+          <p className="truncate text-sm font-bold tracking-normal text-white sm:text-base">
             {seccion.label}
           </p>
         </div>
@@ -143,7 +143,7 @@ export function StaffShell({
           {/* El nombre de la barbería es contexto, no navegación: un empleado
               tiene una sola. En pantalla chica se queda solo el avatar. */}
           <span className="flex min-w-0 items-center gap-2">
-            <InitialsAvatar name={barbershopName} className="size-8 text-[11px]" />
+            <InitialsAvatar name={barbershopName} className="size-8 text-xs" />
             <span className="hidden max-w-[14rem] truncate text-xs font-semibold text-[color:var(--text-secondary)] sm:inline">
               {barbershopName}
             </span>
@@ -151,8 +151,9 @@ export function StaffShell({
           <button
             type="button"
             onClick={() => void signOut().then(() => router.replace("/login"))}
-            aria-label="Salir"
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
           >
             <LogOut className="size-4" />
           </button>
@@ -160,7 +161,7 @@ export function StaffShell({
       </header>
 
       {/* Pestañas — las subpestañas del panel, tal cual. */}
-      <div className="sticky top-14 z-30 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md">
+      <nav aria-label="Navegación del empleado" className="sticky top-14 z-30 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-5xl gap-1 overflow-x-auto px-4 sm:px-8 lg:px-12">
           {tabs.map((tab) => {
             const activo = pathname === tab.href;
@@ -168,8 +169,9 @@ export function StaffShell({
               <Link
                 key={tab.href}
                 href={tab.href}
+                aria-current={activo ? "page" : undefined}
                 className={cn(
-                  "inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-3 text-sm font-semibold transition-colors duration-[var(--duration-fast)]",
+                  "inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-3 text-sm font-semibold transition-colors duration-[var(--duration-fast)]",
                   activo
                     ? "border-[color:var(--brand-gold)] text-[color:var(--brand-gold)]"
                     : "border-transparent text-[color:var(--text-muted)] hover:text-white",
@@ -181,11 +183,11 @@ export function StaffShell({
             );
           })}
         </div>
-      </div>
+      </nav>
 
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
+      <main className="mx-auto flex w-full max-w-5xl flex-col gap-5 px-4 py-5 sm:px-8 sm:py-6 lg:px-12">
         {children}
-      </div>
+      </main>
     </div>
   );
 }

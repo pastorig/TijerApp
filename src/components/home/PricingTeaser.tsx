@@ -64,10 +64,10 @@ export function PricingTeaser() {
       />
       <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
         <header className="text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Planes
           </p>
-          <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
             Precios para la{" "}
             <span className="text-[color:var(--brand-gold)]">
               realidad argentina
@@ -79,7 +79,7 @@ export function PricingTeaser() {
           </p>
         </header>
 
-        <p className="mt-6 text-center text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:hidden">
+        <p className="mt-6 text-center text-xs uppercase tracking-normal text-[color:var(--text-muted)] sm:hidden">
           ← Deslizá para comparar →
         </p>
 
@@ -95,13 +95,13 @@ export function PricingTeaser() {
               )}
             >
               {plan.highlight && (
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-gold-grad px-3 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-black">
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-gold-grad px-3 py-1 text-xs font-bold uppercase tracking-normal text-black">
                   Más elegido
                 </div>
               )}
 
               <div className="flex items-baseline justify-between">
-                <h3 className="text-xl font-black uppercase tracking-tight text-white">
+                <h3 className="text-xl font-black uppercase tracking-normal text-white">
                   {plan.name}
                 </h3>
                 {plan.name === "Pro" && (
@@ -116,7 +116,7 @@ export function PricingTeaser() {
               </p>
 
               <div className="mt-4 flex items-baseline gap-1.5">
-                <span className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+                <span className="text-3xl font-black tracking-normal text-white sm:text-4xl">
                   {formatArs(PLAN_META[plan.tier].priceArs)}
                 </span>
                 <span className="text-xs text-[color:var(--text-secondary)]">
@@ -147,14 +147,14 @@ export function PricingTeaser() {
         <div className="mt-10 flex flex-col items-center gap-3 sm:mt-12 sm:flex-row sm:justify-center">
           <Link
             href="/precios"
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
           >
             Ver todos los planes
             <ArrowUpRight aria-hidden="true" className="size-4" />
           </Link>
           <Link
             href="/precios#fundadores"
-            className="inline-flex min-h-12 w-full items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] sm:w-auto"
+            className="inline-flex min-h-12 w-full items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-6 text-sm font-bold uppercase tracking-normal text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] sm:w-auto"
           >
             Programa Fundadores
           </Link>

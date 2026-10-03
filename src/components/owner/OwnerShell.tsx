@@ -14,7 +14,7 @@ export function OwnerShell({ children }: OwnerShellProps) {
     <div className="min-h-screen bg-black text-white lg:flex">
       <OwnerSidebar />
       <main className="min-w-0 flex-1">
-        <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+        <div className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-8 sm:py-6 lg:px-10 lg:py-8">
           {children}
         </div>
       </main>

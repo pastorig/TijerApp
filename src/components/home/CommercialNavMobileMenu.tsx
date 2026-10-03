@@ -90,7 +90,7 @@ export function CommercialNavMobileMenu() {
                 className="fixed inset-y-0 right-0 z-50 flex w-72 max-w-[85vw] flex-col border-l border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] px-5 py-5 shadow-2xl sm:hidden"
               >
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+                  <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)]">
                     Menú
                   </p>
                   <button
@@ -109,7 +109,7 @@ export function CommercialNavMobileMenu() {
                       key={link.href}
                       href={link.href}
                       onClick={() => setOpen(false)}
-                      className="inline-flex min-h-12 items-center rounded-[var(--radius-sm)] px-3 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--surface-2)] hover:text-[color:var(--brand-gold)]"
+                      className="inline-flex min-h-12 items-center rounded-[var(--radius-sm)] px-3 text-sm font-bold uppercase tracking-normal text-white transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--surface-2)] hover:text-[color:var(--brand-gold)]"
                     >
                       {link.label}
                     </Link>

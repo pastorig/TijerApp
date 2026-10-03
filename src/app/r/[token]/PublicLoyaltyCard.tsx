@@ -44,7 +44,7 @@ export async function PublicLoyaltyCard({ token }: { token: string }) {
               className="size-4 shrink-0 text-[color:var(--brand-gold)]"
             />
           )}
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Fidelización
           </p>
         </div>
@@ -95,7 +95,7 @@ export async function PublicLoyaltyCard({ token }: { token: string }) {
           })}
         </div>
 
-        <p className="mt-3 text-center text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+        <p className="mt-3 text-center text-xs uppercase tracking-normal text-[color:var(--text-muted)]">
           {stamps} / {status.visits_required} sellos
         </p>
 

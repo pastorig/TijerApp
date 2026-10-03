@@ -826,10 +826,10 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             <path d="M20 6L9 17l-5-5" />
           </svg>
         </div>
-        <p className="mt-6 text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+        <p className="mt-6 text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
           Lista de espera
         </p>
-        <h1 className="mt-3 text-3xl font-black uppercase leading-[0.95] tracking-tight text-balance text-white sm:text-4xl">
+        <h1 className="mt-3 text-3xl font-black uppercase leading-[0.95] tracking-normal text-balance text-white sm:text-4xl">
           Te anotamos en la lista
         </h1>
         <p className="mx-auto mt-4 max-w-md text-sm leading-7 text-[color:var(--text-secondary)] sm:text-base">
@@ -848,7 +848,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
 
         <dl className="mx-auto mt-8 grid max-w-sm gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 text-left text-xs text-[color:var(--text-secondary)]">
           <div className="flex items-baseline justify-between gap-3">
-            <dt className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+            <dt className="text-xs uppercase tracking-normal text-[color:var(--text-muted)]">
               Servicio
             </dt>
             <dd className="font-semibold text-white">
@@ -856,13 +856,13 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             </dd>
           </div>
           <div className="flex items-baseline justify-between gap-3">
-            <dt className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+            <dt className="text-xs uppercase tracking-normal text-[color:var(--text-muted)]">
               Barbero
             </dt>
             <dd className="font-semibold text-white">{selectedBarberName}</dd>
           </div>
           <div className="flex items-baseline justify-between gap-3">
-            <dt className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+            <dt className="text-xs uppercase tracking-normal text-[color:var(--text-muted)]">
               Fecha
             </dt>
             <dd className="font-semibold text-white">
@@ -878,13 +878,13 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               setWaitlistSubmitted(false);
               setSelectedDate(getTodayInputValue());
             }}
-            className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-6 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
+            className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-6 text-xs font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
           >
             Probar otra fecha
           </button>
           <Link
             href={`/${barbershop.slug}`}
-            className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
+            className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
           >
             Volver al inicio
           </Link>
@@ -906,7 +906,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             className="w-full max-w-md rounded-[var(--radius-md)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--surface-1)] p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
+            <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)]">
               Lista de espera
             </p>
             <h3 className="mt-3 text-2xl font-black uppercase text-white">
@@ -954,7 +954,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 type="button"
                 onClick={() => setShowWaitlistForm(false)}
                 disabled={isSubmittingWaitlist}
-                className="inline-flex min-h-10 items-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:opacity-50"
+                className="inline-flex min-h-11 items-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-xs font-bold uppercase tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -962,7 +962,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 type="button"
                 onClick={handleSubmitWaitlist}
                 disabled={isSubmittingWaitlist}
-                className="inline-flex min-h-10 items-center rounded-[var(--radius-sm)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:opacity-50"
+                className="inline-flex min-h-11 items-center rounded-[var(--radius-sm)] bg-gold-grad px-4 text-xs font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:opacity-50"
               >
                 {isSubmittingWaitlist ? "Guardando…" : "Confirmar"}
               </button>
@@ -973,21 +973,21 @@ export function BookingForm({ barbershop }: BookingFormProps) {
 
     <form
       onSubmit={handleSubmit}
-      className="grid grid-cols-1 gap-8 pb-28 sm:gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start lg:gap-20 lg:pb-0"
+      className="grid grid-cols-1 gap-5 pb-28 sm:gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start lg:gap-12 lg:pb-0"
     >
-      <section className="min-w-0 space-y-6 sm:space-y-10">
+      <section className="min-w-0 space-y-5 sm:space-y-6">
         <div className="animate-fade-up">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)] sm:tracking-normal">
             Reserva online
           </p>
-          <h1 className="mt-3 text-[1.75rem] font-black uppercase leading-[0.95] tracking-tight text-balance break-words sm:mt-6 sm:text-5xl lg:text-6xl">
+          <h1 className="mt-3 text-[1.75rem] font-black uppercase leading-[0.95] tracking-normal text-balance break-words sm:mt-6 sm:text-5xl lg:text-6xl">
             {barbershop.name}
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-[color:var(--text-secondary)] sm:mt-6 sm:text-base sm:leading-7">
             Reservá tu turno en un minuto. Elegí barbero, servicio, día y hora —
             listo.
           </p>
-          <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-[color:var(--text-muted)]">
+          <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[color:var(--text-muted)]">
             <li className="flex items-center gap-1.5">
               <ShieldCheck className="size-3.5 text-[color:var(--brand-gold)]" aria-hidden="true" />
               Sin cuenta, sin vueltas
@@ -1001,7 +1001,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
 
         <div className="space-y-6">
           {isLoadingBarbers ? (
-            <p className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-muted)]">
+            <p className="text-xs uppercase tracking-normal text-[color:var(--text-muted)]">
               Cargando barberos…
             </p>
           ) : null}
@@ -1027,7 +1027,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                     {selectedBarberName}
                   </span>
                   {selectedBarber.role ? (
-                    <span className="block truncate text-[11px] text-[color:var(--text-muted)]">
+                    <span className="block truncate text-xs text-[color:var(--text-muted)]">
                       {selectedBarber.role}
                     </span>
                   ) : null}
@@ -1128,7 +1128,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 locked={faltaServicio}
               />
               {isLoadingTimes ? (
-                <span className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
+                <span className="text-xs uppercase tracking-normal text-[color:var(--text-subtle)]">
                   Actualizando…
                 </span>
               ) : null}
@@ -1163,7 +1163,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                     <button
                       type="button"
                       onClick={() => setShowWaitlistForm(true)}
-                      className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]/80"
+                      className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-4 text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]/80"
                     >
                       Anotarme en lista de espera
                     </button>
@@ -1238,7 +1238,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                     <div className="mt-4 space-y-5">
                       {morningSlots.length > 0 ? (
                         <div>
-                          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--brand-gold)]">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
                             Mañana
                           </p>
                           <div
@@ -1252,7 +1252,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                       ) : null}
                       {afternoonSlots.length > 0 ? (
                         <div>
-                          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--brand-gold)]">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
                             Tarde
                           </p>
                           <div
@@ -1268,8 +1268,8 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                   );
                 })()}
                 {availabilitySlots.some((slot) => !slot.isAvailable) ? (
-                  <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-subtle)]">
-                    Los horarios tachados ya pasaron
+                  <p className="mt-3 text-xs uppercase tracking-normal text-[color:var(--text-subtle)]">
+                    Horarios no disponibles
                   </p>
                 ) : null}
               </>
@@ -1277,14 +1277,14 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           </div>
 
           {selectedTime ? (
-          <div className="space-y-5 animate-fade-up">
+          <div className="space-y-3">
             <StepHeader
               number={5}
               title="Tus datos"
               subtitle="Último paso"
               done={Boolean(clientName.trim() && clientPhone.trim())}
             />
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Nombre" htmlFor="clientName" required>
               <Input
                 id="clientName"
@@ -1373,13 +1373,13 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           className="animate-fade-up border-t border-[color:var(--border-subtle)] pt-6 sm:border-t-0 sm:border-l sm:pl-6 sm:pt-0 lg:pl-10"
           style={{ animationDelay: "120ms" }}
         >
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)] sm:tracking-normal">
             Resumen
           </p>
 
           {selectedService ? (
             <div className="mt-6">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+              <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
                 Total
               </p>
               {appliedCoupon ? (
@@ -1410,13 +1410,13 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             </div>
           ) : null}
 
-          <dl className="mt-6 grid grid-cols-1 gap-3 sm:mt-10 sm:gap-5">
+          <dl className="mt-4 grid grid-cols-1 gap-2 sm:gap-3">
             {summaryRows.map((row) => (
               <div
                 key={row.label}
                 className="grid grid-cols-[auto_1fr] items-baseline gap-4"
               >
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:tracking-[0.2em]">
+                <dt className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)] sm:tracking-normal">
                   {row.label}
                 </dt>
                 <dd className="min-w-0 break-words text-right text-sm font-semibold text-white">
@@ -1426,7 +1426,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             ))}
             {comment ? (
               <div className="grid gap-2">
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:tracking-[0.2em]">
+                <dt className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)] sm:tracking-normal">
                   Comentario
                 </dt>
                 <dd className="break-words text-sm text-[color:var(--text-secondary)]">
@@ -1445,7 +1445,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             </div>
           ) : null}
 
-          <p className="mt-8 text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
+          <p className="mt-8 text-xs uppercase tracking-normal text-[color:var(--text-subtle)]">
             Al reservar, guardamos el turno y abrimos WhatsApp.
           </p>
 
@@ -1473,11 +1473,11 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                   : formatPrice(selectedService.price)}
               </p>
             ) : (
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[color:var(--text-subtle)]">
+              <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-subtle)]">
                 Tu turno
               </p>
             )}
-            <p className="mt-0.5 truncate text-[11px] text-[color:var(--text-muted)]">
+            <p className="mt-0.5 truncate text-xs text-[color:var(--text-muted)]">
               {compactSummary || "Completá los datos"}
             </p>
           </div>
@@ -1543,10 +1543,10 @@ function BookingSuccess({
   return (
     <section className="grid grid-cols-1 gap-12 pb-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start lg:gap-20 lg:pb-0">
       <div className="animate-fade-up">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+        <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
           Turno reservado
         </p>
-        <h1 className="mt-6 text-4xl font-black uppercase leading-[0.95] tracking-tight text-balance sm:text-5xl lg:text-6xl">
+        <h1 className="mt-6 text-4xl font-black uppercase leading-[0.95] tracking-normal text-balance sm:text-5xl lg:text-6xl">
           ¡Listo, {firstNameOf(result.customerName)}!
         </h1>
         <p className="mt-6 max-w-xl text-sm leading-7 text-[color:var(--text-secondary)] sm:text-base">
@@ -1610,14 +1610,14 @@ function BookingSuccess({
               href={result.whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] sm:w-auto"
+              className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-xs font-bold uppercase tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] sm:w-auto"
             >
               Reabrir WhatsApp con la reserva
             </a>
           ) : null}
         </div>
 
-        <p className="mt-8 text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
+        <p className="mt-8 text-xs uppercase tracking-normal text-[color:var(--text-subtle)]">
           Guardá este link · podés volver acá cuando quieras
         </p>
       </div>
@@ -1628,7 +1628,7 @@ function BookingSuccess({
           className="animate-fade-up border-t border-[color:var(--border-subtle)] pt-8 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0 lg:pl-10"
           style={{ animationDelay: "120ms" }}
         >
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
             Detalle del turno
           </p>
           {result.couponCode && typeof result.finalPrice === "number" ? (
@@ -1639,7 +1639,7 @@ function BookingSuccess({
               <p className="mt-1 font-mono text-4xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl">
                 {formatPrice(result.finalPrice)}
               </p>
-              <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
+              <p className="mt-2 text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
                 Cupón {result.couponCode} aplicado · Ahorrás{" "}
                 {formatPrice(result.couponDiscountAmount ?? 0)}
               </p>
@@ -1666,7 +1666,7 @@ function BookingSuccess({
                 key={row.label}
                 className="grid grid-cols-[auto_1fr] items-baseline gap-4"
               >
-                <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                <dt className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
                   {row.label}
                 </dt>
                 <dd className="text-right text-sm font-semibold text-white">

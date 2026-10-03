@@ -813,16 +813,16 @@ option:hover {
 
 /* Reveal on scroll — el wrapper client (Reveal.tsx) togglea .is-visible. */
 .reveal {
-  opacity: 0;
-  transform: translateY(20px);
+  opacity: 1;
+  transform: none;
   transition:
     opacity 620ms var(--ease-out-soft),
     transform 620ms var(--ease-out-soft);
-  will-change: opacity, transform;
 }
 .reveal.is-visible {
   opacity: 1;
   transform: none;
+  animation: tijerapp-fade-in 180ms var(--ease-out-soft);
 }
 
 /* Hover de la card premium — DESPUÉS de .reveal.is-visible a propósito:

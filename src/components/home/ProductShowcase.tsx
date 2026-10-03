@@ -55,10 +55,10 @@ function MockupTurnero() {
   return (
     <div className="mockup-frame aspect-[9/12] w-full max-w-[200px] bg-[color:var(--surface-1)] p-2.5 sm:aspect-[9/14] sm:max-w-[300px] sm:p-3">
       <div className="flex items-center justify-between border-b border-[color:var(--border-subtle)] pb-2">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)]">
+        <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--brand-gold)]">
           Turnero · Hoy
         </div>
-        <div className="text-[9px] text-[color:var(--text-muted)]">12:30</div>
+        <div className="text-xs text-[color:var(--text-muted)]">12:30</div>
       </div>
       <div className="mt-3 space-y-1.5">
         {[
@@ -82,11 +82,11 @@ function MockupTurnero() {
             }
           >
             <div className="flex items-center gap-2">
-              <span className="font-mono text-[9px] text-[color:var(--text-muted)]">
+              <span className="font-mono text-xs text-[color:var(--text-muted)]">
                 {slot.hora}
               </span>
               <span
-                className={`text-[10px] font-semibold ${
+                className={`text-xs font-semibold ${
                   slot.color === "empty"
                     ? "text-[color:var(--text-subtle)]"
                     : "text-white"
@@ -96,7 +96,7 @@ function MockupTurnero() {
               </span>
             </div>
             <span
-              className={`text-[9px] ${
+              className={`text-xs ${
                 slot.color === "empty"
                   ? "text-[color:var(--text-subtle)]"
                   : "text-[color:var(--text-secondary)]"
@@ -128,7 +128,7 @@ function MockupPublica() {
     <div className="mockup-frame aspect-[9/14] w-full max-w-[200px] bg-[color:var(--surface-1)] p-2 sm:max-w-[300px] sm:p-3">
       {/* Header con back arrow + isotipo */}
       <div className="flex items-center justify-between">
-        <span className="text-[7px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)] sm:text-[9px]">
+        <span className="text-[7px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)] sm:text-xs">
           ← PRIME BARBER
         </span>
         <div className="size-3 rounded-sm bg-gold-grad sm:size-4" />
@@ -136,13 +136,13 @@ function MockupPublica() {
 
       {/* Title block */}
       <div className="mt-2 border-b border-[color:var(--border-subtle)] pb-2">
-        <div className="text-[7px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)] sm:text-[8px]">
+        <div className="text-[7px] font-bold uppercase tracking-normal text-[color:var(--brand-gold)] sm:text-[8px]">
           Reserva online
         </div>
-        <div className="mt-0.5 text-sm font-black uppercase leading-none tracking-tight text-white sm:text-base">
+        <div className="mt-0.5 text-sm font-black uppercase leading-none tracking-normal text-white sm:text-base">
           PRIME BARBER
         </div>
-        <div className="mt-1 hidden text-[8px] leading-tight text-[color:var(--text-secondary)] sm:block sm:text-[9px]">
+        <div className="mt-1 hidden text-[8px] leading-tight text-[color:var(--text-secondary)] sm:block sm:text-xs">
           Elegí servicio, fecha y horario.
         </div>
       </div>
@@ -152,7 +152,7 @@ function MockupPublica() {
         <div className="text-[7px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)]">
           Barbero
         </div>
-        <div className="mt-0.5 text-[10px] font-bold text-white sm:text-xs">
+        <div className="mt-0.5 text-xs font-bold text-white sm:text-xs">
           Jeremias
         </div>
       </div>
@@ -163,7 +163,7 @@ function MockupPublica() {
           Servicio
         </div>
         <div className="mt-0.5 flex items-center justify-between rounded-sm border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-1.5 py-1">
-          <span className="text-[9px] text-white">Corte — $8.500</span>
+          <span className="text-xs text-white">Corte — $8.500</span>
           <span className="text-[8px] text-[color:var(--text-muted)]">▾</span>
         </div>
       </div>
@@ -174,7 +174,7 @@ function MockupPublica() {
           Fecha
         </div>
         <div className="mt-0.5 flex items-center justify-between rounded-sm border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-1.5 py-1">
-          <span className="text-[9px] text-white">06/06/2026</span>
+          <span className="text-xs text-white">06/06/2026</span>
           <span className="text-[8px] text-[color:var(--text-muted)]">📅</span>
         </div>
       </div>
@@ -223,18 +223,18 @@ function MockupPublica() {
 function MockupReportes() {
   return (
     <div className="mockup-frame aspect-[9/12] w-full max-w-[200px] bg-[color:var(--surface-1)] p-2.5 sm:aspect-[9/14] sm:max-w-[300px] sm:p-3">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-gold)]">
+      <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--brand-gold)]">
         Reportes · Esta semana
       </div>
 
       <div className="mt-3 rounded-sm border border-[color:var(--border-default)] bg-[color:var(--surface-2)] p-3">
-        <div className="text-[9px] text-[color:var(--text-muted)]">
+        <div className="text-xs text-[color:var(--text-muted)]">
           Ingresos brutos
         </div>
-        <div className="mt-1 text-2xl font-black tracking-tight text-white">
+        <div className="mt-1 text-2xl font-black tracking-normal text-white">
           $487.500
         </div>
-        <div className="mt-1 text-[10px] text-[color:var(--success)]">
+        <div className="mt-1 text-xs text-[color:var(--success)]">
           ↑ +18% vs semana pasada
         </div>
       </div>
@@ -254,7 +254,7 @@ function MockupReportes() {
         </div>
       </div>
 
-      <div className="mt-3 text-[9px] text-[color:var(--text-muted)]">
+      <div className="mt-3 text-xs text-[color:var(--text-muted)]">
         Top barberos
       </div>
       <div className="mt-1 space-y-1">
@@ -264,7 +264,7 @@ function MockupReportes() {
           { name: "Lucas", pct: 40 },
         ].map((b) => (
           <div key={b.name} className="space-y-0.5">
-            <div className="flex items-center justify-between text-[9px]">
+            <div className="flex items-center justify-between text-xs">
               <span className="text-white">{b.name}</span>
               <span className="text-[color:var(--text-muted)]">{b.pct}%</span>
             </div>
@@ -299,10 +299,10 @@ export function ProductShowcase() {
     <section className="border-t border-[color:var(--border-subtle)] bg-black">
       <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
         <header className="text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Cómo se ve
           </p>
-          <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
             Fácil de usar{" "}
             <span className="text-[color:var(--brand-gold)]">mientras cortás</span>
           </h2>
@@ -327,14 +327,14 @@ export function ProductShowcase() {
                 <div className="min-w-0">
                   <div
                     aria-hidden="true"
-                    className="inline-flex size-9 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] sm:size-11"
+                    className="inline-flex size-11 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] sm:size-11"
                   >
                     <Icon className="size-4 sm:size-5" />
                   </div>
-                  <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--brand-gold)] sm:mt-4 sm:tracking-[0.32em]">
+                  <p className="mt-3 text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)] sm:mt-4 sm:tracking-normal">
                     {block.eyebrow}
                   </p>
-                  <h3 className="mt-2 text-lg font-black uppercase tracking-tight text-balance text-white sm:text-3xl lg:text-4xl">
+                  <h3 className="mt-2 text-lg font-black uppercase tracking-normal text-balance text-white sm:text-3xl lg:text-4xl">
                     {block.title}
                   </h3>
                   <p className="mt-2 hidden text-sm leading-6 text-[color:var(--text-secondary)] sm:mt-4 sm:block sm:text-base sm:leading-7">

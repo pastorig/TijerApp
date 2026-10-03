@@ -32,7 +32,7 @@ export function StepHeader({
       <span
         aria-hidden="true"
         className={cn(
-          "flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-black tabular-nums transition-colors",
+          "flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-black tabular-nums transition-colors",
           // `locked` gana sobre `done`: el paso de la fecha arranca con hoy
           // puesto, así que se pintaba como completado incluso mientras seguía
           // cerrado — justo el paso donde se pierde la gente.
@@ -55,7 +55,7 @@ export function StepHeader({
           {title}
         </p>
         {subtitle ? (
-          <p className="text-[11px] leading-4 text-[color:var(--text-muted)]">
+          <p className="text-xs leading-4 text-[color:var(--text-muted)]">
             {subtitle}
           </p>
         ) : null}

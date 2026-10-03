@@ -120,7 +120,7 @@ export function PricingPlans() {
               aria-selected={cycle === "monthly"}
               onClick={() => setCycle("monthly")}
               className={cn(
-                "min-h-9 rounded-[var(--radius-sm)] px-4 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
+                "min-h-11 rounded-[var(--radius-sm)] px-4 text-xs font-bold uppercase tracking-normal transition-colors duration-[var(--duration-fast)]",
                 cycle === "monthly"
                   ? "bg-gold-grad text-black"
                   : "text-[color:var(--text-secondary)] hover:text-white",
@@ -134,7 +134,7 @@ export function PricingPlans() {
               aria-selected={cycle === "annual"}
               onClick={() => setCycle("annual")}
               className={cn(
-                "min-h-9 rounded-[var(--radius-sm)] px-4 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
+                "min-h-11 rounded-[var(--radius-sm)] px-4 text-xs font-bold uppercase tracking-normal transition-colors duration-[var(--duration-fast)]",
                 cycle === "annual"
                   ? "bg-gold-grad text-black"
                   : "text-[color:var(--text-secondary)] hover:text-white",
@@ -143,7 +143,7 @@ export function PricingPlans() {
               Anual
               <span
                 className={cn(
-                  "ml-2 rounded-full px-2 py-0.5 text-[9px] font-bold tracking-wider transition-colors",
+                  "ml-2 rounded-full px-2 py-0.5 text-xs font-bold tracking-wider transition-colors",
                   cycle === "annual"
                     ? // Botón activo (fondo gold): badge oscuro para contraste
                       "bg-black/85 text-[color:var(--brand-gold)]"
@@ -169,7 +169,7 @@ export function PricingPlans() {
         </div>
 
         {/* Hint de scroll en mobile */}
-        <p className="mt-6 text-center text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:hidden">
+        <p className="mt-6 text-center text-xs uppercase tracking-normal text-[color:var(--text-muted)] sm:hidden">
           ← Deslizá para ver los 3 planes →
         </p>
 
@@ -183,12 +183,12 @@ export function PricingPlans() {
               <div
                 key={plan.id}
                 className={cn(
-                  "card-premium card-premium-hover relative flex w-[85%] shrink-0 snap-center flex-col p-6 sm:w-auto sm:shrink sm:snap-align-none sm:p-8",
+                  "card-premium  relative flex w-[85%] shrink-0 snap-center flex-col p-6 sm:w-auto sm:shrink sm:snap-align-none sm:p-8",
                   plan.highlight && "card-premium-glow",
                 )}
               >
                 {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-gold-grad px-3 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-black shadow-[0_6px_20px_-6px_rgba(201,162,62,0.7)]">
+                  <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-gold-grad px-3 py-1 text-xs font-bold uppercase tracking-normal text-black shadow-[0_6px_20px_-6px_rgba(201,162,62,0.7)]">
                     Más elegido
                   </div>
                 )}
@@ -197,9 +197,9 @@ export function PricingPlans() {
                   <div className="flex items-baseline justify-between">
                     <h3
                       className={cn(
-                        "text-2xl font-black uppercase tracking-tight",
+                        "text-2xl font-black uppercase tracking-normal",
                         plan.highlight
-                          ? "text-gold-gradient"
+                          ? "text-[color:var(--brand-gold)]"
                           : "text-white",
                       )}
                     >
@@ -220,8 +220,8 @@ export function PricingPlans() {
                 <div className="mt-6 flex items-baseline gap-2">
                   <span
                     className={cn(
-                      "text-4xl font-black tracking-tight sm:text-5xl",
-                      plan.highlight ? "text-gold-gradient" : "text-white",
+                      "text-4xl font-black tracking-normal sm:text-5xl",
+                      plan.highlight ? "text-[color:var(--brand-gold)]" : "text-white",
                     )}
                   >
                     {display}
@@ -283,7 +283,7 @@ export function PricingPlans() {
                   >
                     Empezar prueba
                   </Button>
-                  <p className="mt-3 text-center text-[10px] text-[color:var(--text-secondary)]">
+                  <p className="mt-3 text-center text-xs text-[color:var(--text-secondary)]">
                     14 días gratis · Sin tarjeta
                   </p>
                 </div>
@@ -310,10 +310,10 @@ export function FoundersProgram() {
       />
       <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
         <header className="text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Programa Fundadores
           </p>
-          <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
             Las primeras{" "}
             <span className="text-[color:var(--brand-gold)]">10 barberías</span>
             <br className="hidden sm:block" /> reciben beneficios únicos
@@ -360,7 +360,7 @@ export function FoundersProgram() {
           ].map((perk) => (
             <li
               key={perk.title}
-              className="card-premium card-premium-hover p-3 sm:p-6"
+              className="card-premium  p-3 sm:p-6"
             >
               <div className="flex items-start gap-2 sm:gap-3">
                 <Check
@@ -368,7 +368,7 @@ export function FoundersProgram() {
                   className="mt-0.5 size-4 shrink-0 text-[color:var(--brand-gold)] sm:size-5"
                 />
                 <div>
-                  <h3 className="text-[11px] font-bold uppercase leading-tight tracking-wide text-white sm:text-sm">
+                  <h3 className="text-xs font-bold uppercase leading-tight tracking-wide text-white sm:text-sm">
                     {perk.title}
                   </h3>
                   <p className="mt-1 hidden text-sm leading-6 text-[color:var(--text-secondary)] sm:block">
@@ -383,7 +383,7 @@ export function FoundersProgram() {
         <div className="mt-10 flex justify-center sm:mt-12">
           <Link
             href="/registro"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
           >
             Quiero ser Fundador
             <ArrowUpRight aria-hidden="true" className="size-4" />

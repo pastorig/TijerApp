@@ -25,19 +25,19 @@ export function CommercialNav() {
         <div className="flex items-center gap-1.5 sm:gap-1">
           <Link
             href="/producto"
-            className="hidden min-h-9 items-center justify-center rounded-[var(--radius-sm)] px-2 text-[10px] font-bold uppercase tracking-[0.1em] text-white transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:inline-flex sm:px-3 sm:tracking-[0.14em]"
+            className="hidden min-h-11 items-center justify-center rounded-[var(--radius-sm)] px-2 text-xs font-bold uppercase tracking-normal text-white transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:inline-flex sm:px-3 sm:tracking-normal"
           >
             Producto
           </Link>
           <Link
             href="/precios"
-            className="hidden min-h-9 items-center justify-center rounded-[var(--radius-sm)] px-2 text-[10px] font-bold uppercase tracking-[0.1em] text-white transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:inline-flex sm:px-3 sm:tracking-[0.14em]"
+            className="hidden min-h-11 items-center justify-center rounded-[var(--radius-sm)] px-2 text-xs font-bold uppercase tracking-normal text-white transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:inline-flex sm:px-3 sm:tracking-normal"
           >
             Precios
           </Link>
           <Link
             href="/guias"
-            className="hidden min-h-9 items-center justify-center rounded-[var(--radius-sm)] px-2 text-[10px] font-bold uppercase tracking-[0.1em] text-white transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:inline-flex sm:px-3 sm:tracking-[0.14em]"
+            className="hidden min-h-11 items-center justify-center rounded-[var(--radius-sm)] px-2 text-xs font-bold uppercase tracking-normal text-white transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:inline-flex sm:px-3 sm:tracking-normal"
           >
             Guías
           </Link>
@@ -65,7 +65,7 @@ export function CommercialNav() {
             as="link"
             href="/registro"
             size="sm"
-            className="min-h-11 sm:min-h-9"
+            className="min-h-11 sm:min-h-11"
           >
             Empezá gratis
           </Button>

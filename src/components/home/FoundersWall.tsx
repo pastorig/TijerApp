@@ -45,7 +45,7 @@ function FounderCard({ founder }: { founder: Founder }) {
         </div>
 
         <div className="min-w-0">
-          <h3 className="truncate text-lg font-black uppercase tracking-tight text-white">
+          <h3 className="truncate text-lg font-black uppercase tracking-normal text-white">
             {founder.name}
           </h3>
           {founder.location ? (
@@ -90,10 +90,10 @@ export function FoundersWall() {
     <section className="border-t border-[color:var(--border-subtle)] bg-black">
       <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:px-8 sm:py-20 lg:px-12">
         <header className="text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Fundadores TijerApp
           </p>
-          <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl">
+          <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl">
             Los que ya confiaron
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[color:var(--text-secondary)]">

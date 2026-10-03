@@ -21,7 +21,7 @@ export function GuiaBlocks({ blocks }: { blocks: GuiaBlock[] }) {
             return (
               <h2
                 key={index}
-                className="mt-6 text-2xl font-black uppercase tracking-tight text-balance text-white sm:mt-8 sm:text-3xl"
+                className="mt-6 text-2xl font-black uppercase tracking-normal text-balance text-white sm:mt-8 sm:text-3xl"
               >
                 {block.text}
               </h2>
@@ -31,7 +31,7 @@ export function GuiaBlocks({ blocks }: { blocks: GuiaBlock[] }) {
             return (
               <h3
                 key={index}
-                className="mt-2 text-lg font-bold tracking-tight text-[color:var(--brand-gold)] sm:text-xl"
+                className="mt-2 text-lg font-bold tracking-normal text-[color:var(--brand-gold)] sm:text-xl"
               >
                 {block.text}
               </h3>
@@ -106,7 +106,7 @@ export function GuiaBlocks({ blocks }: { blocks: GuiaBlock[] }) {
                 <div className="min-w-[560px] overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)]">
                   <table className="w-full text-left text-sm">
                     <thead className="bg-[color:var(--surface-1)]">
-                      <tr className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+                      <tr className="text-xs uppercase tracking-normal text-[color:var(--text-muted)]">
                         {block.headers.map((header) => (
                           <th key={header} className="px-4 py-3 font-bold">
                             {header}

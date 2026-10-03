@@ -81,6 +81,7 @@ export function AdminCierreCajaManager({
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayYmd());
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -107,7 +108,7 @@ export function AdminCierreCajaManager({
     return () => {
       isMounted = false;
     };
-  }, [barbershop.slug]);
+  }, [barbershop.slug, reloadKey]);
 
   const dayAppointments = useMemo(
     () =>
@@ -363,44 +364,44 @@ export function AdminCierreCajaManager({
   const canGoNext = nextDate <= todayYmd();
 
   return (
-    <div className="space-y-8">
-      <header className="animate-fade-up">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
+    <div className="space-y-6">
+      <header className="">
+        <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--brand-gold)] sm:tracking-normal">
           Cierre de caja
         </p>
-        <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
+        <h1 className="mt-2 text-2xl font-semibold normal-case tracking-normal text-balance text-white sm:text-3xl">
           {isToday ? "Hoy" : formatDateForDisplay(selectedDate)}
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
-          Resumen del día: cobrado real, potencial, producción por barbero
-          y detalle de todos los turnos.
+          {barbershop.name} · {formatDateForDisplay(selectedDate)}
         </p>
       </header>
 
       {/* Selector de fecha */}
       <section className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => setSelectedDate(previousDayYmd(selectedDate))}
             aria-label="Día anterior"
-            className="inline-flex size-9 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
           >
             <ChevronLeft className="size-4" />
           </button>
           <input
             type="date"
+            aria-label="Fecha del resumen de caja"
             value={selectedDate}
             max={todayYmd()}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="min-h-9 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+            onChange={(e) => { if (e.target.value) setSelectedDate(e.target.value); }}
+            className="min-h-11 min-w-0 w-40 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-base text-white outline-none focus:border-[color:var(--brand-gold)] sm:text-sm"
           />
           <button
             type="button"
             onClick={() => setSelectedDate(nextDate)}
             disabled={!canGoNext}
             aria-label="Día siguiente"
-            className="inline-flex size-9 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronRight className="size-4" />
           </button>
@@ -408,7 +409,7 @@ export function AdminCierreCajaManager({
             <button
               type="button"
               onClick={() => setSelectedDate(todayYmd())}
-              className="ml-2 inline-flex min-h-9 items-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+              className="ml-2 inline-flex min-h-11 items-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
             >
               Hoy
             </button>
@@ -418,8 +419,8 @@ export function AdminCierreCajaManager({
           <button
             type="button"
             onClick={handleExportPdf}
-            disabled={dayAppointments.length === 0}
-            className="inline-flex min-h-9 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]/80 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={isLoading || Boolean(errorMessage) || dayAppointments.length === 0}
+            className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]/80 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download className="size-3" />
             PDF
@@ -427,8 +428,8 @@ export function AdminCierreCajaManager({
           <button
             type="button"
             onClick={handleExportCsv}
-            disabled={dayAppointments.length === 0}
-            className="inline-flex min-h-9 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={isLoading || Boolean(errorMessage) || dayAppointments.length === 0}
+            className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download className="size-3" />
             CSV
@@ -437,17 +438,20 @@ export function AdminCierreCajaManager({
       </section>
 
       {errorMessage ? (
-        <p
+        <div
           role="alert"
           className="border-l-2 border-[color:var(--danger)] pl-4 text-sm font-semibold text-[color:var(--danger)]"
         >
           {errorMessage}
-        </p>
+          <button type="button" onClick={() => setReloadKey((value) => value + 1)} className="mt-3 flex min-h-11 items-center rounded-lg border border-[color:var(--border-default)] px-4 text-sm text-white">
+            Reintentar
+          </button>
+        </div>
       ) : null}
 
       {isLoading ? (
-        <p className="text-sm text-[color:var(--text-muted)]">Cargando…</p>
-      ) : (
+        <p role="status" aria-label="Cargando resumen de caja" className="min-h-32 py-6 text-sm text-[color:var(--text-muted)]">Cargando…</p>
+      ) : !errorMessage ? (
         <>
           {/* KPIs */}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -488,13 +492,13 @@ export function AdminCierreCajaManager({
           {/* Producción por barbero */}
           {byBarber.length > 0 ? (
             <section>
-              <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+              <p className="text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)]">
                 Producción por barbero
               </p>
-              <div className="mt-4 overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)]">
+              <div className="mt-4 overflow-x-auto rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)]">
                 <table className="w-full text-left text-xs sm:text-sm">
                   <thead className="bg-[color:var(--surface-1)]">
-                    <tr className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
+                    <tr className="text-xs normal-case tracking-normal text-[color:var(--text-muted)]">
                       <th className="px-3 py-2 sm:px-4">Barbero</th>
                       <th className="px-3 py-2 text-right sm:px-4">Confirmados</th>
                       <th className="hidden px-3 py-2 text-right sm:table-cell sm:px-4">
@@ -528,11 +532,11 @@ export function AdminCierreCajaManager({
 
           {/* Detalle de turnos */}
           <section>
-            <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+            <p className="text-xs font-bold normal-case tracking-normal text-[color:var(--text-muted)]">
               Detalle ({dayAppointments.length})
             </p>
             {dayAppointments.length === 0 ? (
-              <div className="mt-4 rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-subtle)] p-10 text-center">
+              <div className="mt-4 rounded-lg border border-dashed border-[color:var(--border-subtle)] p-6 text-center">
                 <p className="text-sm font-bold text-white">Sin turnos este día</p>
               </div>
             ) : (
@@ -540,7 +544,7 @@ export function AdminCierreCajaManager({
                 {dayAppointments.map((appointment) => (
                   <li
                     key={appointment.id}
-                    className="flex items-center gap-3 rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-3"
+                    className="grid grid-cols-[3rem_2px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-3 sm:grid-cols-[3rem_2px_minmax(0,1fr)_auto]"
                   >
                     <p className="w-12 shrink-0 font-mono text-base font-bold tabular-nums leading-none text-white">
                       {normalizeTimeValue(appointment.appointment_time)}
@@ -552,18 +556,18 @@ export function AdminCierreCajaManager({
                           ? "bg-[color:var(--success)]"
                           : appointment.status === "cancelled"
                             ? "bg-[color:var(--danger)]"
-                            : "bg-gold-grad",
+                            : "bg-[color:var(--brand-gold)]",
                       )}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-white">
+                      <p className="break-words text-sm font-bold text-white">
                         {appointment.customer_name}
                       </p>
-                      <p className="mt-0.5 truncate text-xs text-[color:var(--text-muted)]">
+                      <p className="mt-0.5 break-words text-xs text-[color:var(--text-muted)]">
                         {appointment.service_name} · {appointment.barber_name}
                       </p>
                     </div>
-                    <div className="shrink-0 text-right">
+                    <div className="col-start-3 flex flex-wrap items-center justify-between gap-2 sm:col-start-auto sm:block sm:text-right">
                       <p
                         className={cn(
                           "font-mono text-sm font-bold tabular-nums",
@@ -578,7 +582,7 @@ export function AdminCierreCajaManager({
                       </p>
                       <p
                         className={cn(
-                          "mt-0.5 text-[10px] font-bold uppercase tracking-[0.14em]",
+                          "mt-0.5 text-xs font-bold normal-case tracking-normal",
                           appointment.status === "confirmed"
                             ? "text-[color:var(--success)]"
                             : appointment.status === "cancelled"
@@ -599,7 +603,7 @@ export function AdminCierreCajaManager({
             )}
           </section>
         </>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -626,23 +630,23 @@ function KpiCard({
   return (
     <div
       className={cn(
-        "card-premium card-premium-hover p-4",
-        highlight && "card-premium-glow",
+        "min-w-0 rounded-lg border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-3 sm:p-4",
+        highlight && "border-[color:var(--brand-gold)]/30",
       )}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
+      <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--text-muted)]">
         {label}
       </p>
       <p
         className={cn(
-          "mt-1 font-mono text-2xl font-black tabular-nums leading-none sm:text-3xl",
-          highlight ? "text-gold-gradient" : "text-white",
+          "mt-2 break-words font-mono text-xl font-semibold tabular-nums leading-tight sm:text-2xl",
+          highlight ? "text-[color:var(--brand-gold)]" : "text-white",
         )}
       >
         {value}
       </p>
       {hint ? (
-        <p className="mt-1 text-[10px] text-[color:var(--text-subtle)]">{hint}</p>
+        <p className="mt-1 text-xs text-[color:var(--text-subtle)]">{hint}</p>
       ) : null}
       <ChangeBadge change={change} />
     </div>
@@ -652,7 +656,7 @@ function KpiCard({
 function ChangeBadge({ change }: { change: number | null }) {
   if (change === null) {
     return (
-      <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--text-subtle)]">
+      <p className="mt-2 text-xs font-semibold normal-case tracking-normal text-[color:var(--text-subtle)]">
         Sin día anterior
       </p>
     );
@@ -663,7 +667,7 @@ function ChangeBadge({ change }: { change: number | null }) {
   return (
     <p
       className={cn(
-        "mt-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
+        "mt-2 inline-flex items-center gap-1 text-xs font-semibold normal-case tracking-normal",
         isUp
           ? "text-[color:var(--success)]"
           : isDown

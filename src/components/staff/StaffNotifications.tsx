@@ -1,7 +1,6 @@
 "use client";
 
 import { PushNotificationsCard } from "@/components/push/PushNotificationsCard";
-import { Eyebrow } from "@/components/ui";
 
 /**
  * Los avisos de turnos nuevos, en la pantalla del empleado.
@@ -22,10 +21,10 @@ export function StaffNotifications({
   barbershopSlug: string;
 }) {
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex min-w-0 flex-col gap-4">
       <header>
-        <Eyebrow>Avisos</Eyebrow>
-        <h2 className="mt-2 text-xl font-black tracking-tight text-white sm:text-2xl">
+        <p className="text-xs font-semibold text-[color:var(--brand-gold)]">Avisos</p>
+        <h2 className="mt-2 text-xl font-semibold tracking-normal text-white sm:text-2xl">
           Turnos nuevos en tu celular
         </h2>
         <p className="mt-2 max-w-prose text-xs leading-5 text-[color:var(--text-muted)]">
@@ -34,9 +33,7 @@ export function StaffNotifications({
           llegan.
         </p>
       </header>
-      <div className="max-w-md">
-        <PushNotificationsCard barbershopSlug={barbershopSlug} />
-      </div>
+      <PushNotificationsCard barbershopSlug={barbershopSlug} compact />
     </section>
   );
 }

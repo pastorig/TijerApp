@@ -26,12 +26,12 @@ export function HomeWhatIsIt() {
       <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
         <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start lg:gap-16">
           <header>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+            <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
               Qué es TijerApp
             </p>
-            <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
+            <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
               Una plataforma de turnos hecha para{" "}
-              <span className="text-gold-gradient">barberías argentinas</span>
+              <span className="text-[color:var(--brand-gold)]">barberías argentinas</span>
             </h2>
             <p className="mt-5 text-base leading-7 text-[color:var(--text-secondary)] sm:text-lg sm:leading-8">
               Centralizamos reservas, barberos, servicios y agenda en un solo
@@ -46,11 +46,11 @@ export function HomeWhatIsIt() {
                 as="li"
                 key={benefit.title}
                 delay={(index % 2) * 80}
-                className="card-premium card-premium-hover group flex gap-3 p-5"
+                className="card-premium  group flex gap-3 p-5"
               >
                 <div
                   aria-hidden="true"
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105"
+                  className="flex size-11 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105"
                   style={{ boxShadow: "0 0 18px -8px rgba(201,162,62,0.6)" }}
                 >
                   <Check className="size-4" />

@@ -58,7 +58,7 @@ export function FaqAccordion({
               <span
                 aria-hidden="true"
                 className={cn(
-                  "flex size-7 shrink-0 items-center justify-center rounded-full border transition-colors duration-[var(--duration-fast)]",
+                  "flex size-11 shrink-0 items-center justify-center rounded-full border transition-colors duration-[var(--duration-fast)]",
                   isOpen
                     ? "border-[color:var(--brand-gold)] text-[color:var(--brand-gold)]"
                     : "border-[color:var(--border-default)] text-[color:var(--text-muted)]",

@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { Loader2, X } from "lucide-react";
+import { useStaffDialogFocus } from "./useStaffDialogFocus";
 import { getCurrentSession } from "@/lib/auth";
 import { formatPrice } from "@/lib/format";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui";
@@ -45,9 +46,13 @@ export function StaffNewAppointmentModal({
   onCreado: () => void;
 }) {
   const [servicios, setServicios] = useState<Servicio[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(true);
+  const [servicesError, setServicesError] = useState("");
+  const [servicesReload, setServicesReload] = useState(0);
   const [serviceId, setServiceId] = useState("");
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
+  const dialogRef = useStaffDialogFocus(abierto);
   const [dia, setDia] = useState(fecha);
   const [hora, setHora] = useState("");
   const [comentario, setComentario] = useState("");
@@ -60,10 +65,16 @@ export function StaffNewAppointmentModal({
     if (!abierto) return;
     let vivo = true;
     void (async () => {
+      setServicesLoading(true);
+      setServicesError("");
       try {
         const { data: sessionData } = await getCurrentSession();
         const token = sessionData.session?.access_token;
-        if (!vivo || !token) return;
+        if (!vivo) return;
+        if (!token) {
+          setServicesError("Se cerró tu sesión. Volvé a entrar.");
+          return;
+        }
         const res = await fetch(
           `/api/staff/services?bs=${encodeURIComponent(barbershopSlug)}`,
           { headers: { Authorization: `Bearer ${token}` } },
@@ -71,16 +82,22 @@ export function StaffNewAppointmentModal({
         const payload = (await res.json().catch(() => ({}))) as {
           servicios?: Servicio[];
         };
-        if (!vivo || !res.ok) return;
+        if (!vivo) return;
+        if (!res.ok) {
+          setServicesError("No pudimos traer tus servicios.");
+          return;
+        }
         setServicios(payload.servicios ?? []);
       } catch {
-        if (vivo) setError("No pudimos traer tus servicios.");
+        if (vivo) setServicesError("No pudimos traer tus servicios.");
+      } finally {
+        if (vivo) setServicesLoading(false);
       }
     })();
     return () => {
       vivo = false;
     };
-  }, [abierto, barbershopSlug]);
+  }, [abierto, barbershopSlug, servicesReload]);
 
   useEffect(() => {
     if (!abierto) return;
@@ -155,12 +172,17 @@ export function StaffNewAppointmentModal({
   return createPortal(
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-6">
       <form
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="staff-new-title"
+        tabIndex={-1}
         onSubmit={guardar}
-        className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-y-auto rounded-t-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] sm:rounded-[var(--radius-md)]"
+        className="flex max-h-[calc(100dvh-1rem)] w-full max-w-lg flex-col overflow-y-auto [&_label]:text-xs [&_label]:normal-case [&_label]:tracking-normal [&_input]:min-h-11 [&_input]:text-base [&_select]:min-h-11 [&_select]:text-base [&_textarea]:text-base [&_button]:min-h-11 [&_button]:text-xs [&_button]:normal-case [&_button]:tracking-normal sm:[&_input]:text-sm sm:[&_select]:text-sm sm:[&_textarea]:text-sm rounded-t-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] sm:rounded-[var(--radius-md)]"
       >
-        <header className="flex items-start justify-between gap-3 border-b border-[color:var(--border-subtle)] px-5 py-4">
+        <header className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-4 py-3">
           <div>
-            <h2 className="text-lg font-black tracking-tight text-white">
+            <h2 id="staff-new-title" className="text-lg font-semibold tracking-normal text-white">
               Agregar turno
             </h2>
             <p className="mt-1 text-xs text-[color:var(--text-muted)]">
@@ -171,21 +193,24 @@ export function StaffNewAppointmentModal({
           <button
             type="button"
             onClick={onCerrar}
+            disabled={guardando}
             aria-label="Cerrar"
-            className="shrink-0 rounded-[var(--radius-sm)] p-1.5 text-[color:var(--text-muted)] transition-colors hover:text-white"
+            title="Cerrar"
+            className="flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[color:var(--text-muted)] transition-colors hover:text-white"
           >
             <X className="size-4" />
           </button>
         </header>
 
-        <div className="flex flex-col gap-4 px-5 py-4">
+        <div className="flex flex-col gap-3 px-4 py-3">
           <Field label="Servicio" htmlFor="staff-turno-servicio">
             <Select
               id="staff-turno-servicio"
+              disabled={servicesLoading || Boolean(servicesError)}
               value={serviceId}
               onChange={(e) => setServiceId(e.target.value)}
             >
-              <option value="">Elegí un servicio</option>
+              <option value="">{servicesLoading ? "Cargando servicios…" : "Elegí un servicio"}</option>
               {servicios.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name} · {s.duration_minutes} min · {formatPrice(s.price)}
@@ -193,6 +218,15 @@ export function StaffNewAppointmentModal({
               ))}
             </Select>
           </Field>
+
+          {servicesError ? (
+            <div role="alert" className="text-xs text-[color:var(--danger)]">
+              <p>{servicesError}</p>
+              <Button type="button" variant="secondary" size="sm" onClick={() => setServicesReload(value => value + 1)}>Reintentar servicios</Button>
+            </div>
+          ) : !servicesLoading && servicios.length === 0 ? (
+            <p className="text-xs text-[color:var(--text-secondary)]">No tenés servicios activos para agregar un turno.</p>
+          ) : null}
 
           <Field label="Cliente" htmlFor="staff-turno-nombre">
             <Input
@@ -242,6 +276,8 @@ export function StaffNewAppointmentModal({
           <Field label="Nota" htmlFor="staff-turno-nota" optional>
             <Textarea
               id="staff-turno-nota"
+              rows={2}
+              className="min-h-20"
               value={comentario}
               onChange={(e) => setComentario(e.target.value)}
               placeholder="Algo para acordarte"
@@ -258,7 +294,7 @@ export function StaffNewAppointmentModal({
           ) : null}
         </div>
 
-        <footer className="flex justify-end gap-2 border-t border-[color:var(--border-subtle)] px-5 py-4">
+        <footer className="sticky bottom-0 z-10 flex justify-end gap-2 border-t border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <Button
             type="button"
             variant="secondary"
@@ -270,6 +306,8 @@ export function StaffNewAppointmentModal({
           </Button>
           <Button
             type="submit"
+            style={{ backgroundImage: "none", backgroundColor: "var(--brand-gold)" }}
+            disabled={servicesLoading || Boolean(servicesError) || servicios.length === 0}
             size="sm"
             loading={guardando}
             iconLeft={

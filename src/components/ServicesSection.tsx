@@ -29,10 +29,10 @@ export function ServicesSection({
     >
       <div className="mx-auto w-full max-w-6xl px-4 py-7 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
         <header className="text-center sm:text-left">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Servicios
           </p>
-          <h2 className="mt-3 text-2xl font-black uppercase tracking-tight text-white sm:mt-4 sm:text-3xl lg:text-4xl">
+          <h2 className="mt-3 text-2xl font-black uppercase tracking-normal text-white sm:mt-4 sm:text-3xl lg:text-4xl">
             Elegí tu servicio
           </h2>
         </header>
@@ -47,7 +47,7 @@ export function ServicesSection({
                 <h3 className="truncate text-base font-bold text-white sm:text-lg">
                   {service.name}
                 </h3>
-                <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-muted)]">
+                <p className="mt-1 font-mono text-xs uppercase tracking-normal text-[color:var(--text-muted)]">
                   {service.durationMinutes} min
                 </p>
               </div>

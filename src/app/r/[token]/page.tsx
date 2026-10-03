@@ -61,7 +61,7 @@ export default async function PublicAppointmentPage({
       <nav className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-5 sm:px-8 sm:py-6 lg:px-12">
         <Link
           href={`/${appointment.barbershop_slug}`}
-          className="inline-flex min-w-0 items-center gap-1 truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:tracking-[0.2em]"
+          className="inline-flex min-w-0 items-center gap-1 truncate text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:tracking-normal"
         >
           ← {barbershopName}
         </Link>

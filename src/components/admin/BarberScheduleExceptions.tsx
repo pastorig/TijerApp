@@ -50,10 +50,10 @@ type Props = {
 type ModoPausa = "heredar" | "propia" | "ninguna";
 
 const inputClass =
-  "min-h-11 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]";
+  "min-h-11 min-w-0 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-base text-white sm:text-sm outline-none transition focus:border-[color:var(--brand-gold)]";
 
 const botonModo =
-  "min-h-11 flex-1 rounded-md border px-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors";
+  "min-h-11 flex-1 rounded-md border px-3 text-xs font-bold normal-case tracking-normal transition-colors";
 
 /** Hoy según el reloj de la barbería, no el del aparato que abre el panel. */
 function hoyEnLaBarberia(): string {
@@ -278,11 +278,11 @@ export function BarberScheduleExceptions({ barbershop, barber, reglaSemanal }: P
 
   return (
     <div className="mt-5">
-      <p className="flex items-center gap-2 text-[11px] font-bold uppercase text-[color:var(--brand-gold)]">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-[color:var(--brand-gold)]">
         <CalendarClock className="size-3.5" />
-        Horario distinto por unos días
-      </p>
-      <p className="mt-1 text-[11px] leading-4 text-[color:var(--text-muted)]">
+        Excepciones por fecha
+      </h3>
+      <p className="mt-1 text-xs leading-4 text-[color:var(--text-muted)]">
         Para una semana puntual: horas extra, vacaciones, un feriado. El horario
         semanal de {barber.display_name || barber.name} no se toca.
       </p>
@@ -292,7 +292,7 @@ export function BarberScheduleExceptions({ barbershop, barber, reglaSemanal }: P
         className="mt-3 grid gap-3 rounded-md border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-3"
       >
         <div className="grid gap-2 sm:grid-cols-2">
-          <label className="grid gap-1 text-[11px] uppercase tracking-wide text-[color:var(--text-muted)]">
+          <label className="grid gap-1 text-xs normal-case tracking-wide text-[color:var(--text-muted)]">
             Desde
             <input
               type="date"
@@ -303,7 +303,7 @@ export function BarberScheduleExceptions({ barbershop, barber, reglaSemanal }: P
               required
             />
           </label>
-          <label className="grid gap-1 text-[11px] uppercase tracking-wide text-[color:var(--text-muted)]">
+          <label className="grid gap-1 text-xs normal-case tracking-wide text-[color:var(--text-muted)]">
             Hasta
             <input
               type="date"
@@ -320,9 +320,10 @@ export function BarberScheduleExceptions({ barbershop, barber, reglaSemanal }: P
           <button
             type="button"
             onClick={() => setTrabaja(true)}
+            aria-pressed={trabaja}
             className={`${botonModo} ${
               trabaja
-                ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
+                ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
                 : "border-[color:var(--border-default)] text-[color:var(--text-secondary)]"
             }`}
           >
@@ -331,9 +332,10 @@ export function BarberScheduleExceptions({ barbershop, barber, reglaSemanal }: P
           <button
             type="button"
             onClick={() => setTrabaja(false)}
+            aria-pressed={!trabaja}
             className={`${botonModo} ${
               !trabaja
-                ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
+                ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold)] text-black"
                 : "border-[color:var(--border-default)] text-[color:var(--text-secondary)]"
             }`}
           >
@@ -344,7 +346,7 @@ export function BarberScheduleExceptions({ barbershop, barber, reglaSemanal }: P
         {trabaja ? (
           <>
             <div className="grid gap-2 sm:grid-cols-2">
-              <label className="grid gap-1 text-[11px] uppercase tracking-wide text-[color:var(--text-muted)]">
+              <label className="grid gap-1 text-xs normal-case tracking-wide text-[color:var(--text-muted)]">
                 Abre
                 <input
                   type="time"
@@ -354,7 +356,7 @@ export function BarberScheduleExceptions({ barbershop, barber, reglaSemanal }: P
                   required
                 />
               </label>
-              <label className="grid gap-1 text-[11px] uppercase tracking-wide text-[color:var(--text-muted)]">
+              <label className="grid gap-1 text-xs normal-case tracking-wide text-[color:var(--text-muted)]">
                 Cierra
                 <input
                   type="time"
@@ -367,7 +369,7 @@ export function BarberScheduleExceptions({ barbershop, barber, reglaSemanal }: P
             </div>
 
             <div className="grid gap-2">
-              <span className="text-[11px] uppercase tracking-wide text-[color:var(--text-muted)]">
+              <span className="text-xs normal-case tracking-wide text-[color:var(--text-muted)]">
                 La pausa del mediodía
               </span>
               <div className="flex flex-wrap gap-2">
@@ -382,6 +384,7 @@ export function BarberScheduleExceptions({ barbershop, barber, reglaSemanal }: P
                     key={valor}
                     type="button"
                     onClick={() => setModoPausa(valor)}
+                    aria-pressed={modoPausa === valor}
                     className={`${botonModo} ${
                       modoPausa === valor
                         ? "border-[color:var(--brand-gold)] text-[color:var(--brand-gold)]"
@@ -432,7 +435,7 @@ export function BarberScheduleExceptions({ barbershop, barber, reglaSemanal }: P
 
         {previa ? (
           previa.ok ? (
-            <p className="text-[11px] leading-4 text-[color:var(--text-muted)]">
+            <p className="text-xs leading-4 text-[color:var(--text-muted)]">
               Toca{" "}
               <strong className="text-white">
                 {previa.fechas.length} día{previa.fechas.length === 1 ? "" : "s"}
@@ -443,7 +446,7 @@ export function BarberScheduleExceptions({ barbershop, barber, reglaSemanal }: P
               .
             </p>
           ) : (
-            <p className="text-[11px] leading-4 text-[color:var(--danger)]">{previa.error}</p>
+            <p className="text-xs leading-4 text-[color:var(--danger)]">{previa.error}</p>
           )
         ) : null}
 
@@ -452,7 +455,7 @@ export function BarberScheduleExceptions({ barbershop, barber, reglaSemanal }: P
         <button
           type="submit"
           disabled={guardando || !previa?.ok}
-          className="min-h-11 rounded-md bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-11 rounded-md bg-[color:var(--brand-gold)] px-4 text-xs font-bold normal-case tracking-normal text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {guardando ? "Guardando…" : "Guardar horario especial"}
         </button>
@@ -475,7 +478,7 @@ export function BarberScheduleExceptions({ barbershop, barber, reglaSemanal }: P
                 <p className="text-sm font-bold text-white">
                   {formatDateForDisplay(fila.override_date)}
                 </p>
-                <p className="text-[11px] text-[color:var(--text-muted)]">
+                <p className="text-xs text-[color:var(--text-muted)]">
                   {descripcion(fila)}
                   {fila.nota ? ` · ${fila.nota}` : ""}
                 </p>

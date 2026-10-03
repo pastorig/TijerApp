@@ -193,7 +193,7 @@ export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
             </label>
             <Link
               href="/recuperar"
-              className="text-[11px] font-semibold text-[color:var(--brand-gold)] hover:brightness-125"
+              className="text-xs font-semibold text-[color:var(--brand-gold)] hover:brightness-125"
             >
               ¿La olvidaste?
             </Link>
@@ -254,7 +254,7 @@ export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
 
       {choices.length > 1 ? (
         <section className="mt-6 border-t border-[color:var(--border-subtle)] pt-5">
-          <p className="text-xs font-bold uppercase tracking-[0.1em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Elegí tu barbería
           </p>
           <div className="mt-3 grid gap-2">
@@ -268,7 +268,7 @@ export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
                 }
                 className="flex items-center gap-3 rounded-md border border-[color:var(--border-default)] bg-black px-3 py-3 transition hover:border-[color:var(--brand-gold)]"
               >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-[color:var(--border-default)] text-[color:var(--text-muted)]">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-md border border-[color:var(--border-default)] text-[color:var(--text-muted)]">
                   <Store aria-hidden="true" className="size-4" />
                 </span>
                 <span className="min-w-0">

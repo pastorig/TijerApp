@@ -93,21 +93,21 @@ export default async function GuiaPage({ params }: Props) {
           <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-10 sm:px-8 sm:pb-12 sm:pt-14 lg:pt-16">
             <Link
               href="/guias"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--brand-gold)]"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--brand-gold)]"
             >
               <ArrowLeft aria-hidden="true" className="size-3.5" />
               Guías
             </Link>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
-              <span className="chip-gold !px-2 !py-1 !text-[9px]">
+              <span className="chip-gold !px-2 !py-1 !text-xs">
                 {guia.category}
               </span>
               {/* Si la guía se actualizó, mostramos ESA fecha y no la de
                   publicación: en una comparativa con precios de terceros, la
                   fecha visible es lo que le dice al lector si el dato sigue
                   vigente. El JSON-LD ya usaba updatedAt, el texto no. */}
-              <span className="text-[11px] text-[color:var(--text-muted)]">
+              <span className="text-xs text-[color:var(--text-muted)]">
                 {guia.readingMinutes} min ·{" "}
                 {guia.updatedAt
                   ? `Actualizada el ${formatFecha(guia.updatedAt)}`
@@ -115,7 +115,7 @@ export default async function GuiaPage({ params }: Props) {
               </span>
             </div>
 
-            <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
+            <h1 className="mt-4 text-3xl font-black uppercase tracking-normal text-balance text-white sm:text-4xl lg:text-5xl">
               {guia.title}
             </h1>
             <p className="mt-5 text-base leading-7 text-[color:var(--text-secondary)] sm:text-lg sm:leading-8">
@@ -136,7 +136,7 @@ export default async function GuiaPage({ params }: Props) {
       <section className="border-t border-[color:var(--border-subtle)]">
         <div className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-8 sm:py-16">
           <div className="card-premium card-premium-glow p-6 text-center sm:p-8">
-            <h2 className="text-2xl font-black uppercase tracking-tight text-balance text-white sm:text-3xl">
+            <h2 className="text-2xl font-black uppercase tracking-normal text-balance text-white sm:text-3xl">
               Probalo con tu barbería
             </h2>
             <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
@@ -145,7 +145,7 @@ export default async function GuiaPage({ params }: Props) {
             </p>
             <Link
               href="/registro"
-              className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
+              className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
             >
               Empezar gratis
               <ArrowUpRight aria-hidden="true" className="size-4" />
@@ -154,7 +154,7 @@ export default async function GuiaPage({ params }: Props) {
 
           {otras.length > 0 ? (
             <div className="mt-12">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+              <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
                 Seguí leyendo
               </p>
               <ul className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -162,7 +162,7 @@ export default async function GuiaPage({ params }: Props) {
                   <li key={otra.slug}>
                     <Link
                       href={`/guias/${otra.slug}`}
-                      className="card-premium card-premium-hover flex h-full flex-col p-4"
+                      className="card-premium  flex h-full flex-col p-4"
                     >
                       <span className="text-sm font-bold text-white">
                         {otra.cardTitle}

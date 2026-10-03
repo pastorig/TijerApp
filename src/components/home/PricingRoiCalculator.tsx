@@ -36,11 +36,11 @@ export function PricingRoiCalculator() {
         <header className="text-center">
           <div className="inline-flex items-center gap-2 text-[color:var(--brand-gold)]">
             <Calculator className="size-5" />
-            <p className="text-[10px] font-semibold uppercase tracking-[0.32em]">
+            <p className="text-xs font-semibold uppercase tracking-normal">
               Calculadora de ROI
             </p>
           </div>
-          <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
             ¿Cuánto te cuesta{" "}
             <span className="text-[color:var(--brand-gold)]">
               no usar TijerApp
@@ -60,7 +60,7 @@ export function PricingRoiCalculator() {
               <div>
                 <label
                   htmlFor="ticket"
-                  className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]"
+                  className="text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)]"
                 >
                   Ticket promedio por corte
                 </label>
@@ -76,7 +76,7 @@ export function PricingRoiCalculator() {
                     step={500}
                     value={ticketPromedio}
                     onChange={(e) => setTicketPromedio(Number(e.target.value))}
-                    className="w-full bg-transparent text-2xl font-black tracking-tight text-white outline-none sm:text-3xl"
+                    className="w-full bg-transparent text-2xl font-black tracking-normal text-white outline-none sm:text-3xl"
                   />
                 </div>
                 <input
@@ -89,7 +89,7 @@ export function PricingRoiCalculator() {
                   onChange={(e) => setTicketPromedio(Number(e.target.value))}
                   className="mt-3 w-full accent-[color:var(--brand-gold)]"
                 />
-                <div className="mt-1 flex justify-between text-[10px] text-[color:var(--text-muted)]">
+                <div className="mt-1 flex justify-between text-xs text-[color:var(--text-muted)]">
                   <span>$2.000</span>
                   <span>$25.000</span>
                 </div>
@@ -98,11 +98,11 @@ export function PricingRoiCalculator() {
               <div>
                 <label
                   htmlFor="turnos"
-                  className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]"
+                  className="text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)]"
                 >
                   Turnos perdidos por mes
                 </label>
-                <p className="mt-1 text-[11px] text-[color:var(--text-muted)]">
+                <p className="mt-1 text-xs text-[color:var(--text-muted)]">
                   Por olvido, doble-booking o cliente que no avisa.
                 </p>
                 <div className="mt-2 flex items-baseline gap-2">
@@ -114,7 +114,7 @@ export function PricingRoiCalculator() {
                     step={1}
                     value={turnosPerdidos}
                     onChange={(e) => setTurnosPerdidos(Number(e.target.value))}
-                    className="w-full bg-transparent text-2xl font-black tracking-tight text-white outline-none sm:text-3xl"
+                    className="w-full bg-transparent text-2xl font-black tracking-normal text-white outline-none sm:text-3xl"
                   />
                   <span className="text-sm text-[color:var(--text-secondary)]">
                     turnos / mes
@@ -130,7 +130,7 @@ export function PricingRoiCalculator() {
                   onChange={(e) => setTurnosPerdidos(Number(e.target.value))}
                   className="mt-3 w-full accent-[color:var(--brand-gold)]"
                 />
-                <div className="mt-1 flex justify-between text-[10px] text-[color:var(--text-muted)]">
+                <div className="mt-1 flex justify-between text-xs text-[color:var(--text-muted)]">
                   <span>0</span>
                   <span>30 turnos</span>
                 </div>
@@ -140,11 +140,11 @@ export function PricingRoiCalculator() {
             {/* Resultados */}
             <div className="space-y-4 rounded-[var(--radius-md)] border border-[color:var(--brand-gold)]/20 bg-black/30 p-5 sm:p-6">
               <div>
-                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--danger)]">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-normal text-[color:var(--danger)]">
                   <TrendingDown className="size-3.5" />
                   Lo que perdés sin TijerApp
                 </div>
-                <div className="mt-2 text-3xl font-black tracking-tight text-[color:var(--danger)] sm:text-4xl">
+                <div className="mt-2 text-3xl font-black tracking-normal text-[color:var(--danger)] sm:text-4xl">
                   ${formatArs(dineroPerdidoPorMes)}
                 </div>
                 <div className="text-xs text-[color:var(--text-muted)]">
@@ -155,7 +155,7 @@ export function PricingRoiCalculator() {
               <div className="h-px bg-[color:var(--border-subtle)]" />
 
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                <div className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
                   Costo TijerApp Pro
                 </div>
                 <div className="mt-1 text-lg font-bold text-white sm:text-xl">
@@ -167,7 +167,7 @@ export function PricingRoiCalculator() {
 
               <div>
                 <div
-                  className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] ${
+                  className={`flex items-center gap-2 text-xs font-bold uppercase tracking-normal ${
                     roiPositivo
                       ? "text-[color:var(--brand-gold)]"
                       : "text-[color:var(--text-muted)]"
@@ -177,7 +177,7 @@ export function PricingRoiCalculator() {
                   {roiPositivo ? "Ahorro neto mensual" : "Diferencia"}
                 </div>
                 <div
-                  className={`mt-2 text-3xl font-black tracking-tight sm:text-4xl ${
+                  className={`mt-2 text-3xl font-black tracking-normal sm:text-4xl ${
                     roiPositivo
                       ? "text-[color:var(--brand-gold)]"
                       : "text-white"
@@ -197,14 +197,14 @@ export function PricingRoiCalculator() {
           <div className="mt-6 flex justify-center sm:mt-8">
             <Link
               href="/#contacto"
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
             >
               Empezar prueba gratis
               <ArrowUpRight aria-hidden="true" className="size-4" />
             </Link>
           </div>
 
-          <p className="mt-4 text-center text-[10px] text-[color:var(--text-muted)] sm:text-xs">
+          <p className="mt-4 text-center text-xs text-[color:var(--text-muted)] sm:text-xs">
             * Cálculo estimado basado en datos de barberías argentinas con
             agenda desorganizada. Resultados reales pueden variar.
           </p>

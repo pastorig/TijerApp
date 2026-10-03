@@ -45,10 +45,10 @@ export function BarbershopReviewsSection({
     >
       <div className="mx-auto w-full max-w-6xl px-4 py-7 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
         <header className="mb-6 sm:mb-8">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Lo que dicen
           </p>
-          <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:text-4xl lg:text-5xl">
             Reseñas reales
           </h2>
           <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -68,7 +68,7 @@ export function BarbershopReviewsSection({
             <p className="font-mono text-sm font-bold tabular-nums text-white">
               {avgRating.toFixed(1)}
             </p>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+            <span className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
               · {totalCount} {totalCount === 1 ? "reseña" : "reseñas"}
             </span>
           </div>
@@ -81,7 +81,7 @@ export function BarbershopReviewsSection({
               className="relative flex flex-col gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--border-default)]"
             >
               <Quote
-                className="size-7 text-[color:var(--brand-gold)]/20"
+                className="size-11 text-[color:var(--brand-gold)]/20"
                 aria-hidden="true"
               />
               <div className="flex items-center gap-0.5">
@@ -106,13 +106,13 @@ export function BarbershopReviewsSection({
                     {review.customer_first_name}
                   </p>
                   {review.service_name ? (
-                    <p className="truncate text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+                    <p className="truncate text-xs uppercase tracking-normal text-[color:var(--text-muted)]">
                       {review.service_name}
                       {review.barber_name ? ` · ${review.barber_name}` : ""}
                     </p>
                   ) : null}
                 </div>
-                <span className="shrink-0 font-mono text-[10px] text-[color:var(--text-subtle)]">
+                <span className="shrink-0 font-mono text-xs text-[color:var(--text-subtle)]">
                   {formatRelativeDate(review.created_at)}
                 </span>
               </div>
@@ -126,7 +126,7 @@ export function BarbershopReviewsSection({
               href={googleReviewsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center text-[11px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
+              className="inline-flex items-center text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
             >
               Ver más en Google →
             </a>

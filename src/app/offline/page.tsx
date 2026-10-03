@@ -28,11 +28,11 @@ export default function OfflinePage() {
       <div className="flex max-w-sm flex-col items-center text-center">
         <Logo variant="mark" size="xl" />
 
-        <p className="mt-8 text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+        <p className="mt-8 text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
           Sin conexión
         </p>
 
-        <h1 className="mt-4 text-3xl font-black uppercase leading-[0.95] tracking-tight text-balance text-white sm:text-4xl">
+        <h1 className="mt-4 text-3xl font-black uppercase leading-[0.95] tracking-normal text-balance text-white sm:text-4xl">
           Te quedaste
           <br />
           sin internet
@@ -47,7 +47,7 @@ export default function OfflinePage() {
           <Link
             href="/"
             prefetch={false}
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black no-underline transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-normal text-black no-underline transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
           >
             <RefreshCw className="size-4" aria-hidden="true" />
             Reintentar

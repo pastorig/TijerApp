@@ -138,7 +138,7 @@ export function DateStrip({
               >
                 <span
                   className={cn(
-                    "text-[9px] font-bold uppercase tracking-[0.1em]",
+                    "text-xs font-bold uppercase tracking-normal",
                     isSelected
                       ? "text-black/70"
                       : "text-[color:var(--text-muted)]",
@@ -151,7 +151,7 @@ export function DateStrip({
                 </span>
                 <span
                   className={cn(
-                    "text-[9px] font-semibold uppercase",
+                    "text-xs font-semibold uppercase",
                     isSelected
                       ? "text-black/60"
                       : "text-[color:var(--text-subtle)]",
@@ -181,14 +181,14 @@ export function DateStrip({
 
       <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         {/* Hint mobile: deslizá (en desktop se entiende con las flechas + mouse) */}
-        <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)] sm:hidden">
+        <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)] sm:hidden">
           <ChevronLeft className="size-3 text-[color:var(--brand-gold)]" aria-hidden="true" />
           Deslizá para ver más días
           <ChevronRight className="size-3 text-[color:var(--brand-gold)]" aria-hidden="true" />
         </p>
 
         {/* Otra fecha (más lejana que el strip) */}
-        <label className="flex items-center gap-2 text-[11px] text-[color:var(--text-muted)]">
+        <label className="flex items-center gap-2 text-xs text-[color:var(--text-muted)]">
           <span>¿Otra fecha?</span>
           <input
             type="date"
@@ -196,7 +196,7 @@ export function DateStrip({
             min={today}
             disabled={disabled}
             onChange={(e) => e.target.value && onChange(e.target.value)}
-            className="min-h-9 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-2 text-xs text-white outline-none focus:border-[color:var(--brand-gold)]"
+            className="min-h-11 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-2 text-xs text-white outline-none focus:border-[color:var(--brand-gold)]"
           />
         </label>
       </div>

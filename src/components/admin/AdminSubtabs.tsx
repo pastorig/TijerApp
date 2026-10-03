@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
+import styles from "./AdminShell.module.css";
 import { hasFeature } from "@/lib/plans";
 import { useCurrentPlan } from "./PlanContext";
 import {
@@ -34,8 +35,8 @@ export function AdminSubtabs({ barbershopSlug }: { barbershopSlug: string }) {
   if (items.length < 2) return null;
 
   return (
-    <div className="sticky top-14 z-30 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-6xl gap-1 overflow-x-auto px-4 sm:px-8 lg:px-12">
+    <nav aria-label={`Secciones de ${activeGroup.label}`} className="sticky top-[var(--admin-header-height)] z-30 border-b border-white/10 bg-[#101012]/95 backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-6xl gap-1 overflow-x-auto px-4 sm:px-6 lg:px-8">
         {items.map((item) => {
           const active = itemIsActive(item, pathname);
           const Icon = item.icon;
@@ -43,8 +44,10 @@ export function AdminSubtabs({ barbershopSlug }: { barbershopSlug: string }) {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                "inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-3 text-sm font-semibold transition-colors duration-[var(--duration-fast)]",
+                styles.focus,
+                "inline-flex min-h-12 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition-colors duration-150",
                 active
                   ? "border-[color:var(--brand-gold)] text-[color:var(--brand-gold)]"
                   : "border-transparent text-[color:var(--text-muted)] hover:text-white",
@@ -56,6 +59,6 @@ export function AdminSubtabs({ barbershopSlug }: { barbershopSlug: string }) {
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }

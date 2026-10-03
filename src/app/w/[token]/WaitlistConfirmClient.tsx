@@ -175,10 +175,10 @@ export function WaitlistConfirmClient({ token }: WaitlistConfirmClientProps) {
   if (loadError || !entry) {
     return (
       <article className="animate-fade-up">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+        <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
           Lista de espera
         </p>
-        <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
+        <h1 className="mt-4 text-3xl font-black uppercase tracking-normal text-white sm:text-4xl">
           Link inválido
         </h1>
         <p className="mt-4 text-sm text-[color:var(--text-secondary)]">
@@ -192,10 +192,10 @@ export function WaitlistConfirmClient({ token }: WaitlistConfirmClientProps) {
   if (entry.status === "fulfilled") {
     return (
       <article className="animate-fade-up">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+        <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
           Lista de espera
         </p>
-        <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
+        <h1 className="mt-4 text-3xl font-black uppercase tracking-normal text-white sm:text-4xl">
           Ya confirmaste un turno
         </h1>
         <p className="mt-4 text-sm text-[color:var(--text-secondary)]">
@@ -212,7 +212,7 @@ export function WaitlistConfirmClient({ token }: WaitlistConfirmClientProps) {
         <div className="mx-auto flex size-14 items-center justify-center rounded-full border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] text-[color:var(--success)]">
           <CheckCircle2 className="size-7" />
         </div>
-        <h1 className="mt-6 text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
+        <h1 className="mt-6 text-3xl font-black uppercase tracking-normal text-white sm:text-4xl">
           Turno reservado
         </h1>
         <p className="mt-4 text-sm leading-7 text-[color:var(--text-secondary)]">
@@ -223,7 +223,7 @@ export function WaitlistConfirmClient({ token }: WaitlistConfirmClientProps) {
         </p>
         <Link
           href={`/r/${confirmedAppointmentToken}`}
-          className="mt-8 inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-5 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
+          className="mt-8 inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-5 text-xs font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
         >
           Ver detalle del turno
         </Link>
@@ -233,10 +233,10 @@ export function WaitlistConfirmClient({ token }: WaitlistConfirmClientProps) {
 
   return (
     <article className="animate-fade-up">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+      <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
         Lista de espera · {entry.barbershop_name}
       </p>
-      <h1 className="mt-4 text-3xl font-black uppercase leading-[0.95] tracking-tight text-white sm:text-4xl lg:text-5xl">
+      <h1 className="mt-4 text-3xl font-black uppercase leading-[0.95] tracking-normal text-white sm:text-4xl lg:text-5xl">
         Hola {entry.customer_name.split(" ")[0]}!
       </h1>
       <p className="mt-4 text-sm leading-7 text-[color:var(--text-secondary)] sm:text-base">
@@ -250,7 +250,7 @@ export function WaitlistConfirmClient({ token }: WaitlistConfirmClientProps) {
 
       <dl className="mt-8 grid gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 text-xs text-[color:var(--text-secondary)]">
         <div className="flex items-baseline justify-between gap-3">
-          <dt className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+          <dt className="text-xs uppercase tracking-normal text-[color:var(--text-muted)]">
             Servicio
           </dt>
           <dd className="text-right font-semibold text-white">
@@ -258,7 +258,7 @@ export function WaitlistConfirmClient({ token }: WaitlistConfirmClientProps) {
           </dd>
         </div>
         <div className="flex items-baseline justify-between gap-3">
-          <dt className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+          <dt className="text-xs uppercase tracking-normal text-[color:var(--text-muted)]">
             Barbero
           </dt>
           <dd className="text-right font-semibold text-white">
@@ -271,7 +271,7 @@ export function WaitlistConfirmClient({ token }: WaitlistConfirmClientProps) {
       <div className="mt-8">
         <label
           htmlFor="confirm-date"
-          className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
+          className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]"
         >
           Fecha
         </label>
@@ -291,7 +291,7 @@ export function WaitlistConfirmClient({ token }: WaitlistConfirmClientProps) {
 
       {/* Slots */}
       <div className="mt-6">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+        <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
           Horario
         </p>
         {isLoadingSlots ? (
@@ -349,7 +349,7 @@ export function WaitlistConfirmClient({ token }: WaitlistConfirmClientProps) {
         </Button>
       </div>
 
-      <p className="mt-10 text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
+      <p className="mt-10 text-xs uppercase tracking-normal text-[color:var(--text-subtle)]">
         Powered by TijerApp
       </p>
     </article>

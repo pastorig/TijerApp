@@ -55,10 +55,10 @@ export default function ProductPage() {
         />
         <div className="mx-auto w-full max-w-6xl px-4 pb-14 pt-12 sm:px-8 sm:pb-16 sm:pt-16 lg:px-12 lg:pb-20 lg:pt-20">
           <div className="animate-fade-up">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+            <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
               Producto
             </p>
-            <h1 className="mt-6 max-w-3xl text-[2.25rem] font-black uppercase leading-[0.95] tracking-tight text-balance sm:mt-8 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-6 max-w-3xl text-[2.25rem] font-black uppercase leading-[0.95] tracking-normal text-balance sm:mt-8 sm:text-5xl lg:text-6xl">
               Todo lo que tu barbería{" "}
               <span className="text-[color:var(--brand-gold)]">
                 necesita
@@ -81,7 +81,7 @@ export default function ProductPage() {
               </Button>
               <Link
                 href="/#contacto"
-                className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+                className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-6 text-sm font-bold uppercase tracking-normal text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
               >
                 Hablar con nosotros
               </Link>
@@ -100,10 +100,10 @@ export default function ProductPage() {
       <section className="border-t border-[color:var(--border-subtle)] bg-black">
         <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
           <header className="text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+            <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
               Mirá la demo
             </p>
-            <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
+            <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
               La mejor forma de entender TijerApp es usarlo
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[color:var(--text-secondary)] sm:text-lg">

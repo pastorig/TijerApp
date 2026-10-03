@@ -52,6 +52,7 @@ type TestResult =
 export function AdminMercadoPagoSettings({ barbershop }: Props) {
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
 
@@ -164,10 +165,12 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
 
   async function load() {
     setIsLoading(true);
+    setLoadError("");
     try {
       const { data: sessionData } = await getCurrentSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
+        setLoadError("Tu sesion expiro. Volve a iniciar sesion.");
         toast.error("Sesión expirada");
         return;
       }
@@ -178,6 +181,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string };
         toast.error("Error cargando config", { description: err.error });
+        setLoadError("No pudimos cargar la configuracion de cobros.");
         return;
       }
       const data = (await res.json()) as SettingsResponse;
@@ -191,6 +195,8 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
       setDepositAutoCancelHours(data.settings.deposit_auto_cancel_hours);
       setHasAccessToken(data.settings.has_access_token);
       setAccessTokenMasked(data.settings.mp_access_token_masked);
+    } catch {
+      setLoadError("No pudimos cargar la configuracion de cobros.");
     } finally {
       setIsLoading(false);
     }
@@ -304,34 +310,37 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-8 px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
+    <section aria-label="Configuracion de cobros" className="w-full min-w-0 max-w-4xl space-y-6">
       <header>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
-          Feature Pro
+        <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--brand-gold)]">
+          {barbershop.name}
         </p>
-        <h1 className="mt-2 text-2xl font-black uppercase leading-tight tracking-tight sm:text-3xl lg:text-4xl">
+        <h1 className="mt-2 text-2xl font-semibold normal-case leading-tight tracking-normal sm:text-3xl lg:text-3xl">
           Cobros online
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)]">
-          Si lo activás, cobrás una seña por cada reserva vía Mercado Pago.
-          El dinero va directo a tu cuenta. Si no lo activás, las reservas
-          siguen funcionando como hasta ahora (solo WhatsApp, sin pago).
+          Las señas se acreditan directamente en tu cuenta de Mercado Pago.
         </p>
       </header>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-10">
+        <div role="status" aria-label="Cargando configuracion de cobros" className="flex min-h-40 items-center justify-center py-10">
           <Loader2 className="size-5 animate-spin text-[color:var(--brand-gold)]" />
+        </div>
+      ) : loadError ? (
+        <div role="alert" className="border-l-2 border-[color:var(--danger)] pl-4 text-sm text-[color:var(--danger)]">
+          <p>{loadError}</p>
+          <button type="button" onClick={() => void load()} className="mt-3 min-h-11 rounded-lg border border-[color:var(--border-default)] px-4 text-white">Reintentar</button>
         </div>
       ) : (
         <form onSubmit={handleSave} className="space-y-6">
           {/* Conexión con MercadoPago (OAuth) */}
           <section
             className={cn(
-              "rounded-[var(--radius-md)] border p-5 sm:p-6",
+              "min-w-0 border-l-2 py-4 pl-4",
               hasAccessToken
                 ? "border-[color:var(--success)]/40 bg-[color:var(--success-soft)]"
-                : "border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] ring-1 ring-[color:var(--brand-gold)]/20",
+                : "border-[color:var(--brand-gold)]/40",
             )}
           >
             {hasAccessToken ? (
@@ -354,7 +363,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                   type="button"
                   onClick={() => void handleDisconnect()}
                   disabled={isDisconnecting}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors hover:border-[color:var(--danger)] hover:text-[color:var(--danger)] disabled:opacity-50"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-xs font-bold normal-case tracking-normal text-[color:var(--text-secondary)] transition-colors hover:border-[color:var(--danger)] hover:text-[color:var(--danger)] disabled:opacity-50"
                 >
                   <Unlink className="size-3.5" aria-hidden="true" />
                   {isDisconnecting ? "Desconectando…" : "Desconectar"}
@@ -377,7 +386,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                   type="button"
                   onClick={() => void handleConnect()}
                   disabled={isConnecting}
-                  className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[#009ee3] px-5 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[#009ee3] px-5 text-xs font-bold normal-case tracking-normal text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   {isConnecting ? (
                     <Loader2 className="size-4 animate-spin" aria-hidden="true" />
@@ -389,7 +398,9 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                 <button
                   type="button"
                   onClick={() => setShowManual((v) => !v)}
-                  className="mt-3 block text-[11px] font-semibold text-[color:var(--text-muted)] underline transition-colors hover:text-[color:var(--brand-gold)]"
+                  aria-expanded={showManual}
+                  aria-controls="mp-manual-settings"
+                  className="mt-3 block min-h-11 text-xs font-semibold text-[color:var(--text-muted)] underline transition-colors hover:text-[color:var(--brand-gold)]"
                 >
                   {showManual
                     ? "Ocultar carga manual"
@@ -402,11 +413,11 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
           {/* Toggle principal */}
           <section
             className={cn(
-              "card-premium p-5 sm:p-6",
-              mpEnabled && "card-premium-glow",
+              "min-w-0 border-t border-[color:var(--border-subtle)] py-5",
+              mpEnabled && "border-[color:var(--brand-gold)]/30",
             )}
           >
-            <label className="flex cursor-pointer items-start gap-3">
+            <label className="flex min-h-11 cursor-pointer items-start gap-3">
               <input
                 type="checkbox"
                 checked={mpEnabled}
@@ -432,8 +443,8 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
 
           {/* Credenciales MP — fallback manual (colapsado por defecto) */}
           {showManual ? (
-          <section className="card-premium p-5 sm:p-6">
-            <h2 className="text-lg font-black uppercase tracking-tight">
+          <section id="mp-manual-settings" className="min-w-0 border-t border-[color:var(--border-subtle)] py-5">
+            <h2 className="text-lg font-semibold normal-case tracking-normal">
               Credenciales de Mercado Pago
             </h2>
             <p className="mt-1 text-xs text-[color:var(--text-muted)]">
@@ -454,7 +465,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
               <div>
                 <label
                   htmlFor="mp-access-token"
-                  className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]"
+                  className="text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)]"
                 >
                   Access Token{" "}
                   <span className="text-[color:var(--danger)]">*</span>
@@ -475,9 +486,9 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                       : "APP_USR-1234567890... o TEST-1234567890..."
                   }
                   autoComplete="off"
-                  className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 font-mono text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+                  className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] min-h-11 min-w-0 px-3 py-2 font-mono text-base sm:text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
                 />
-                <p className="mt-1 text-[10px] text-[color:var(--text-muted)]">
+                <p className="mt-1 text-xs text-[color:var(--text-muted)]">
                   Empieza con APP_USR- (producción) o TEST- (sandbox).
                 </p>
               </div>
@@ -486,7 +497,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                 <div>
                   <label
                     htmlFor="mp-public-key"
-                    className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]"
+                    className="text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)]"
                   >
                     Public Key
                   </label>
@@ -496,13 +507,13 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                     value={publicKey}
                     onChange={(e) => setPublicKey(e.target.value)}
                     placeholder="APP_USR-... o TEST-..."
-                    className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 font-mono text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+                    className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] min-h-11 min-w-0 px-3 py-2 font-mono text-base sm:text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="mp-user-id"
-                    className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]"
+                    className="text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)]"
                   >
                     User ID <span className="text-[color:var(--text-muted)]">— opcional</span>
                   </label>
@@ -512,7 +523,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
                     placeholder="Tu ID numérico de MP"
-                    className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 font-mono text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+                    className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] min-h-11 min-w-0 px-3 py-2 font-mono text-base sm:text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
                   />
                 </div>
               </div>
@@ -523,7 +534,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                 disabled={
                   isTesting || (!accessTokenInput && !hasAccessToken)
                 }
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-gold-grad hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-4 text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)] transition-colors hover:bg-[color:var(--brand-gold)] hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isTesting ? (
                   <Loader2 className="size-3.5 animate-spin" />
@@ -544,7 +555,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                       <p className="font-bold text-[color:var(--success)]">
                         Conectado como {testResult.user.nickname}
                       </p>
-                      <p className="text-[11px] text-[color:var(--text-secondary)]">
+                      <p className="text-xs text-[color:var(--text-secondary)]">
                         {testResult.user.email} · {testResult.user.site_id}
                       </p>
                     </div>
@@ -559,7 +570,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                       <p className="font-bold text-[color:var(--danger)]">
                         Falló la conexión
                       </p>
-                      <p className="text-[11px] text-[color:var(--text-secondary)]">
+                      <p className="text-xs text-[color:var(--text-secondary)]">
                         {testResult.error}
                       </p>
                     </div>
@@ -571,8 +582,8 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
           ) : null}
 
           {/* Config de seña */}
-          <section className="card-premium p-5 sm:p-6">
-            <h2 className="text-lg font-black uppercase tracking-tight">
+          <section className="min-w-0 border-t border-[color:var(--border-subtle)] py-5">
+            <h2 className="text-lg font-semibold normal-case tracking-normal">
               Configuración de la seña
             </h2>
 
@@ -580,7 +591,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
               <div>
                 <label
                   htmlFor="deposit-percent"
-                  className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]"
+                  className="text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)]"
                 >
                   % del servicio que cobrás de seña: {depositPercent}%
                 </label>
@@ -592,9 +603,9 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                   step={1}
                   value={depositPercent}
                   onChange={(e) => setDepositPercent(Number(e.target.value))}
-                  className="mt-2 w-full accent-[color:var(--brand-gold)]"
+                  className="mt-2 min-h-11 w-full accent-[color:var(--brand-gold)]"
                 />
-                <div className="flex justify-between text-[10px] text-[color:var(--text-muted)]">
+                <div className="flex justify-between text-xs text-[color:var(--text-muted)]">
                   <span>1%</span>
                   <span>50%</span>
                   <span>100%</span>
@@ -605,7 +616,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                 <div>
                   <label
                     htmlFor="deposit-min"
-                    className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]"
+                    className="text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)]"
                   >
                     Monto mínimo de seña{" "}
                     <span className="text-[color:var(--text-muted)]">— opcional</span>
@@ -619,10 +630,10 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                       value={depositMinAmount}
                       onChange={(e) => setDepositMinAmount(e.target.value)}
                       placeholder="Ej. 1000"
-                      className="flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 font-mono text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+                      className="flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] min-h-11 min-w-0 px-3 py-2 font-mono text-base sm:text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
                     />
                   </div>
-                  <p className="mt-1 text-[10px] text-[color:var(--text-muted)]">
+                  <p className="mt-1 text-xs text-[color:var(--text-muted)]">
                     Si el % queda menor a este monto, se cobra este monto.
                   </p>
                 </div>
@@ -630,7 +641,7 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                 <div>
                   <label
                     htmlFor="deposit-cancel-hours"
-                    className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]"
+                    className="text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)]"
                   >
                     Plazo para pagar (horas)
                   </label>
@@ -643,9 +654,9 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
                     onChange={(e) =>
                       setDepositAutoCancelHours(Number(e.target.value))
                     }
-                    className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 font-mono text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
+                    className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] min-h-11 min-w-0 px-3 py-2 font-mono text-base sm:text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
                   />
-                  <p className="mt-1 text-[10px] text-[color:var(--text-muted)]">
+                  <p className="mt-1 text-xs text-[color:var(--text-muted)]">
                     Si no paga en este plazo, se cancela auto.
                   </p>
                 </div>
@@ -658,13 +669,13 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
             <button
               type="submit"
               disabled={isSaving}
-              className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold normal-case tracking-normal text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving ? "Guardando…" : "Guardar cambios"}
             </button>
           </div>
         </form>
       )}
-    </main>
+    </section>
   );
 }

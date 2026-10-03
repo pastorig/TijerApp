@@ -62,7 +62,7 @@ export function AuthShell({
             {backLink ? (
               <Link
                 href={backLink.href}
-                className="inline-flex min-w-0 items-center gap-1 truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:tracking-[0.2em]"
+                className="inline-flex min-w-0 items-center gap-1 truncate text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:tracking-normal"
               >
                 <ArrowLeft className="size-3.5 shrink-0" aria-hidden="true" />
                 <span className="truncate">{backLink.label}</span>
@@ -81,15 +81,15 @@ export function AuthShell({
             />
           </div>
 
-          <div className="flex flex-1 flex-col justify-center py-10">
+          <div className="flex flex-1 flex-col justify-center py-6 sm:py-10">
             <div className="mx-auto w-full max-w-md animate-fade-up">
-              <div className="card-premium p-6 sm:p-7">
+              <div className="py-3 sm:py-5">
                 {eyebrow ? (
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
+                  <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)] sm:tracking-normal">
                     {eyebrow}
                   </p>
                 ) : null}
-                <h1 className="mt-3 text-2xl font-black uppercase leading-[1.05] tracking-tight text-balance text-white sm:text-3xl">
+                <h1 className="mt-3 text-2xl font-black uppercase leading-[1.05] tracking-normal text-balance text-white sm:text-3xl">
                   {title}
                 </h1>
                 {subtitle ? (
@@ -122,10 +122,10 @@ export function AuthShell({
             }}
           />
           <div className="relative px-10 py-16 xl:px-16">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+            <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
               TijerApp
             </p>
-            <h2 className="mt-4 max-w-md text-4xl font-black uppercase leading-[0.95] tracking-tight text-balance text-white xl:text-5xl">
+            <h2 className="mt-4 max-w-md text-4xl font-black uppercase leading-[0.95] tracking-normal text-balance text-white xl:text-5xl">
               {panelTitle}
             </h2>
             <p className="mt-4 max-w-sm text-sm leading-6 text-[color:var(--text-secondary)]">
@@ -147,7 +147,7 @@ export const AUTH_FIELD_CLASS =
   "mt-2 min-h-12 w-full rounded-md border border-[color:var(--border-default)] bg-black px-4 text-base text-white outline-none transition placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]";
 
 export const AUTH_LABEL_CLASS =
-  "text-xs font-bold uppercase tracking-[0.1em] text-[color:var(--text-muted)]";
+  "text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]";
 
 export const AUTH_BUTTON_CLASS =
-  "inline-flex min-h-12 w-full items-center justify-center rounded-md bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.1em] text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-12 w-full items-center justify-center rounded-md bg-gold-grad px-6 text-sm font-bold uppercase tracking-normal text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60";

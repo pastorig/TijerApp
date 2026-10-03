@@ -20,10 +20,10 @@ export function HomeProductGate() {
       />
       <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Conocé el producto completo
           </p>
-          <h2 className="mt-4 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-5 sm:text-4xl lg:text-5xl">
+          <h2 className="mt-4 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-5 sm:text-4xl lg:text-5xl">
             Todas las features que tu barbería{" "}
             <span className="text-[color:var(--brand-gold)]">necesita</span>,
             explicadas en detalle.
@@ -36,7 +36,7 @@ export function HomeProductGate() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href="/producto"
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
             >
               Ver producto completo
               <ArrowUpRight aria-hidden="true" className="size-4" />
@@ -44,7 +44,7 @@ export function HomeProductGate() {
             <Link
               href="/precios"
               prefetch={false}
-              className="inline-flex min-h-12 w-full items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-6 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] sm:w-auto"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-6 text-sm font-bold uppercase tracking-normal text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] sm:w-auto"
             >
               Ver precios
             </Link>

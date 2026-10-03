@@ -72,7 +72,7 @@ function StatusDot({ status }: { status: "yes" | "no" | "limited" }) {
       <span
         role="img"
         aria-label="Limitado"
-        className="flex size-5 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-default)] bg-[color:var(--surface-2)] text-[11px] font-black text-[color:var(--text-muted)]"
+        className="flex size-5 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-default)] bg-[color:var(--surface-2)] text-xs font-black text-[color:var(--text-muted)]"
       >
         ~
       </span>
@@ -103,19 +103,19 @@ export function HomeComparison() {
       />
       <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
         <header className="text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Comparativa
           </p>
-          <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
+          <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
             ¿Por qué no seguir con lo que ya{" "}
-            <span className="text-gold-gradient">usás</span>?
+            <span className="text-[color:var(--brand-gold)]">usás</span>?
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:mt-5 sm:text-base sm:leading-7">
             Mirá lado a lado qué hace TijerApp que tu setup actual no puede.
           </p>
         </header>
 
-        <p className="mt-6 text-center text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:hidden">
+        <p className="mt-6 text-center text-xs uppercase tracking-normal text-[color:var(--text-muted)] sm:hidden">
           ← Deslizá para comparar →
         </p>
 
@@ -126,7 +126,7 @@ export function HomeComparison() {
             delay={80}
             className="card-premium card-premium-glow order-first flex w-[85%] shrink-0 snap-center flex-col p-5 sm:w-auto sm:shrink sm:snap-align-none sm:p-6 lg:order-last"
           >
-            <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-gold-grad px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-black shadow-[0_6px_20px_-6px_rgba(201,162,62,0.7)]">
+            <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-gold-grad px-3 py-1 text-xs font-black uppercase tracking-normal text-black shadow-[0_6px_20px_-6px_rgba(201,162,62,0.7)]">
               La mejor opción
             </div>
             <div className="flex items-center gap-3">
@@ -138,7 +138,7 @@ export function HomeComparison() {
                 <Sparkles className="size-5" />
               </div>
               <div>
-                <h3 className="text-base font-black uppercase tracking-tight text-gold-gradient sm:text-lg">
+                <h3 className="text-base font-black uppercase tracking-normal text-[color:var(--brand-gold)] sm:text-lg">
                   TijerApp
                 </h3>
                 <p className="text-xs text-[color:var(--brand-gold)]">
@@ -165,7 +165,7 @@ export function HomeComparison() {
                   "radial-gradient(120% 120% at 0% 0%, rgba(201,162,62,0.16), transparent 60%)",
               }}
             >
-              <p className="text-[11px] font-black uppercase tracking-wider text-gold-gradient">
+              <p className="text-xs font-black uppercase tracking-wider text-[color:var(--brand-gold)]">
                 Desde {monthlyPriceLabel("solo")}/mes
               </p>
               <p className="mt-1 text-sm leading-5 text-[color:var(--text-secondary)]">
@@ -182,7 +182,7 @@ export function HomeComparison() {
                 as="div"
                 key={c.name}
                 delay={index * 90}
-                className="card-premium card-premium-hover flex w-[85%] shrink-0 snap-center flex-col p-5 opacity-90 sm:w-auto sm:shrink sm:snap-align-none sm:p-6"
+                className="card-premium  flex w-[85%] shrink-0 snap-center flex-col p-5 opacity-90 sm:w-auto sm:shrink sm:snap-align-none sm:p-6"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -192,7 +192,7 @@ export function HomeComparison() {
                     <Icon className="size-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-black uppercase tracking-tight text-[color:var(--text-secondary)] sm:text-lg">
+                    <h3 className="text-base font-black uppercase tracking-normal text-[color:var(--text-secondary)] sm:text-lg">
                       {c.name}
                     </h3>
                     <p className="text-xs text-[color:var(--text-muted)]">

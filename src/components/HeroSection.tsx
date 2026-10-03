@@ -92,11 +92,11 @@ export function HeroSection({
             </div>
           ) : null}
 
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
+          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Reservas online
           </p>
 
-          <h1 className="mt-4 text-[2.25rem] font-black uppercase leading-[0.95] tracking-tight text-balance text-white sm:mt-5 sm:text-5xl lg:text-6xl">
+          <h1 className="mt-4 text-[2.25rem] font-black uppercase leading-[0.95] tracking-normal text-balance text-white sm:mt-5 sm:text-5xl lg:text-6xl">
             {barbershop.name}
           </h1>
 
@@ -115,8 +115,8 @@ export function HeroSection({
                 rel="noopener noreferrer"
                 className={
                   bookingEnabled
-                    ? "inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-5 text-sm font-bold uppercase tracking-[0.14em] text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
-                    : "inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-5 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
+                    ? "inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-5 text-sm font-bold uppercase tracking-normal text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+                    : "inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-5 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
                 }
               >
                 <WhatsAppGlyph className="size-4" />
@@ -128,7 +128,7 @@ export function HeroSection({
                 href={barbershop.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] px-5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:ml-auto"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] px-5 text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)] sm:ml-auto"
               >
                 <InstagramGlyph className="size-4" />
                 Instagram

@@ -12,7 +12,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
         <h3 className="truncate text-base font-bold text-white sm:text-lg">
           {service.name}
         </h3>
-        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
+        <p className="mt-1 font-mono text-xs uppercase tracking-normal text-[color:var(--text-subtle)]">
           {service.durationMinutes} min
         </p>
       </div>

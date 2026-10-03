@@ -27,13 +27,16 @@ export function AdminTeamManager({ barbershop }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [isInviting, setIsInviting] = useState(false);
   const [email, setEmail] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   async function load() {
     setIsLoading(true);
+    setLoadError("");
     try {
       const { data: sessionData } = await getCurrentSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
+        setLoadError("Tu sesion expiro. Volve a iniciar sesion.");
         toast.error("Sesión expirada");
         return;
       }
@@ -42,6 +45,7 @@ export function AdminTeamManager({ barbershop }: Props) {
         { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       if (!res.ok) {
+        setLoadError("No pudimos cargar los administradores.");
         const err = (await res.json().catch(() => ({}))) as { error?: string };
         toast.error("Error cargando equipo", { description: err.error });
         return;
@@ -56,6 +60,8 @@ export function AdminTeamManager({ barbershop }: Props) {
       setCanInvite(data.canInvite);
       setMaxAdmins(data.max);
       setIAmOwner(data.iAmOwner);
+    } catch {
+      setLoadError("No pudimos cargar los administradores.");
     } finally {
       setIsLoading(false);
     }
@@ -143,18 +149,16 @@ export function AdminTeamManager({ barbershop }: Props) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-8 px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
+    <section aria-label="Administradores" className="min-w-0 space-y-5">
       <header className="relative">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
-          Feature Pro
+        <p className="text-xs font-semibold normal-case tracking-normal text-[color:var(--brand-gold)]">
+          {barbershop.name}
         </p>
-        <h1 className="mt-2 text-2xl font-black uppercase leading-tight tracking-tight sm:text-3xl lg:text-4xl">
-          Equipo
+        <h1 className="mt-2 text-2xl font-semibold normal-case leading-tight tracking-normal sm:text-3xl lg:text-3xl">
+          Equipo y accesos
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)]">
-          Hasta {maxAdmins} admins por barbería. Cada uno con acceso completo
-          al panel. El <span className="font-bold text-[color:var(--brand-gold)]">owner</span>{" "}
-          puede invitar y remover; los demás solo administran.
+          Administradores · {admins.length}/{maxAdmins} cuentas
         </p>
         <OnboardingTip
           id="team-first-visit-v2"
@@ -166,34 +170,33 @@ export function AdminTeamManager({ barbershop }: Props) {
       </header>
 
       {/* Invitar nuevo admin */}
-      {iAmOwner ? (
-        <section className="card-premium p-5 sm:p-6">
-          <h2 className="text-lg font-black uppercase tracking-tight">
+      {iAmOwner && !loadError ? (
+        <section className="border-t border-[color:var(--border-subtle)] py-5">
+          <h2 className="text-lg font-semibold normal-case tracking-normal">
             Invitar admin
           </h2>
-          <p className="mt-1 text-xs text-[color:var(--text-muted)]">
-            Ingresá el email. Si no tiene cuenta, se la creamos automáticamente
-            y le mandamos por mail su contraseña temporal + link para acceder.
-          </p>
           <form onSubmit={handleInvite} className="mt-4 flex flex-col gap-3 sm:flex-row">
             <input
               type="email"
+              aria-label="Email del administrador"
+              autoComplete="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@email.com"
               disabled={!canInvite || isInviting}
-              className="flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)] disabled:opacity-50"
+              className="min-h-11 min-w-0 flex-1 rounded-md border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 text-base text-white outline-none focus:border-[color:var(--brand-gold)] disabled:opacity-50 sm:text-sm"
             />
             <button
               type="submit"
               disabled={!canInvite || isInviting}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-6 text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--brand-gold)] px-6 text-sm font-bold normal-case tracking-normal text-black transition-colors hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <UserPlus className="size-4" />
               Invitar
             </button>
           </form>
+          <p className="mt-2 text-xs text-[color:var(--text-muted)]">Acceso completo a esta barberia.</p>
           {!canInvite && admins.length >= maxAdmins ? (
             <p className="mt-3 text-xs text-[color:var(--text-muted)]">
               Llegaste al límite de {maxAdmins} admins. Remové uno para
@@ -204,18 +207,23 @@ export function AdminTeamManager({ barbershop }: Props) {
       ) : null}
 
       {/* Lista actual */}
-      <section className="card-premium p-5 sm:p-6">
-        <h2 className="text-lg font-black uppercase tracking-tight">
-          Admins actuales ({admins.length}/{maxAdmins})
+      <section className="border-t border-[color:var(--border-subtle)] py-5">
+        <h2 className="text-lg font-semibold normal-case tracking-normal">
+          Administradores ({admins.length}/{maxAdmins})
         </h2>
         {isLoading ? (
-          <div className="flex items-center justify-center py-10">
+          <div role="status" aria-label="Cargando administradores" className="flex items-center justify-center py-10">
             <Loader2 className="size-5 animate-spin text-[color:var(--brand-gold)]" />
+          </div>
+        ) : loadError ? (
+          <div className="mt-4">
+            <p role="alert" className="text-sm text-[color:var(--danger)]">{loadError}</p>
+            <button type="button" onClick={() => void load()} className="mt-2 min-h-11 rounded-md border border-[color:var(--border-default)] px-3 text-sm">Reintentar</button>
           </div>
         ) : admins.length === 0 ? (
           <p className="mt-6 rounded-[var(--radius-sm)] border border-dashed border-[color:var(--border-subtle)] py-8 text-center text-sm text-[color:var(--text-muted)]">
             <Users className="mx-auto mb-2 size-6 text-[color:var(--text-muted)]" />
-            Sin admins (algo raro pasó)
+            Sin administradores
           </p>
         ) : (
           <ul className="mt-5 space-y-2">
@@ -242,19 +250,21 @@ export function AdminTeamManager({ barbershop }: Props) {
                         className="size-4 shrink-0 text-[color:var(--text-muted)]"
                       />
                     )}
-                    <p className="truncate text-sm font-bold text-white">
+                    <p className="break-all text-sm font-bold text-white">
                       {a.email}
                     </p>
                   </div>
-                  <p className="mt-0.5 text-[11px] text-[color:var(--text-muted)]">
-                    {a.is_owner ? "Owner" : "Admin"} · Desde {new Date(a.created_at).toLocaleDateString("es-AR")}
+                  <p className="mt-0.5 text-xs text-[color:var(--text-muted)]">
+                    {a.is_owner ? "Dueño de la barbería" : "Administrador"} · Desde {new Date(a.created_at).toLocaleDateString("es-AR")}
                   </p>
                 </div>
                 {iAmOwner && !a.is_owner ? (
                   <button
                     type="button"
                     onClick={() => void handleRemove(a)}
-                    className="inline-flex min-h-9 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 px-3 text-[color:var(--danger)] transition-colors hover:bg-[color:var(--danger-soft)]"
+                    aria-label={`Quitar acceso a ${a.email}`}
+                    title="Quitar acceso"
+                    className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 px-3 text-[color:var(--danger)] transition-colors hover:bg-[color:var(--danger-soft)]"
                   >
                     <Trash2 className="size-4" />
                   </button>
@@ -264,6 +274,6 @@ export function AdminTeamManager({ barbershop }: Props) {
           </ul>
         )}
       </section>
-    </main>
+    </section>
   );
 }

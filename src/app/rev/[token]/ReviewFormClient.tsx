@@ -119,9 +119,9 @@ export function ReviewFormClient({
     return (
       <section className="animate-fade-up">
         <div className="mx-auto flex size-16 items-center justify-center rounded-full border border-[color:var(--success)]/40 bg-[color:var(--success-soft)]">
-          <Check className="size-8 text-[color:var(--success)]" />
+          <Check className="size-11 text-[color:var(--success)]" />
         </div>
-        <h1 className="mt-6 text-center text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
+        <h1 className="mt-6 text-center text-3xl font-black uppercase tracking-normal text-white sm:text-4xl">
           ¡Gracias, {firstName}!
         </h1>
         <p className="mt-3 text-center text-sm text-[color:var(--text-secondary)] sm:text-base">
@@ -158,7 +158,7 @@ export function ReviewFormClient({
               href={googleReviewsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-5 text-[11px] font-bold uppercase tracking-[0.16em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
+              className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-5 text-xs font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]"
             >
               Dejar reseña en Google
             </a>
@@ -168,7 +168,7 @@ export function ReviewFormClient({
         <div className="mt-8 text-center">
           <Link
             href={`/${barbershopSlug}`}
-            className="inline-flex items-center text-[11px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
+            className="inline-flex items-center text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
           >
             Volver a {barbershopName}
           </Link>
@@ -181,10 +181,10 @@ export function ReviewFormClient({
   return (
     <section className="animate-fade-up">
       <header>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)]">
+        <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
           Reseña
         </p>
-        <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
+        <h1 className="mt-4 text-3xl font-black uppercase tracking-normal text-white sm:text-4xl">
           ¿Cómo te fue, {firstName}?
         </h1>
         <p className="mt-3 text-sm text-[color:var(--text-secondary)] sm:text-base">
@@ -195,7 +195,7 @@ export function ReviewFormClient({
       </header>
 
       <div className="mt-8 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+        <p className="text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]">
           Tu puntuación
         </p>
         <div
@@ -217,7 +217,7 @@ export function ReviewFormClient({
               >
                 <Star
                   className={cn(
-                    "size-9 transition-colors",
+                    "size-11 transition-colors",
                     isActive
                       ? "fill-[color:var(--brand-gold)] text-[color:var(--brand-gold)]"
                       : "text-[color:var(--text-subtle)]",
@@ -230,7 +230,7 @@ export function ReviewFormClient({
 
         <label
           htmlFor="review-comment"
-          className="mt-6 block text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
+          className="mt-6 block text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)]"
         >
           Comentario (opcional)
         </label>
@@ -258,7 +258,7 @@ export function ReviewFormClient({
           type="button"
           onClick={handleSubmit}
           disabled={isBlocked || isSubmitting || rating < 1}
-          className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-5 text-[12px] font-bold uppercase tracking-[0.16em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-5 text-[12px] font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSubmitting ? "Guardando…" : "Enviar reseña"}
         </button>
@@ -278,7 +278,7 @@ function BlockedState({
 }) {
   return (
     <section className="animate-fade-up text-center">
-      <h1 className="text-2xl font-black uppercase tracking-tight text-white sm:text-3xl">
+      <h1 className="text-2xl font-black uppercase tracking-normal text-white sm:text-3xl">
         {title}
       </h1>
       <p className="mt-3 text-sm text-[color:var(--text-secondary)] sm:text-base">
@@ -286,7 +286,7 @@ function BlockedState({
       </p>
       <Link
         href={`/${barbershopSlug}`}
-        className="mt-8 inline-flex items-center text-[11px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
+        className="mt-8 inline-flex items-center text-xs font-bold uppercase tracking-normal text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
       >
         Volver al inicio
       </Link>

@@ -40,7 +40,7 @@ export function PasoPendiente({ texto, irA, irLabel }: PasoPendienteProps) {
               .getElementById(irA)
               ?.scrollIntoView({ behavior: "smooth", block: "center" });
           }}
-          className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/50 px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold)]/15"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/50 px-4 text-xs font-bold uppercase tracking-normal text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold)]/15"
         >
           <ArrowUp aria-hidden="true" className="size-3.5" />
           {irLabel ?? "Ir al paso"}

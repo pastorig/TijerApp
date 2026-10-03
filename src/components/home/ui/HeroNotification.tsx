@@ -106,10 +106,10 @@ export function HeroNotification({ className }: { className?: string }) {
         <BellRing className="size-3" />
       </span>
       <span className="leading-tight">
-        <span className="block text-[9px] font-bold uppercase tracking-[0.14em] text-white">
+        <span className="block text-xs font-bold uppercase tracking-normal text-white">
           Nuevo turno
         </span>
-        <span className="block text-[9px] text-[color:var(--text-muted)]">
+        <span className="block text-xs text-[color:var(--text-muted)]">
           Hoy {SLOTS[index]} · Corte + barba
         </span>
       </span>
