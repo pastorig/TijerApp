@@ -9,6 +9,7 @@
 import {
   buildAvailabilitySlots,
   computeDayCapacity,
+  minutosQueOcupa,
 } from "../src/lib/availability.ts";
 import type {
   BarberDayOverrideRow,
@@ -227,6 +228,35 @@ const times = (slots: { time: string }[]) => slots.map((s) => s.time).join(",");
   );
 }
 
+// minutosQueOcupa: acortar un turno no libera horarios; alargarlo sí bloquea.
+{
+  check("acortado 40→30 sigue ocupando 40", minutosQueOcupa(40, 30), 40);
+  check("alargado 30→45 ocupa 45", minutosQueOcupa(30, 45), 45);
+  check("sin ajuste ocupa el servicio", minutosQueOcupa(40, null), 40);
+  check("sin ninguna duración → null (cae al intervalo)", minutosQueOcupa(null, null), null);
+  check("duración 0 no cuenta", minutosQueOcupa(0, 25), 25);
+}
+
+// Caso real SV Barber 2/10: "Corte y barba" 15:00 de 40 min acortado a 30.
+// Un corte de 30 NO puede caer a las 15:30: el primer libre es 15:40.
+{
+  const slots = buildAvailabilitySlots({
+    appointmentDate: "2026-06-15",
+    appointmentDurationMinutes: 30,
+    barbershopIntervalMinutes: 30,
+    workingHours: { start: "15:00", end: "17:00" },
+    weeklySchedules: [],
+    timeBlocks: [],
+    appointments: [
+      { startTime: "15:00", durationMinutes: minutosQueOcupa(40, 30) ?? 30 },
+    ],
+    now: FAR,
+  });
+  const libres = slots.map((s) => s.time);
+  check("15:00 no se ofrece", libres.includes("15:00"), false);
+  check("15:30 no se ofrece", libres.includes("15:30"), false);
+  check("el primer horario libre es 15:40", libres[0], "15:40");
+}
 
 console.log(`\n${passed}/${passed + failed} OK${failed ? ` · ${failed} FALLARON` : ""}`);
 if (failed) process.exit(1);

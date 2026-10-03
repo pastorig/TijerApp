@@ -98,6 +98,28 @@ export function mergeWeeklySchedulesWithDefaults(
   });
 }
 
+/**
+ * Cuántos minutos de agenda ocupa un turno a la hora de ofrecer horarios.
+ *
+ * Es el MAYOR entre la duración del servicio y la "duración real" que el
+ * barbero ajusta con −5/+5 desde el turnero. Alargar un turno bloquea más;
+ * acortarlo NO le libera horarios a los clientes. Antes se usaba la duración
+ * real tal cual: en SV Barber un "Corte y barba" de 40 min quedó en 30 por dos
+ * toques de −5, la reserva pública liberó las 15:30 y entró un corte encima.
+ *
+ * Devuelve null si no hay ninguna duración válida (turnos viejos): el motor
+ * cae al intervalo de la barbería.
+ */
+export function minutosQueOcupa(
+  duracionServicio: number | null | undefined,
+  duracionReal: number | null | undefined,
+): number | null {
+  const validas = [duracionServicio, duracionReal].filter(
+    (m): m is number => typeof m === "number" && Number.isFinite(m) && m > 0,
+  );
+  return validas.length > 0 ? Math.max(...validas) : null;
+}
+
 function formatMinutesToTime(totalMinutes: number) {
   const hours = Math.floor(totalMinutes / 60)
     .toString()

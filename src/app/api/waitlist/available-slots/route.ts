@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
-import { buildAvailabilitySlots } from "@/lib/availability";
+import { buildAvailabilitySlots, minutosQueOcupa } from "@/lib/availability";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
         .is("deleted_at", null),
       supabase
         .from("appointments")
-        .select("appointment_time, service_duration_minutes")
+        .select("appointment_time, service_duration_minutes, actual_duration_minutes")
         .eq("barbershop_slug", entry.barbershop_slug)
         .eq("barber_id", entry.barber_id)
         .eq("appointment_date", date)
@@ -105,6 +105,7 @@ export async function GET(request: Request) {
   type DayApptRow = {
     appointment_time: string;
     service_duration_minutes: number;
+    actual_duration_minutes: number | null;
   };
 
   const slots = buildAvailabilitySlots({
@@ -142,7 +143,8 @@ export async function GET(request: Request) {
     appointments: ((appointmentsResult.data ?? []) as DayApptRow[]).map(
       (r) => ({
         startTime: r.appointment_time,
-        durationMinutes: r.service_duration_minutes,
+        durationMinutes:
+          minutosQueOcupa(r.service_duration_minutes, r.actual_duration_minutes) ?? 0,
       }),
     ),
   });

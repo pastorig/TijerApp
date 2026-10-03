@@ -2,6 +2,7 @@ import "server-only";
 
 import {
   buildAvailabilitySlots,
+  minutosQueOcupa,
   type AvailabilitySlot,
 } from "@/lib/availability";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
@@ -85,7 +86,7 @@ export async function getServerAvailability(
         .is("deleted_at", null),
       supabase
         .from("appointments")
-        .select("id, appointment_time, service_duration_minutes")
+        .select("id, appointment_time, service_duration_minutes, actual_duration_minutes")
         .eq("barbershop_slug", barbershopSlug)
         .eq("barber_id", barberId)
         .eq("appointment_date", date)
@@ -132,7 +133,10 @@ export async function getServerAvailability(
       .filter((r) => !excludeAppointmentId || r.id !== excludeAppointmentId)
       .map((r) => ({
         startTime: r.appointment_time,
-        durationMinutes: r.service_duration_minutes,
+        // Misma regla que la RPC pública: si el barbero alargó el turno, el
+        // servidor también tiene que bloquear esos minutos de más.
+        durationMinutes:
+          minutosQueOcupa(r.service_duration_minutes, r.actual_duration_minutes) ?? 0,
       })),
     minBookingNoticeMinutes: shopRes.data?.min_booking_notice_minutes ?? 0,
     // Sin esto el servidor mide con el reloj de Vercel, que corre en UTC: tres
