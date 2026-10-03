@@ -626,7 +626,7 @@ export function BarberAvailabilityManager({
                         className={cn(
                           "relative h-11 w-11 shrink-0 before:absolute before:inset-x-0 before:top-3 before:h-5 before:rounded-full before:content-[''] disabled:opacity-60",
                           schedule.isWorking
-                            ? "before:bg-[color:var(--brand-gold)]"
+                            ? "before:bg-[linear-gradient(135deg,var(--brand-gold-hi)_0%,var(--brand-gold)_48%,var(--brand-gold-lo)_100%)]"
                             : "before:bg-white/15",
                         )}
                       >
@@ -788,7 +788,7 @@ export function BarberAvailabilityManager({
             <button
               type="submit"
               disabled={isSavingSchedules}
-              className="mt-3 inline-flex min-h-11 items-center justify-center rounded-md bg-[color:var(--brand-gold)] px-3 py-2 text-xs font-bold normal-case text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-3 inline-flex min-h-11 items-center justify-center rounded-md bg-gold-grad px-3 py-2 text-xs font-bold normal-case text-black transition hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSavingSchedules ? "Guardando..." : "Guardar horarios"}
             </button>

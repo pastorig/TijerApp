@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ConfirmProvider, ToastProvider } from "@/components/ui";
 import { PWAInstallProvider } from "@/components/pwa/PWAInstallProvider";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
+import { RecoveryLinkRedirect } from "@/components/auth/RecoveryLinkRedirect";
 import { StructuredData } from "@/components/seo/StructuredData";
 import "./globals.css";
 
@@ -145,6 +146,8 @@ export default function RootLayout({
             <ConfirmProvider>{children}</ConfirmProvider>
           </ToastProvider>
         </PWAInstallProvider>
+        {/* Un link de recuperar contraseña que cayó en otra página va a /nueva-password. */}
+        <RecoveryLinkRedirect />
         <ServiceWorkerRegister />
         {/* JSON-LD: va en el HTML servido para que lo lean los crawlers. */}
         <StructuredData />

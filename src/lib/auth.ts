@@ -48,22 +48,29 @@ export async function signOut() {
 }
 
 /**
- * Manda el mail de "olvidé mi contraseña". El link del mail vuelve a
- * /nueva-password, donde Supabase deja una sesión de recuperación activa y
- * el usuario puede setear la nueva clave.
+ * Pide el mail de "olvidé mi contraseña". El link vuelve a /nueva-password,
+ * donde Supabase deja una sesión de recuperación activa y el usuario puede
+ * setear la nueva clave.
  *
- * `redirectTo` tiene que estar permitido en Supabase → Auth → URL
- * Configuration → Redirect URLs, si no el link del mail rebota.
+ * El mail lo arma y lo manda el servidor (`/api/auth/recuperar`), no Supabase:
+ * así el link vuelve siempre al sitio canónico —no al dominio desde donde se
+ * pidió— y Gmail no lo esconde como repetido.
  */
-export async function sendPasswordResetEmail(email: string) {
-  const origin =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : (process.env.NEXT_PUBLIC_SITE_URL ?? "https://tijerapp.com");
-
-  return getSupabaseClient().auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/nueva-password`,
-  });
+export async function sendPasswordResetEmail(
+  email: string,
+): Promise<{ error: { message: string } | null }> {
+  try {
+    const res = await fetch("/api/auth/recuperar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (res.ok) return { error: null };
+    const payload = (await res.json().catch(() => ({}))) as { error?: string };
+    return { error: { message: payload.error ?? "No pudimos enviar el mail." } };
+  } catch {
+    return { error: { message: "No pudimos enviar el mail." } };
+  }
 }
 
 /** Setea la contraseña nueva del usuario logueado (sesión de recuperación). */
