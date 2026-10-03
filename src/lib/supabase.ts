@@ -178,10 +178,6 @@ type BarbershopAdminInsert = {
 };
 type BarbershopAdminUpdate = Partial<BarbershopAdminInsert>;
 
-type PublicOccupiedAppointmentTimeRow = {
-  appointment_time: string;
-};
-
 type BarbershopRow = {
   id: string;
   created_at: string;
@@ -978,14 +974,6 @@ type Database = {
     };
     Views: Record<string, never>;
     Functions: {
-      get_public_occupied_appointment_times: {
-        Args: {
-          p_appointment_date: string;
-          p_barber_id: string;
-          p_barbershop_slug: string;
-        };
-        Returns: PublicOccupiedAppointmentTimeRow[];
-      };
       get_public_barber_day_appointments: {
         Args: {
           p_appointment_date: string;

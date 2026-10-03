@@ -88,7 +88,10 @@ export default async function PublicAppointmentPage({
           </div>
         ) : null}
         <ClientPushOptIn token={token} />
-        <PublicLoyaltyCard token={token} />
+        <PublicLoyaltyCard
+          token={token}
+          barbershopSlug={appointment.barbershop_slug}
+        />
       </div>
     </main>
   );
