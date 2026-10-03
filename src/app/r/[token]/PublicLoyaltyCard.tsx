@@ -1,5 +1,6 @@
 import { Gift, Sparkles } from "lucide-react";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { barbershopHasFeature } from "@/lib/plan-access";
 
 type LoyaltyStatus = {
   visits_required: number;
@@ -12,9 +13,22 @@ type LoyaltyStatus = {
 /**
  * Card pública que muestra al cliente sus sellos de fidelidad acumulados.
  * Server component: trae el status via RPC y lo renderiza inline.
- * Si la barbería NO tiene programa activo, no se renderiza nada.
+ * No se renderiza si la barbería no tiene programa activo, ni si su plan no
+ * incluye fidelización o está vencido: antes la RPC solo miraba el programa, y
+ * una barbería en Esencial con un programa cargado le mostraba a sus clientes
+ * una tarjeta que ella no podía administrar desde el panel.
  */
-export async function PublicLoyaltyCard({ token }: { token: string }) {
+export async function PublicLoyaltyCard({
+  token,
+  barbershopSlug,
+}: {
+  token: string;
+  barbershopSlug: string;
+}) {
+  if (!(await barbershopHasFeature(barbershopSlug, "fidelizacion"))) {
+    return null;
+  }
+
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase.rpc(
     "get_public_loyalty_status_by_token",

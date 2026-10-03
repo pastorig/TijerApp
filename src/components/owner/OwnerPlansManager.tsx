@@ -681,8 +681,8 @@ function EditPlanModal({
                 className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-base sm:text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
               />
               <p className="mt-1 text-xs text-[color:var(--text-muted)]">
-                Se resetean las fechas: trial expira en {trialDays || "?"}d + 7d
-                de gracia.
+                Se resetean las fechas: la prueba vence en {trialDays || "?"}d y
+                después queda en modo lectura.
               </p>
             </div>
           ) : status === "active" ? (

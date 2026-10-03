@@ -4,22 +4,27 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
-## ⏳ Exportación al CRM — falta una env var (2026-09-07)
+## ✅ Mails de Supabase Auth en castellano — HECHO (2026-10-02)
 
-El endpoint `GET /api/crm/export` está listo en la rama
-`claude/crm-export-endpoint`, **sin mergear y sin desplegar**. Para que ande
-hace falta cargar en Vercel:
+SMTP propio con Resend (`no-responder@tijerapp.com`, key `supabase-auth-tijerapp`)
+y la plantilla "Reset Password" en castellano con la marca. Probado de punta a
+punta por Bautista: llega, en castellano, y el link deja cambiar la contraseña.
 
-- `CRM_EXPORT_TOKEN` — el mismo secreto que se configure del lado del CRM.
-  Generar con `openssl rand -hex 32`. **Sin esta variable el endpoint contesta
-  503 y no expone nada**, que es a propósito: un endpoint que se abre solo
-  cuando alguien olvida una variable es un agujero esperando el despiste.
-- `CRM_EXPORT_ENVIRONMENT` — opcional. Qué entorno describe la BASE a la que
-  apunta la app (`test`, `preview` o `production`). Vacío se deduce del
-  despliegue; sólo hace falta si se corre local contra la base de producción.
+Es la ÚNICA plantilla que importa: todas las cuentas se crean ya confirmadas y
+la invitación de admins la manda la app. Antes de esto, con el SMTP de fábrica,
+"olvidé mi contraseña" casi seguro no le llegaba a ningún barbero.
 
-Ojo: las variables nuevas **no entran en un deploy ya hecho**, hay que
-redeployar.
+---
+
+## ✅ Migración de `appointment_time` y CRM — HECHO (2026-10-02)
+
+- Bautista corrió `20261003130000_appointment_time_canonico.sql`: los 946 turnos
+  quedaron en "HH:MM:SS" (verificado). De acá en adelante lo mantiene la base
+  (trigger + CHECK).
+- `CRM_EXPORT_TOKEN` y `CRM_ACTIVATE_TOKEN` cargados en Vercel, y sus pares
+  `CONNECTOR_TIJERAPP_TOKEN` / `CONNECTOR_TIJERAPP_ACTIVATE_TOKEN` en el CRM.
+  Verificado en prod: export contesta 200 con el token y activate valida el
+  pedido (422 con body vacío, sin activar nada).
 
 ---
 
@@ -66,10 +71,12 @@ es lo que Bautista confirmó.
 ## ✅ Auditoría del módulo empleado — CERRADA (2026-08-26)
 
 Los 5 hallazgos accionables se arreglaron en las features 020, 021 y 022, todas
-en prod. Quedan dos a propósito:
+en prod.
 
-- **06** (GET/PATCH/DELETE de staff-access sin chequeo de plan): prolijidad. Sin
-  poder invitar no hay a quién editarle permisos.
+- ~~**06** (GET/PATCH/DELETE de staff-access sin chequeo de plan)~~ → **HECHO
+  (02/10)**: GET mira el tier (en modo lectura se sigue viendo), PATCH pide el
+  plan al día. DELETE queda sin chequeo a propósito: revocar un acceso nunca
+  tiene que depender de estar al día.
 
 Con la **023** y la **024** se cerró todo lo que quedaba de capacidades: el
 empleado ya puede **bloquear un horario** y **mover un turno suyo**. De la
@@ -256,30 +263,18 @@ Spec en `specs/015-aviso-vencimiento-plan/`.
 
 ---
 
-## 📅 OCTUBRE 2026 — dos cosas con fecha, sin recordatorio automático
+## 📅 21/10/2026 — a Leo Cuts se le termina el Fundador (y se le cobra)
 
-> Ojo al llegar esa fecha: el precio que ve el barbero sale de
-> `billedMonthlyArs(tier, isFounder)`, que baja un escalón si la barbería es
-> fundadora. Cuando a Leo se le termine el upgrade y vuelva a Solo, ya no hay
-> escalón para abajo y pasa a ver el precio de Solo, que es lo correcto. Si
-> además se baja Solo a $19.000, va a ver $19.000 — revisar que eso sea lo que
-> se le quiere cobrar.
+Sin recordatorio automático en el producto. Ese día pasa de Esencial (gratis
+desde el 21/07) a Solo, **pagando lo mismo: $22.000**, y es también el día que
+se le cobra. Menos producto por igual precio es el momento típico en que un
+cliente se va: llegar ANTES con una oferta armada (tipo Esencial a precio de
+Fundador, ~$26–28k).
 
-**21/10/2026 — se le termina el programa Fundador a Leo Cuts.** Ese día pasa de
-Esencial (que tiene gratis desde el 21/07) a Solo, **pagando lo mismo: $22.000**.
-Menos producto por igual precio es el momento típico en que un cliente se va, así
-que no dejarlo caer solo: llegar con una oferta armada, tipo Esencial a precio de
-Fundador (~$26–28k), antes de esa fecha y no después.
+El precio que ve sale de `billedMonthlyArs(tier, isFounder)`: al volver a Solo
+ya no hay escalón para abajo y ve el precio de Solo, que es lo correcto.
 
-**Recién ahí decidir el precio de Solo.** Quedó sobre la mesa bajarlo de $22.000 a
-$19.000 (relevamiento del 12/08/2026: la mediana del mercado argentino en el tramo
-"1 barbero" es ~$14.500, o sea Solo está ~50% arriba). No se hizo ahora **a
-propósito**: $22.000 es el precio congelado de Leo Cuts, y bajar el público por
-debajo dejaría su "precio de Fundador" peor que el de cualquiera.
-
-Con el -15% anual, $19.000 queda en $16.150/mes — prácticamente la mediana, lo que
-convierte al plan anual en argumento de venta. Si se cambia, se toca **solo**
-`src/lib/plans.ts`: desde el commit `6f2c445` toda la landing deriva de ahí.
+> Bajar Solo a $19.000: **descartado por ahora** (decisión del 02/10/2026).
 
 ---
 

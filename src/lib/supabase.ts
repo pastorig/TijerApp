@@ -17,6 +17,11 @@ type AppointmentInsert = {
   comment: string;
   status: AppointmentStatus;
   actual_duration_minutes?: number | null;
+  /**
+   * Turno metido a propósito desde el panel en un hueco o encima de otro.
+   * La agenda lo dibuja distinto y no cuenta para el índice de horario único.
+   */
+  is_sobreturno?: boolean;
   confirmation_token?: string;
   internal_notes?: string | null;
   cancellation_reason?: string | null;
@@ -177,10 +182,6 @@ type BarbershopAdminInsert = {
   created_at?: string;
 };
 type BarbershopAdminUpdate = Partial<BarbershopAdminInsert>;
-
-type PublicOccupiedAppointmentTimeRow = {
-  appointment_time: string;
-};
 
 type BarbershopRow = {
   id: string;
@@ -978,14 +979,6 @@ type Database = {
     };
     Views: Record<string, never>;
     Functions: {
-      get_public_occupied_appointment_times: {
-        Args: {
-          p_appointment_date: string;
-          p_barber_id: string;
-          p_barbershop_slug: string;
-        };
-        Returns: PublicOccupiedAppointmentTimeRow[];
-      };
       get_public_barber_day_appointments: {
         Args: {
           p_appointment_date: string;

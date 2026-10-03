@@ -17,7 +17,7 @@ import { getBarberDayAvailability } from "@/lib/barber-availability";
  * que el dueño había marcado a mano al cancelar.
  */
 const APPOINTMENT_SELECT =
-  "id, barbershop_slug, barber_id, barber_name, customer_name, customer_phone, customer_email, service_name, service_price, service_duration_minutes, actual_duration_minutes, appointment_date, appointment_time, comment, status, created_at, confirmation_token, internal_notes, deposit_status, deposit_amount, cancellation_reason, status_changed_by_name, status_changed_at";
+  "id, barbershop_slug, barber_id, barber_name, customer_name, customer_phone, customer_email, service_name, service_price, service_duration_minutes, actual_duration_minutes, is_sobreturno, appointment_date, appointment_time, comment, status, created_at, confirmation_token, internal_notes, deposit_status, deposit_amount, cancellation_reason, status_changed_by_name, status_changed_at";
 
 /** Tope de filas por request de PostgREST/Supabase (default del proyecto). */
 const PAGE_SIZE = 1000;
@@ -99,9 +99,10 @@ export async function updateAppointmentActualDuration(
     .from("appointments")
     .update({ actual_duration_minutes: actualDurationMinutes })
     .eq("id", appointmentId)
-    .select(
-      "id, barbershop_slug, barber_id, barber_name, customer_name, customer_phone, customer_email, service_name, service_price, service_duration_minutes, actual_duration_minutes, appointment_date, appointment_time, comment, status, created_at, confirmation_token, internal_notes, deposit_status, deposit_amount",
-    )
+    // Mismo select que el turnero: esta fila reemplaza a la de la lista, y con
+    // un select más corto se perdían el motivo de cancelación y la marca de
+    // sobreturno al tocar −5/+5.
+    .select(APPOINTMENT_SELECT)
     .single();
 }
 

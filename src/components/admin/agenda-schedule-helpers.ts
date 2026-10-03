@@ -15,6 +15,7 @@
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { mergeWeeklySchedulesWithDefaults, getDayOfWeekFromDate } from "@/lib/availability";
 import { normalizeDateValue } from "@/lib/format";
+import { resolverJornadaDelDia } from "@/lib/jornada-del-dia";
 import type {
   BarberDayOverrideRow,
   BarberWeeklyScheduleRow,
@@ -25,6 +26,11 @@ export type BarberDaySchedule = {
   startTime: string;
   endTime: string;
   isWorking: boolean;
+  /**
+   * Pausa del día (almuerzo), ya resuelta con la misma regla que la
+   * disponibilidad: la excepción del día puede heredarla, cambiarla o sacarla.
+   */
+  pausa?: { startTime: string; endTime: string } | null;
 };
 
 export function getBarberDaySchedule(params: {
@@ -60,19 +66,47 @@ export function getBarberDaySchedule(params: {
       ? (dayOverridesByBarber[barberId] ?? null)
       : null;
 
+  if (!dayOverride && !weeklySchedule) return null;
+
+  const jornada = resolverJornadaDelDia({
+    reglaSemanal: weeklySchedule
+      ? {
+          startTime: weeklySchedule.startTime,
+          endTime: weeklySchedule.endTime,
+          isWorking: weeklySchedule.isWorking,
+          breakStart: weeklySchedule.breakStart,
+          breakEnd: weeklySchedule.breakEnd,
+        }
+      : null,
+    excepcion: dayOverride
+      ? {
+          startTime: normalizeTimeShort(dayOverride.start_time),
+          endTime: normalizeTimeShort(dayOverride.end_time),
+          isWorking: dayOverride.is_working,
+          heredaPausa: dayOverride.hereda_pausa ?? true,
+          breakStart: dayOverride.break_start ?? null,
+          breakEnd: dayOverride.break_end ?? null,
+        }
+      : null,
+    horarioBarberia: workingHours,
+  });
+  const pausa = jornada.pausa
+    ? { startTime: jornada.pausa.inicio, endTime: jornada.pausa.fin }
+    : null;
+
   if (dayOverride) {
     return {
       startTime: normalizeTimeShort(dayOverride.start_time),
       endTime: normalizeTimeShort(dayOverride.end_time),
       isWorking: dayOverride.is_working,
+      pausa,
     };
   }
 
-  if (!weeklySchedule) return null;
-
   return {
-    startTime: weeklySchedule.startTime,
-    endTime: weeklySchedule.endTime,
-    isWorking: weeklySchedule.isWorking,
+    startTime: weeklySchedule!.startTime,
+    endTime: weeklySchedule!.endTime,
+    isWorking: weeklySchedule!.isWorking,
+    pausa,
   };
 }

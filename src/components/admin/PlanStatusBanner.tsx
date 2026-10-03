@@ -17,9 +17,8 @@ import { TransferDetailsCard } from "./TransferDetailsCard";
  *  - trial activo, <= 3 días → banner gold con countdown
  *  - **plan PAGO por vencer, <= 3 días → banner gold con los días y Pagar**
  *  - **plan pago que vence HOY → el mismo banner, con otro texto**
- *  - en grace period → banner ámbar con "pagá ahora o se cancela"
- *  - expirado/cancelado → no debería llegar acá porque RequirePlan ya
- *    rinde paywall, pero por las dudas mostramos banner danger
+ *  - vencido/cancelado → banner danger de MODO LECTURA (desde el 21/09/2026
+ *    no hay días de cortesía: al vencer se pasa directo a modo lectura)
  *
  * El botón "Pagar" abre un modal con los datos de transferencia (monto +
  * alias/CBU/titular) reusando TransferDetailsCard — así el barbero ve a dónde
@@ -52,7 +51,7 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
    * escribirnos y elegimos juntos el plan que le sirve.
    *
    * Usamos "nunca pagó" en vez de `rawStatus === 'trial'` porque cuando el
-   * trial vence el status pasa a grace/expired y se perdería el dato de que
+   * trial vence el status pasa a expired y se perdería el dato de que
    * nunca llegó a elegir un plan.
    */
   const isTrial = !plan.paidUntilIso;
@@ -130,34 +129,12 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
         <ContactCta href={chooseWaLink} />
       </BannerBase>
     );
-  } else if (plan.effectiveStatus === "grace") {
-    // Grace period — distinto según si venía de prueba o de un plan pago.
-    banner = isTrial ? (
-      <BannerBase tone="amber">
-        <AlertTriangle className="size-4 shrink-0" />
-        <p className="flex-1 text-xs sm:text-sm">
-          Terminó tu prueba gratis, pero te dejamos unos días más de cortesía.{" "}
-          <strong>Escribinos y elegimos juntos tu plan</strong> para que no
-          pierdas el acceso.
-        </p>
-        <ContactCta href={chooseWaLink} />
-      </BannerBase>
-    ) : (
-      <BannerBase tone="amber">
-        <AlertTriangle className="size-4 shrink-0" />
-        <p className="flex-1 text-xs sm:text-sm">
-          Tu plan venció. Estás en período de gracia — la app sigue
-          funcionando unos días más.{" "}
-          <strong>Activá tu plan ya ({precio}/mes)</strong> antes que se
-          cancele.
-        </p>
-        <PayCta onClick={() => setPayOpen(true)} />
-      </BannerBase>
-    );
   } else if (
-    // Expired/cancelled (de respaldo)
+    // "grace" ya no lo produce resolvePlanStatus; si alguna vez llegara, es
+    // modo lectura igual que expired.
     plan.effectiveStatus === "expired" ||
-    plan.effectiveStatus === "cancelled"
+    plan.effectiveStatus === "cancelled" ||
+    plan.effectiveStatus === "grace"
   ) {
     banner = isTrial ? (
       <BannerBase tone="danger">
@@ -175,7 +152,7 @@ export function PlanStatusBanner({ barbershopSlug }: Props) {
         <AlertTriangle className="size-4 shrink-0" />
         <p className="flex-1 text-xs sm:text-sm">
           Tu plan está{" "}
-          {plan.effectiveStatus === "expired" ? "expirado" : "cancelado"} y la
+          {plan.effectiveStatus === "cancelled" ? "cancelado" : "expirado"} y la
           barbería quedó en <strong>modo lectura</strong>: podés ver todo, pero
           no cargar ni modificar turnos, y tus clientes no pueden reservar
           online. Activalo ({precio}/mes) y vuelve todo.
@@ -204,12 +181,11 @@ function BannerBase({
   tone,
   children,
 }: {
-  tone: "gold" | "amber" | "danger";
+  tone: "gold" | "danger";
   children: React.ReactNode;
 }) {
   const toneClasses = {
     gold: "border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]",
-    amber: "border-amber-400/40 bg-amber-400/10 text-amber-200",
     danger:
       "border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] text-[color:var(--danger)]",
   };
