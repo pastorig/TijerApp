@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ExternalLink, LogOut, Plus } from "lucide-react";
+import { ChevronDown, LogOut, Plus } from "lucide-react";
 import { InitialsAvatar } from "@/components/booking/InitialsAvatar";
 import { InstallButton } from "@/components/pwa/InstallButton";
 import { signOut } from "@/lib/auth";
@@ -93,17 +93,6 @@ export function AdminUserMenu({
           </div>
 
           <div className="py-1">
-            <Link
-              href={`/${barbershopSlug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className={itemClass}
-            >
-              <ExternalLink className="size-4 shrink-0 text-[color:var(--text-muted)]" />
-              Ver página pública
-            </Link>
             <Link
               href={`/${barbershopSlug}/reservar`}
               target="_blank"
