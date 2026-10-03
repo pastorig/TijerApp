@@ -66,7 +66,7 @@ export function AdminSidebar(props: SidebarProps) {
 
   return (
     <>
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-white/10 bg-[#101012] lg:flex">
+      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-white/10 bg-black lg:flex">
         <SidebarContent {...props} mobile={false} />
       </aside>
       <dialog
@@ -80,7 +80,7 @@ export function AdminSidebar(props: SidebarProps) {
           const rect = event.currentTarget.getBoundingClientRect();
           if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose();
         }}
-        className={cn(styles.drawer, "fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[min(288px,calc(100vw-48px))] max-w-none border-r border-white/10 bg-[#101012] p-0 text-white backdrop:bg-black/70")}
+        className={cn(styles.drawer, "fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[min(288px,calc(100vw-48px))] max-w-none border-r border-white/10 bg-black p-0 text-white backdrop:bg-black/70")}
       >
         <div className="flex h-full flex-col">
           <SidebarContent {...props} mobile />
