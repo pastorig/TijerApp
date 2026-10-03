@@ -108,6 +108,8 @@ type AgendaCalendarGridViewProps = {
 const RULER_WIDTH_PX = 58; // Columna de horas (izquierda)
 const MIN_COL_WIDTH_PX = 200; // Ancho mínimo de columna de barbero en escritorio
 const SWIPE_MIN_PX = 60;
+/** Desde esta altura el bloque muestra nombre, servicio y horario en tres líneas. */
+const ALTO_COMPLETO_PX = 84;
 const MOBILE_QUERY = "(max-width: 767px)";
 
 function timeToMinutes(time: string): number {
@@ -196,6 +198,8 @@ function DraggableAppointmentBlock({
   const startLabel = appointment.appointment_time.slice(0, 5);
   const endLabel = minutesToTimeLabel(timeToMinutes(startLabel) + durationMinutes);
   const compact = !isOverlay && Boolean(bloque?.compacto);
+  // Entre compacto y completo (turnos de ~30 min): dos líneas, nombre y horario.
+  const medio = !isOverlay && !compact && Boolean(bloque && bloque.altoPx < ALTO_COMPLETO_PX);
   const encimado = Boolean(bloque?.encimado);
   const sobreturno = Boolean(bloque?.esSobreturno ?? appointment.is_sobreturno);
   const angosto = Boolean(bloque && bloque.anchoPct < 40);
@@ -276,6 +280,21 @@ function DraggableAppointmentBlock({
             </span>
           ) : null}
           <BlockFlags encimado={encimado} sobreturno={sobreturno} />
+        </div>
+      ) : medio ? (
+        <div className="flex h-full flex-col justify-center gap-0.5 pl-3 pr-2">
+          <div className="flex items-center gap-1.5">
+            <p className="min-w-0 flex-1 truncate text-sm font-semibold leading-tight text-white">
+              {appointment.customer_name}
+            </p>
+            <BlockFlags encimado={encimado} sobreturno={sobreturno} />
+          </div>
+          <p className="truncate text-xs leading-tight text-[color:var(--text-secondary)]">
+            <span className="font-mono font-semibold">
+              {startLabel}–{endLabel}
+            </span>
+            {!angosto ? ` · ${sobreturno ? "Sobreturno" : appointment.service_name}` : null}
+          </p>
         </div>
       ) : (
         <div className="flex h-full flex-col gap-0.5 py-1.5 pl-3 pr-2">
@@ -959,7 +978,7 @@ export function AgendaCalendarGridView({
             <span
               key={`hour-${h.min}`}
               className="absolute right-2 -translate-y-1/2 font-mono text-xs text-[color:var(--text-muted)]"
-              style={{ top: Math.max(h.top, 8) }}
+              style={{ top: Math.min(Math.max(h.top, 8), gridHeight - 8) }}
             >
               {h.label}
             </span>
@@ -1066,7 +1085,9 @@ export function AgendaCalendarGridView({
                   onClick={() => setOpenGroup({ barberId: barber.id, ids: grupo.ids })}
                   aria-label={`${grupo.ocultos.length} turnos más a esta hora. Ver todos`}
                   className="absolute right-1 z-30 inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--radius-md)] border border-[color:var(--brand-gold)] bg-[color:var(--surface-1)] px-2 text-sm font-bold text-[color:var(--brand-gold-hi)] shadow-elevated"
-                  style={{ top: Math.max(0, grupo.topPx + grupo.altoPx / 2 - 22) }}
+                  // Abajo a la derecha del grupo: es donde menos texto tapa
+                  // (los carriles de la derecha suelen terminar antes).
+                  style={{ top: Math.max(grupo.topPx, grupo.topPx + grupo.altoPx - 46) }}
                 >
                   +{grupo.ocultos.length}
                 </button>

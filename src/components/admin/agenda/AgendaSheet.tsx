@@ -42,7 +42,9 @@ export function AgendaSheet({
     previousFocusRef.current = document.activeElement as HTMLElement | null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const frame = requestAnimationFrame(() => panelRef.current?.focus());
+    // El panel ya está montado cuando corre el efecto: se enfoca directo (con
+    // requestAnimationFrame el foco no llegaba si la pestaña estaba en segundo plano).
+    panelRef.current?.focus();
 
     function handleKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -71,7 +73,6 @@ export function AgendaSheet({
     document.addEventListener("keydown", handleKey);
 
     return () => {
-      cancelAnimationFrame(frame);
       document.removeEventListener("keydown", handleKey);
       document.body.style.overflow = previousOverflow;
       previousFocusRef.current?.focus?.();
