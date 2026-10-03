@@ -161,6 +161,30 @@ export async function listTimeBlocksByBarber({
   return { data, error };
 }
 
+/**
+ * Bloqueos activos de TODOS los barberos de una barbería en una fecha. Los usa
+ * el calendario de la agenda para dibujarlos (antes no se cargaban y el
+ * calendario mostraba libre un rato bloqueado).
+ */
+export async function listTimeBlocksByBarbershopDate({
+  barbershopSlug,
+  blockDate,
+}: {
+  barbershopSlug: string;
+  blockDate: string;
+}) {
+  const { data, error } = await getSupabaseClient()
+    .from("barber_time_blocks")
+    .select(timeBlocksSelect)
+    .eq("barbershop_slug", barbershopSlug)
+    .eq("block_date", blockDate)
+    .eq("is_active", true)
+    .is("deleted_at", null)
+    .order("start_time", { ascending: true });
+
+  return { data, error };
+}
+
 export async function listDayOverridesByBarber({
   barbershopSlug,
   barberId,
