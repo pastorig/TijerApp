@@ -1,40 +1,31 @@
 "use client";
 
 /**
- * AgendaCalendarGridView
- *
- * Vista tipo "agenda / timeline" del turnero del admin. Rediseño premium
- * (dirección "agenda_pro"):
+ * AgendaCalendarGridView — vista Calendario del turnero (spec 031).
  *
  *   ┌────────┬──────────────┬──────────────┐
- *   │        │  JEREMÍAS    │  MATEO       │  ← cabecera con avatar + contador
+ *   │        │  JEREMÍAS    │  MATEO       │  ← cabecera (en el celular: chips)
  *   ├────────┼──────────────┼──────────────┤
- *   │ 15:00 ─┼──────────────┼──────────────┤
- *   │        │ ▐ Cliente A  │              │  ← bloque cuya ALTURA = duración
- *   │ 16:00 ─┼──────────────┼─ ▐ Cliente C │
- *   │        │ ▐ Cliente B  │              │
- *   │ ···    │              │              │
+ *   │ 15:00 ─┼▐ Cliente A ─┐│              │  ← bloque: alto = duración
+ *   │        │▐ Cliente B ⚠││▐ Cliente C   │  ← encimados lado a lado
+ *   │ 16:00 ─┼──────────────┼──────────────┤
  *   └────────┴──────────────┴──────────────┘
  *
- * A diferencia de la grilla vieja (1 card por celda fija), acá cada turno es
- * un BLOQUE posicionado por hora (top) y duración (height) sobre un eje de
- * horas real, así se ven los huecos libres a escala.
+ * Dónde va cada bloque lo decide `layoutDia` (src/lib/agenda-layout.ts), que es
+ * puro y tiene tests: grupos de turnos encimados con el mismo ancho, "+N" desde
+ * el tercer carril, sobreturnos en una franja angosta, altura mínima sin tapar
+ * al siguiente. Acá solo se dibuja y se cablea la interacción.
  *
- * Preservación del drag & drop (idéntico a la versión previa):
- *  - Detrás de los bloques viven las zonas droppables por slot (una por
- *    intervalo de grilla), registradas con `useDroppable`. La detección de
- *    colisión de dnd-kit es geométrica (rects) → los bloques encima no la
- *    tapan.
- *  - Los turnos son `useDraggable`. Al arrastrar, el card se levanta con
- *    `DragOverlay` dejando las celdas droppables expuestas.
- *  - `handleDragStart` / `handleDragEnd` / `appointmentsByBarberAndTime` /
- *    `isSlotInBarberWorkingHours` / los sensores: sin cambios de lógica.
- *
- * Drag vertical: cambiar hora dentro del mismo barbero.
- * Drag horizontal: cambiar barbero.
+ * - Escala fija de 2 px por minuto.
+ * - En el celular (< 768 px) se ve un barbero por vez a ancho completo; se
+ *   cambia con los chips o deslizando de costado.
+ * - Tocar un turno abre su detalle (`onOpenAppointment`). Tocar un hueco ofrece
+ *   "Turno" o "Sobreturno" (`onCreateAt`).
+ * - Arrastrar para reprogramar: igual que antes (mouse a 6 px, dedo con
+ *   mantener apretado 200 ms), contra PATCH /api/admin/appointments/move.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -49,17 +40,32 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
-import { CalendarX, Clock, GripVertical, Plus, Scissors } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { CalendarX, Clock, GripVertical, Plus, TriangleAlert, Zap } from "lucide-react";
 import { useToast } from "@/components/ui";
-import { READ_ONLY_REASON, useIsReadOnly } from "./PlanContext";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import {
+  PX_POR_MIN,
+  franjasNoDisponibles,
+  huecosLibres,
+  layoutDia,
+  ocupacionDelDia,
+  rangoDelDia,
+  type BloqueDibujado,
+  type GrupoDibujado,
+  type Intervalo,
+  type JornadaParaLayout,
+} from "@/lib/agenda-layout";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import type {
   AppointmentRow,
   BarberDayOverrideRow,
   BarberRow,
+  BarberTimeBlockRow,
   BarberWeeklyScheduleRow,
 } from "@/lib/supabase";
+import { READ_ONLY_REASON, useIsReadOnly } from "./PlanContext";
 import {
   getBarberDaySchedule,
   type BarberDaySchedule,
@@ -68,6 +74,11 @@ import {
   RescheduleNotifyDialog,
   type RescheduleNotifyContext,
 } from "./RescheduleNotifyDialog";
+import { AgendaBarberSwitcher } from "./agenda/AgendaBarberSwitcher";
+import { AgendaSheet } from "./agenda/AgendaSheet";
+import { UnavailableBand } from "./agenda/UnavailableBand";
+
+export type AgendaCreateMode = "turno" | "sobreturno";
 
 type AgendaCalendarGridViewProps = {
   barbershopSlug: string;
@@ -78,6 +89,8 @@ type AgendaCalendarGridViewProps = {
   appointments: AppointmentRow[];
   weeklySchedulesByBarber: Record<string, BarberWeeklyScheduleRow[]>;
   dayOverridesByBarber: Record<string, BarberDayOverrideRow | null>;
+  /** Bloqueos activos del día, por barbero. */
+  timeBlocksByBarber: Record<string, BarberTimeBlockRow[]>;
   workingHours: {
     start: string;
     end: string;
@@ -90,12 +103,22 @@ type AgendaCalendarGridViewProps = {
     barber_id: string;
     barber_name: string;
   }) => void;
+  /** Tocar un turno: abre su detalle. */
+  onOpenAppointment: (appointmentId: string) => void;
+  /** Tocar un hueco libre y elegir "Turno" o "Sobreturno". */
+  onCreateAt: (args: { barberId: string; time: string; mode: AgendaCreateMode }) => void;
 };
 
-const SLOT_HEIGHT_PX = 60; // Altura visual de un intervalo de grilla
-const RULER_WIDTH_PX = 62; // Ancho de la columna de horas (izquierda)
-const MIN_COL_WIDTH_PX = 172; // Ancho mínimo de columna de barbero
-const MIN_BLOCK_HEIGHT_PX = 48; // Piso de altura para turnos cortos (legibilidad)
+const RULER_WIDTH_PX = 58; // Columna de horas (izquierda)
+const MIN_COL_WIDTH_PX = 200; // Ancho mínimo de columna de barbero en escritorio
+const SWIPE_MIN_PX = 60;
+/** Un rato libre se marca ("Libre · 40 min") desde estos minutos. */
+const MIN_HUECO_VISIBLE = 30;
+/** Alto de la etiqueta de hueco libre (px). */
+const ALTO_HUECO_PX = 36;
+/** Desde esta altura el bloque muestra nombre, servicio y horario en tres líneas. */
+const ALTO_COMPLETO_PX = 84;
+const MOBILE_QUERY = "(max-width: 767px)";
 
 function timeToMinutes(time: string): number {
   const [hh, mm] = time.split(":").map(Number);
@@ -103,9 +126,8 @@ function timeToMinutes(time: string): number {
 }
 
 /**
- * Devuelve hoy en formato "YYYY-MM-DD" en zona horaria local del browser.
- * Usado para deshabilitar drag en fechas pasadas (no tiene sentido mover
- * un turno de hace 2 días — no tiene a dónde moverlo lógicamente).
+ * Hoy en "YYYY-MM-DD" en la zona horaria del browser. Sirve para trabar el
+ * arrastre en días pasados (no hay a dónde mover un turno de hace 2 días).
  */
 function getTodayYmd(): string {
   const today = new Date();
@@ -118,409 +140,462 @@ function minutesToTimeLabel(minutes: number): string {
   return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
 }
 
-/**
- * Genera todos los slots de tiempo entre start y end con un step dado.
- * Ej: start="09:00", end="20:00", step=30 → ["09:00", "09:30", ..., "19:30"]
- */
-function generateTimeSlots(
-  start: string,
-  end: string,
-  stepMinutes: number,
-): string[] {
-  const startMin = timeToMinutes(start);
-  const endMin = timeToMinutes(end);
-  const slots: string[] = [];
-  for (let t = startMin; t < endMin; t += stepMinutes) {
-    slots.push(minutesToTimeLabel(t));
-  }
-  return slots;
+/** 40 → "40 min", 90 → "1 h 30", 120 → "2 h". */
+function formatoMinutos(minutos: number): string {
+  if (minutos < 60) return `${minutos} min`;
+  const h = Math.floor(minutos / 60);
+  const m = minutos % 60;
+  return m === 0 ? `${h} h` : `${h} h ${m}`;
 }
 
-/**
- * Genera el ID droppable de una cell. Usado para identificar el target
- * al soltar el card.
- */
+/** Lo que dura el turno según el barbero: la duración real si la ajustó. */
+function duracionDibujada(appointment: AppointmentRow, fallback: number): number {
+  return appointment.actual_duration_minutes ?? appointment.service_duration_minutes ?? fallback;
+}
+
+function isActive(appointment: AppointmentRow) {
+  return appointment.status === "pending" || appointment.status === "confirmed";
+}
+
+function barberDisplayName(barber: BarberRow) {
+  return barber.display_name?.trim() || barber.name;
+}
+
+/** ID droppable de un slot: "slot:<barberId>:HH:MM". */
 function makeDroppableId(barberId: string, time: string): string {
   return `slot:${barberId}:${time}`;
 }
 
-function parseDroppableId(
-  id: string,
-): { barberId: string; time: string } | null {
+function parseDroppableId(id: string): { barberId: string; time: string } | null {
   const parts = id.split(":");
   if (parts.length !== 4 || parts[0] !== "slot") return null;
-  // ID format: "slot:<barberId>:HH:MM" → parts = ["slot", uuid, "HH", "MM"]
-  // Reconstruimos: barberId = parts[1], time = parts[2]+":"+parts[3]
   return { barberId: parts[1], time: `${parts[2]}:${parts[3]}` };
 }
 
-/** Iniciales (máx 2) a partir de un nombre. */
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-/** Paleta de acento por estado del turno (color = acento, no relleno). */
-type StatusAccent = {
-  bar: string; // color de la barra vertical + anillo del avatar
-  glow: string; // color del glow radial sutil
-  label: string; // etiqueta corta
-  labelColor: string; // color del texto de estado
-};
-
-function statusAccentOf(status: AppointmentRow["status"]): StatusAccent {
-  if (status === "confirmed") {
-    return {
-      bar: "var(--success)",
-      glow: "rgba(110, 231, 183, 0.16)",
-      label: "Confirmado",
-      labelColor: "var(--success)",
-    };
-  }
-  if (status === "pending") {
-    return {
-      bar: "var(--brand-gold)",
-      glow: "rgba(201, 162, 62, 0.18)",
-      label: "Pendiente",
-      labelColor: "var(--brand-gold-hi)",
-    };
-  }
-  return {
-    bar: "var(--text-subtle)",
-    glow: "rgba(138, 138, 138, 0.12)",
-    label: "Cancelado",
-    labelColor: "var(--text-muted)",
-  };
+function statusOf(status: AppointmentRow["status"]) {
+  if (status === "confirmed") return { bar: "var(--success)", label: "Confirmado" };
+  if (status === "pending") return { bar: "var(--brand-gold)", label: "Pendiente" };
+  return { bar: "var(--text-subtle)", label: "Cancelado" };
 }
 
 /**
- * Bloque de un turno posicionado en el timeline. La geometría (top/height/
- * lane) la calcula el parent; acá solo renderizamos y cableamos el drag.
+ * Bloque de un turno. La geometría viene de `layoutDia`; acá se dibuja y se
+ * cablea el arrastre y el toque.
  *
- * `isOverlay` = copia que sigue al cursor durante el drag (DragOverlay).
- * `isLocked` = día pasado (no draggable, se ve "archivado").
- * `isInProgress` = turno en curso ahora (glow + pill "EN CURSO").
+ * `isOverlay` = copia que sigue al dedo/cursor durante el arrastre.
+ * `isLocked` = día pasado o plan vencido (no se arrastra, se abre igual).
  */
 function DraggableAppointmentBlock({
   appointment,
-  geometry,
+  bloque,
+  durationMinutes,
   isOverlay = false,
   isLocked = false,
   isInProgress = false,
+  isPast = false,
+  progress = null,
   wasRecentlyDropped = false,
+  onOpen,
 }: {
   appointment: AppointmentRow;
-  geometry?: { top: number; height: number; left: number; width: number };
+  bloque?: BloqueDibujado;
+  durationMinutes: number;
   isOverlay?: boolean;
   isLocked?: boolean;
   isInProgress?: boolean;
+  /** Hoy, ya terminó: se ve atenuado para que resalte lo que sigue. */
+  isPast?: boolean;
+  /** Hoy, en curso: cuánto lleva (0 a 1), para la barrita de progreso. */
+  progress?: number | null;
   wasRecentlyDropped?: boolean;
+  onOpen?: () => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `appt:${appointment.id}`,
     data: { appointment },
-    disabled: isLocked,
+    disabled: isLocked || isOverlay,
   });
 
-  const accent = statusAccentOf(appointment.status);
-  const startMin = timeToMinutes(appointment.appointment_time.slice(0, 5));
-  const duration = appointment.service_duration_minutes || 0;
-  const endLabel = minutesToTimeLabel(startMin + duration);
-
-  // Bloques muy chatos ocultan info → si la altura es baja mostramos una
-  // versión condensada (solo nombre + hora en una línea).
-  const compact = !isOverlay && geometry ? geometry.height < 64 : false;
+  const status = statusOf(appointment.status);
+  const startLabel = appointment.appointment_time.slice(0, 5);
+  const endLabel = minutesToTimeLabel(timeToMinutes(startLabel) + durationMinutes);
+  const compact = !isOverlay && Boolean(bloque?.compacto);
+  // Entre compacto y completo (turnos de ~30 min): dos líneas, nombre y horario.
+  const medio = !isOverlay && !compact && Boolean(bloque && bloque.altoPx < ALTO_COMPLETO_PX);
+  const encimado = Boolean(bloque?.encimado);
+  const sobreturno = Boolean(bloque?.esSobreturno ?? appointment.is_sobreturno);
+  const angosto = Boolean(bloque && bloque.anchoPct < 40);
+  // El barbero le cambió la duración con −5/+5: el bloque mide distinto que el
+  // servicio y sin aviso un "Corte y barba" de 30 min parece un error.
+  const ajustado =
+    appointment.actual_duration_minutes != null &&
+    appointment.actual_duration_minutes !== appointment.service_duration_minutes;
 
   const positionStyle: React.CSSProperties = isOverlay
-    ? { width: 208 }
-    : geometry
+    ? { width: 220 }
+    : bloque
       ? {
           position: "absolute",
-          top: geometry.top,
-          height: Math.max(geometry.height, MIN_BLOCK_HEIGHT_PX),
-          left: `calc(${geometry.left}% + 4px)`,
-          width: `calc(${geometry.width}% - 8px)`,
+          top: bloque.topPx + 1,
+          height: bloque.altoPx - 2,
+          left: `calc(${bloque.izquierdaPct}% + 3px)`,
+          width: `calc(${bloque.anchoPct}% - 6px)`,
         }
       : {};
+
+  const etiquetaAccesible = [
+    `${startLabel} a ${endLabel}`,
+    appointment.customer_name,
+    appointment.service_name,
+    status.label,
+    encimado ? "encimado con otro turno" : null,
+    sobreturno ? "sobreturno" : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <div
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      role="button"
+      tabIndex={0}
+      aria-label={etiquetaAccesible}
+      aria-roledescription={isLocked ? "turno" : "turno arrastrable"}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen?.();
+        }
+      }}
       style={positionStyle}
       className={cn(
-        "group z-10 overflow-hidden rounded-[var(--radius-md)] border text-left",
-        "border-[color:var(--border-default)] bg-[color:var(--surface-2)]",
-        "shadow-[0_1px_0_rgba(255,255,255,0.05)_inset,0_10px_26px_-16px_rgba(0,0,0,0.9)]",
-        "transition-[transform,box-shadow,opacity] duration-150",
-        // `touch-pan-y`, no `touch-none` ni `touch-manipulation`.
-        //
-        // `touch-none` fue el primer intento y trababa la página entera: con el
-        // dedo sobre un turno no se podía subir ni bajar la agenda.
-        // `touch-manipulation` lo arregló, pero habilita los DOS ejes, y como
-        // la grilla scrollea de costado el navegador se enganchaba al eje
-        // horizontal ante el mínimo desvío del dedo: se corría el calendario en
-        // vez de bajar la página. Con `pan-y` el navegador solo puede mover la
-        // página hacia arriba y abajo desde un turno; el costado se sigue
-        // moviendo desde los espacios vacíos de la grilla.
-        //
-        // El arrastre no se pierde: el TouchSensor activa por long-press de
-        // 200 ms sin mover el dedo, y a partir de ahí dnd-kit toma el control
-        // con preventDefault.
-        !isLocked && "touch-pan-y select-none",
-        isLocked
-          ? "cursor-not-allowed opacity-60 [filter:saturate(0.55)]"
-          : "cursor-grab hover:z-20 hover:shadow-elevated hover:-translate-y-px active:cursor-grabbing",
-        // Bloque en su sitio mientras se arrastra la copia (overlay): se apaga.
-        isDragging && !isOverlay && "opacity-25 [filter:blur(0.5px)]",
-        // Copia levantada que sigue al cursor.
+        "group z-10 overflow-hidden rounded-[var(--radius-md)] border text-left outline-none",
+        "bg-[color:var(--surface-2)] transition-[transform,box-shadow,opacity] duration-150",
+        "focus-visible:ring-2 focus-visible:ring-[color:var(--brand-gold)]",
+        sobreturno
+          ? "border-dashed border-[color:var(--brand-gold)]/70"
+          : encimado
+            ? "border-[color:var(--danger)]/60"
+            : "border-[color:var(--border-default)]",
+        // `touch-pan-y`: con el dedo sobre un turno la página sigue subiendo y
+        // bajando; el arrastre arranca recién con mantener apretado 200 ms.
+        // (`touch-none` trababa la página; `touch-manipulation` habilitaba el
+        // eje horizontal y se corría el calendario en vez de bajar.)
+        "touch-pan-y select-none",
+        isLocked ? "cursor-pointer" : "cursor-pointer hover:z-20 hover:shadow-elevated active:cursor-grabbing",
+        isDragging && !isOverlay && "opacity-25",
+        isPast && !isDragging && !isOverlay && "opacity-50 hover:opacity-100 focus-visible:opacity-100",
         isOverlay &&
-          "rotate-[-1.2deg] scale-[1.03] shadow-[0_24px_60px_-12px_rgba(0,0,0,0.85),0_0_30px_-6px_color-mix(in_oklab,var(--brand-gold)_45%,transparent)] ring-2 ring-[color:var(--brand-gold)]",
-        // Turno en curso: anillo + glow dorado permanente.
-        isInProgress &&
-          !isOverlay &&
-          "ring-1 ring-[color:var(--brand-gold)]/70 shadow-[0_0_0_1px_var(--brand-gold-ring),0_0_28px_-10px_rgba(201,162,62,0.5)]",
-        // Bounce de aterrizaje tras mover.
+          "rotate-[-1deg] scale-[1.03] shadow-elevated ring-2 ring-[color:var(--brand-gold)]",
+        isInProgress && !isOverlay && "ring-1 ring-[color:var(--brand-gold)]/70",
         wasRecentlyDropped && !isOverlay && "animate-drop-land",
       )}
     >
-      {/* Barra vertical de acento (estado) */}
-      <span
-        aria-hidden="true"
-        className="absolute inset-y-0 left-0 w-1"
-        style={{ background: accent.bar }}
-      />
-      {/* Glow radial sutil del color de estado (arriba-izquierda) */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background: `radial-gradient(120% 80% at 0% 0%, ${accent.glow} 0%, transparent 60%)`,
-        }}
-      />
-      {/* Brillo sutil superior (glass) */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/10"
-      />
+      {/* Barra de estado: verde confirmado, dorado pendiente. */}
+      <span aria-hidden="true" className="absolute inset-y-0 left-0 w-[3px]" style={{ background: status.bar }} />
+      {/* En curso: barrita abajo que avanza con el reloj (se actualiza cada minuto). */}
+      {progress !== null && !isOverlay ? (
+        <span
+          aria-hidden="true"
+          className="absolute bottom-0 left-[3px] h-[3px] bg-[color:var(--brand-gold)] transition-[width] duration-700"
+          style={{ width: `calc((100% - 3px) * ${Math.min(1, Math.max(0, progress))})` }}
+        />
+      ) : null}
 
-      <div className="relative flex h-full items-stretch gap-2 pl-3 pr-2 py-1.5">
-        {/* Avatar del cliente con anillo del color de estado */}
-        {!compact && (
-          <span
-            aria-hidden="true"
-            className="mt-0.5 flex size-7 shrink-0 items-center justify-center self-start rounded-full border text-[10px] font-black uppercase tracking-tight text-white"
-            style={{
-              borderColor: accent.bar,
-              background: "var(--surface-3)",
-              boxShadow: `0 0 12px -6px ${accent.bar}`,
-            }}
-          >
-            {initialsOf(appointment.customer_name)}
+      {compact ? (
+        <div className="flex h-full items-center gap-1.5 pl-2.5 pr-1.5">
+          <span className="shrink-0 font-mono text-xs font-semibold text-[color:var(--text-secondary)]">
+            {startLabel}
           </span>
-        )}
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-1.5">
-            <p className="truncate text-[12px] font-bold leading-tight text-white">
+          {!angosto ? (
+            <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-white">
+              {appointment.customer_name}
+            </span>
+          ) : null}
+          <BlockFlags encimado={encimado} sobreturno={sobreturno} />
+        </div>
+      ) : medio ? (
+        <div className="flex h-full flex-col justify-center gap-0.5 pl-3 pr-2">
+          <div className="flex items-center gap-1.5">
+            <p className="min-w-0 flex-1 truncate text-sm font-semibold leading-tight text-white">
               {appointment.customer_name}
             </p>
-            {!compact && (
-              <span className="shrink-0 whitespace-nowrap font-mono text-[9px] leading-tight text-[color:var(--text-muted)]">
-                {duration}min
-              </span>
-            )}
+            <BlockFlags encimado={encimado} sobreturno={sobreturno} />
           </div>
-
-          {compact ? (
-            <p className="mt-0.5 truncate font-mono text-[9px] leading-tight text-[color:var(--text-muted)]">
-              {appointment.appointment_time.slice(0, 5)} · {appointment.service_name}
-            </p>
-          ) : (
-            <>
-              <p className="mt-0.5 flex items-center gap-1 truncate text-[10px] leading-tight text-[color:var(--text-secondary)]">
-                <Scissors
-                  aria-hidden="true"
-                  className="size-2.5 shrink-0 text-[color:var(--text-muted)]"
-                />
-                <span className="truncate">{appointment.service_name}</span>
-              </p>
-              <div className="mt-1 flex items-center justify-between gap-1.5">
-                <span className="font-mono text-[10px] font-semibold text-[color:var(--text-secondary)]">
-                  {appointment.appointment_time.slice(0, 5)}–{endLabel}
-                </span>
-                {isInProgress ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gold-grad px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-black">
-                    <span className="size-1 rounded-full bg-black/70" />
-                    En curso
-                  </span>
-                ) : (
-                  <span
-                    className="text-[9px] font-bold uppercase tracking-[0.1em]"
-                    style={{ color: accent.labelColor }}
-                  >
-                    {accent.label}
-                  </span>
-                )}
-              </div>
-            </>
-          )}
+          <p className="truncate text-xs leading-tight text-[color:var(--text-secondary)]">
+            <span className="font-mono font-semibold">
+              {startLabel}–{endLabel}
+            </span>
+            {ajustado ? " (ajustado)" : ""}
+            {!angosto ? ` · ${sobreturno ? "Sobreturno" : appointment.service_name}` : null}
+          </p>
         </div>
+      ) : (
+        <div className="flex h-full flex-col gap-0.5 py-1.5 pl-3 pr-2">
+          <div className="flex items-start gap-1.5">
+            <p className="min-w-0 flex-1 truncate text-sm font-semibold leading-tight text-white">
+              {appointment.customer_name}
+            </p>
+            <BlockFlags encimado={encimado} sobreturno={sobreturno} />
+          </div>
+          {!angosto ? (
+            <p className="truncate text-xs leading-tight text-[color:var(--text-secondary)]">
+              {sobreturno ? "Sobreturno · " : ""}
+              {appointment.service_name} · {durationMinutes} min{ajustado ? " (ajustado)" : ""}
+            </p>
+          ) : null}
+          <p className="mt-auto flex items-center justify-between gap-1.5 text-xs leading-tight">
+            <span className="font-mono font-semibold text-[color:var(--text-secondary)]">
+              {startLabel}–{endLabel}
+            </span>
+            {!angosto ? (
+              isInProgress ? (
+                <span className="font-semibold text-[color:var(--brand-gold-hi)]">En curso</span>
+              ) : (
+                <span className="text-[color:var(--text-muted)]">{status.label}</span>
+              )
+            ) : null}
+          </p>
+        </div>
+      )}
 
-        {/* Grip visible al hover */}
-        {!isLocked && !isOverlay && (
-          <GripVertical
-            aria-hidden="true"
-            className="absolute right-1 top-1 size-3 text-[color:var(--brand-gold)] opacity-0 transition-opacity group-hover:opacity-100"
-          />
-        )}
-      </div>
+      {!isLocked && !isOverlay ? (
+        <GripVertical
+          aria-hidden="true"
+          className="absolute bottom-1 right-1 hidden size-3 text-[color:var(--brand-gold)] opacity-0 transition-opacity group-hover:opacity-100 sm:block"
+        />
+      ) : null}
     </div>
   );
 }
 
+function BlockFlags({ encimado, sobreturno }: { encimado: boolean; sobreturno: boolean }) {
+  if (!encimado && !sobreturno) return null;
+  return (
+    <span className="flex shrink-0 items-center gap-0.5">
+      {encimado ? (
+        <TriangleAlert aria-hidden="true" className="size-3.5 text-[color:var(--danger)]" />
+      ) : null}
+      {sobreturno ? (
+        <Zap aria-hidden="true" className="size-3.5 fill-current text-[color:var(--brand-gold)]" />
+      ) : null}
+    </span>
+  );
+}
+
+/** Barra fina con qué parte de la jornada está ocupada. */
+function OccupancyBar({ percent }: { percent: number | null }) {
+  if (percent === null) return null;
+  return (
+    <div className="mt-1.5 flex items-center gap-2">
+      <div
+        role="meter"
+        aria-label="Jornada ocupada"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+        className="h-1 flex-1 overflow-hidden rounded-full bg-[color:var(--surface-3)]"
+      >
+        <div
+          className="h-full rounded-full bg-[color:var(--brand-gold)] transition-[width] duration-500"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <span className="shrink-0 text-xs tabular-nums text-[color:var(--text-muted)]">
+        {percent}% ocupado
+      </span>
+    </div>
+  );
+}
+
+/** "· 2 encimados" en la cabecera del barbero (solo si hay). */
+function EncimadosCount({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <span className="font-semibold text-[color:var(--danger)]">
+      {" "}
+      · {count} encimado{count === 1 ? "" : "s"}
+    </span>
+  );
+}
+
 /**
- * Slot droppable (capa de fondo). Ya NO contiene el card — es solo la zona
- * donde se puede soltar. Mantiene el registro `useDroppable` para que el
- * drag & drop siga funcionando idéntico.
- *
- * Visual states:
- *  - fuera de horario: hatching diagonal (no drop)
- *  - vacío + drag activo + over: pulse gold (drop target)
- *  - vacío + drag activo: ring gold tenue
- *  - vacío + hover sin drag: afordancia "+ turno"
+ * Qué significa cada cosa del calendario. Sin esto la barra de color, el
+ * triángulo y el rayo había que adivinarlos.
+ */
+function AgendaLegend() {
+  return (
+    <ul
+      aria-label="Referencias del calendario"
+      className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[color:var(--text-secondary)]"
+    >
+      <li className="inline-flex items-center gap-1.5">
+        <span aria-hidden="true" className="h-3.5 w-[3px] rounded-full bg-[color:var(--brand-gold)]" />
+        Pendiente
+      </li>
+      <li className="inline-flex items-center gap-1.5">
+        <span aria-hidden="true" className="h-3.5 w-[3px] rounded-full bg-[color:var(--success)]" />
+        Confirmado
+      </li>
+      <li className="inline-flex items-center gap-1.5">
+        <TriangleAlert aria-hidden="true" className="size-3.5 text-[color:var(--danger)]" />
+        Se pisa con otro turno
+      </li>
+      <li className="inline-flex items-center gap-1.5">
+        <Zap aria-hidden="true" className="size-3.5 fill-current text-[color:var(--brand-gold)]" />
+        Sobreturno
+      </li>
+      <li className="inline-flex items-center gap-1.5">
+        <span
+          aria-hidden="true"
+          className="size-3.5 rounded-[2px] border border-[color:var(--border-default)] [background-image:repeating-linear-gradient(135deg,transparent_0_3px,var(--border-strong)_3px_4px)]"
+        />
+        Pausa o bloqueado
+      </li>
+    </ul>
+  );
+}
+
+/**
+ * Slot de fondo: zona donde se puede soltar un turno y, si está libre, tocar
+ * para cargar uno. No contiene al bloque (los bloques van encima).
  */
 function DroppableSlot({
   barberId,
   time,
   top,
+  height,
   isHourStart,
   isInWorkingHours,
   isOccupied,
+  isCovered,
   isDayLocked,
   isDragActive,
+  onPick,
 }: {
   barberId: string;
   time: string;
   top: number;
+  height: number;
   isHourStart: boolean;
   isInWorkingHours: boolean;
   isOccupied: boolean;
+  /** Algún turno pasa por encima de este horario (aunque no empiece acá). */
+  isCovered: boolean;
   isDayLocked: boolean;
   isDragActive: boolean;
+  onPick: (barberId: string, time: string, top: number) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: makeDroppableId(barberId, time),
     disabled: !isInWorkingHours || isOccupied || isDayLocked,
   });
 
-  const isAvailableDropTarget = isInWorkingHours && !isOccupied && !isDayLocked;
-  const showDragHint = isAvailableDropTarget && isDragActive;
+  const isAvailable = isInWorkingHours && !isOccupied && !isDayLocked;
+  // Para cargar un turno el horario tiene que estar libre de verdad: si un
+  // turno lo tapa, el "+ 11:30" quedaba medio escondido debajo del bloque.
+  const canPick = isAvailable && !isCovered && !isDragActive;
+  const showDragHint = isAvailable && isDragActive;
   const showBusyTooltip = isOccupied && isDragActive && !isDayLocked;
 
   return (
     <div
       ref={setNodeRef}
+      onClick={canPick ? () => onPick(barberId, time, top) : undefined}
       className={cn(
         "group/slot absolute inset-x-0 border-t transition-colors duration-150",
-        isHourStart
-          ? "border-[color:var(--border-default)]"
-          : "border-[color:var(--border-subtle)]/60",
-        !isInWorkingHours &&
-          "[background-image:linear-gradient(135deg,transparent_46%,var(--border-subtle)_46%,var(--border-subtle)_54%,transparent_54%)] [background-size:7px_7px]",
-        showDragHint &&
-          !isOver &&
-          "bg-[color:var(--brand-gold-soft)]/25 ring-1 ring-inset ring-[color:var(--brand-gold)]/35",
+        isHourStart ? "border-[color:var(--border-default)]" : "border-[color:var(--border-subtle)]/50",
+        canPick && "cursor-pointer hover:bg-[color:var(--surface-2)]/50",
+        showDragHint && !isOver && "bg-[color:var(--brand-gold-soft)]/25",
         isOver &&
-          "z-10 bg-[color:var(--brand-gold-soft)] ring-2 ring-inset ring-[color:var(--brand-gold)] animate-drop-target-pulse",
-        // Afordancia "+ turno" al hover sobre tiempo libre (sin drag activo).
-        isAvailableDropTarget &&
-          !isDragActive &&
-          "hover:bg-[color:var(--surface-2)]/40",
+          "z-[5] bg-[color:var(--brand-gold-soft)] ring-2 ring-inset ring-[color:var(--brand-gold)] animate-drop-target-pulse",
         showBusyTooltip && "busy-slot-tooltip",
       )}
-      style={{ top, height: SLOT_HEIGHT_PX }}
+      style={{ top, height }}
     >
-      {isAvailableDropTarget && !isDragActive && (
-        <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-150 group-hover/slot:opacity-100">
-          <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--surface-1)]/80 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)]">
-            <Plus aria-hidden="true" className="size-2.5" />
-            Turno
+      {canPick && height >= 24 ? (
+        <span className="pointer-events-none absolute inset-0 hidden items-center justify-center opacity-0 transition-opacity duration-150 group-hover/slot:opacity-100 sm:flex">
+          <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--surface-1)]/90 px-2 py-0.5 text-xs font-semibold text-[color:var(--brand-gold)]">
+            <Plus aria-hidden="true" className="size-3" />
+            Cargar a las {time}
           </span>
         </span>
-      )}
+      ) : null}
     </div>
   );
 }
 
-/**
- * Empaqueta los turnos de un barbero en "carriles" (lanes) para que dos
- * turnos que se solapan (ej. una doble reserva) se muestren lado a lado en
- * vez de taparse. Coloreo de grafo de intervalos simple: por cada turno,
- * el primer carril libre; luego se calcula el ancho del cluster.
- */
-type BlockGeometry = {
-  appointment: AppointmentRow;
+/** Mini menú que aparece al tocar un hueco: "Turno" o "Sobreturno". */
+function SlotMenu({
+  time,
+  top,
+  onChoose,
+  onClose,
+}: {
+  time: string;
   top: number;
-  height: number;
-  left: number; // %
-  width: number; // %
-};
+  onChoose: (mode: AgendaCreateMode) => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
 
-function packBarberBlocks(
-  appts: AppointmentRow[],
-  gridStartMin: number,
-  interval: number,
-): BlockGeometry[] {
-  const pxPerMin = SLOT_HEIGHT_PX / interval;
-  const sorted = [...appts].sort(
-    (a, b) =>
-      timeToMinutes(a.appointment_time.slice(0, 5)) -
-      timeToMinutes(b.appointment_time.slice(0, 5)),
-  );
-
-  // Asignar lane a cada turno.
-  type Placed = {
-    appt: AppointmentRow;
-    start: number;
-    end: number;
-    lane: number;
-  };
-  const placed: Placed[] = [];
-  const laneEnds: number[] = []; // fin (min) del último turno de cada lane
-  for (const appt of sorted) {
-    const start = timeToMinutes(appt.appointment_time.slice(0, 5));
-    const end = start + (appt.service_duration_minutes || interval);
-    let lane = laneEnds.findIndex((laneEnd) => laneEnd <= start);
-    if (lane === -1) {
-      lane = laneEnds.length;
-      laneEnds.push(end);
-    } else {
-      laneEnds[lane] = end;
+  useEffect(() => {
+    ref.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    function handlePointer(event: PointerEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) onClose();
     }
-    placed.push({ appt, start, end, lane });
-  }
-
-  // Para cada turno, cuántos lanes tiene su cluster de solapamiento.
-  return placed.map((p) => {
-    const overlapping = placed.filter(
-      (q) => q.start < p.end && q.end > p.start,
-    );
-    const clusterLanes =
-      Math.max(...overlapping.map((q) => q.lane)) + 1 || 1;
-    const width = 100 / clusterLanes;
-    return {
-      appointment: p.appt,
-      top: (p.start - gridStartMin) * pxPerMin,
-      height: (p.end - p.start) * pxPerMin,
-      left: p.lane * width,
-      width,
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    // En el próximo tick: el mismo toque que abrió el menú no lo cierra.
+    const id = setTimeout(() => document.addEventListener("pointerdown", handlePointer), 0);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      clearTimeout(id);
+      document.removeEventListener("pointerdown", handlePointer);
+      document.removeEventListener("keydown", handleKey);
     };
-  });
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      role="menu"
+      aria-label={`Cargar a las ${time}`}
+      className="absolute left-2 right-2 z-40 flex flex-col gap-1 rounded-[var(--radius-md)] border border-[color:var(--border-strong)] bg-[color:var(--surface-1)] p-1.5 shadow-elevated animate-scale-in sm:right-auto sm:w-52"
+      style={{ top }}
+    >
+      <p className="px-2 pb-1 pt-0.5 font-mono text-xs text-[color:var(--text-muted)]">{time}</p>
+      <button
+        type="button"
+        role="menuitem"
+        onClick={() => onChoose("turno")}
+        className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] px-2.5 text-sm font-semibold text-white hover:bg-[color:var(--surface-2)]"
+      >
+        <Plus aria-hidden="true" className="size-4 text-[color:var(--brand-gold)]" />
+        Turno
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        onClick={() => onChoose("sobreturno")}
+        className="inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] px-2.5 text-sm font-semibold text-white hover:bg-[color:var(--surface-2)]"
+      >
+        <Zap aria-hidden="true" className="size-4 fill-current text-[color:var(--brand-gold)]" />
+        Sobreturno
+      </button>
+    </div>
+  );
 }
+
+type Column = {
+  barber: BarberRow;
+  schedule: BarberDaySchedule;
+  isOffDay: boolean;
+};
 
 export function AgendaCalendarGridView({
   barbershopSlug,
@@ -530,23 +605,25 @@ export function AgendaCalendarGridView({
   appointments,
   weeklySchedulesByBarber,
   dayOverridesByBarber,
+  timeBlocksByBarber,
   workingHours,
   onMoveComplete,
+  onOpenAppointment,
+  onCreateAt,
 }: AgendaCalendarGridViewProps) {
   const toast = useToast();
   const isReadOnly = useIsReadOnly();
-  const [activeAppointment, setActiveAppointment] =
-    useState<AppointmentRow | null>(null);
-  const [notifyContext, setNotifyContext] =
-    useState<RescheduleNotifyContext | null>(null);
-  // Trackeamos qué appointment recién se movió para animarlo con el
-  // bounce de "aterrizaje" (animate-drop-land). Se limpia tras 700ms.
-  const [recentlyDroppedId, setRecentlyDroppedId] = useState<string | null>(
-    null,
-  );
+  const isMobile = useMediaQuery(MOBILE_QUERY);
+  const reduceMotion = useReducedMotion();
+  const [activeAppointment, setActiveAppointment] = useState<AppointmentRow | null>(null);
+  const [notifyContext, setNotifyContext] = useState<RescheduleNotifyContext | null>(null);
+  const [recentlyDroppedId, setRecentlyDroppedId] = useState<string | null>(null);
+  const [slotMenu, setSlotMenu] = useState<{ barberId: string; time: string; top: number } | null>(null);
+  const [openGroup, setOpenGroup] = useState<{ barberId: string; ids: string[] } | null>(null);
+  // Un click llega justo después de soltar un arrastre: no tiene que abrir el detalle.
+  const justDraggedRef = useRef(false);
 
-  // Minuto actual del día — para la línea "ahora" y el resalte de "en curso".
-  // Se refresca cada 60s para que la línea avance sola sin recargar.
+  // Minuto actual — línea de "ahora" y "en curso". Se refresca cada 60 s.
   const [nowMinutes, setNowMinutes] = useState<number>(() => {
     const d = new Date();
     return d.getHours() * 60 + d.getMinutes();
@@ -559,52 +636,36 @@ export function AgendaCalendarGridView({
     return () => clearInterval(id);
   }, []);
 
-  // Sensors separados para mouse y touch porque tienen UX distinta:
-  // - Mouse: drag inicia después de 6px de movimiento (rápido, sin delay)
-  // - Touch: long-press de 200ms (evita que el touch para scroll de la
-  //   grilla se confunda con drag de un card). Con tolerance 5px el
-  //   usuario puede mover ligeramente el dedo durante el long-press
-  //   sin cancelarlo.
+  // Mouse: arrastre después de 6 px. Dedo: mantener apretado 200 ms (con 5 px
+  // de tolerancia) para no confundirlo con scrollear la página.
   const sensors = useSensors(
-    useSensor(MouseSensor, {
-      activationConstraint: { distance: 6 },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 200, tolerance: 5 },
-    }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
   );
 
-  // Si focusDate es anterior a hoy, deshabilitamos todo el drag & drop.
-  // Mover un turno de un día pasado no tiene sentido (no podés cambiarlo
-  // a otra hora de un día que ya terminó). Visualmente se mantiene
-  // visible para que el barbero pueda CONSULTAR la agenda pasada.
-  // Plan vencido => modo lectura: la agenda queda congelada igual que un día
-  // pasado. Reusamos el mismo candado, que ya apaga draggable, droppable y la
-  // afordancia "+ turno".
+  // Día pasado o plan vencido: se ve todo, no se mueve ni se carga nada.
   const isPastDay = useMemo(() => focusDate < getTodayYmd(), [focusDate]);
   const isDayLocked = isPastDay || isReadOnly;
-
   const isToday = useMemo(() => focusDate === getTodayYmd(), [focusDate]);
+  const interval = workingHours.intervalMinutes > 0 ? workingHours.intervalMinutes : 30;
 
-  // 0. Rango que ocupan los turnos del día, por barbero.
-  //    Se calcula ANTES que las columnas porque un barbero que hoy no trabaja
-  //    igual tiene que tener columna si tiene turnos cargados (ver punto 1).
-  //    No se puede derivar de `blocksByBarber`: ese depende de gridStartMin,
-  //    que a su vez sale de las columnas.
+  const dayAppointments = useMemo(
+    () => appointments.filter((a) => a.appointment_date === focusDate && isActive(a)),
+    [appointments, focusDate],
+  );
+  const appointmentById = useMemo(() => {
+    const map = new Map<string, AppointmentRow>();
+    for (const a of dayAppointments) if (a.id) map.set(a.id, a);
+    return map;
+  }, [dayAppointments]);
+
+  // Rango que ocupan los turnos de cada barbero (para el barbero de franco
+  // con turnos cargados, que igual necesita su columna).
   const dayApptSpanByBarber = useMemo(() => {
     const span = new Map<string, { startMin: number; endMin: number }>();
-    for (const appointment of appointments) {
-      if (appointment.appointment_date !== focusDate) continue;
-      if (
-        appointment.status !== "pending" &&
-        appointment.status !== "confirmed"
-      ) {
-        continue;
-      }
+    for (const appointment of dayAppointments) {
       const start = timeToMinutes(appointment.appointment_time.slice(0, 5));
-      const end =
-        start +
-        (appointment.service_duration_minutes || workingHours.intervalMinutes);
+      const end = start + duracionDibujada(appointment, interval);
       const current = span.get(appointment.barber_id);
       span.set(appointment.barber_id, {
         startMin: Math.min(current?.startMin ?? start, start),
@@ -612,20 +673,13 @@ export function AgendaCalendarGridView({
       });
     }
     return span;
-  }, [appointments, focusDate, workingHours.intervalMinutes]);
+  }, [dayAppointments, interval]);
 
-  // 1. Columnas del día: los barberos que trabajan hoy, MÁS los que no
-  //    trabajan pero tienen turnos cargados igual.
-  //
-  //    Ese segundo caso es el turno manual fuera de horario (o el barbero al
-  //    que le movieron un turno a su día franco). Antes la columna se filtraba
-  //    solo por `isWorking`, así que esos turnos EXISTÍAN pero no se dibujaban:
-  //    en Lista aparecían y en Calendario no, que se lee como "se me perdió un
-  //    turno". Al barbero de franco le damos como rango el de sus propios
-  //    turnos, para que la grilla los cubra.
-  const activeBarbersWithSchedule = useMemo(() => {
+  // Columnas del día: los barberos que trabajan hoy MÁS los que no trabajan
+  // pero tienen turnos cargados (si no, esos turnos "se pierden" del calendario).
+  const columns = useMemo<Column[]>(() => {
     return barbers
-      .map((barber) => {
+      .map((barber): Column | null => {
         const schedule = getBarberDaySchedule({
           barberId: barber.id,
           date: focusDate,
@@ -634,9 +688,7 @@ export function AgendaCalendarGridView({
           workingHours,
           focusDate,
         });
-        if (schedule?.isWorking) {
-          return { barber, schedule, isOffDay: false };
-        }
+        if (schedule?.isWorking) return { barber, schedule, isOffDay: false };
         const span = dayApptSpanByBarber.get(barber.id);
         if (!span) return null;
         return {
@@ -645,146 +697,159 @@ export function AgendaCalendarGridView({
             startTime: minutesToTimeLabel(span.startMin),
             endTime: minutesToTimeLabel(span.endMin),
             isWorking: false,
-          } satisfies BarberDaySchedule,
+            pausa: null,
+          },
           isOffDay: true,
         };
       })
-      .filter(
-        (
-          entry,
-        ): entry is {
-          barber: BarberRow;
-          schedule: BarberDaySchedule;
-          isOffDay: boolean;
-        } => entry !== null,
-      );
-  }, [
-    barbers,
-    focusDate,
-    weeklySchedulesByBarber,
-    dayOverridesByBarber,
-    workingHours,
-    dayApptSpanByBarber,
-  ]);
+      .filter((entry): entry is Column => entry !== null);
+  }, [barbers, focusDate, weeklySchedulesByBarber, dayOverridesByBarber, workingHours, dayApptSpanByBarber]);
 
-  // 2. Calcular el rango total de horas a mostrar (min start, max end de
-  //    todos los barberos del día) — así la grilla cubre el día entero.
-  const { gridStartTime, gridEndTime } = useMemo(() => {
-    if (activeBarbersWithSchedule.length === 0) {
-      return {
-        gridStartTime: workingHours.start,
-        gridEndTime: workingHours.end,
-      };
-    }
-    let minStart = Number.POSITIVE_INFINITY;
-    let maxEnd = 0;
-    for (const { schedule } of activeBarbersWithSchedule) {
-      minStart = Math.min(minStart, timeToMinutes(schedule.startTime));
-      maxEnd = Math.max(maxEnd, timeToMinutes(schedule.endTime));
-    }
-    return {
-      gridStartTime: minutesToTimeLabel(minStart),
-      gridEndTime: minutesToTimeLabel(maxEnd),
-    };
-  }, [activeBarbersWithSchedule, workingHours]);
+  // Rango de la regla: jornadas ∪ turnos del día, en horas enteras. Un turno
+  // fuera de horario estira la regla en vez de quedar cortado.
+  const rango = useMemo(() => {
+    return rangoDelDia(
+      columns
+        .filter((c) => !c.isOffDay)
+        .map((c) => ({
+          inicioMin: timeToMinutes(c.schedule.startTime),
+          finMin: timeToMinutes(c.schedule.endTime),
+        })),
+      dayAppointments.map((a) => {
+        const inicioMin = timeToMinutes(a.appointment_time.slice(0, 5));
+        return { inicioMin, finMin: inicioMin + duracionDibujada(a, interval) };
+      }),
+      { inicioMin: timeToMinutes(workingHours.start), finMin: timeToMinutes(workingHours.end) },
+    );
+  }, [columns, dayAppointments, interval, workingHours.start, workingHours.end]);
 
-  // 3. Generar slots de tiempo de toda la grilla
-  const timeSlots = useMemo(
-    () =>
-      generateTimeSlots(
-        gridStartTime,
-        gridEndTime,
-        workingHours.intervalMinutes,
-      ),
-    [gridStartTime, gridEndTime, workingHours.intervalMinutes],
-  );
+  const gridHeight = (rango.finMin - rango.inicioMin) * PX_POR_MIN;
+  const slotHeight = interval * PX_POR_MIN;
+  const timeSlots = useMemo(() => {
+    const slots: string[] = [];
+    for (let t = rango.inicioMin; t < rango.finMin; t += interval) slots.push(minutesToTimeLabel(t));
+    return slots;
+  }, [rango, interval]);
 
-  const gridStartMin = timeToMinutes(gridStartTime);
-  const gridEndMin = timeToMinutes(gridEndTime);
-  const gridHeight = timeSlots.length * SLOT_HEIGHT_PX;
-
-  // 4. Indexar appointments por (barberId, slotDeGrilla) para el chequeo de
-  //    OCUPACIÓN de los droppables (impedir soltar sobre un slot ocupado).
-  //    OJO: la hora de arranque de un turno NO siempre cae en la grilla fija
-  //    de esta vista. El motor de reservas genera horarios según la DURACIÓN
-  //    del servicio (y un "slot de cierre" pegado al fin de jornada), así que
-  //    hay turnos fuera de grilla (ej. 16:20 en una grilla de 30'). Para la
-  //    ocupación encajamos cada turno en la fila que lo CONTIENE (floor al
-  //    slot). Si la hora ya cae justo en la grilla, el floor la deja igual.
-  const appointmentsByBarberAndTime = useMemo(() => {
-    const step = workingHours.intervalMinutes;
-    const map = new Map<string, AppointmentRow>();
-    for (const appointment of appointments) {
-      if (appointment.appointment_date !== focusDate) continue;
-      if (
-        appointment.status !== "pending" &&
-        appointment.status !== "confirmed"
-      ) {
-        continue;
-      }
+  // Ocupación de los slots droppables: cada turno marca la fila que contiene
+  // su inicio (la hora de un turno no siempre cae justo en la grilla).
+  const occupiedSlots = useMemo(() => {
+    const set = new Set<string>();
+    for (const appointment of dayAppointments) {
       const apptMin = timeToMinutes(appointment.appointment_time.slice(0, 5));
       const slotMin =
-        step > 0 && apptMin >= gridStartMin
-          ? gridStartMin + Math.floor((apptMin - gridStartMin) / step) * step
+        apptMin >= rango.inicioMin
+          ? rango.inicioMin + Math.floor((apptMin - rango.inicioMin) / interval) * interval
           : apptMin;
-      const key = `${appointment.barber_id}:${minutesToTimeLabel(slotMin)}`;
-      // Colisión (2 turnos que caen en la misma fila): gana el que arranca
-      // más temprano — así el que está pegado al borde no queda tapado.
-      const existing = map.get(key);
-      if (
-        !existing ||
-        apptMin < timeToMinutes(existing.appointment_time.slice(0, 5))
-      ) {
-        map.set(key, appointment);
-      }
+      set.add(`${appointment.barber_id}:${minutesToTimeLabel(slotMin)}`);
     }
-    return map;
-  }, [
-    appointments,
-    focusDate,
-    gridStartMin,
-    workingHours.intervalMinutes,
-  ]);
+    return set;
+  }, [dayAppointments, rango.inicioMin, interval]);
 
-  // 5. Turnos del día por barbero, con geometría de bloque (top/height/lane).
-  //    Estos son los BLOQUES visibles del timeline (todos los turnos, no
-  //    deduplicados — el lane-packing evita que se tapen si se solapan).
-  const blocksByBarber = useMemo(() => {
+  // Reparto de los bloques por barbero.
+  const layoutByBarber = useMemo(() => {
     const byBarber = new Map<string, AppointmentRow[]>();
-    for (const appointment of appointments) {
-      if (appointment.appointment_date !== focusDate) continue;
-      if (
-        appointment.status !== "pending" &&
-        appointment.status !== "confirmed"
-      ) {
-        continue;
-      }
+    for (const appointment of dayAppointments) {
       const list = byBarber.get(appointment.barber_id) ?? [];
       list.push(appointment);
       byBarber.set(appointment.barber_id, list);
     }
-    const result = new Map<string, BlockGeometry[]>();
+    const result = new Map<string, { bloques: BloqueDibujado[]; grupos: GrupoDibujado[] }>();
     for (const [barberId, list] of byBarber) {
       result.set(
         barberId,
-        packBarberBlocks(list, gridStartMin, workingHours.intervalMinutes),
+        layoutDia(
+          list
+            .filter((a) => a.id)
+            .map((a) => ({
+              id: a.id as string,
+              inicioMin: timeToMinutes(a.appointment_time.slice(0, 5)),
+              duracionMin: duracionDibujada(a, interval),
+              esSobreturno: Boolean(a.is_sobreturno),
+            })),
+          rango.inicioMin,
+        ),
       );
     }
     return result;
-  }, [appointments, focusDate, gridStartMin, workingHours.intervalMinutes]);
+  }, [dayAppointments, interval, rango.inicioMin]);
 
-  // Contador por barbero para la cabecera (total del día + próximo turno).
+  const franjasByBarber = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof franjasNoDisponibles>>();
+    for (const { barber, schedule, isOffDay } of columns) {
+      map.set(
+        barber.id,
+        franjasNoDisponibles(
+          isOffDay
+            ? null
+            : {
+                trabaja: schedule.isWorking,
+                inicioMin: timeToMinutes(schedule.startTime),
+                finMin: timeToMinutes(schedule.endTime),
+                pausa: schedule.pausa
+                  ? {
+                      inicioMin: timeToMinutes(schedule.pausa.startTime),
+                      finMin: timeToMinutes(schedule.pausa.endTime),
+                    }
+                  : null,
+              },
+          (timeBlocksByBarber[barber.id] ?? []).map((b) => ({
+            inicioMin: timeToMinutes(b.start_time.slice(0, 5)),
+            finMin: timeToMinutes(b.end_time.slice(0, 5)),
+            etiqueta: b.reason,
+          })),
+          rango,
+        ),
+      );
+    }
+    return map;
+  }, [columns, timeBlocksByBarber, rango]);
+
+  // Por barbero: huecos libres para mostrar ("Libre · 40 min") y qué parte de
+  // la jornada tiene ocupada. Hoy, lo que ya pasó no cuenta como hueco.
+  const diaByBarber = useMemo(() => {
+    const map = new Map<string, { huecos: Intervalo[]; ocupacion: number | null }>();
+    for (const { barber, schedule, isOffDay } of columns) {
+      const jornada: JornadaParaLayout | null = isOffDay
+        ? null
+        : {
+            trabaja: schedule.isWorking,
+            inicioMin: timeToMinutes(schedule.startTime),
+            finMin: timeToMinutes(schedule.endTime),
+            pausa: schedule.pausa
+              ? {
+                  inicioMin: timeToMinutes(schedule.pausa.startTime),
+                  finMin: timeToMinutes(schedule.pausa.endTime),
+                }
+              : null,
+          };
+      const turnos = dayAppointments
+        .filter((a) => a.barber_id === barber.id)
+        .map((a) => ({
+          inicioMin: timeToMinutes(a.appointment_time.slice(0, 5)),
+          duracionMin: duracionDibujada(a, interval),
+        }));
+      const bloqueos = (timeBlocksByBarber[barber.id] ?? []).map((b) => ({
+        inicioMin: timeToMinutes(b.start_time.slice(0, 5)),
+        finMin: timeToMinutes(b.end_time.slice(0, 5)),
+      }));
+      const desde = isToday ? nowMinutes : -1;
+      const huecos = huecosLibres(jornada, turnos, bloqueos)
+        .map((h) => ({ inicioMin: Math.max(h.inicioMin, desde), finMin: h.finMin }))
+        .filter((h) => h.finMin - h.inicioMin >= MIN_HUECO_VISIBLE);
+      map.set(barber.id, { huecos, ocupacion: ocupacionDelDia(jornada, turnos, bloqueos) });
+    }
+    return map;
+  }, [columns, dayAppointments, interval, timeBlocksByBarber, isToday, nowMinutes]);
+
   const statsByBarber = useMemo(() => {
-    const stats = new Map<
-      string,
-      { total: number; nextTime: string | null }
-    >();
-    for (const { barber } of activeBarbersWithSchedule) {
-      const list = blocksByBarber.get(barber.id) ?? [];
+    const stats = new Map<string, { total: number; nextTime: string | null }>();
+    for (const { barber } of columns) {
+      const list = dayAppointments.filter((a) => a.barber_id === barber.id);
       let nextTime: string | null = null;
       if (isToday) {
         const upcoming = list
-          .map((b) => timeToMinutes(b.appointment.appointment_time.slice(0, 5)))
+          .map((a) => timeToMinutes(a.appointment_time.slice(0, 5)))
           .filter((m) => m >= nowMinutes)
           .sort((a, b) => a - b);
         if (upcoming.length > 0) nextTime = minutesToTimeLabel(upcoming[0]);
@@ -792,49 +857,119 @@ export function AgendaCalendarGridView({
       stats.set(barber.id, { total: list.length, nextTime });
     }
     return stats;
-  }, [activeBarbersWithSchedule, blocksByBarber, isToday, nowMinutes]);
+  }, [columns, dayAppointments, isToday, nowMinutes]);
 
-  function isSlotInBarberWorkingHours(
-    barberSchedule: BarberDaySchedule,
-    time: string,
-  ): boolean {
-    const slotMin = timeToMinutes(time);
-    const start = timeToMinutes(barberSchedule.startTime);
-    const end = timeToMinutes(barberSchedule.endTime);
-    return slotMin >= start && slotMin < end;
+  // ── Celular: un barbero por pantalla ──────────────────────────────────────
+  const storageKey = `tijerapp:agenda:barbero:${barbershopSlug}`;
+  const [selectedBarberId, setSelectedBarberId] = useState<string | null>(() => {
+    try {
+      return typeof window === "undefined" ? null : window.sessionStorage.getItem(storageKey);
+    } catch {
+      return null;
+    }
+  });
+  const [slideDirection, setSlideDirection] = useState(0);
+
+  // Si el guardado no está entre las columnas del día, se elige el que tiene
+  // el próximo turno; si no, el primero con turnos; si no, el primero.
+  const effectiveSelectedId = useMemo(() => {
+    if (selectedBarberId && columns.some((c) => c.barber.id === selectedBarberId)) {
+      return selectedBarberId;
+    }
+    const conProximo = columns
+      .map((c) => ({ id: c.barber.id, next: statsByBarber.get(c.barber.id)?.nextTime }))
+      .filter((c) => c.next)
+      .sort((a, b) => (a.next as string).localeCompare(b.next as string))[0];
+    if (conProximo) return conProximo.id;
+    const conTurnos = columns.find((c) => (statsByBarber.get(c.barber.id)?.total ?? 0) > 0);
+    return conTurnos?.barber.id ?? columns[0]?.barber.id ?? null;
+  }, [selectedBarberId, columns, statsByBarber]);
+
+  const selectBarber = useCallback(
+    (barberId: string) => {
+      const from = columns.findIndex((c) => c.barber.id === effectiveSelectedId);
+      const to = columns.findIndex((c) => c.barber.id === barberId);
+      setSlideDirection(to > from ? 1 : -1);
+      setSelectedBarberId(barberId);
+      setSlotMenu(null);
+      try {
+        window.sessionStorage.setItem(storageKey, barberId);
+      } catch {
+        /* sin storage (modo privado): no se recuerda, no pasa nada */
+      }
+    },
+    [columns, effectiveSelectedId, storageKey],
+  );
+
+  const visibleColumns = isMobile
+    ? columns.filter((c) => c.barber.id === effectiveSelectedId)
+    : columns;
+
+  // Deslizar de costado sobre el calendario cambia de barbero. Solo si el gesto
+  // es claramente horizontal y no hay un arrastre de turno en curso.
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  function handleTouchStart(event: React.TouchEvent) {
+    if (!isMobile || columns.length < 2) return;
+    const t = event.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+  }
+  function handleTouchEnd(event: React.TouchEvent) {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start || activeAppointment || justDraggedRef.current) return;
+    const t = event.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const index = columns.findIndex((c) => c.barber.id === effectiveSelectedId);
+    const next = columns[index + (dx < 0 ? 1 : -1)];
+    if (next) selectBarber(next.barber.id);
+  }
+
+  // Al abrir HOY, la página baja hasta la línea de "ahora" (una vez por día).
+  const nowLineRef = useRef<HTMLDivElement>(null);
+  const scrolledForDateRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isToday || scrolledForDateRef.current === focusDate) return;
+    scrolledForDateRef.current = focusDate;
+    const frame = requestAnimationFrame(() => {
+      nowLineRef.current?.scrollIntoView({
+        block: "center",
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isToday, focusDate, reduceMotion]);
+
+  function handleOpen(appointmentId: string | undefined) {
+    if (!appointmentId || justDraggedRef.current) return;
+    onOpenAppointment(appointmentId);
   }
 
   function handleDragStart(event: DragStartEvent) {
-    const data = event.active.data.current as
-      | { appointment?: AppointmentRow }
-      | undefined;
+    const data = event.active.data.current as { appointment?: AppointmentRow } | undefined;
     if (data?.appointment) {
       setActiveAppointment(data.appointment);
-      // Haptic feedback en mobile: vibración corta de 30ms al activar
-      // el drag. Confirma sin texto que "agarraste" el card. Algunos
-      // browsers/devices no soportan Vibration API → ignoramos silently.
-      if (
-        typeof navigator !== "undefined" &&
-        "vibrate" in navigator &&
-        typeof navigator.vibrate === "function"
-      ) {
-        try {
-          navigator.vibrate(30);
-        } catch {
-          /* noop */
-        }
+      setSlotMenu(null);
+      // Vibración corta al "agarrar" el turno (si el dispositivo la soporta).
+      try {
+        navigator.vibrate?.(30);
+      } catch {
+        /* noop */
       }
     }
   }
 
   async function handleDragEnd(event: DragEndEvent) {
     setActiveAppointment(null);
+    justDraggedRef.current = true;
+    setTimeout(() => {
+      justDraggedRef.current = false;
+    }, 300);
     const { active, over } = event;
     if (!over) return;
 
-    const data = active.data.current as
-      | { appointment?: AppointmentRow }
-      | undefined;
+    const data = active.data.current as { appointment?: AppointmentRow } | undefined;
     if (!data?.appointment) return;
     const appointment = data.appointment;
 
@@ -842,59 +977,43 @@ export function AgendaCalendarGridView({
     if (!dropTarget) return;
 
     const currentTime = appointment.appointment_time.slice(0, 5);
-    const noChange =
-      dropTarget.barberId === appointment.barber_id &&
-      dropTarget.time === currentTime;
-    if (noChange) return;
+    if (dropTarget.barberId === appointment.barber_id && dropTarget.time === currentTime) return;
 
-    // ─── OPTIMISTIC UPDATE ─────────────────────────────────────────────
-    // Movemos el card al lugar nuevo INMEDIATAMENTE en el state local,
-    // mientras el endpoint corre en background. Si falla, revertimos.
-    // Antes esperábamos la respuesta (~200-500ms) y el card se quedaba
-    // en su posición vieja, dando sensación de lag.
+    // Optimistic update: el turno se mueve ya; si el servidor falla, vuelve.
     if (!appointment.id) return;
     const apptId = appointment.id;
     const targetBarber = barbers.find((b) => b.id === dropTarget.barberId);
-    const optimisticAppointment = {
+    const revert = () =>
+      onMoveComplete({
+        id: apptId,
+        appointment_date: appointment.appointment_date,
+        appointment_time: appointment.appointment_time,
+        barber_id: appointment.barber_id,
+        barber_name: appointment.barber_name,
+      });
+    onMoveComplete({
       id: apptId,
       appointment_date: appointment.appointment_date,
       appointment_time: `${dropTarget.time}:00`,
       barber_id: dropTarget.barberId,
-      barber_name:
-        targetBarber?.display_name?.trim() ||
-        targetBarber?.name ||
-        appointment.barber_name,
-    };
-    onMoveComplete(optimisticAppointment);
+      barber_name: (targetBarber && barberDisplayName(targetBarber)) || appointment.barber_name,
+    });
 
-    // Bounce inmediato en la nueva posición (sin esperar al server)
     setRecentlyDroppedId(apptId);
-    setTimeout(() => {
-      setRecentlyDroppedId((current) => (current === apptId ? null : current));
-    }, 700);
+    setTimeout(() => setRecentlyDroppedId((current) => (current === apptId ? null : current)), 700);
 
     try {
       const { data: sessionData } = await getCurrentSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
-        // Revertir el optimistic update
-        onMoveComplete({
-          id: apptId,
-          appointment_date: appointment.appointment_date,
-          appointment_time: appointment.appointment_time,
-          barber_id: appointment.barber_id,
-          barber_name: appointment.barber_name,
-        });
+        revert();
         toast.error("Tu sesión expiró, volvé a iniciar sesión.");
         return;
       }
 
       const res = await fetch("/api/admin/appointments/move", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({
           appointmentId: appointment.id,
           barbershopSlug,
@@ -904,18 +1023,9 @@ export function AgendaCalendarGridView({
       });
 
       if (!res.ok) {
-        // Revertir el optimistic update al fallar el server
-        onMoveComplete({
-          id: apptId,
-          appointment_date: appointment.appointment_date,
-          appointment_time: appointment.appointment_time,
-          barber_id: appointment.barber_id,
-          barber_name: appointment.barber_name,
-        });
+        revert();
         const err = (await res.json().catch(() => ({}))) as { error?: string };
-        toast.error("No pudimos mover el turno", {
-          description: err.error ?? `HTTP ${res.status}`,
-        });
+        toast.error("No pudimos mover el turno", { description: err.error ?? `HTTP ${res.status}` });
         return;
       }
 
@@ -930,35 +1040,17 @@ export function AgendaCalendarGridView({
           barber_name: string;
         };
       };
-      if (result.changed === false) return;
-      if (!result.appointment) return;
+      if (result.changed === false || !result.appointment) return;
 
-      toast.success("Turno movido", {
-        description: `${appointment.customer_name} → ${dropTarget.time}`,
-      });
-      // Confirmar con datos del server (puede diff con el optimistic ej.
-      // por updated_at o canonicalización de hora).
+      toast.success("Turno movido", { description: `${appointment.customer_name} → ${dropTarget.time}` });
       onMoveComplete(result.appointment);
-
-      // Haptic feedback de éxito: pattern corto-medio para confirmar drop
-      // exitoso (distinto del start). Solo en devices que soporten.
-      if (
-        typeof navigator !== "undefined" &&
-        "vibrate" in navigator &&
-        typeof navigator.vibrate === "function"
-      ) {
-        try {
-          navigator.vibrate([20, 40, 20]);
-        } catch {
-          /* noop */
-        }
+      try {
+        navigator.vibrate?.([20, 40, 20]);
+      } catch {
+        /* noop */
       }
 
-      // (Bounce ya se disparó al optimistic update, no se repite acá)
-
-      // Abrir el modal para notificar al cliente del cambio.
-      // El email automático se dispara solo al montar el modal; el botón
-      // de WhatsApp queda disponible para que el admin pueda mandar también.
+      // Aviso al cliente: el email sale al montar el diálogo; WhatsApp queda a mano.
       setNotifyContext({
         appointmentId: appointment.id ?? "",
         customerName: appointment.customer_name,
@@ -973,71 +1065,257 @@ export function AgendaCalendarGridView({
       });
     } catch (err) {
       console.warn("[agenda] move failed:", err);
-      toast.error("Error moviendo el turno", {
-        description: err instanceof Error ? err.message : "Error desconocido",
+      revert();
+      toast.error("No pudimos mover el turno", {
+        description: err instanceof Error ? err.message : "Probá de nuevo en un momento.",
       });
     }
   }
 
-  if (activeBarbersWithSchedule.length === 0) {
+  const closeSlotMenu = useCallback(() => setSlotMenu(null), []);
+  const encimadosDe = (barberId: string) =>
+    (layoutByBarber.get(barberId)?.bloques ?? []).filter((b) => b.encimado).length;
+
+  if (columns.length === 0) {
     return (
-      <div className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-8 text-center">
-        <Clock
-          aria-hidden="true"
-          className="mx-auto size-8 text-[color:var(--text-muted)]"
-        />
-        <p className="mt-3 text-sm font-semibold text-white">
-          Sin barberos trabajando este día
-        </p>
-        <p className="mt-1 text-xs text-[color:var(--text-secondary)]">
-          No hay agenda para mostrar en formato calendario.
+      <div className="rounded-[var(--radius-lg)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-8 text-center">
+        <Clock aria-hidden="true" className="mx-auto size-8 text-[color:var(--text-muted)]" />
+        <p className="mt-3 text-sm font-semibold text-white">Ningún barbero trabaja este día</p>
+        <p className="mt-1 text-sm text-[color:var(--text-secondary)]">
+          Si hay una excepción de horario, cargala desde Barberos.
         </p>
       </div>
     );
   }
 
-  // Posición vertical de la línea "ahora" (solo hoy y dentro del rango).
-  const showNowLine =
-    isToday && nowMinutes >= gridStartMin && nowMinutes <= gridEndMin;
-  const nowTop =
-    ((nowMinutes - gridStartMin) / workingHours.intervalMinutes) *
-    SLOT_HEIGHT_PX;
+  const showNowLine = isToday && nowMinutes >= rango.inicioMin && nowMinutes <= rango.finMin;
+  const nowTop = (nowMinutes - rango.inicioMin) * PX_POR_MIN;
 
-  // Marcas de la regla izquierda alineadas al INICIO de cada turno. Como los
-  // turnos caen según la duración del servicio (ej. cada 40' → 15:40, 16:20…),
-  // no coinciden con las horas enteras: sin esto un turno de 17:40 "pisa" la
-  // marca de las 18:00 y no se lee a qué hora es. Cada marca se ubica en el
-  // borde superior de su bloque (mismo `top`), así la hora queda pegada al turno.
+  // Regla: la hora de inicio de cada turno visible, alineada a su bloque, más
+  // las horas enteras que no queden pegadas a una de esas marcas.
   const blockStartTicks: { min: number; top: number; label: string }[] = [];
   const seenTickMin = new Set<number>();
-  for (const list of blocksByBarber.values()) {
-    for (const geo of list) {
-      const startMin = timeToMinutes(
-        geo.appointment.appointment_time.slice(0, 5),
-      );
+  for (const { barber } of visibleColumns) {
+    for (const bloque of layoutByBarber.get(barber.id)?.bloques ?? []) {
+      if (bloque.oculto) continue;
+      const appt = appointmentById.get(bloque.id);
+      if (!appt) continue;
+      const startMin = timeToMinutes(appt.appointment_time.slice(0, 5));
       if (seenTickMin.has(startMin)) continue;
       seenTickMin.add(startMin);
-      blockStartTicks.push({
-        min: startMin,
-        top: geo.top,
-        label: minutesToTimeLabel(startMin),
-      });
+      blockStartTicks.push({ min: startMin, top: bloque.topPx, label: minutesToTimeLabel(startMin) });
     }
   }
   blockStartTicks.sort((a, b) => a.min - b.min);
-
-  // Horas completas de referencia, pero omitimos las que quedan pegadas a una
-  // marca de turno (±18px) para no duplicar/encimar etiquetas.
   const hourLabels: { min: number; top: number; label: string }[] = [];
-  for (let m = Math.ceil(gridStartMin / 60) * 60; m <= gridEndMin; m += 60) {
-    const top =
-      ((m - gridStartMin) / workingHours.intervalMinutes) * SLOT_HEIGHT_PX;
+  for (let m = rango.inicioMin; m <= rango.finMin; m += 60) {
+    const top = (m - rango.inicioMin) * PX_POR_MIN;
     if (blockStartTicks.some((t) => Math.abs(t.top - top) < 18)) continue;
     hourLabels.push({ min: m, top, label: minutesToTimeLabel(m) });
   }
 
-  const columnsMinWidth =
-    RULER_WIDTH_PX + activeBarbersWithSchedule.length * MIN_COL_WIDTH_PX;
+  const selectedColumn = columns.find((c) => c.barber.id === effectiveSelectedId);
+  const selectedStats = selectedColumn ? statsByBarber.get(selectedColumn.barber.id) : undefined;
+  const columnsMinWidth = isMobile ? undefined : RULER_WIDTH_PX + columns.length * MIN_COL_WIDTH_PX;
+  const groupAppointments = openGroup
+    ? openGroup.ids.map((id) => appointmentById.get(id)).filter((a): a is AppointmentRow => Boolean(a))
+    : [];
+
+  const body = (
+    <div className="flex">
+      {/* Regla de horas */}
+      <div
+        className="sticky left-0 z-20 shrink-0 border-r border-[color:var(--border-subtle)] bg-[color:var(--surface-1)]"
+        style={{ width: RULER_WIDTH_PX, height: gridHeight }}
+      >
+        <div className="relative h-full">
+          {hourLabels.map((h) => (
+            <span
+              key={`hour-${h.min}`}
+              className="absolute right-2 -translate-y-1/2 font-mono text-xs text-[color:var(--text-muted)]"
+              style={{ top: Math.min(Math.max(h.top, 8), gridHeight - 8) }}
+            >
+              {h.label}
+            </span>
+          ))}
+          {blockStartTicks.map((t) => (
+            <span
+              key={`tick-${t.min}`}
+              className="absolute right-2 -translate-y-1/2 font-mono text-xs font-semibold text-[color:var(--brand-gold)]"
+              style={{ top: Math.max(t.top, 8) }}
+            >
+              {t.label}
+            </span>
+          ))}
+          {showNowLine ? (
+            <span
+              className="absolute right-1 z-10 -translate-y-1/2 rounded-[var(--radius-xs)] bg-[color:var(--brand-gold)] px-1 font-mono text-xs font-bold text-black"
+              style={{ top: nowTop }}
+            >
+              {minutesToTimeLabel(nowMinutes)}
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Columnas de barberos */}
+      {visibleColumns.map(({ barber, schedule }) => {
+        const layout = layoutByBarber.get(barber.id) ?? { bloques: [], grupos: [] };
+        const franjas = franjasByBarber.get(barber.id) ?? [];
+        // Etiquetas "Libre · N min": arriba de cada hueco, solo si se puede cargar.
+        const huecos = isDayLocked
+          ? []
+          : (diaByBarber.get(barber.id)?.huecos ?? []).map((h) => ({
+              ...h,
+              topPx: (h.inicioMin - rango.inicioMin) * PX_POR_MIN + 4,
+            }));
+        const scheduleStart = timeToMinutes(schedule.startTime);
+        const scheduleEnd = timeToMinutes(schedule.endTime);
+        return (
+          <div
+            key={`col-${barber.id}`}
+            className="relative flex-1 border-r border-[color:var(--border-subtle)] last:border-r-0"
+            style={{ minWidth: isMobile ? undefined : MIN_COL_WIDTH_PX, height: gridHeight }}
+          >
+            {franjas.map((franja) => (
+              <UnavailableBand
+                key={`band-${franja.tipo}-${franja.inicioMin}`}
+                franja={franja}
+                topPx={(franja.inicioMin - rango.inicioMin) * PX_POR_MIN}
+                altoPx={(franja.finMin - franja.inicioMin) * PX_POR_MIN}
+              />
+            ))}
+
+            {timeSlots.map((time, i) => {
+              const slotMin = timeToMinutes(time);
+              return (
+                <DroppableSlot
+                  key={`slot-${barber.id}-${time}`}
+                  barberId={barber.id}
+                  time={time}
+                  top={i * slotHeight}
+                  height={slotHeight}
+                  isHourStart={time.endsWith(":00")}
+                  isInWorkingHours={slotMin >= scheduleStart && slotMin < scheduleEnd}
+                  isOccupied={occupiedSlots.has(`${barber.id}:${time}`)}
+                  isCovered={
+                    layout.bloques.some(
+                      (b) => b.topPx < (i + 1) * slotHeight && i * slotHeight < b.topPx + b.altoPx,
+                    ) ||
+                    franjas.some(
+                      (f) =>
+                        f.tipo !== "fuera-de-horario" &&
+                        f.inicioMin < slotMin + interval &&
+                        slotMin < f.finMin,
+                    ) ||
+                    // Donde está la etiqueta "Libre": la etiqueta ya es el botón.
+                    huecos.some(
+                      (h) => h.topPx < (i + 1) * slotHeight && i * slotHeight < h.topPx + ALTO_HUECO_PX,
+                    )
+                  }
+                  isDayLocked={isDayLocked}
+                  isDragActive={Boolean(activeAppointment)}
+                  onPick={(barberId, t, top) => setSlotMenu({ barberId, time: t, top })}
+                />
+              );
+            })}
+
+            {!activeAppointment
+              ? huecos.map((h) => {
+                  const minutos = h.finMin - h.inicioMin;
+                  const hora = minutesToTimeLabel(h.inicioMin);
+                  return (
+                    <button
+                      key={`hueco-${h.inicioMin}`}
+                      type="button"
+                      onClick={() => setSlotMenu({ barberId: barber.id, time: hora, top: h.topPx })}
+                      aria-label={`Libre ${minutos} minutos desde las ${hora}. Cargar un turno`}
+                      className="absolute left-1.5 right-1.5 z-[3] flex items-center justify-between gap-2 rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-strong)] px-2.5 text-xs text-[color:var(--text-muted)] transition-colors hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold-hi)]"
+                      style={{ top: h.topPx, height: Math.min(ALTO_HUECO_PX, minutos * PX_POR_MIN - 8) }}
+                    >
+                      <span className="truncate">
+                        Libre · <span className="font-semibold tabular-nums">{formatoMinutos(minutos)}</span>
+                      </span>
+                      <Plus aria-hidden="true" className="size-4 shrink-0" />
+                    </button>
+                  );
+                })
+              : null}
+
+            {showNowLine ? (
+              <div
+                ref={visibleColumns[0]?.barber.id === barber.id ? nowLineRef : undefined}
+                // Debajo de los turnos (z 10): cruzaba el texto del que está en
+                // curso, que igual se marca con su barrita de progreso.
+                className="pointer-events-none absolute inset-x-0 z-[4] flex items-center"
+                style={{ top: nowTop }}
+              >
+                <span className="size-2 -translate-x-1/2 rounded-full bg-[color:var(--brand-gold)]" />
+                <span className="h-px flex-1 bg-[color:var(--brand-gold)]" />
+              </div>
+            ) : null}
+
+            {layout.bloques
+              .filter((bloque) => !bloque.oculto)
+              .map((bloque) => {
+                const appointment = appointmentById.get(bloque.id);
+                if (!appointment) return null;
+                const startMin = timeToMinutes(appointment.appointment_time.slice(0, 5));
+                const duration = duracionDibujada(appointment, interval);
+                return (
+                  <DraggableAppointmentBlock
+                    key={`block-${bloque.id}`}
+                    appointment={appointment}
+                    bloque={bloque}
+                    durationMinutes={duration}
+                    isLocked={isDayLocked}
+                    isInProgress={isToday && nowMinutes >= startMin && nowMinutes < startMin + duration}
+                    isPast={isToday && nowMinutes >= startMin + duration}
+                    progress={
+                      isToday && nowMinutes >= startMin && nowMinutes < startMin + duration
+                        ? (nowMinutes - startMin) / duration
+                        : null
+                    }
+                    wasRecentlyDropped={recentlyDroppedId === bloque.id}
+                    onOpen={() => handleOpen(appointment.id)}
+                  />
+                );
+              })}
+
+            {/* "+N": turnos de un grupo que no entran en dos carriles. */}
+            {layout.grupos
+              .filter((grupo) => grupo.ocultos.length > 0)
+              .map((grupo) => (
+                <button
+                  key={`more-${grupo.id}`}
+                  type="button"
+                  onClick={() => setOpenGroup({ barberId: barber.id, ids: grupo.ids })}
+                  aria-label={`${grupo.ocultos.length} turnos más a esta hora. Ver todos`}
+                  className="absolute right-1 z-30 inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--radius-md)] border border-[color:var(--brand-gold)] bg-[color:var(--surface-1)] px-2 text-sm font-bold text-[color:var(--brand-gold-hi)] shadow-elevated"
+                  // Abajo a la derecha del grupo: es donde menos texto tapa
+                  // (los carriles de la derecha suelen terminar antes).
+                  style={{ top: Math.max(grupo.topPx, grupo.topPx + grupo.altoPx - 46) }}
+                >
+                  +{grupo.ocultos.length} más
+                </button>
+              ))}
+
+            {slotMenu && slotMenu.barberId === barber.id ? (
+              <SlotMenu
+                time={slotMenu.time}
+                top={slotMenu.top}
+                onClose={closeSlotMenu}
+                onChoose={(mode) => {
+                  onCreateAt({ barberId: slotMenu.barberId, time: slotMenu.time, mode });
+                  setSlotMenu(null);
+                }}
+              />
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <DndContext
@@ -1047,222 +1325,115 @@ export function AgendaCalendarGridView({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      {/* Hint slim (pill) — reemplaza el recuadro grande anterior */}
       {isDayLocked ? (
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[color:var(--text-muted)]/30 bg-[color:var(--surface-1)] px-3 py-1.5">
-          <CalendarX
-            aria-hidden="true"
-            className="size-3.5 shrink-0 text-[color:var(--text-muted)]"
-          />
-          <span className="text-[11px] font-semibold text-[color:var(--text-secondary)]">
-            {isReadOnly
-              ? READ_ONLY_REASON
-              : "Agenda histórica — los turnos de días pasados no se pueden mover."}
-          </span>
-        </div>
+        <p className="mb-3 inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 py-1.5 text-xs text-[color:var(--text-secondary)]">
+          <CalendarX aria-hidden="true" className="size-3.5 shrink-0 text-[color:var(--text-muted)]" />
+          {isReadOnly ? READ_ONLY_REASON : "Día pasado: se puede consultar, no mover."}
+        </p>
       ) : (
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[color:var(--brand-gold)]/25 bg-[color:var(--brand-gold-soft)]/50 px-3 py-1.5">
-          <GripVertical
-            aria-hidden="true"
-            className="size-3.5 shrink-0 text-[color:var(--brand-gold)]"
-          />
-          <span className="text-[11px] font-semibold text-[color:var(--text-secondary)]">
-            <span className="hidden sm:inline">
-              Arrastrá un turno para cambiar hora o barbero.
-            </span>
-            <span className="inline sm:hidden">
-              Mantené apretado un turno y arrastralo para moverlo.
-            </span>
+        <p className="mb-2 text-xs text-[color:var(--text-muted)]">
+          <span className="hidden sm:inline">
+            Tocá un turno para ver el detalle, un horario libre para cargar uno y arrastrá para mover.
           </span>
-        </div>
+          <span className="sm:hidden">
+            Tocá un turno o un horario libre. Mantené apretado un turno para moverlo.
+          </span>
+        </p>
       )}
 
-      {/* ── El calendario scrollea SOLO de costado ─────────────────────────
-          `overflow-x-auto` solo no alcanza: CSS no permite `visible` en un eje
-          cuando el otro es `auto`, así que el vertical quedaba en `auto` sin
-          que nadie lo pidiera. Con los 12px que sobraban por el borde, esto
-          era un scroller vertical de 12px puesto encima de toda la grilla: el
-          dedo bajaba, se comía esos 12px, y la página no se movía. En el
-          celular se sentía como que la agenda se traba y no deja bajar.
+      <AgendaLegend />
 
-          `overflow-y-hidden` lo deja como lo que tiene que ser —una tira
-          horizontal— y los gestos verticales pasan de largo a la página.
-          `overscroll-x-contain` evita que el rebote al llegar al final del
-          costado dispare el "volver atrás" de Safari. */}
-      <div className="overflow-x-auto overflow-y-hidden overscroll-x-contain rounded-[var(--radius-lg)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] shadow-card">
+
+      <div
+        className={cn(
+          "rounded-[var(--radius-lg)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)]",
+          // Escritorio: scroll de costado si hay muchos barberos (solo eje x:
+          // con el vertical en auto se armaba un scroller de 12 px que se comía
+          // el gesto de bajar la página). Celular: una columna, sin scroll lateral.
+          isMobile ? "overflow-hidden" : "overflow-x-auto overflow-y-hidden overscroll-x-contain",
+        )}
+      >
         <div style={{ minWidth: columnsMinWidth }}>
-          {/* ── Cabecera sticky (arriba): esquina + barberos ── */}
-          <div className="sticky top-0 z-30 flex border-b border-[color:var(--border-default)] bg-[color:var(--surface-2)]/95 backdrop-blur-sm">
-            <div
-              className="sticky left-0 z-10 shrink-0 border-r border-[color:var(--border-subtle)] bg-[color:var(--surface-2)]/95 px-2 py-2.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-subtle)]"
-              style={{ width: RULER_WIDTH_PX }}
-            >
-              Hora
+          {isMobile ? (
+            <div className="sticky top-0 z-30 border-b border-[color:var(--border-default)] bg-[color:var(--surface-2)]">
+              {columns.length > 1 ? (
+                <AgendaBarberSwitcher
+                  barbers={columns.map((c) => ({
+                    id: c.barber.id,
+                    name: barberDisplayName(c.barber),
+                    count: statsByBarber.get(c.barber.id)?.total ?? 0,
+                    offDay: c.isOffDay,
+                  }))}
+                  selectedId={effectiveSelectedId ?? ""}
+                  onSelect={selectBarber}
+                />
+              ) : null}
+              {selectedColumn ? (
+                <p className="px-3 pb-2 pt-1 text-xs text-[color:var(--text-muted)]">
+                  {columns.length === 1 ? (
+                    <span className="font-semibold text-white">{barberDisplayName(selectedColumn.barber)} · </span>
+                  ) : null}
+                  {selectedColumn.isOffDay
+                    ? "Franco, con turnos cargados"
+                    : `${selectedColumn.schedule.startTime.slice(0, 5)}–${selectedColumn.schedule.endTime.slice(0, 5)}`}
+                  {selectedStats?.nextTime ? ` · próximo ${selectedStats.nextTime}` : ""}
+                  <EncimadosCount count={encimadosDe(selectedColumn.barber.id)} />
+                </p>
+              ) : null}
+              {selectedColumn ? (
+                <div className="px-3 pb-2.5">
+                  <OccupancyBar percent={diaByBarber.get(selectedColumn.barber.id)?.ocupacion ?? null} />
+                </div>
+              ) : null}
             </div>
-            {activeBarbersWithSchedule.map(({ barber, schedule, isOffDay }) => {
-              const stats = statsByBarber.get(barber.id);
-              const name = barber.display_name?.trim() || barber.name;
-              return (
-                <div
-                  key={`header-${barber.id}`}
-                  className="flex flex-1 items-center gap-2 border-r border-[color:var(--border-subtle)] px-2.5 py-2 last:border-r-0"
-                  style={{ minWidth: MIN_COL_WIDTH_PX }}
-                >
-                  <span
-                    aria-hidden="true"
-                    className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-default)] bg-[color:var(--surface-3)] text-[11px] font-black uppercase tracking-tight text-[color:var(--text-secondary)]"
+          ) : (
+            <div className="sticky top-0 z-30 flex border-b border-[color:var(--border-default)] bg-[color:var(--surface-2)]">
+              <div
+                className="sticky left-0 z-10 shrink-0 border-r border-[color:var(--border-subtle)] bg-[color:var(--surface-2)]"
+                style={{ width: RULER_WIDTH_PX }}
+              />
+              {columns.map(({ barber, schedule, isOffDay }) => {
+                const stats = statsByBarber.get(barber.id);
+                return (
+                  <div
+                    key={`header-${barber.id}`}
+                    className="flex-1 border-r border-[color:var(--border-subtle)] px-3 py-2 last:border-r-0"
+                    style={{ minWidth: MIN_COL_WIDTH_PX }}
                   >
-                    {initialsOf(name)}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[12px] font-bold leading-tight text-white">
-                      {name}
-                    </p>
-                    <p className="mt-0.5 flex items-center gap-1.5 text-[9px] leading-tight text-[color:var(--text-muted)]">
+                    <p className="truncate text-sm font-semibold text-white">{barberDisplayName(barber)}</p>
+                    <p className="mt-0.5 truncate text-xs text-[color:var(--text-muted)]">
                       <span className="font-semibold text-[color:var(--brand-gold)]">
                         {stats?.total ?? 0} turno{(stats?.total ?? 0) === 1 ? "" : "s"}
                       </span>
-                      {/* Sin esto, el barbero de franco con turnos parece uno
-                          más del día y su rango se lee como horario laboral. */}
-                      {isOffDay ? (
-                        <span className="font-semibold uppercase tracking-wide text-[color:var(--text-subtle)]">
-                          · franco
-                        </span>
-                      ) : null}
-                      {stats?.nextTime ? (
-                        <span className="font-mono">· próx {stats.nextTime}</span>
-                      ) : (
-                        <span className="font-mono">
-                          {schedule.startTime.slice(0, 5)}–{schedule.endTime.slice(0, 5)}
-                        </span>
-                      )}
+                      <EncimadosCount count={encimadosDe(barber.id)} />
+                      {isOffDay ? " · franco" : ""}
+                      {stats?.nextTime
+                        ? ` · próximo ${stats.nextTime}`
+                        : isOffDay
+                          ? ""
+                          : ` · ${schedule.startTime.slice(0, 5)}–${schedule.endTime.slice(0, 5)}`}
                     </p>
+                    <OccupancyBar percent={diaByBarber.get(barber.id)?.ocupacion ?? null} />
                   </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* ── Cuerpo: regla de horas (sticky izq) + columnas de barberos ── */}
-          <div className="flex">
-            {/* Regla de horas */}
-            <div
-              className="sticky left-0 z-20 shrink-0 border-r border-[color:var(--border-subtle)] bg-[color:var(--surface-1)]"
-              style={{ width: RULER_WIDTH_PX, height: gridHeight }}
-            >
-              <div className="relative h-full">
-                {/* Horas enteras: referencia tenue */}
-                {hourLabels.map((h) => (
-                  <div
-                    key={`hour-${h.min}`}
-                    className="absolute right-2 -translate-y-1/2"
-                    style={{ top: h.top }}
-                  >
-                    <span className="font-mono text-[11px] text-[color:var(--text-muted)]">
-                      {h.label}
-                    </span>
-                  </div>
-                ))}
-                {/* Hora exacta de cada turno, alineada a su bloque */}
-                {blockStartTicks.map((t) => (
-                  <div
-                    key={`tick-${t.min}`}
-                    className="absolute right-1.5 flex -translate-y-1/2 items-center gap-1"
-                    style={{ top: t.top }}
-                  >
-                    <span className="font-mono text-[11px] font-bold text-[color:var(--brand-gold)]">
-                      {t.label}
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      className="h-1.5 w-1.5 rounded-full bg-[color:var(--brand-gold)]"
-                    />
-                  </div>
-                ))}
-                {showNowLine && (
-                  <div
-                    className="absolute right-1 -translate-y-1/2"
-                    style={{ top: nowTop }}
-                  >
-                    <span className="rounded-sm bg-gold-grad px-1 py-0.5 font-mono text-[9px] font-black text-black">
-                      {minutesToTimeLabel(nowMinutes)}
-                    </span>
-                  </div>
-                )}
-              </div>
+                );
+              })}
             </div>
+          )}
 
-            {/* Columnas de barberos */}
-            {activeBarbersWithSchedule.map(({ barber, schedule }) => {
-              const blocks = blocksByBarber.get(barber.id) ?? [];
-              return (
-                <div
-                  key={`col-${barber.id}`}
-                  className="relative flex-1 border-r border-[color:var(--border-subtle)] last:border-r-0"
-                  style={{ minWidth: MIN_COL_WIDTH_PX, height: gridHeight }}
-                >
-                  {/* Capa de fondo: slots droppables */}
-                  {timeSlots.map((time, i) => {
-                    const inWorking = isSlotInBarberWorkingHours(schedule, time);
-                    const occupied = appointmentsByBarberAndTime.has(
-                      `${barber.id}:${time}`,
-                    );
-                    return (
-                      <DroppableSlot
-                        key={`slot-${barber.id}-${time}`}
-                        barberId={barber.id}
-                        time={time}
-                        top={i * SLOT_HEIGHT_PX}
-                        isHourStart={time.endsWith(":00")}
-                        isInWorkingHours={inWorking}
-                        isOccupied={occupied}
-                        isDayLocked={isDayLocked}
-                        isDragActive={Boolean(activeAppointment)}
-                      />
-                    );
-                  })}
-
-                  {/* Línea "ahora" (solo hoy) */}
-                  {showNowLine && (
-                    <div
-                      className="pointer-events-none absolute inset-x-0 z-[15] flex items-center"
-                      style={{ top: nowTop }}
-                    >
-                      <span className="size-1.5 -translate-x-1/2 rounded-full bg-[color:var(--brand-gold)] shadow-[0_0_8px_2px_rgba(201,162,62,0.6)]" />
-                      <span className="h-px flex-1 bg-[color:var(--brand-gold)]/70" />
-                    </div>
-                  )}
-
-                  {/* Bloques de turnos */}
-                  {blocks.map((geo) => {
-                    const startMin = timeToMinutes(
-                      geo.appointment.appointment_time.slice(0, 5),
-                    );
-                    const endMin =
-                      startMin +
-                      (geo.appointment.service_duration_minutes ||
-                        workingHours.intervalMinutes);
-                    const inProgress =
-                      isToday &&
-                      nowMinutes >= startMin &&
-                      nowMinutes < endMin;
-                    return (
-                      <DraggableAppointmentBlock
-                        key={`block-${geo.appointment.id}`}
-                        appointment={geo.appointment}
-                        geometry={geo}
-                        isLocked={isDayLocked}
-                        isInProgress={inProgress}
-                        wasRecentlyDropped={
-                          recentlyDroppedId === geo.appointment.id
-                        }
-                      />
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
+          {isMobile ? (
+            <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+              <motion.div
+                key={effectiveSelectedId ?? "none"}
+                initial={reduceMotion ? false : { opacity: 0, x: slideDirection * 24 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {body}
+              </motion.div>
+            </div>
+          ) : (
+            body
+          )}
         </div>
       </div>
 
@@ -1270,10 +1441,50 @@ export function AgendaCalendarGridView({
         {activeAppointment ? (
           <DraggableAppointmentBlock
             appointment={activeAppointment}
+            durationMinutes={duracionDibujada(activeAppointment, interval)}
             isOverlay
           />
         ) : null}
       </DragOverlay>
+
+      <AgendaSheet
+        open={openGroup !== null}
+        onClose={() => setOpenGroup(null)}
+        title={`${groupAppointments.length} turnos encimados`}
+        subtitle={
+          groupAppointments[0]
+            ? `Desde las ${groupAppointments[0].appointment_time.slice(0, 5)}`
+            : undefined
+        }
+      >
+        <ul className="flex flex-col gap-2">
+          {groupAppointments.map((appointment) => (
+            <li key={appointment.id}>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenGroup(null);
+                  if (appointment.id) onOpenAppointment(appointment.id);
+                }}
+                className="flex min-h-11 w-full items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-2)] px-3 py-2 text-left hover:border-[color:var(--brand-gold)]"
+              >
+                <span className="font-mono text-sm font-semibold text-[color:var(--brand-gold)]">
+                  {appointment.appointment_time.slice(0, 5)}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-white">
+                    {appointment.customer_name}
+                  </span>
+                  <span className="block truncate text-xs text-[color:var(--text-secondary)]">
+                    {appointment.is_sobreturno ? "Sobreturno · " : ""}
+                    {appointment.service_name} · {duracionDibujada(appointment, interval)} min
+                  </span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </AgendaSheet>
 
       <RescheduleNotifyDialog
         context={notifyContext}

@@ -17,6 +17,11 @@ type AppointmentInsert = {
   comment: string;
   status: AppointmentStatus;
   actual_duration_minutes?: number | null;
+  /**
+   * Turno metido a propósito desde el panel en un hueco o encima de otro.
+   * La agenda lo dibuja distinto y no cuenta para el índice de horario único.
+   */
+  is_sobreturno?: boolean;
   confirmation_token?: string;
   internal_notes?: string | null;
   cancellation_reason?: string | null;

@@ -7,8 +7,10 @@ import {
   ChevronDown,
   ChevronRight,
   Search,
+  TriangleAlert,
   Users,
   X,
+  Zap,
 } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import {
@@ -39,15 +41,18 @@ import {
 } from "@/lib/availability";
 import {
   listDayOverridesByBarber,
+  listTimeBlocksByBarbershopDate,
   listWeeklySchedulesByBarber,
   upsertDayOverrideForBarber,
 } from "@/lib/barber-availability";
+import { pisaAOtro } from "@/lib/agenda-layout";
 import type {
   AppointmentRow,
   BarberDayOverrideRow,
   BarberRow,
   BarberServiceRow,
   BarbershopClientRow,
+  BarberTimeBlockRow,
   BarberWeeklyScheduleRow,
 } from "@/lib/supabase";
 import {
@@ -57,7 +62,11 @@ import {
 } from "@/lib/whatsapp";
 import { Select, useConfirm, useToast } from "@/components/ui";
 import { AgendaCalendar } from "./calendar/AgendaCalendar";
-import { AgendaCalendarGridView } from "./admin/AgendaCalendarGridView";
+import {
+  AgendaCalendarGridView,
+  type AgendaCreateMode,
+} from "./admin/AgendaCalendarGridView";
+import { AgendaBadge, AgendaSheet } from "./admin/agenda/AgendaSheet";
 import { AppointmentRow as AppointmentCard } from "./admin/AppointmentRow";
 import { AppointmentRowSkeletonList } from "./admin/AppointmentRowSkeleton";
 import {
@@ -189,6 +198,21 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const [duplicatingAppointment, setDuplicatingAppointment] =
     useState<AppointmentRow | null>(null);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  // Lo que precarga el alta manual cuando se abre desde un hueco del calendario.
+  const [manualPreset, setManualPreset] = useState<{
+    barberId?: string;
+    time?: string;
+    mode: AgendaCreateMode;
+  }>({ mode: "turno" });
+  // Turno abierto en la hoja de detalle del calendario.
+  const [openAppointmentId, setOpenAppointmentId] = useState<string | null>(
+    null,
+  );
+  // Bloqueos del día, por barbero, para dibujarlos en el calendario.
+  const [timeBlocksByBarber, setTimeBlocksByBarber] = useState<
+    Record<string, BarberTimeBlockRow[]>
+  >({});
+  const [timeBlocksVersion, setTimeBlocksVersion] = useState(0);
   const confirm = useConfirm();
   const toast = useToast();
   const [calendarQuickBlockDate, setCalendarQuickBlockDate] = useState<
@@ -1281,6 +1305,192 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     };
   }, [barbers, barbershop.slug, focusDate]);
 
+  // Bloqueos del día: el calendario los dibuja como franjas. Si falla la carga
+  // el calendario se ve igual, solo sin las franjas.
+  useEffect(() => {
+    let isMounted = true;
+    void (async () => {
+      const { data } = await listTimeBlocksByBarbershopDate({
+        barbershopSlug: barbershop.slug,
+        blockDate: focusDate,
+      });
+      if (!isMounted) return;
+      const byBarber: Record<string, BarberTimeBlockRow[]> = {};
+      for (const block of data ?? []) {
+        (byBarber[block.barber_id] ??= []).push(block);
+      }
+      setTimeBlocksByBarber(byBarber);
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [barbershop.slug, focusDate, timeBlocksVersion]);
+
+  const openAppointment = openAppointmentId
+    ? (appointments.find((a) => a.id === openAppointmentId) ?? null)
+    : null;
+  const openAppointmentIsEncimado = useMemo(() => {
+    if (!openAppointment) return false;
+    if (openAppointment.is_sobreturno) return false;
+    const minutos = (a: AppointmentRow) => ({
+      inicioMin: timeValueToMinutes(a.appointment_time),
+      duracionMin:
+        a.actual_duration_minutes ?? a.service_duration_minutes ?? 0,
+    });
+    const otros = appointments
+      .filter(
+        (a) =>
+          a.id !== openAppointment.id &&
+          !a.is_sobreturno &&
+          a.barber_id === openAppointment.barber_id &&
+          normalizeDateValue(a.appointment_date) ===
+            normalizeDateValue(openAppointment.appointment_date) &&
+          (a.status === "pending" || a.status === "confirmed"),
+      )
+      .map(minutos);
+    return pisaAOtro(minutos(openAppointment), otros);
+  }, [openAppointment, appointments]);
+
+  function openManualModal(preset: {
+    barberId?: string;
+    time?: string;
+    mode: AgendaCreateMode;
+  }) {
+    setManualPreset(preset);
+    setIsManualModalOpen(true);
+  }
+
+  /**
+   * La tarjeta de un turno con todas sus acciones. La usan la vista Lista y
+   * la hoja de detalle del Calendario: así confirmar, WhatsApp, cancelar o
+   * ajustar la duración hacen exactamente lo mismo en los dos lugares.
+   */
+  function renderAppointmentCard(appointment: AppointmentRow) {
+    const appointmentDate = normalizeDateValue(
+      appointment.appointment_date,
+    );
+    const daySchedule = getBarberDaySchedule({
+      barberId: appointment.barber_id,
+      date: appointmentDate,
+      weeklySchedulesByBarber,
+      dayOverridesByBarber,
+      workingHours: barbershop.workingHours,
+      focusDate,
+    });
+    const scheduleProjection = appointment.id
+      ? scheduleProjectionByAppointmentId.get(
+          appointment.id,
+        )
+      : undefined;
+    const dayClosingMinutes = daySchedule?.isWorking
+      ? timeValueToMinutes(daySchedule.endTime)
+      : undefined;
+    const overtimeMinutes =
+      dayClosingMinutes !== undefined && scheduleProjection
+        ? Math.max(
+            0,
+            scheduleProjection.estimatedEndMinutes -
+              dayClosingMinutes,
+          )
+        : 0;
+    // Botón "Pedir reseña" sólo cuando el turno está
+    // confirmado/pendiente, la fecha ya pasó y tenemos el token.
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const reviewWhatsAppHref =
+      appointment.confirmation_token &&
+      appointment.customer_phone &&
+      (appointment.status === "confirmed" ||
+        appointment.status === "pending") &&
+      appointmentDate <= todayIso
+        ? createWhatsAppReviewRequestLink({
+            barbershopName: barbershop.name,
+            clientName: appointment.customer_name,
+            clientPhone: appointment.customer_phone,
+            confirmationToken:
+              appointment.confirmation_token,
+          })
+        : undefined;
+
+    // Si hay delay propagado, ofrecemos botón para avisar al
+    // cliente. Sin restricción de fecha — el owner decide.
+    const delayWhatsAppHref =
+      scheduleProjection &&
+      scheduleProjection.delayMinutes > 0 &&
+      appointment.customer_phone &&
+      (appointment.status === "confirmed" ||
+        appointment.status === "pending")
+        ? createWhatsAppDelayLink({
+            barbershopName: barbershop.name,
+            clientName: appointment.customer_name,
+            clientPhone: appointment.customer_phone,
+            serviceName: appointment.service_name,
+            reservedTime:
+              appointment.appointment_time.slice(0, 5),
+            estimatedTime: `${String(
+              Math.floor(
+                scheduleProjection.estimatedStartMinutes /
+                  60,
+              ),
+            ).padStart(2, "0")}:${String(
+              scheduleProjection.estimatedStartMinutes % 60,
+            ).padStart(2, "0")}`,
+            delayMinutes: scheduleProjection.delayMinutes,
+          })
+        : undefined;
+    return (
+      <AppointmentCard
+        key={
+          appointment.id ??
+          `${appointment.customer_phone}-${appointment.appointment_date}-${appointment.appointment_time}`
+        }
+        appointment={appointment}
+        barbershopName={barbershop.name}
+        whatsappMessageTemplate={
+          barbershop.whatsappMessageTemplate ?? null
+        }
+        onConfirm={handleConfirmAppointment}
+        onWhatsApp={handleSendWhatsApp}
+        onCancel={handleCancelAppointment}
+        onRestore={handleRestoreAppointment}
+        onDelete={handleDeleteAppointment}
+        onHardDelete={handleHardDeleteAppointment}
+        onSaveInternalNotes={handleSaveInternalNotes}
+        onDuplicate={setDuplicatingAppointment}
+        confirmingId={confirmingAppointmentId}
+        cancellingId={cancellingAppointmentId}
+        restoringId={restoringAppointmentId}
+        deletingId={deletingAppointmentId}
+        hardDeletingId={hardDeletingAppointmentId}
+        updatingDurationId={updatingDurationAppointmentId}
+        onAdjustActualDuration={handleAdjustActualDuration}
+        scheduleProjection={scheduleProjection}
+        dayClosingMinutes={dayClosingMinutes}
+        overtimeAccepted={
+          updatingDayOverrideBarberId ===
+          appointment.barber_id
+        }
+        onAcceptOvertime={
+          appointment.id && overtimeMinutes > 0
+            ? () =>
+                handleExtendClosingForDay(
+                  appointment.barber_id,
+                  overtimeMinutes,
+                  appointmentDate,
+                )
+            : undefined
+        }
+        showDate
+        clientTags={getTagsForAppointment(appointment)}
+        reviewWhatsAppHref={reviewWhatsAppHref}
+        delayWhatsAppHref={delayWhatsAppHref}
+        isNextUp={
+          Boolean(appointment.id) &&
+          appointment.id === nextUpAppointmentId
+        }
+      />
+    );
+  }
+
   const activeFilterLabel =
     FILTER_OPTIONS.find((o) => o.value === activeFilter)?.label.toLowerCase() ??
     "este filtro";
@@ -1295,7 +1505,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
             </p>
             <button
               type="button"
-              onClick={() => setIsManualModalOpen(true)}
+              onClick={() => openManualModal({ mode: "turno" })}
               disabled={isReadOnly}
               title={isReadOnly ? READ_ONLY_REASON : undefined}
               aria-label="Agregar turno"
@@ -1560,11 +1770,10 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
               </div>
             ) : null}
 
-            {/* Toggle Lista / Calendario — solo se muestra cuando hay turnos
-                y NO estamos en búsqueda. La vista Calendario tiene sentido para
-                el filtro "Día" (1 día concreto con sus barberos) */}
-            {appointments.length > 0 &&
-            !isSearching &&
+            {/* Toggle Lista / Calendario — en el filtro "Día" y fuera de la
+                búsqueda. Se muestra aunque el día no tenga turnos: el
+                calendario vacío sirve para cargar uno desde un hueco. */}
+            {!isSearching &&
             activeFilter === "day" &&
             activeFilter !== ("deleted" as typeof activeFilter) ? (
               <div className="flex items-center justify-end">
@@ -1629,7 +1838,32 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
             ) : null}
 
             {/* Renderizado de turnos: vista Lista (actual) o Calendario nuevo */}
-            {appointments.length === 0 ? (
+            {agendaViewMode === "calendar" &&
+            activeFilter === "day" &&
+            !isSearching ? (
+              // El calendario se dibuja aunque el día esté vacío: los huecos
+              // libres son justamente donde se carga un turno.
+              <AgendaCalendarGridView
+                barbershopSlug={barbershop.slug}
+                barbershopName={barbershop.name}
+                focusDate={focusDate}
+                barbers={
+                  selectedBarberFilter !== "all"
+                    ? barbers.filter((b) => b.id === selectedBarberFilter)
+                    : barbers
+                }
+                appointments={filteredAppointments}
+                weeklySchedulesByBarber={weeklySchedulesByBarber}
+                dayOverridesByBarber={dayOverridesByBarber}
+                timeBlocksByBarber={timeBlocksByBarber}
+                workingHours={barbershop.workingHours}
+                onMoveComplete={handleAppointmentMoved}
+                onOpenAppointment={setOpenAppointmentId}
+                onCreateAt={({ barberId, time, mode }) =>
+                  openManualModal({ barberId, time, mode })
+                }
+              />
+            ) : appointments.length === 0 ? (
               <EmptyState
                 title="Sin reservas todavia"
                 description="Cuando alguien reserve por la pagina publica, aparecera aca."
@@ -1642,20 +1876,6 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                     ? `No encontramos turnos para "${searchQuery.trim()}".`
                     : `No hay reservas para ${activeFilterLabel}.`
                 }
-              />
-            ) : agendaViewMode === "calendar" &&
-              activeFilter === "day" &&
-              !isSearching ? (
-              <AgendaCalendarGridView
-                barbershopSlug={barbershop.slug}
-                barbershopName={barbershop.name}
-                focusDate={focusDate}
-                barbers={barbers}
-                appointments={filteredAppointments}
-                weeklySchedulesByBarber={weeklySchedulesByBarber}
-                dayOverridesByBarber={dayOverridesByBarber}
-                workingHours={barbershop.workingHours}
-                onMoveComplete={handleAppointmentMoved}
               />
             ) : (
               <div className={effectiveGroupByBarber ? "space-y-6" : undefined}>
@@ -1685,129 +1905,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                     ) : null}
                     <ul className="grid gap-3 animate-stagger">
                       {group.appointments.flatMap((appointment, index, arr) => {
-                        const appointmentDate = normalizeDateValue(
-                          appointment.appointment_date,
-                        );
-                        const daySchedule = getBarberDaySchedule({
-                          barberId: appointment.barber_id,
-                          date: appointmentDate,
-                          weeklySchedulesByBarber,
-                          dayOverridesByBarber,
-                          workingHours: barbershop.workingHours,
-                          focusDate,
-                        });
-                        const scheduleProjection = appointment.id
-                          ? scheduleProjectionByAppointmentId.get(
-                              appointment.id,
-                            )
-                          : undefined;
-                        const dayClosingMinutes = daySchedule?.isWorking
-                          ? timeValueToMinutes(daySchedule.endTime)
-                          : undefined;
-                        const overtimeMinutes =
-                          dayClosingMinutes !== undefined && scheduleProjection
-                            ? Math.max(
-                                0,
-                                scheduleProjection.estimatedEndMinutes -
-                                  dayClosingMinutes,
-                              )
-                            : 0;
-                        // Botón "Pedir reseña" sólo cuando el turno está
-                        // confirmado/pendiente, la fecha ya pasó y tenemos el token.
-                        const todayIso = new Date().toISOString().slice(0, 10);
-                        const reviewWhatsAppHref =
-                          appointment.confirmation_token &&
-                          appointment.customer_phone &&
-                          (appointment.status === "confirmed" ||
-                            appointment.status === "pending") &&
-                          appointmentDate <= todayIso
-                            ? createWhatsAppReviewRequestLink({
-                                barbershopName: barbershop.name,
-                                clientName: appointment.customer_name,
-                                clientPhone: appointment.customer_phone,
-                                confirmationToken:
-                                  appointment.confirmation_token,
-                              })
-                            : undefined;
-
-                        // Si hay delay propagado, ofrecemos botón para avisar al
-                        // cliente. Sin restricción de fecha — el owner decide.
-                        const delayWhatsAppHref =
-                          scheduleProjection &&
-                          scheduleProjection.delayMinutes > 0 &&
-                          appointment.customer_phone &&
-                          (appointment.status === "confirmed" ||
-                            appointment.status === "pending")
-                            ? createWhatsAppDelayLink({
-                                barbershopName: barbershop.name,
-                                clientName: appointment.customer_name,
-                                clientPhone: appointment.customer_phone,
-                                serviceName: appointment.service_name,
-                                reservedTime:
-                                  appointment.appointment_time.slice(0, 5),
-                                estimatedTime: `${String(
-                                  Math.floor(
-                                    scheduleProjection.estimatedStartMinutes /
-                                      60,
-                                  ),
-                                ).padStart(2, "0")}:${String(
-                                  scheduleProjection.estimatedStartMinutes % 60,
-                                ).padStart(2, "0")}`,
-                                delayMinutes: scheduleProjection.delayMinutes,
-                              })
-                            : undefined;
-                        const nodes: React.ReactNode[] = [
-                          <AppointmentCard
-                            key={
-                              appointment.id ??
-                              `${appointment.customer_phone}-${appointment.appointment_date}-${appointment.appointment_time}`
-                            }
-                            appointment={appointment}
-                            barbershopName={barbershop.name}
-                            whatsappMessageTemplate={
-                              barbershop.whatsappMessageTemplate ?? null
-                            }
-                            onConfirm={handleConfirmAppointment}
-                            onWhatsApp={handleSendWhatsApp}
-                            onCancel={handleCancelAppointment}
-                            onRestore={handleRestoreAppointment}
-                            onDelete={handleDeleteAppointment}
-                            onHardDelete={handleHardDeleteAppointment}
-                            onSaveInternalNotes={handleSaveInternalNotes}
-                            onDuplicate={setDuplicatingAppointment}
-                            confirmingId={confirmingAppointmentId}
-                            cancellingId={cancellingAppointmentId}
-                            restoringId={restoringAppointmentId}
-                            deletingId={deletingAppointmentId}
-                            hardDeletingId={hardDeletingAppointmentId}
-                            updatingDurationId={updatingDurationAppointmentId}
-                            onAdjustActualDuration={handleAdjustActualDuration}
-                            scheduleProjection={scheduleProjection}
-                            dayClosingMinutes={dayClosingMinutes}
-                            overtimeAccepted={
-                              updatingDayOverrideBarberId ===
-                              appointment.barber_id
-                            }
-                            onAcceptOvertime={
-                              appointment.id && overtimeMinutes > 0
-                                ? () =>
-                                    handleExtendClosingForDay(
-                                      appointment.barber_id,
-                                      overtimeMinutes,
-                                      appointmentDate,
-                                    )
-                                : undefined
-                            }
-                            showDate
-                            clientTags={getTagsForAppointment(appointment)}
-                            reviewWhatsAppHref={reviewWhatsAppHref}
-                            delayWhatsAppHref={delayWhatsAppHref}
-                            isNextUp={
-                              Boolean(appointment.id) &&
-                              appointment.id === nextUpAppointmentId
-                            }
-                          />,
-                        ];
+                        const nodes: React.ReactNode[] = [renderAppointmentCard(appointment)];
 
                         // Gap marker entre turnos consecutivos activos del mismo dÃƒÆ’Ã‚Â­a.
                         // Solo tiene sentido cuando el filtro es "DÃƒÆ’Ã‚Â­a" (ver un solo dÃƒÆ’Ã‚Â­a)
@@ -1966,14 +2064,19 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         barbers={barbers.filter((b) => b.is_active)}
         services={services}
         defaultDate={focusDate}
+        defaultTime={manualPreset.time}
+        mode={manualPreset.mode}
+        existingAppointments={appointments}
         preselectedBarberId={
-          selectedBarberFilter !== "all" ? selectedBarberFilter : undefined
+          manualPreset.barberId ??
+          (selectedBarberFilter !== "all" ? selectedBarberFilter : undefined)
         }
         onClose={() => setIsManualModalOpen(false)}
-        onCreated={() => {
-          toast.success("Turno agregado", {
-            description: "Queda pendiente hasta que lo confirmes.",
-          });
+        onCreated={(createdMode) => {
+          toast.success(
+            createdMode === "sobreturno" ? "Sobreturno agregado" : "Turno agregado",
+            { description: "Queda pendiente hasta que lo confirmes." },
+          );
           void (async () => {
             const { data } = await listAppointmentsByBarbershop(
               barbershop.slug,
@@ -1993,8 +2096,52 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           selectedBarberFilter !== "all" ? selectedBarberFilter : undefined
         }
         controlledOpen={calendarQuickBlockDate !== null}
-        onControlledClose={() => setCalendarQuickBlockDate(null)}
+        onControlledClose={() => {
+          setCalendarQuickBlockDate(null);
+          // Puede haber creado un bloqueo: el calendario lo tiene que dibujar.
+          setTimeBlocksVersion((v) => v + 1);
+        }}
       />
+
+      {/* Detalle de un turno tocado en el calendario: la misma tarjeta de la
+          Lista, con sus mismas acciones. */}
+      <AgendaSheet
+        open={openAppointment !== null}
+        onClose={() => setOpenAppointmentId(null)}
+        title={
+          openAppointment
+            ? `${normalizeTimeShort(openAppointment.appointment_time)} · ${openAppointment.customer_name}`
+            : ""
+        }
+        subtitle={openAppointment?.barber_name}
+        badges={
+          openAppointment &&
+          (openAppointmentIsEncimado || openAppointment.is_sobreturno) ? (
+            <>
+              {openAppointmentIsEncimado ? (
+                <AgendaBadge
+                  tone="danger"
+                  icon={<TriangleAlert className="size-3.5" aria-hidden="true" />}
+                >
+                  Encimado con otro turno
+                </AgendaBadge>
+              ) : null}
+              {openAppointment.is_sobreturno ? (
+                <AgendaBadge
+                  tone="gold"
+                  icon={<Zap className="size-3.5 fill-current" aria-hidden="true" />}
+                >
+                  Sobreturno
+                </AgendaBadge>
+              ) : null}
+            </>
+          ) : undefined
+        }
+      >
+        {openAppointment ? (
+          <ul className="grid gap-3">{renderAppointmentCard(openAppointment)}</ul>
+        ) : null}
+      </AgendaSheet>
     </div>
   );
 }
