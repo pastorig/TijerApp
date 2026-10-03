@@ -4,6 +4,18 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## ✅ Mails de Supabase Auth en castellano — HECHO (2026-10-02)
+
+SMTP propio con Resend (`no-responder@tijerapp.com`, key `supabase-auth-tijerapp`)
+y la plantilla "Reset Password" en castellano con la marca. Probado de punta a
+punta por Bautista: llega, en castellano, y el link deja cambiar la contraseña.
+
+Es la ÚNICA plantilla que importa: todas las cuentas se crean ya confirmadas y
+la invitación de admins la manda la app. Antes de esto, con el SMTP de fábrica,
+"olvidé mi contraseña" casi seguro no le llegaba a ningún barbero.
+
+---
+
 ## ✅ Migración de `appointment_time` y CRM — HECHO (2026-10-02)
 
 - Bautista corrió `20261003130000_appointment_time_canonico.sql`: los 946 turnos
