@@ -408,7 +408,7 @@ function ReminderSection({
                     <button
                       type="button"
                       onClick={() => id && onUnmark(id, kind)}
-                      className="inline-flex min-h-9 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
+                      className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
                     >
                       <CheckCircle2 className="size-3" />
                       WhatsApp abierto
@@ -417,7 +417,7 @@ function ReminderSection({
                     <button
                       type="button"
                       onClick={() => onSend(appointment, kind)}
-                      className="inline-flex min-h-9 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
+                      className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
                     >
                       <MessageCircle className="size-3" />
                       WhatsApp

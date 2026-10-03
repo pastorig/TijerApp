@@ -136,7 +136,7 @@ export function QuickBlockTimeButton({
         <button
           type="button"
           onClick={() => setInternalOpen(true)}
-          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
           aria-label="Bloquear horario"
         >
           <CalendarX className="size-3.5" aria-hidden="true" />
@@ -168,7 +168,7 @@ export function QuickBlockTimeButton({
                 type="button"
                 onClick={() => closeModal()}
                 aria-label="Cerrar"
-                className="inline-flex size-8 items-center justify-center rounded-[var(--radius-xs)] text-[color:var(--text-subtle)] transition-colors hover:bg-[color:var(--surface-1)] hover:text-white"
+                className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-xs)] text-[color:var(--text-subtle)] transition-colors hover:bg-[color:var(--surface-1)] hover:text-white"
               >
                 <X className="size-4" />
               </button>
@@ -292,7 +292,7 @@ export function QuickBlockTimeButton({
                   type="submit"
                   disabled={isSaving}
                   className={cn(
-                    "inline-flex min-h-11 flex-1 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60",
+                    "inline-flex min-h-11 flex-1 items-center justify-center rounded-[var(--radius-sm)] bg-gold-grad px-4 text-xs font-bold normal-case tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)] disabled:cursor-not-allowed disabled:opacity-60",
                   )}
                 >
                   {isSaving ? "Guardando…" : "Bloquear"}
@@ -301,7 +301,7 @@ export function QuickBlockTimeButton({
                   type="button"
                   onClick={() => closeModal()}
                   disabled={isSaving}
-                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-xs font-bold normal-case tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Cancelar
                 </button>

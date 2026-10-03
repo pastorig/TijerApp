@@ -228,7 +228,7 @@ export function AdminWaitlistManager({ barbershop }: AdminWaitlistManagerProps) 
                 type="button"
                 onClick={() => setFilter(opt.value)}
                 className={cn(
-                  "inline-flex min-h-9 shrink-0 items-center rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
+                  "inline-flex min-h-11 shrink-0 items-center rounded-[var(--radius-sm)] border px-3 text-xs font-bold normal-case tracking-normal transition-colors duration-[var(--duration-fast)]",
                   isActive
                     ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                     : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
@@ -250,7 +250,7 @@ export function AdminWaitlistManager({ barbershop }: AdminWaitlistManagerProps) 
             onClick={() => refresh()}
             aria-label="Actualizar lista"
             title="Actualizar"
-            className="inline-flex size-8 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--border-default)] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--border-default)] text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
           >
             <RefreshCw className="size-3" />
           </button>
@@ -352,7 +352,7 @@ export function AdminWaitlistManager({ barbershop }: AdminWaitlistManagerProps) 
                     href={getWhatsAppLink(entry)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex min-h-8 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
+                    className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
                   >
                     <MessageCircle className="size-3" />
                     WhatsApp
@@ -363,7 +363,7 @@ export function AdminWaitlistManager({ barbershop }: AdminWaitlistManagerProps) 
                         type="button"
                         onClick={() => handleMarkContacted(entry)}
                         disabled={isBusy}
-                        className="inline-flex min-h-8 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--border-default)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:opacity-50"
+                        className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--border-default)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:opacity-50"
                       >
                         Marcar contactado
                       </button>
@@ -371,7 +371,7 @@ export function AdminWaitlistManager({ barbershop }: AdminWaitlistManagerProps) 
                         type="button"
                         onClick={() => handleMarkFulfilled(entry)}
                         disabled={isBusy}
-                        className="inline-flex min-h-8 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--success)]/40 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--success-soft)] disabled:opacity-50"
+                        className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--success)]/40 px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--success-soft)] disabled:opacity-50"
                       >
                         <Check className="size-3" />
                         Cumplido
@@ -382,7 +382,7 @@ export function AdminWaitlistManager({ barbershop }: AdminWaitlistManagerProps) 
                       type="button"
                       onClick={() => handleReopen(entry)}
                       disabled={isBusy}
-                      className="inline-flex min-h-8 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--border-default)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:opacity-50"
+                      className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--border-default)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:opacity-50"
                     >
                       <RotateCcw className="size-3" />
                       Reabrir
@@ -392,7 +392,7 @@ export function AdminWaitlistManager({ barbershop }: AdminWaitlistManagerProps) 
                     type="button"
                     onClick={() => handleDelete(entry)}
                     disabled={isBusy}
-                    className="ml-auto inline-flex min-h-8 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--danger)]/40 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)] disabled:opacity-50"
+                    className="ml-auto inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--danger)]/40 px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)] disabled:opacity-50"
                   >
                     <Trash2 className="size-3" />
                     Eliminar

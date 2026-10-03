@@ -285,7 +285,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
                   step={1}
                   value={visitsRequired}
                   onChange={(e) => setVisitsRequired(Number(e.target.value))}
-                  className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-base text-white outline-none focus:border-[color:var(--brand-gold)]"
+                  className="mt-2 min-h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-base text-white outline-none focus:border-[color:var(--brand-gold)]"
                 />
               </div>
               <div>
@@ -301,7 +301,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
                   value={rewardName}
                   onChange={(e) => setRewardName(e.target.value)}
                   maxLength={80}
-                  className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-base text-white outline-none focus:border-[color:var(--brand-gold)]"
+                  className="mt-2 min-h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-base text-white outline-none focus:border-[color:var(--brand-gold)]"
                 />
               </div>
             </div>
@@ -396,7 +396,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
                   <button
                     type="button"
                     onClick={() => void handleRedeem(c)}
-                    className="mt-3 inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-3 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors hover:bg-gold-grad hover:text-black sm:w-auto sm:self-end"
+                    className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] px-3 text-xs font-bold normal-case tracking-normal text-[color:var(--brand-gold)] transition-colors hover:bg-gold-grad hover:text-black sm:w-auto sm:self-end"
                   >
                     <Check className="size-3.5" />
                     Canjear {program.reward_name}

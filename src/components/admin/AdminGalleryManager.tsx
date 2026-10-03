@@ -275,7 +275,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
           </div>
           <label
             aria-disabled={!canUpload}
-            className={`inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]${canUpload ? "" : " pointer-events-none opacity-50"}`}
+            className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-gold-grad px-4 text-xs font-bold normal-case tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]${canUpload ? "" : " pointer-events-none opacity-50"}`}
           >
             {isUploading ? "Subiendo…" : "Elegir archivos"}
             <input
@@ -354,7 +354,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
                       handleCaptionChange(photo, event.target.value)
                     }
                     placeholder="Descripción (opcional)"
-                    className="min-h-9 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-xs text-white outline-none placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
+                    className="min-h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-xs text-white outline-none placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
                   />
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex gap-1">
@@ -363,7 +363,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
                         onClick={() => handleMove(photo, -1)}
                         disabled={isBusy || isFirst}
                         aria-label="Mover arriba"
-                        className="inline-flex size-8 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <ArrowUp className="size-3.5" />
                       </button>
@@ -372,7 +372,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
                         onClick={() => handleMove(photo, 1)}
                         disabled={isBusy || isLast}
                         aria-label="Mover abajo"
-                        className="inline-flex size-8 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-xs)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <ArrowDown className="size-3.5" />
                       </button>
@@ -381,7 +381,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
                       type="button"
                       onClick={() => handleDelete(photo)}
                       disabled={isBusy}
-                      className="inline-flex min-h-8 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--danger)]/40 px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--danger)]/40 px-2 text-xs font-bold normal-case tracking-normal text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Trash2 className="size-3" />
                       Eliminar
