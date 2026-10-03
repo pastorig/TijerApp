@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Loader2, Plus, Tag, Trash2 } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
-import { useConfirm, useToast } from "@/components/ui";
+import { Button, useConfirm, useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import type { CouponRow } from "@/lib/supabase";
@@ -16,6 +16,9 @@ export function AdminCouponsManager({ barbershop }: Props) {
   const confirm = useConfirm();
   const [coupons, setCoupons] = useState<CouponRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // Error de CARGA de la lista. No toca el formulario de alta: reintentar
+  // conserva lo que el dueño tenga escrito.
+  const [loadError, setLoadError] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
   // Form fields para nuevo cupón
@@ -30,11 +33,12 @@ export function AdminCouponsManager({ barbershop }: Props) {
 
   async function load() {
     setIsLoading(true);
+    setLoadError("");
     try {
       const { data: sessionData } = await getCurrentSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
-        toast.error("Sesión expirada");
+        setLoadError("Tu sesión expiró, volvé a iniciar sesión.");
         return;
       }
       const res = await fetch(
@@ -42,14 +46,13 @@ export function AdminCouponsManager({ barbershop }: Props) {
         { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as { error?: string };
-        toast.error("Error cargando cupones", {
-          description: err.error ?? `HTTP ${res.status}`,
-        });
+        setLoadError("No pudimos traer tus cupones.");
         return;
       }
       const data = (await res.json()) as { coupons: CouponRow[] };
       setCoupons(data.coupons);
+    } catch {
+      setLoadError("No pudimos traer tus cupones.");
     } finally {
       setIsLoading(false);
     }
@@ -310,6 +313,15 @@ export function AdminCouponsManager({ barbershop }: Props) {
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
             <Loader2 className="size-5 animate-spin text-[color:var(--brand-gold)]" />
+          </div>
+        ) : loadError ? (
+          <div className="mt-6">
+            <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]">
+              <p>{loadError}</p>
+              <Button type="button" variant="secondary" size="sm" onClick={() => void load()}>
+                Reintentar
+              </Button>
+            </div>
           </div>
         ) : coupons.length === 0 ? (
           <p className="mt-6 rounded-[var(--radius-sm)] border border-dashed border-[color:var(--border-subtle)] py-8 text-center text-sm text-[color:var(--text-muted)]">

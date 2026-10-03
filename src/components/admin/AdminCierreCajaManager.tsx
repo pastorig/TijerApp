@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Download, Minus } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
+import { Button } from "@/components/ui";
 import { listAppointmentsByBarbershop } from "@/lib/appointments";
 import { cn } from "@/lib/cn";
 import {
@@ -81,6 +82,7 @@ export function AdminCierreCajaManager({
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayYmd());
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -93,12 +95,12 @@ export function AdminCierreCajaManager({
         );
         if (!isMounted) return;
         if (error) {
-          setErrorMessage("No pudimos cargar los turnos.");
+          setErrorMessage("No pudimos traer el cierre de ese día.");
           return;
         }
         setAppointments(data ?? []);
       } catch {
-        if (isMounted) setErrorMessage("No pudimos cargar los turnos.");
+        if (isMounted) setErrorMessage("No pudimos traer el cierre de ese día.");
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -107,7 +109,7 @@ export function AdminCierreCajaManager({
     return () => {
       isMounted = false;
     };
-  }, [barbershop.slug]);
+  }, [barbershop.slug, reloadKey]);
 
   const dayAppointments = useMemo(
     () =>
@@ -361,6 +363,10 @@ export function AdminCierreCajaManager({
   const isToday = selectedDate === todayYmd();
   const nextDate = nextDayYmd(selectedDate);
   const canGoNext = nextDate <= todayYmd();
+  // Un cierre que no se pudo traer (o que todavía está cargando) no se exporta:
+  // saldría en cero y parecería válido.
+  const exportDisabled =
+    isLoading || Boolean(errorMessage) || dayAppointments.length === 0;
 
   return (
     <div className="space-y-8">
@@ -392,7 +398,10 @@ export function AdminCierreCajaManager({
             type="date"
             value={selectedDate}
             max={todayYmd()}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            onChange={(e) => {
+              // Al borrar el campo llega "": se ignora y queda la fecha anterior.
+              if (e.target.value) setSelectedDate(e.target.value);
+            }}
             className="min-h-9 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
           />
           <button
@@ -418,7 +427,7 @@ export function AdminCierreCajaManager({
           <button
             type="button"
             onClick={handleExportPdf}
-            disabled={dayAppointments.length === 0}
+            disabled={exportDisabled}
             className="inline-flex min-h-9 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-gold)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-soft)]/80 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download className="size-3" />
@@ -427,7 +436,7 @@ export function AdminCierreCajaManager({
           <button
             type="button"
             onClick={handleExportCsv}
-            disabled={dayAppointments.length === 0}
+            disabled={exportDisabled}
             className="inline-flex min-h-9 items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download className="size-3" />
@@ -436,17 +445,15 @@ export function AdminCierreCajaManager({
         </div>
       </section>
 
-      {errorMessage ? (
-        <p
-          role="alert"
-          className="border-l-2 border-[color:var(--danger)] pl-4 text-sm font-semibold text-[color:var(--danger)]"
-        >
-          {errorMessage}
-        </p>
-      ) : null}
-
       {isLoading ? (
         <p className="text-sm text-[color:var(--text-muted)]">Cargando…</p>
+      ) : errorMessage ? (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]">
+          <p>{errorMessage}</p>
+          <Button type="button" variant="secondary" size="sm" onClick={() => setReloadKey((k) => k + 1)}>
+            Reintentar
+          </Button>
+        </div>
       ) : (
         <>
           {/* KPIs */}

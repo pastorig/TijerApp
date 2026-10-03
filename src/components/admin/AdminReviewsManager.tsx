@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
+import { Button } from "@/components/ui";
 import { listReviewsByBarbershop } from "@/lib/appointment-reviews";
 import { cn } from "@/lib/cn";
 import { formatDateForDisplay, normalizeDateValue } from "@/lib/format";
@@ -33,27 +34,33 @@ type ReviewWithContext = {
   } | null;
 };
 
+const COMMENT_PREVIEW_LENGTH = 220;
+
 export function AdminReviewsManager({ barbershop }: AdminReviewsManagerProps) {
   const [reviews, setReviews] = useState<ReviewWithContext[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+  const [expandedComments, setExpandedComments] = useState<
+    Record<string, boolean>
+  >({});
   const [ratingFilter, setRatingFilter] = useState<number | "all">("all");
 
   useEffect(() => {
     let isMounted = true;
     async function load() {
       setIsLoading(true);
-      setErrorMessage("");
+      setLoadError("");
       try {
         const { data, error } = await listReviewsByBarbershop(barbershop.slug);
         if (!isMounted) return;
         if (error) {
-          setErrorMessage("No pudimos cargar las reseñas.");
+          setLoadError("No pudimos traer las reseñas.");
           return;
         }
         setReviews((data ?? []) as unknown as ReviewWithContext[]);
       } catch {
-        if (isMounted) setErrorMessage("No pudimos cargar las reseñas.");
+        if (isMounted) setLoadError("No pudimos traer las reseñas.");
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -62,7 +69,7 @@ export function AdminReviewsManager({ barbershop }: AdminReviewsManagerProps) {
     return () => {
       isMounted = false;
     };
-  }, [barbershop.slug]);
+  }, [barbershop.slug, reloadKey]);
 
   const stats = useMemo(() => {
     if (reviews.length === 0) {
@@ -99,15 +106,6 @@ export function AdminReviewsManager({ barbershop }: AdminReviewsManagerProps) {
         </p>
       </header>
 
-      {errorMessage ? (
-        <p
-          role="alert"
-          className="border-l-2 border-[color:var(--danger)] pl-4 text-sm font-semibold text-[color:var(--danger)]"
-        >
-          {errorMessage}
-        </p>
-      ) : null}
-
       {isLoading ? (
         <ul className="grid gap-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -125,6 +123,11 @@ export function AdminReviewsManager({ barbershop }: AdminReviewsManagerProps) {
             </li>
           ))}
         </ul>
+      ) : loadError ? (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]">
+          <p>{loadError}</p>
+          <Button type="button" variant="secondary" size="sm" onClick={() => setReloadKey((n) => n + 1)}>Reintentar</Button>
+        </div>
       ) : reviews.length === 0 ? (
         <div className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-subtle)] p-10 text-center">
           <Users className="mx-auto size-8 text-[color:var(--text-subtle)]" />
@@ -250,6 +253,13 @@ export function AdminReviewsManager({ barbershop }: AdminReviewsManagerProps) {
                 const whatsappLink = phone
                   ? `https://wa.me/${phone.replace(/\D/g, "")}`
                   : null;
+                const comment = review.comment ?? "";
+                const isLongComment = comment.length > COMMENT_PREVIEW_LENGTH;
+                const isExpanded = Boolean(expandedComments[review.id]);
+                const visibleComment =
+                  isLongComment && !isExpanded
+                    ? `${comment.slice(0, COMMENT_PREVIEW_LENGTH).trimEnd()}…`
+                    : comment;
                 return (
                   <li
                     key={review.id}
@@ -282,9 +292,28 @@ export function AdminReviewsManager({ barbershop }: AdminReviewsManagerProps) {
                     </div>
 
                     {review.comment ? (
-                      <p className="mt-3 rounded-[var(--radius-xs)] border-l-2 border-[color:var(--brand-gold)]/50 bg-[color:var(--surface-0)]/60 px-3 py-2 text-sm italic text-[color:var(--text-secondary)]">
-                        “{review.comment}”
+                      <p
+                        id={`review-comment-${review.id}`}
+                        className="mt-3 rounded-[var(--radius-xs)] border-l-2 border-[color:var(--brand-gold)]/50 bg-[color:var(--surface-0)]/60 px-3 py-2 text-sm italic text-[color:var(--text-secondary)]"
+                      >
+                        “{visibleComment}”
                       </p>
+                    ) : null}
+                    {isLongComment ? (
+                      <button
+                        type="button"
+                        aria-expanded={isExpanded}
+                        aria-controls={`review-comment-${review.id}`}
+                        onClick={() =>
+                          setExpandedComments((current) => ({
+                            ...current,
+                            [review.id]: !current[review.id],
+                          }))
+                        }
+                        className="mt-1 text-xs font-semibold text-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold-hi)]"
+                      >
+                        {isExpanded ? "Ver menos" : "Leer completa"}
+                      </button>
                     ) : null}
 
                     <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[color:var(--text-muted)]">

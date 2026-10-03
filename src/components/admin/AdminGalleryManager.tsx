@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { ArrowDown, ArrowUp, ImagePlus, Trash2 } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
-import { useConfirm } from "@/components/ui";
+import { Button, useConfirm } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import {
   listGalleryPhotosByBarbershop,
@@ -22,6 +22,12 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [busyPhotoId, setBusyPhotoId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  // Error de CARGA de la lista, separado de `errorMessage` (que es de las
+  // acciones y se limpia con cualquier subida o borrado). Mientras la lista no
+  // cargó bien no se puede subir: el orden de las fotos nuevas sale de la lista,
+  // y con la lista vacía por error pisarían el orden de las que ya existen.
+  const [loadError, setLoadError] = useState("");
+  const [recarga, setRecarga] = useState(0);
   const [successMessage, setSuccessMessage] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -30,19 +36,20 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
     async function load() {
       setIsLoading(true);
       setErrorMessage("");
+      setLoadError("");
       try {
         const { data, error } = await listGalleryPhotosByBarbershop(
           barbershop.slug,
         );
         if (!isMounted) return;
         if (error) {
-          setErrorMessage("No pudimos cargar las fotos.");
+          setLoadError("No pudimos traer la galería.");
           setPhotos([]);
           return;
         }
         setPhotos(data ?? []);
       } catch {
-        if (isMounted) setErrorMessage("No pudimos cargar las fotos.");
+        if (isMounted) setLoadError("No pudimos traer la galería.");
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -51,7 +58,9 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
     return () => {
       isMounted = false;
     };
-  }, [barbershop.slug]);
+  }, [barbershop.slug, recarga]);
+
+  const canUpload = !isLoading && !loadError;
 
   async function getAccessToken(): Promise<string | null> {
     const { data } = await getCurrentSession();
@@ -60,7 +69,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
 
   async function handleUpload(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? []);
-    if (files.length === 0) return;
+    if (files.length === 0 || !canUpload) return;
     setErrorMessage("");
     setSuccessMessage("");
     setIsUploading(true);
@@ -264,7 +273,10 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
               </p>
             </div>
           </div>
-          <label className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]">
+          <label
+            aria-disabled={!canUpload}
+            className={`inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)] bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--brand-gold-hi)]${canUpload ? "" : " pointer-events-none opacity-50"}`}
+          >
             {isUploading ? "Subiendo…" : "Elegir archivos"}
             <input
               ref={inputRef}
@@ -272,7 +284,7 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
               accept="image/png,image/jpeg,image/webp"
               multiple
               onChange={handleUpload}
-              disabled={isUploading}
+              disabled={isUploading || !canUpload}
               className="sr-only"
             />
           </label>
@@ -296,6 +308,13 @@ export function AdminGalleryManager({ barbershop }: AdminGalleryManagerProps) {
       {/* Grid */}
       {isLoading ? (
         <p className="text-sm text-[color:var(--text-muted)]">Cargando fotos…</p>
+      ) : loadError ? (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]">
+          <p>{loadError}</p>
+          <Button type="button" variant="secondary" size="sm" onClick={() => setRecarga((n) => n + 1)}>
+            Reintentar
+          </Button>
+        </div>
       ) : sortedPhotos.length === 0 ? (
         <div className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-subtle)] p-10 text-center">
           <p className="text-sm font-bold text-white">Sin fotos todavía</p>

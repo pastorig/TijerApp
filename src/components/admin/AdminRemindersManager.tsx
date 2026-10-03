@@ -9,6 +9,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
+import { Button } from "@/components/ui";
 import { listAppointmentsByBarbershop } from "@/lib/appointments";
 import { cn } from "@/lib/cn";
 import {
@@ -77,7 +78,8 @@ export function AdminRemindersManager({
 }: AdminRemindersManagerProps) {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
   const [sentMap, setSentMap] = useState<Record<string, string>>(() =>
     loadSentMap(),
   );
@@ -86,19 +88,19 @@ export function AdminRemindersManager({
     let isMounted = true;
     async function load() {
       setIsLoading(true);
-      setErrorMessage("");
+      setLoadError("");
       try {
         const { data, error } = await listAppointmentsByBarbershop(
           barbershop.slug,
         );
         if (!isMounted) return;
         if (error) {
-          setErrorMessage("No pudimos cargar los turnos.");
+          setLoadError("No pudimos traer los recordatorios.");
           return;
         }
         setAppointments(data ?? []);
       } catch {
-        if (isMounted) setErrorMessage("No pudimos cargar los turnos.");
+        if (isMounted) setLoadError("No pudimos traer los recordatorios.");
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -107,7 +109,7 @@ export function AdminRemindersManager({
     return () => {
       isMounted = false;
     };
-  }, [barbershop.slug]);
+  }, [barbershop.slug, reloadKey]);
 
   const today = todayYmd();
   const tomorrow = tomorrowYmd();
@@ -234,23 +236,19 @@ export function AdminRemindersManager({
           Turnos próximos
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:text-base">
-          Mandales un recordatorio por WhatsApp con un click. Los marcados
-          como enviados quedan grabados en tu navegador para que no los mandes
+          Mandales un recordatorio por WhatsApp con un click. Los que ya
+          abriste quedan marcados en este navegador para que no los mandes
           dos veces.
         </p>
       </header>
 
-      {errorMessage ? (
-        <p
-          role="alert"
-          className="border-l-2 border-[color:var(--danger)] pl-4 text-sm font-semibold text-[color:var(--danger)]"
-        >
-          {errorMessage}
-        </p>
-      ) : null}
-
       {isLoading ? (
         <p className="text-sm text-[color:var(--text-muted)]">Cargando…</p>
+      ) : loadError ? (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]">
+          <p>{loadError}</p>
+          <Button type="button" variant="secondary" size="sm" onClick={() => setReloadKey((n) => n + 1)}>Reintentar</Button>
+        </div>
       ) : (
         <>
           <ReminderSection
@@ -413,7 +411,7 @@ function ReminderSection({
                       className="inline-flex min-h-9 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--success)] transition-colors duration-[var(--duration-fast)] hover:opacity-80"
                     >
                       <CheckCircle2 className="size-3" />
-                      Enviado
+                      WhatsApp abierto
                     </button>
                   ) : (
                     <button

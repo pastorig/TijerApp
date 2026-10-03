@@ -11,7 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
-import { useConfirm } from "@/components/ui";
+import { Button, useConfirm } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import { formatDateForDisplay, normalizeDateValue } from "@/lib/format";
@@ -38,11 +38,13 @@ export function AdminWaitlistManager({ barbershop }: AdminWaitlistManagerProps) 
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("pending");
   const [errorMessage, setErrorMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [busyEntryId, setBusyEntryId] = useState<string | null>(null);
 
   async function refresh(opts?: { silent?: boolean }) {
     if (!opts?.silent) setIsLoading(true);
     if (!opts?.silent) setErrorMessage("");
+    if (!opts?.silent) setLoadError("");
     try {
       const [entriesResult, barbersResult] = await Promise.all([
         listWaitlistByBarbershop(barbershop.slug),
@@ -50,15 +52,18 @@ export function AdminWaitlistManager({ barbershop }: AdminWaitlistManagerProps) 
       ]);
       if (entriesResult.error) {
         if (!opts?.silent) {
-          setErrorMessage("No pudimos cargar la lista de espera.");
+          setLoadError("No pudimos traer la lista de espera.");
         }
         return;
       }
+      // Si el refresco silencioso trae datos después de una carga fallida,
+      // el error deja de ser cierto.
+      setLoadError("");
       setEntries(entriesResult.data ?? []);
       setBarbers(barbersResult.data ?? []);
     } catch {
       if (!opts?.silent) {
-        setErrorMessage("No pudimos cargar la lista de espera.");
+        setLoadError("No pudimos traer la lista de espera.");
       }
     } finally {
       if (!opts?.silent) setIsLoading(false);
@@ -235,9 +240,11 @@ export function AdminWaitlistManager({ barbershop }: AdminWaitlistManagerProps) 
           })}
         </div>
         <div className="flex items-center gap-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
-            {pendingCount} pendientes
-          </p>
+          {loadError ? null : (
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+              {pendingCount} pendientes
+            </p>
+          )}
           <button
             type="button"
             onClick={() => refresh()}
@@ -261,6 +268,11 @@ export function AdminWaitlistManager({ barbershop }: AdminWaitlistManagerProps) 
 
       {isLoading ? (
         <p className="text-sm text-[color:var(--text-muted)]">Cargando…</p>
+      ) : loadError ? (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]">
+          <p>{loadError}</p>
+          <Button type="button" variant="secondary" size="sm" onClick={() => refresh()}>Reintentar</Button>
+        </div>
       ) : visibleEntries.length === 0 ? (
         <div className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-subtle)] p-10 text-center">
           <p className="text-sm font-bold text-white">

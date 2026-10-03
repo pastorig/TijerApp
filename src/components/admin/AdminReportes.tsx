@@ -21,7 +21,7 @@ import {
   type PeriodKey,
 } from "@/lib/report-ranges";
 import type { AppointmentRow, BarberRow } from "@/lib/supabase";
-import { Select } from "@/components/ui";
+import { Button, Select } from "@/components/ui";
 import { getTodayYmd, parseYmd } from "./date-utils";
 import { ExportReportPdfButton } from "./ExportReportPdfButton";
 
@@ -113,6 +113,9 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
   const [barbers, setBarbers] = useState<BarberRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  // Sube en 1 con "Reintentar". No toca `period` ni `selectedBarber`: el
+  // reintento vuelve con el mismo período y el mismo barbero elegidos.
+  const [recarga, setRecarga] = useState(0);
   const [period, setPeriod] = useState<PeriodKey>("month");
   const [selectedBarber, setSelectedBarber] = useState("all");
 
@@ -127,8 +130,10 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
           listBarbersByBarbershop(barbershop.slug),
         ]);
         if (!isMounted) return;
-        if (appsResult.error) {
-          setErrorMessage("No pudimos cargar los reportes.");
+        // Los barberos también cuentan: sin ellos el filtro desaparece y las
+        // comisiones salen todas como "sin configurar", que es mentira.
+        if (appsResult.error || barbersResult.error) {
+          setErrorMessage("No pudimos traer el reporte.");
           setAppointments([]);
           return;
         }
@@ -136,7 +141,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
         setBarbers(barbersResult.data ?? []);
       } catch {
         if (isMounted) {
-          setErrorMessage("No pudimos cargar los reportes.");
+          setErrorMessage("No pudimos traer el reporte.");
         }
       } finally {
         if (isMounted) setIsLoading(false);
@@ -146,7 +151,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
     return () => {
       isMounted = false;
     };
-  }, [barbershop.slug]);
+  }, [barbershop.slug, recarga]);
 
   // Rangos
   const currentRange = useMemo(
@@ -429,11 +434,16 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
       ) : null}
 
       {!isLoading && errorMessage ? (
-        <div
-          role="alert"
-          className="border-l-2 border-[color:var(--danger)] pl-4 text-sm font-semibold text-[color:var(--danger)]"
-        >
-          {errorMessage}
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]">
+          <p>{errorMessage}</p>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => setRecarga((n) => n + 1)}
+          >
+            Reintentar
+          </Button>
         </div>
       ) : null}
 

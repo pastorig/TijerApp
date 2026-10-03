@@ -12,7 +12,7 @@ import {
   Unlink,
 } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
-import { useToast } from "@/components/ui";
+import { Button, useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 
@@ -52,6 +52,10 @@ type TestResult =
 export function AdminMercadoPagoSettings({ barbershop }: Props) {
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  // Si la configuración no se pudo traer, el formulario NO se muestra: tendría
+  // los valores por defecto del estado inicial y "Guardar" pisaría la
+  // configuración real de la barbería con ellos.
+  const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
 
@@ -164,10 +168,12 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
 
   async function load() {
     setIsLoading(true);
+    setLoadError("");
     try {
       const { data: sessionData } = await getCurrentSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
+        setLoadError("No pudimos traer la configuración de cobros.");
         toast.error("Sesión expirada");
         return;
       }
@@ -176,11 +182,16 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
         { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       if (!res.ok) {
+        setLoadError("No pudimos traer la configuración de cobros.");
         const err = (await res.json().catch(() => ({}))) as { error?: string };
         toast.error("Error cargando config", { description: err.error });
         return;
       }
-      const data = (await res.json()) as SettingsResponse;
+      const data = (await res.json()) as Partial<SettingsResponse>;
+      if (!data.settings) {
+        setLoadError("No pudimos traer la configuración de cobros.");
+        return;
+      }
       setMpEnabled(data.settings.mp_enabled);
       setPublicKey(data.settings.mp_public_key ?? "");
       setUserId(data.settings.mp_user_id ?? "");
@@ -191,6 +202,9 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
       setDepositAutoCancelHours(data.settings.deposit_auto_cancel_hours);
       setHasAccessToken(data.settings.has_access_token);
       setAccessTokenMasked(data.settings.mp_access_token_masked);
+    } catch {
+      // Sin red, o la respuesta no era JSON.
+      setLoadError("No pudimos traer la configuración de cobros.");
     } finally {
       setIsLoading(false);
     }
@@ -322,6 +336,13 @@ export function AdminMercadoPagoSettings({ barbershop }: Props) {
       {isLoading ? (
         <div className="flex items-center justify-center py-10">
           <Loader2 className="size-5 animate-spin text-[color:var(--brand-gold)]" />
+        </div>
+      ) : loadError ? (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]">
+          <p>{loadError}</p>
+          <Button type="button" variant="secondary" size="sm" onClick={() => void load()}>
+            Reintentar
+          </Button>
         </div>
       ) : (
         <form onSubmit={handleSave} className="space-y-6">

@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Crown, Loader2, Trash2, UserPlus, Users } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
-import { useConfirm, useToast } from "@/components/ui";
+import { Button, useConfirm, useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import { OnboardingTip } from "./OnboardingTip";
@@ -25,15 +25,18 @@ export function AdminTeamManager({ barbershop }: Props) {
   const [canInvite, setCanInvite] = useState(false);
   const [maxAdmins, setMaxAdmins] = useState(5);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [isInviting, setIsInviting] = useState(false);
   const [email, setEmail] = useState("");
 
   async function load() {
     setIsLoading(true);
+    setLoadError("");
     try {
       const { data: sessionData } = await getCurrentSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
+        setLoadError("No pudimos traer el equipo.");
         toast.error("Sesión expirada");
         return;
       }
@@ -42,6 +45,7 @@ export function AdminTeamManager({ barbershop }: Props) {
         { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       if (!res.ok) {
+        setLoadError("No pudimos traer el equipo.");
         const err = (await res.json().catch(() => ({}))) as { error?: string };
         toast.error("Error cargando equipo", { description: err.error });
         return;
@@ -56,6 +60,9 @@ export function AdminTeamManager({ barbershop }: Props) {
       setCanInvite(data.canInvite);
       setMaxAdmins(data.max);
       setIAmOwner(data.iAmOwner);
+    } catch {
+      // Sin red, o la respuesta no era JSON.
+      setLoadError("No pudimos traer el equipo.");
     } finally {
       setIsLoading(false);
     }
@@ -177,7 +184,8 @@ export function AdminTeamManager({ barbershop }: Props) {
       </header>
 
       {/* Invitar nuevo admin */}
-      {iAmOwner ? (
+      {/* Con error de carga no se invita: no se sabe quién está en el equipo. */}
+      {iAmOwner && !loadError ? (
         <section className="card-premium p-5 sm:p-6">
           <h2 className="text-lg font-black uppercase tracking-tight">
             Invitar admin
@@ -222,6 +230,13 @@ export function AdminTeamManager({ barbershop }: Props) {
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
             <Loader2 className="size-5 animate-spin text-[color:var(--brand-gold)]" />
+          </div>
+        ) : loadError ? (
+          <div role="alert" className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]">
+            <p>{loadError}</p>
+            <Button type="button" variant="secondary" size="sm" onClick={() => void load()}>
+              Reintentar
+            </Button>
           </div>
         ) : admins.length === 0 ? (
           <p className="mt-6 rounded-[var(--radius-sm)] border border-dashed border-[color:var(--border-subtle)] py-8 text-center text-sm text-[color:var(--text-muted)]">

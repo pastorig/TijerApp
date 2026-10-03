@@ -18,7 +18,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { ImportClientsModal } from "@/components/admin/ImportClientsModal";
-import { useConfirm, useToast } from "@/components/ui";
+import { Button, useConfirm, useToast } from "@/components/ui";
 import {
   ClientTagsEditor,
   getTagTone,
@@ -60,6 +60,8 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [editedNotes, setEditedNotes] = useState("");
@@ -82,20 +84,23 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
     async function load() {
       setIsLoading(true);
       setErrorMessage("");
+      setLoadError("");
       try {
         const [clientsResult, appsResult] = await Promise.all([
           listClientsByBarbershop(barbershop.slug),
           listAppointmentsByBarbershop(barbershop.slug),
         ]);
         if (!isMounted) return;
-        if (clientsResult.error) {
-          setErrorMessage("No pudimos cargar los clientes.");
+        // Sin los turnos, todos los clientes saldrían con 0 visitas: también
+        // es un error de carga, no un resultado.
+        if (clientsResult.error || appsResult.error) {
+          setLoadError("No pudimos traer tus clientes.");
           return;
         }
         setClients(clientsResult.data ?? []);
         setAppointments(appsResult.data ?? []);
       } catch {
-        if (isMounted) setErrorMessage("No pudimos cargar los clientes.");
+        if (isMounted) setLoadError("No pudimos traer tus clientes.");
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -104,7 +109,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
     return () => {
       isMounted = false;
     };
-  }, [barbershop.slug]);
+  }, [barbershop.slug, reloadKey]);
 
   const appointmentsByClient = useMemo(() => {
     const map = new Map<string, AppointmentRow[]>();
@@ -585,8 +590,10 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
         listClientsByBarbershop(barbershop.slug),
         listAppointmentsByBarbershop(barbershop.slug),
       ]);
-      setClients(clientsResult.data ?? []);
-      setAppointments(appsResult.data ?? []);
+      // Si la recarga falla, se conserva lo que ya estaba en pantalla en vez
+      // de vaciar la lista.
+      if (!clientsResult.error) setClients(clientsResult.data ?? []);
+      if (!appsResult.error) setAppointments(appsResult.data ?? []);
     } catch {
       toast.error("No pudimos separar los turnos.");
     } finally {
@@ -1066,7 +1073,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
       </div>
 
       {/* Alerta de turnos huérfanos — teléfonos inválidos que no generaron cliente */}
-      {orphanAppointments.length > 0 && !isLoading ? (
+      {orphanAppointments.length > 0 && !isLoading && !loadError ? (
         <div className="flex flex-wrap items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--text-subtle)]/30 bg-[color:var(--surface-1)] p-4">
           <AlertTriangle
             aria-hidden="true"
@@ -1109,7 +1116,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
       ) : null}
 
       {/* Alerta de inactivos / por reactivar */}
-      {(inactivosCount > 0 || porReactivarCount > 0) && !isLoading ? (
+      {(inactivosCount > 0 || porReactivarCount > 0) && !isLoading && !loadError ? (
         <div className="flex flex-wrap items-start gap-3 rounded-[var(--radius-md)] border border-amber-400/30 bg-amber-400/5 p-4">
           <AlertTriangle
             aria-hidden="true"
@@ -1160,7 +1167,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
       ) : null}
 
       {/* Filtros por segmento */}
-      {!isLoading && clients.length > 0 ? (
+      {!isLoading && !loadError && clients.length > 0 ? (
         <div className="-mx-1 flex flex-wrap gap-1.5 overflow-x-auto px-1">
           {(
             [
@@ -1237,6 +1244,11 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
             </li>
           ))}
         </ul>
+      ) : loadError ? (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]">
+          <p>{loadError}</p>
+          <Button type="button" variant="secondary" size="sm" onClick={() => setReloadKey((n) => n + 1)}>Reintentar</Button>
+        </div>
       ) : clients.length === 0 ? (
         <div className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-subtle)] p-10 text-center">
           <Users className="mx-auto size-8 text-[color:var(--text-subtle)]" />

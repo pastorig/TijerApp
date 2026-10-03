@@ -49,6 +49,7 @@ export function StaffAccessSection({
     {},
   );
   const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState("");
   const [invitando, setInvitando] = useState<string | null>(null);
   const [guardando, setGuardando] = useState<string | null>(null);
   const [emails, setEmails] = useState<Record<string, string>>({});
@@ -68,10 +69,15 @@ export function StaffAccessSection({
     let vivo = true;
     async function cargar() {
       setCargando(true);
+      setErrorCarga("");
       try {
         const { data: sessionData } = await getCurrentSession();
         const token = sessionData.session?.access_token;
-        if (!vivo || !token) return;
+        if (!vivo) return;
+        if (!token) {
+          setErrorCarga("No pudimos traer los accesos de los empleados.");
+          return;
+        }
         const res = await fetch(
           `/api/admin/staff-access?bs=${encodeURIComponent(barbershop.slug)}`,
           { headers: { Authorization: `Bearer ${token}` } },
@@ -79,8 +85,14 @@ export function StaffAccessSection({
         const payload = (await res.json().catch(() => ({}))) as {
           accesos?: Array<{ barber_id: string; permisos?: StaffPermissions }>;
         };
-        if (!vivo || !res.ok) return;
-        const accesos = payload.accesos ?? [];
+        if (!vivo) return;
+        // Sin esto, un fallo dejaba la lista como si nadie tuviera acceso y el
+        // dueño podía "darle acceso" a alguien que ya lo tiene.
+        if (!res.ok || !Array.isArray(payload.accesos)) {
+          setErrorCarga("No pudimos traer los accesos de los empleados.");
+          return;
+        }
+        const accesos = payload.accesos;
         setConAcceso(accesos.map((a) => a.barber_id));
         setPermisos(
           Object.fromEntries(
@@ -90,6 +102,10 @@ export function StaffAccessSection({
             ]),
           ),
         );
+      } catch {
+        if (vivo) {
+          setErrorCarga("No pudimos traer los accesos de los empleados.");
+        }
       } finally {
         if (vivo) setCargando(false);
       }
@@ -267,6 +283,13 @@ export function StaffAccessSection({
       {cargando ? (
         <div className="flex justify-center py-6">
           <Loader2 className="size-4 animate-spin text-[color:var(--text-muted)]" />
+        </div>
+      ) : errorCarga ? (
+        <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]">
+          <p>{errorCarga}</p>
+          <Button type="button" variant="secondary" size="sm" onClick={() => setRecarga((v) => v + 1)}>
+            Reintentar
+          </Button>
         </div>
       ) : barberos.length === 0 ? (
         <p className="mt-4 text-xs text-[color:var(--text-muted)]">

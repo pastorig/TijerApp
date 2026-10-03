@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Check, Gift, Loader2, Sparkles, TrendingUp, Users } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
-import { useToast } from "@/components/ui";
+import { Button, useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import type { LoyaltyProgramRow } from "@/lib/supabase";
@@ -30,6 +30,10 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
   const [program, setProgram] = useState<LoyaltyProgramRow | null>(null);
   const [customers, setCustomers] = useState<LoyaltyCustomerSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // Error de CARGA, separado de los toasts de guardar/canjear: si la carga
+  // falla no hay que mostrar ceros, "Pausado" ni "Sin clientes" como si fueran
+  // el resultado real.
+  const [loadError, setLoadError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   // Form fields (controlled)
@@ -41,11 +45,12 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
   // Reload program + customers
   async function load() {
     setIsLoading(true);
+    setLoadError("");
     try {
       const { data: sessionData } = await getCurrentSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
-        toast.error("Tu sesión expiró, volvé a iniciar sesión.");
+        setLoadError("Tu sesión expiró, volvé a iniciar sesión.");
         return;
       }
       const res = await fetch(
@@ -53,10 +58,7 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
         { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       if (!res.ok) {
-        const err = (await res.json().catch(() => ({}))) as { error?: string };
-        toast.error("Error cargando fidelización", {
-          description: err.error ?? `HTTP ${res.status}`,
-        });
+        setLoadError("No pudimos traer el programa de fidelización.");
         return;
       }
       const data = (await res.json()) as {
@@ -71,10 +73,8 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
         setRewardName(data.program.reward_name);
         setRewardDescription(data.program.reward_description ?? "");
       }
-    } catch (err) {
-      toast.error("Error inesperado", {
-        description: err instanceof Error ? err.message : "Error desconocido.",
-      });
+    } catch {
+      setLoadError("No pudimos traer el programa de fidelización.");
     } finally {
       setIsLoading(false);
     }
@@ -191,29 +191,46 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
         />
       </header>
 
+      {loadError ? (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 bg-[color:var(--danger)]/10 px-3 py-2 text-xs text-[color:var(--danger)]">
+          <p>{loadError}</p>
+          <Button type="button" variant="secondary" size="sm" onClick={() => void load()}>
+            Reintentar
+          </Button>
+        </div>
+      ) : (
+        <>
       {/* Stats summary */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <StatCard
           icon={Users}
           label="Clientes con sellos"
-          value={String(customers.length)}
+          value={isLoading ? "—" : String(customers.length)}
         />
         <StatCard
           icon={TrendingUp}
           label="Sellos activos"
-          value={String(totalActiveStamps)}
+          value={isLoading ? "—" : String(totalActiveStamps)}
         />
         <StatCard
           icon={Sparkles}
           label="Premios disponibles"
-          value={String(customersWithReward)}
-          highlight={customersWithReward > 0}
+          value={isLoading ? "—" : String(customersWithReward)}
+          highlight={!isLoading && customersWithReward > 0}
         />
         <StatCard
           icon={Gift}
           label="Estado"
-          value={program?.is_active ? "Activo" : "Pausado"}
-          highlight={program?.is_active}
+          value={
+            isLoading
+              ? "—"
+              : !program
+                ? "Sin configurar"
+                : program.is_active
+                  ? "Activo"
+                  : "Pausado"
+          }
+          highlight={!isLoading && program?.is_active}
         />
       </div>
 
@@ -390,6 +407,8 @@ export function AdminLoyaltyManager({ barbershop }: AdminLoyaltyManagerProps) {
           </ul>
         )}
       </section>
+        </>
+      )}
     </main>
   );
 }
