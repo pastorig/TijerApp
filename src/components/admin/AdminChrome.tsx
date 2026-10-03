@@ -31,7 +31,7 @@ export function AdminChrome({
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
   return (
-    <div className={`${styles.chrome} min-h-screen bg-[#09090b] text-white lg:flex`}>
+    <div className={`${styles.chrome} min-h-screen bg-black text-white lg:flex`}>
       <a href="#admin-content" className="sr-only fixed left-4 top-3 z-50 rounded-md bg-white px-4 py-3 text-sm font-semibold text-black focus:not-sr-only">
         Ir al contenido
       </a>
