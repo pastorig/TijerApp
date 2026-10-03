@@ -108,7 +108,7 @@ export function AdminLoginForm({ barbershop }: AdminLoginFormProps) {
             </label>
             <Link
               href="/recuperar"
-              className="text-xs font-semibold text-[color:var(--brand-gold)] hover:brightness-125"
+              className="text-[11px] font-semibold text-[color:var(--brand-gold)] hover:brightness-125"
             >
               ¿La olvidaste?
             </Link>

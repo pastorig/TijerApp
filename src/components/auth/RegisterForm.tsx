@@ -273,7 +273,7 @@ export function RegisterForm() {
           {isSubmitting ? "Creando tu barbería…" : "Crear mi barbería"}
         </button>
 
-        <p className="text-center text-xs leading-5 text-[color:var(--text-subtle)]">
+        <p className="text-center text-[11px] leading-5 text-[color:var(--text-subtle)]">
           Al crear tu cuenta arrancás el trial de 14 días. No te pedimos tarjeta.
         </p>
       </form>
