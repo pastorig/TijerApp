@@ -62,6 +62,20 @@ try {
     await page.setViewportSize({ width: 390, height: 844 });
     const response = await page.goto(new URL(route, base).href, { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
+    if (!section) {
+      const trigger = page.getByRole("button", { name: "Abrir menu", exact: true });
+      await trigger.click();
+      const dialog = page.getByRole("dialog", { name: "Navegacion principal" });
+      await dialog.waitFor({ state: "visible" });
+      for (let index = 0; index < 18; index++) {
+        await page.keyboard.press("Tab");
+        assert.ok(await dialog.evaluate(element => element.contains(document.activeElement)), "El foco salio del menu admin.");
+      }
+      await page.keyboard.press("Escape");
+      await dialog.waitFor({ state: "hidden" });
+      assert.ok(await trigger.evaluate(element => element === document.activeElement), "El foco no regreso al boton del menu.");
+      console.log("Menu mobile: foco contenido, Escape y retorno de foco correctos.");
+    }
     const overflow = [];
     for (const width of [360, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: 900 });
