@@ -6,8 +6,8 @@ import {
   listCoupons,
   updateCoupon,
 } from "@/lib/coupons";
-import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { assertPlanFeature } from "@/lib/api-plan-guard";
+import { resolveBarbershopAdminAccess } from "@/lib/server/barbershop-admin-access";
 import type { CouponDiscountType } from "@/lib/supabase";
 
 export const runtime = "nodejs";
@@ -23,36 +23,6 @@ export const runtime = "nodejs";
  *   DELETE body { id, barbershopSlug } → { ok }
  */
 
-async function assertAdmin(
-  authHeader: string | null,
-  barbershopSlug: string,
-) {
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return { ok: false as const, status: 401, error: "No autorizado." };
-  }
-  const supabase = getSupabaseAdminClient();
-  const { data: userResult } = await supabase.auth.getUser(
-    authHeader.slice("Bearer ".length),
-  );
-  if (!userResult.user) {
-    return { ok: false as const, status: 401, error: "Sesión inválida." };
-  }
-  const { data: adminRow } = await supabase
-    .from("barbershop_admins")
-    .select("user_id")
-    .eq("user_id", userResult.user.id)
-    .eq("barbershop_slug", barbershopSlug)
-    .maybeSingle();
-  if (!adminRow) {
-    return {
-      ok: false as const,
-      status: 403,
-      error: "No sos admin de esta barbería.",
-    };
-  }
-  return { ok: true as const, userId: userResult.user.id };
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const barbershopSlug = searchParams.get("barbershopSlug") ?? "";
@@ -62,7 +32,7 @@ export async function GET(request: Request) {
       { status: 400 },
     );
   }
-  const auth = await assertAdmin(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );
@@ -104,7 +74,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  const auth = await assertAdmin(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );
@@ -198,7 +168,7 @@ export async function PATCH(request: Request) {
       { status: 400 },
     );
   }
-  const auth = await assertAdmin(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );
@@ -255,7 +225,7 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    const coupon = await updateCoupon(id, patch);
+    const coupon = await updateCoupon(id, barbershopSlug, patch);
     return NextResponse.json({ coupon });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error.";
@@ -279,7 +249,7 @@ export async function DELETE(request: Request) {
       { status: 400 },
     );
   }
-  const auth = await assertAdmin(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );
@@ -292,7 +262,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: gate.error }, { status: gate.status });
   }
   try {
-    await deleteCoupon(id);
+    await deleteCoupon(id, barbershopSlug);
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error.";

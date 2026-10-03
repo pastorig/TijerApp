@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 
 /**
  * Menú de la nav comercial en celular.
@@ -48,15 +49,11 @@ export function CommercialNavMobileMenu() {
   }, [open]);
 
   // Con el panel abierto, el fondo no scrollea: si no, el dedo mueve la home
-  // por detrás del menú.
-  useEffect(() => {
-    if (!open) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [open]);
+  // por detrás del menú. El mismo hook mete el foco en el panel (primer link),
+  // no deja que Tab se vaya a la home tapada y, al cerrar, lo devuelve al botón
+  // que abrió. El bloqueo de scroll vive ahí y no acá: dos efectos guardando y
+  // restaurando el mismo `overflow` lo dejan trabado en "hidden".
+  const panelRef = useDialogFocus<HTMLDivElement>(open);
 
   return (
     <div className="sm:hidden">
@@ -85,6 +82,7 @@ export function CommercialNavMobileMenu() {
               />
 
               <div
+                ref={panelRef}
                 id={panelId}
                 className="fixed inset-y-0 right-0 z-50 flex w-72 max-w-[85vw] flex-col border-l border-[color:var(--border-subtle)] bg-[color:var(--surface-0)] px-5 py-5 shadow-2xl sm:hidden"
               >
@@ -103,10 +101,11 @@ export function CommercialNavMobileMenu() {
                 </div>
 
                 <nav className="mt-6 flex flex-col gap-1">
-                  {LINKS.map((link) => (
+                  {LINKS.map((link, index) => (
                     <Link
                       key={link.href}
                       href={link.href}
+                      data-autofocus={index === 0 ? "" : undefined}
                       onClick={() => setOpen(false)}
                       className="inline-flex min-h-12 items-center rounded-[var(--radius-sm)] px-3 text-sm font-bold uppercase tracking-normal text-white transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--surface-2)] hover:text-[color:var(--brand-gold)]"
                     >

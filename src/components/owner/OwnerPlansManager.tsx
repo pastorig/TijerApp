@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useId, useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { DEMO_BARBERSHOP_SLUGS } from "@/data/demo-barbershops";
 import { useToast } from "@/components/ui";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import {
@@ -495,6 +496,12 @@ function EditPlanModal({
   const [trialDays, setTrialDays] = useState<string>("14");
   const [notes, setNotes] = useState(row.notes ?? "");
   const [isSaving, setIsSaving] = useState(false);
+  const titleId = useId();
+  // Foco adentro, Tab contenido y fondo sin scroll. Escape cierra, salvo
+  // mientras guarda: cerrar ahí dejaría el pedido corriendo sin nadie mirando.
+  const dialogRef = useDialogFocus<HTMLDivElement>(true, {
+    onEscape: isSaving ? undefined : onClose,
+  });
 
   async function handleSave() {
     setIsSaving(true);
@@ -536,8 +543,10 @@ function EditPlanModal({
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-labelledby={titleId}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
       onClick={onClose}
     >
@@ -550,7 +559,7 @@ function EditPlanModal({
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
               Editar plan
             </p>
-            <h2 className="mt-1 text-xl font-black uppercase tracking-tight text-white">
+            <h2 id={titleId} className="mt-1 text-xl font-black uppercase tracking-tight text-white">
               {row.name}
             </h2>
             <code className="text-[11px] text-[color:var(--text-muted)]">
@@ -753,6 +762,12 @@ function RegisterPaymentModal({
   );
   const [note, setNote] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const titleId = useId();
+  // Foco adentro, Tab contenido y fondo sin scroll. Escape cierra, salvo
+  // mientras guarda: cerrar ahí dejaría el pedido corriendo sin nadie mirando.
+  const dialogRef = useDialogFocus<HTMLDivElement>(true, {
+    onEscape: isSaving ? undefined : onClose,
+  });
   // El monto que el server marcó como raro y todavía no se confirmó.
   const [unusualAmount, setUnusualAmount] = useState<string | null>(null);
 
@@ -819,8 +834,10 @@ function RegisterPaymentModal({
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-labelledby={titleId}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
       onClick={onClose}
     >
@@ -833,7 +850,7 @@ function RegisterPaymentModal({
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--success)]">
               Registrar pago
             </p>
-            <h2 className="mt-1 text-xl font-black uppercase tracking-tight text-white">
+            <h2 id={titleId} className="mt-1 text-xl font-black uppercase tracking-tight text-white">
               {row.name}
             </h2>
             <p className="text-[11px] text-[color:var(--text-muted)]">

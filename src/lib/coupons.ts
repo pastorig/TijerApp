@@ -52,8 +52,15 @@ export async function createCoupon(
   return data as CouponRow;
 }
 
+/**
+ * Edita un cupón DE ESA BARBERÍA. El slug va en el filtro y no es decorativo:
+ * antes se filtraba solo por id, así que el admin de una barbería podía editar
+ * el cupón de otra con conocer su id (la ruta validaba que fuera admin del
+ * slug que mandaba, pero nadie ataba el cupón a ese slug).
+ */
 export async function updateCoupon(
   couponId: string,
+  barbershopSlug: string,
   patch: CouponUpdate,
 ): Promise<CouponRow> {
   const supabase = getSupabaseAdminClient();
@@ -69,8 +76,9 @@ export async function updateCoupon(
     .from("coupons")
     .update(updates)
     .eq("id", couponId)
+    .eq("barbershop_slug", barbershopSlug)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     if (error.code === "23505") {
@@ -78,12 +86,25 @@ export async function updateCoupon(
     }
     throw new Error(`[coupons] updateCoupon failed: ${error.message}`);
   }
+  // Sin fila: el id no existe o es de otra barbería. Se dice lo mismo en los
+  // dos casos, para no confirmarle a nadie que un id ajeno existe.
+  if (!data) {
+    throw new Error("Ese cupón no es de tu barbería.");
+  }
   return data as CouponRow;
 }
 
-export async function deleteCoupon(couponId: string): Promise<void> {
+/** Borra un cupón DE ESA BARBERÍA (mismo cuidado que `updateCoupon`). */
+export async function deleteCoupon(
+  couponId: string,
+  barbershopSlug: string,
+): Promise<void> {
   const supabase = getSupabaseAdminClient();
-  const { error } = await supabase.from("coupons").delete().eq("id", couponId);
+  const { error } = await supabase
+    .from("coupons")
+    .delete()
+    .eq("id", couponId)
+    .eq("barbershop_slug", barbershopSlug);
   if (error) {
     throw new Error(`[coupons] deleteCoupon failed: ${error.message}`);
   }

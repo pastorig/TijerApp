@@ -6,8 +6,8 @@ import {
   redeemCustomerStamps,
   upsertLoyaltyProgram,
 } from "@/lib/loyalty";
-import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { assertPlanFeature } from "@/lib/api-plan-guard";
+import { resolveBarbershopAdminAccess } from "@/lib/server/barbershop-admin-access";
 
 export const runtime = "nodejs";
 
@@ -21,34 +21,6 @@ export const runtime = "nodejs";
  *        → { redeemed: number } (canjear N stamps)
  */
 
-async function assertAdmin(
-  authHeader: string | null,
-  barbershopSlug: string,
-): Promise<
-  | { ok: true; userId: string }
-  | { ok: false; status: number; error: string }
-> {
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return { ok: false, status: 401, error: "No autorizado." };
-  }
-  const supabaseAdmin = getSupabaseAdminClient();
-  const { data: userResult, error: userError } =
-    await supabaseAdmin.auth.getUser(authHeader.slice("Bearer ".length));
-  if (userError || !userResult.user) {
-    return { ok: false, status: 401, error: "Sesión inválida." };
-  }
-  const { data: adminRow } = await supabaseAdmin
-    .from("barbershop_admins")
-    .select("user_id")
-    .eq("user_id", userResult.user.id)
-    .eq("barbershop_slug", barbershopSlug)
-    .maybeSingle();
-  if (!adminRow) {
-    return { ok: false, status: 403, error: "No sos admin de esta barbería." };
-  }
-  return { ok: true, userId: userResult.user.id };
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const barbershopSlug = searchParams.get("barbershopSlug") ?? "";
@@ -61,7 +33,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const auth = await assertAdmin(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );
@@ -109,7 +81,7 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const auth = await assertAdmin(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );
@@ -202,7 +174,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const auth = await assertAdmin(
+  const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),
     barbershopSlug,
   );

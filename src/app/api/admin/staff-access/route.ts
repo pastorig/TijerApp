@@ -5,6 +5,7 @@ import {
   assertPlanFeature,
   assertTierIncludesFeature,
 } from "@/lib/api-plan-guard";
+import { resolveBarbershopAdminAccess } from "@/lib/server/barbershop-admin-access";
 import {
   aColumnas,
   normalizarPermisos,
@@ -52,26 +53,16 @@ async function assertOwner(
 ): Promise<
   { ok: true; userId: string } | { ok: false; status: number; error: string }
 > {
-  if (!authHeader?.startsWith("Bearer ")) {
-    return { ok: false, status: 401, error: "No autorizado." };
+  // Quién puede entrar lo decide el helper compartido (admin de la barbería u
+  // owner de la plataforma). Acá solo se conserva el mensaje de 403 que esta
+  // ruta ya devolvía, que es el que la pantalla de accesos muestra.
+  const access = await resolveBarbershopAdminAccess(authHeader, barbershopSlug);
+  if (!access.ok) {
+    return access.status === 403
+      ? { ok: false, status: 403, error: "No administrás esta barbería." }
+      : access;
   }
-  const supabase = getSupabaseAdminClient();
-  const { data: userResult } = await supabase.auth.getUser(
-    authHeader.slice("Bearer ".length),
-  );
-  if (!userResult.user) {
-    return { ok: false, status: 401, error: "Sesión inválida." };
-  }
-  const { data: admin } = await supabase
-    .from("barbershop_admins")
-    .select("user_id")
-    .eq("user_id", userResult.user.id)
-    .eq("barbershop_slug", barbershopSlug)
-    .maybeSingle();
-  if (!admin) {
-    return { ok: false, status: 403, error: "No administrás esta barbería." };
-  }
-  return { ok: true, userId: userResult.user.id };
+  return { ok: true, userId: access.userId };
 }
 
 export async function GET(request: Request) {

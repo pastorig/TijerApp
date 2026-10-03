@@ -59,26 +59,49 @@ Los tres primeros eran bugs que YA estaban en prod, no de la remasterización.
 - `AGENTS.md` describía el proyecto como en junio ("no implementar pagos ni
   panel owner"). Actualizado.
 
+### Segunda pasada (03/10, noche) — arreglado y en prod
+
+- **Cupones: editar y borrar no ataban el cupón a la barbería.** El admin de una
+  barbería podía editar o borrar el cupón de otra si conocía su id. Ahora el
+  filtro lleva el slug.
+- **Galería y logo: el archivo a borrar lo decía el navegador.** Se podía borrar
+  una foto o el logo de otra barbería mandando su ruta. Ahora sale de la base.
+- **El owner de la plataforma ya puede operar el panel de cualquier barbería.**
+  Las 15 rutas de `/api/admin` deciden el acceso con un solo helper
+  (`src/lib/server/barbershop-admin-access.ts`). Si la base falla al verificar,
+  se contesta 503 en vez de "no sos admin". El owner solo pasa si la barbería
+  existe.
+- **Respuestas sin mensajes internos de Postgres** (configuración e importar
+  clientes los devolvían en un campo `debug`).
+- **Foco y teclado** en los modales de `/owner/planes` y en el menú mobile de la
+  home (`src/hooks/useDialogFocus.ts`, compartido con los modales del empleado).
+
 ### Queda (nada urgente, por orden)
 
 1. **Dos reservas al mismo tiempo que se pisan sin empezar a la misma hora.**
    El índice único frena dos turnos en el MISMO minuto, no un 15:00–15:40 y un
-   15:30–16:00 pedidos a la vez. La ventana es de milisegundos y hoy no hay
-   ningún caso; cerrarla bien pide una restricción de rangos en la base
-   (migración con diseño propio).
-2. **El owner de la plataforma entra al panel de cualquier barbería pero
-   algunas acciones le dan 403** (`/api/admin/appointments`, `/api/admin/barbers`
-   miran solo si es admin de ESA barbería). Hay que decidir el contrato y
-   unificarlo en un helper; no abrir permisos a mano.
-3. **Accesibilidad de dos diálogos**: los modales de `/owner/planes` (sin
-   nombre accesible ni trampa de foco) y el menú mobile de la home (no retiene
-   el foco).
-4. **Búsqueda de cuentas por email limitada a la primera página** en el
+   15:30–16:00 pedidos a la vez. No se puede prohibir en la base que dos turnos
+   se superpongan: rompería los sobreturnos y los encimados que el panel permite
+   a propósito. Lo correcto: que la reserva pública (y reprogramar) verifique y
+   guarde en UN paso, con un candado por barbero y día (función SQL +
+   `pg_advisory_xact_lock`). Toca el corazón de la reserva y pide migración:
+   va con Spec Kit, no como arreglo suelto.
+2. **¿Los accesos de empleados los da cualquier admin o solo el dueño?**
+   `staff-access` dice "solo el dueño" en los comentarios pero nunca miró
+   `is_owner`: hoy cualquier co-admin crea cuentas de empleados, cambia permisos
+   y revoca. Es una decisión de producto; si es "solo el dueño", es una línea.
+3. **`barbers` POST acepta `is_owner: true` del pedido**: cualquier admin puede
+   crear un barbero marcado como "cabeza". Misma decisión que el punto 2.
+4. **En los modales de `/owner/planes`**, Cancelar, la X y el clic afuera siguen
+   cerrando mientras se está guardando (solo Escape lo respeta).
+5. **Búsqueda de cuentas por email limitada a la primera página** en el
    registro (`provision-barbershop.ts`, 200) y en accesos de empleado
    (`staff-access`, 1000). Hoy hay 19 cuentas. En Equipo ya está resuelto con
    `buscarUsuarioPorEmail`: cuando se toque, reusar eso.
-5. **Probar con plata real**: MercadoPago, crons y push no se pueden verificar
+6. **Probar con plata real**: MercadoPago, crons y push no se pueden verificar
    sin aislar destinatarios. Sigue siendo el riesgo más grande.
+7. **Preview sin aprobar**: `preview/controles-resto` (controles de 44 px en
+   barberos, clientes, lista de espera, galería, cupones y turnero).
 
 ---
 
