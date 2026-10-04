@@ -977,3 +977,83 @@ option:hover {
     font-size: max(16px, 1em) !important;
   }
 }
+
+/* ── Cartel con QR de "Compartir" (feature 034) ───────────────────────────────
+   En pantalla no existe; al imprimir es lo ÚNICO que sale. Va acá y no en un
+   CSS module porque tiene que esconder todo el panel (menú, barra, botones),
+   y un module no puede tocar lo que está fuera de su componente.
+
+   `:has()` limita el efecto a la página que tiene el cartel: imprimir
+   cualquier otra pantalla del panel sigue saliendo como siempre. */
+.tj-cartel {
+  display: none;
+}
+@media print {
+  body:has(.tj-cartel) {
+    background: #ffffff !important;
+  }
+  body:has(.tj-cartel) * {
+    visibility: hidden !important;
+  }
+  body:has(.tj-cartel) .tj-cartel,
+  body:has(.tj-cartel) .tj-cartel * {
+    visibility: visible !important;
+  }
+  .tj-cartel {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6mm;
+    padding: 18mm;
+    background: #ffffff;
+    color: #000000;
+    text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+  .tj-cartel-marca {
+    margin: 0;
+    max-width: 150mm;
+    font-size: 15pt;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    /* Un nombre largo baja a dos líneas en vez de salirse de la hoja. */
+    overflow-wrap: anywhere;
+  }
+  .tj-cartel-titulo {
+    margin: 0;
+    font-size: 40pt;
+    font-weight: 900;
+    line-height: 1.05;
+    text-transform: uppercase;
+  }
+  .tj-cartel-bajada {
+    margin: 0;
+    font-size: 14pt;
+  }
+  .tj-cartel-qr {
+    width: 95mm;
+    height: 95mm;
+    margin: 4mm 0;
+  }
+  .tj-cartel-link {
+    margin: 0;
+    max-width: 160mm;
+    font-size: 15pt;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+  .tj-cartel-pie {
+    margin: 0;
+    font-size: 11pt;
+    color: #444444;
+  }
+  @page {
+    size: A4;
+    margin: 0;
+  }
+}

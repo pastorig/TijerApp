@@ -15,6 +15,7 @@ import {
   provisionBarbershop,
 } from "@/lib/provision-barbershop";
 import { avisarAltaDeBarberia } from "@/lib/server/signup-notice";
+import { mandarBienvenida } from "@/lib/server/activation-emails";
 
 /**
  * Registro self-serve público: el barbero se da de alta solo y arranca su
@@ -155,6 +156,20 @@ export async function POST(request: Request) {
         whatsapp: payload.whatsapp!.trim(),
         cuentaYaExistía: result.reusedExistingUser,
         diasDeTrial: TRIAL_DAYS,
+      }),
+    );
+
+    // La bienvenida al barbero (feature 034). Hasta acá, el que se registraba
+    // no recibía NADA de TijerApp: tres barberías dejaron todo configurado,
+    // entraron una vez y no volvieron. Este mail les deja su link y el paso
+    // que falta (compartirlo), y además es lo que habilita la serie de los
+    // días 1, 3 y 7: el cron solo le escribe a quien recibió la bienvenida.
+    after(() =>
+      mandarBienvenida({
+        slug: result.slug,
+        nombre: result.name,
+        email,
+        dueño: payload.ownerName!.trim(),
       }),
     );
 

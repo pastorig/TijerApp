@@ -4,14 +4,48 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
-## 🗄️ Correr la migración de las reseñas (2026-10-04)
+## 🗄️ Correr la migración de la activación (2026-10-04)
 
-`supabase/migrations/20261004120000_reminder_log_review_request.sql`, en el SQL
-Editor. Son dos líneas: le suma el tipo "pedido de reseña" al registro de avisos.
+`supabase/migrations/20261004130000_barbershop_activation_log.sql`, en el SQL
+Editor. Crea la tabla donde se anota qué mail de activación ya recibió cada
+barbería.
 
-**Hasta que se corra, los pedidos de reseña no salen** (el cierre de turnos sí
-funciona). Es a propósito: el cron anota cada pedido antes de mandarlo para no
-repetirlo, y si no puede anotar, no manda.
+**Hasta que se corra, a las barberías nuevas no les llega ningún mail** (ni la
+bienvenida). Es a propósito: cada mail se anota antes de mandarse para no
+repetirlo, y sin la tabla no se puede anotar. El registro sigue funcionando
+igual; la pantalla "Compartir" tampoco depende de esto.
+
+---
+
+## ✅ 034 — Activación de barberías recién registradas — EN PROD (2026-10-04)
+
+**El problema.** Grado, Barber Uri y Focus hicieron lo mismo: se registraron,
+dejaron todo configurado, entraron UNA vez y no volvieron. Cero turnos. Y al
+registrarse no les llegaba ni un mail.
+
+**Lo que hay ahora.**
+- **Bienvenida** al registrarse, con el link de turnos y el paso que falta.
+- **Serie de mails mientras siga en cero turnos**: día 1 (texto para la bio de
+  Instagram), día 3 (cartel con QR + mensaje para WhatsApp) y día 7 (cuántos
+  días de prueba le quedan + WhatsApp directo). Entre las 10 y las 13. Se corta
+  sola con el primer turno, con la prueba vencida o a los 14 días.
+- **Aviso al fundador el día 3** si sigue en cero, con el WhatsApp del dueño,
+  para escribirle a mano.
+- **Pantalla "Compartir"** (Mi barbería → Compartir, y "Cartel con QR" en el
+  bloque del link del Inicio): link, QR, texto para la bio, mensaje para
+  clientes y un cartel de una hoja para imprimir.
+
+**A quién NO le escribe:** a ninguna barbería que ya existía (la serie solo
+corre para las que recibieron la bienvenida, que la manda el registro) ni a las
+creadas a mano desde `/owner`.
+
+**Para mirar sin mandar nada:** GitHub → Actions → "Activación Cron" → Run
+workflow (por defecto en modo prueba).
+
+**Qué mirar:** la próxima barbería que se registre tiene que recibir la
+bienvenida al minuto. Y escanear el QR de "Compartir" con el celular una vez.
+
+Spec, plan y tasks en `specs/034-activacion-registro/`.
 
 ---
 
@@ -27,7 +61,7 @@ fecha pasada.
 **Si un cliente no vino**, se cancela el turno con el motivo "Cliente no vino",
 igual que siempre, antes o después del cierre.
 
-**Reseñas.** Entre las 10 y las 13, a los clientes de AYER que dejaron mail: un
+**Reseñas** (migración corrida el 04/10; el primer envío es el 05/10). Entre las 10 y las 13, a los clientes de AYER que dejaron mail: un
 mail con un botón al formulario de reseña. Uno por turno, y como mucho uno cada
 90 días por cliente y barbería. No a barberías en modo lectura.
 

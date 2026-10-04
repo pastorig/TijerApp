@@ -36,7 +36,7 @@ export type AltaDeBarberia = {
  * le antepone el 54 de país y el 9 de móvil; si ya vino con el 54, se respeta
  * lo que puso.
  */
-function linkDeWhatsApp(telefono: string): string | null {
+export function linkDeWhatsApp(telefono: string): string | null {
   const digitos = telefono.replace(/\D/g, "");
   if (digitos.length < 8) return null;
   const internacional = digitos.startsWith("54") ? digitos : `549${digitos}`;

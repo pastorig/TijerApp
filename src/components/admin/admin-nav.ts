@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LineChart,
   Settings,
+  Share2,
   Star,
   Store,
   Tag,
@@ -130,6 +131,7 @@ export function getAdminNavGroups(barbershopSlug: string): AdminNavGroup[] {
       items: [
         { label: "Galería", href: `${base}/galeria`, icon: ImageIcon },
         { label: "Configuración", href: `${base}/settings`, icon: Settings },
+        { label: "Compartir", href: `${base}/compartir`, icon: Share2 },
       ],
     },
   ];

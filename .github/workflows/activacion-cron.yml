@@ -1,0 +1,54 @@
+name: Activación Cron
+
+# Serie de mails a barberías recién registradas sin turnos (feature 034).
+# Cada hora; el endpoint manda solo entre las 10 y las 13 (Argentina) y decide
+# a quién le toca qué. Acá solo se lo llama.
+
+on:
+  schedule:
+    # Minuto 25: recordatorios al 5, señas al 10, cierre al 20.
+    - cron: "25 * * * *"
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: "Solo informar qué haría, sin cambiar ni mandar nada"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      force:
+        description: "Ignorar la ventana horaria (10 a 13)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  trigger-activacion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/activacion
+        run: |
+          # En la corrida programada no hay inputs: se ejecuta de verdad.
+          # A mano, por defecto es dryRun.
+          QUERY=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            QUERY="?dryRun=${{ github.event.inputs.dryRun }}&force=${{ github.event.inputs.force }}"
+          fi
+          echo "Calling with query: ${QUERY:-<none>}"
+          # -L: sigue redirects (308 → URL final) reenviando los headers.
+          response=$(curl -s -L --post301 --post302 --post303 \
+            -o /tmp/cron-body -w "%{http_code}" \
+            -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.CRON_BASE_URL }}/api/cron/activacion${QUERY}")
+          echo "HTTP $response"
+          cat /tmp/cron-body
+          if [ "$response" -ne 200 ]; then
+            echo "Cron failed with status $response"
+            exit 1
+          fi

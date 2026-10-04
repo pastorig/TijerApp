@@ -10,6 +10,7 @@ import {
   ImagePlus,
   Rocket,
   Scissors,
+  QrCode,
   Share2,
   Sparkles,
   Store,
@@ -205,6 +206,15 @@ export function OnboardingChecklist({
             <Share2 aria-hidden="true" className="size-3.5" />
             Compartir
           </a>
+          {/* El kit completo: QR para el espejo, texto para la bio, mensaje para
+              los clientes (feature 034). */}
+          <Link
+            href={`/${barbershop.slug}/admin/compartir`}
+            className="inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] px-3 text-xs font-semibold text-[color:var(--text-secondary)] transition-colors hover:border-[color:var(--brand-gold-ring)] hover:text-white"
+          >
+            <QrCode aria-hidden="true" className="size-3.5" />
+            Cartel con QR
+          </Link>
           {/* La barbería que ya está lista no tiene nada que hacer acá: si el
               link le estorba todos los días, se lo saca de encima. */}
           <button
