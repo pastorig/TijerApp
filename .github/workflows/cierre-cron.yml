@@ -1,0 +1,53 @@
+name: Cierre del día Cron
+
+# Cierre automático del día y pedido de reseña (feature 033).
+# Cada hora: los turnos pendientes de días ya terminados pasan a confirmado, y
+# entre las 10 y las 13 (Argentina) se les pide reseña a los clientes de ayer.
+# El endpoint decide solo qué toca en cada pasada; acá solo se lo llama.
+
+on:
+  # (el horario se prende después de verificar la prueba en seco)
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: "Solo informar qué haría, sin cambiar ni mandar nada"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      force:
+        description: "Ignorar la ventana horaria de las reseñas (10 a 13)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  trigger-cierre:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/cierre
+        run: |
+          # En la corrida programada no hay inputs: se ejecuta de verdad.
+          # A mano, por defecto es dryRun.
+          QUERY=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            QUERY="?dryRun=${{ github.event.inputs.dryRun }}&force=${{ github.event.inputs.force }}"
+          fi
+          echo "Calling with query: ${QUERY:-<none>}"
+          # -L: sigue redirects (308 → URL final) reenviando los headers.
+          response=$(curl -s -L --post301 --post302 --post303 \
+            -o /tmp/cron-body -w "%{http_code}" \
+            -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.CRON_BASE_URL }}/api/cron/cierre${QUERY}")
+          echo "HTTP $response"
+          cat /tmp/cron-body
+          if [ "$response" -ne 200 ]; then
+            echo "Cron failed with status $response"
+            exit 1
+          fi
