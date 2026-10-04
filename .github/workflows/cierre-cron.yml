@@ -6,7 +6,9 @@ name: Cierre del día Cron
 # El endpoint decide solo qué toca en cada pasada; acá solo se lo llama.
 
 on:
-  # (el horario se prende después de verificar la prueba en seco)
+  schedule:
+    # Minuto 20: recordatorios corre al 5 y señas al 10.
+    - cron: "20 * * * *"
   workflow_dispatch:
     inputs:
       dryRun:

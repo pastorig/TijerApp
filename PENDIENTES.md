@@ -4,6 +4,46 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## 🗄️ Correr la migración de las reseñas (2026-10-04)
+
+`supabase/migrations/20261004120000_reminder_log_review_request.sql`, en el SQL
+Editor. Son dos líneas: le suma el tipo "pedido de reseña" al registro de avisos.
+
+**Hasta que se corra, los pedidos de reseña no salen** (el cierre de turnos sí
+funciona). Es a propósito: el cron anota cada pedido antes de mandarlo para no
+repetirlo, y si no puede anotar, no manda.
+
+---
+
+## ✅ 033 — Cierre automático del día + pedido de reseña — EN PROD (2026-10-04)
+
+**Cierre.** Cada hora, los turnos pendientes de días ya terminados pasan a
+confirmado solos (quedan como "Confirmado por Cierre automático"). No le avisa
+nada al cliente. No toca los turnos con seña impaga. La primera corrida, el
+04/10, cerró **233 turnos viejos** (216 de SV Barber, que pasó de 78 a 195
+confirmados en los últimos 30 días). Verificado contra la base: 0 pendientes con
+fecha pasada.
+
+**Si un cliente no vino**, se cancela el turno con el motivo "Cliente no vino",
+igual que siempre, antes o después del cierre.
+
+**Reseñas.** Entre las 10 y las 13, a los clientes de AYER que dejaron mail: un
+mail con un botón al formulario de reseña. Uno por turno, y como mucho uno cada
+90 días por cliente y barbería. No a barberías en modo lectura.
+
+**Para probar o mirar sin tocar nada:** GitHub → Actions → "Cierre del día Cron"
+→ Run workflow (por defecto corre en modo prueba y solo informa qué haría).
+
+**Qué mirar la primera semana:**
+- que SV Barber y Leo Cuts vean sus turnos de ayer como confirmados a la mañana;
+- después de correr la migración, que empiecen a llegar reseñas (hoy hay cero);
+- si algún barbero se queja de que le "confirmó" a uno que no vino: es lo
+  esperado, se cancela con "Cliente no vino".
+
+Spec, plan y tasks en `specs/033-cierre-del-dia/`.
+
+---
+
 ## 🧪 Para mirar logueado (2026-10-03)
 
 Lo que entró a prod el 03/10 y no pude ver con sesión:
