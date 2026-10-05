@@ -43,12 +43,12 @@ export default async function BookingPage({ params }: BookingPageProps) {
   const plan = await getBarbershopPlan(barbershopSlug);
 
   return (
-    {/* `overflow-x-clip` y no `overflow-hidden`: recorta el resplandor igual,
-        pero no convierte a la página en un contenedor con scroll propio. Con
-        `overflow-hidden` el resumen de la derecha dejaba de quedarse pegado al
-        bajar (`position: sticky` se apaga dentro de un ancestro así) y el
-        botón de reservar se perdía arriba. */}
     <main className="relative isolate min-h-screen overflow-x-clip bg-black text-white">
+      {/* `overflow-x-clip` y no `overflow-hidden` en el <main>: recorta el
+          resplandor igual, pero no convierte a la página en un contenedor con
+          scroll propio. Con `overflow-hidden` el resumen de la derecha dejaba
+          de quedarse pegado al bajar (`position: sticky` se apaga dentro de un
+          ancestro así) y el botón de reservar se perdía arriba. */}
       {/* El mismo resplandor dorado de la página de la barbería: la reserva es
           la continuación de esa página, no una pantalla aparte. */}
       <div
