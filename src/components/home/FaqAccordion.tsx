@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Minus, Plus } from "lucide-react";
+import { Minus } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export type FaqItem = {
@@ -64,23 +64,41 @@ export function FaqAccordion({
                     : "border-[color:var(--border-default)] text-[color:var(--text-muted)]",
                 )}
               >
-                {isOpen ? (
-                  <Minus className="size-3.5" />
-                ) : (
-                  <Plus className="size-3.5" />
-                )}
+                {/* Un "+" hecho con dos rayas: al abrir, la vertical gira
+                    hasta acostarse y queda el "−". */}
+                <span className="relative block size-3.5">
+                  <Minus className="absolute inset-0 size-3.5" />
+                  <Minus
+                    className={cn(
+                      "absolute inset-0 size-3.5 transition-transform duration-300 ease-out",
+                      isOpen ? "rotate-0" : "rotate-90",
+                    )}
+                  />
+                </span>
               </span>
             </button>
-            {isOpen ? (
-              <div
-                id={`${idPrefix}-answer-${index}`}
-                className="border-t border-[color:var(--border-subtle)] px-5 py-4"
-              >
-                <p className="text-sm leading-7 text-[color:var(--text-secondary)]">
-                  {item.answer}
-                </p>
+            {/* La respuesta queda siempre en la página (también la leen los
+                buscadores) y se despliega animando la fila de una grilla, que
+                es la forma de animar un alto que no se conoce de antemano.
+                Cerrada, queda fuera del alcance de los lectores de pantalla. */}
+            <div
+              id={`${idPrefix}-answer-${index}`}
+              aria-hidden={!isOpen}
+              className={cn(
+                "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
+                isOpen
+                  ? "grid-rows-[1fr] opacity-100"
+                  : "grid-rows-[0fr] opacity-0",
+              )}
+            >
+              <div className="overflow-hidden">
+                <div className="border-t border-[color:var(--border-subtle)] px-5 py-4">
+                  <p className="text-sm leading-7 text-[color:var(--text-secondary)]">
+                    {item.answer}
+                  </p>
+                </div>
               </div>
-            ) : null}
+            </div>
           </li>
         );
       })}

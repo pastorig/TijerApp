@@ -39,7 +39,7 @@ export function HomePersonas() {
   return (
     <section className="border-t border-[color:var(--border-subtle)] bg-black">
       <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
-        <header className="text-center">
+        <Reveal as="header" className="text-center">
           <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Para tu barbería
           </p>
@@ -50,7 +50,7 @@ export function HomePersonas() {
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:mt-5 sm:text-base sm:leading-7">
             Si te pasa alguna de estas, TijerApp te lo resuelve.
           </p>
-        </header>
+        </Reveal>
 
         <ul className="-mx-4 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:mt-12 sm:grid sm:snap-none sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3">
           {ITEMS.map((item, index) => {
@@ -60,7 +60,7 @@ export function HomePersonas() {
                 as="li"
                 key={item.problem}
                 delay={(index % 3) * 80}
-                className="card-premium  flex w-[85%] shrink-0 snap-center flex-col gap-4 p-5 sm:w-auto sm:shrink sm:snap-align-none sm:p-6"
+                className="card-premium card-premium-hover flex w-[85%] shrink-0 snap-center flex-col gap-4 p-5 sm:w-auto sm:shrink sm:snap-align-none sm:p-6"
               >
                 <div className="flex items-start gap-3">
                   <div
@@ -90,10 +90,10 @@ export function HomePersonas() {
         <div className="mt-10 flex justify-center sm:mt-12">
           <Link
             href="/precios"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-7 text-sm font-bold uppercase tracking-normal text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+            className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-7 text-sm font-bold uppercase tracking-normal text-white transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
           >
             Ver planes y precios
-            <ArrowUpRight aria-hidden="true" className="size-4" />
+            <ArrowUpRight aria-hidden="true" className="size-4 transition-transform duration-[var(--duration-base)] ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </Link>
         </div>
       </div>

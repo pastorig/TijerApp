@@ -857,17 +857,74 @@ option:hover {
 }
 
 /* Reveal on scroll — el wrapper client (Reveal.tsx) togglea .is-visible. */
-.reveal {
-  opacity: 1;
-  transform: none;
-  transition:
-    opacity 620ms var(--ease-out-soft),
-    transform 620ms var(--ease-out-soft);
+/* Tres momentos, y el HTML del servidor no trae ninguno (se ve todo):
+   - `is-waiting`: el navegador confirmó que está debajo de la pantalla.
+   - `is-visible`: entró. La animación usa `backwards`, no `both`: mientras
+     espera su demora queda escondido, pero al terminar suelta el `transform`
+     para que el hover de la tarjeta lo pueda usar.
+   - `is-still`: ya estaba a la vista al cargar; no se anima. */
+.reveal.is-waiting {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: none;
+}
+@keyframes tijerapp-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
 }
 .reveal.is-visible {
-  opacity: 1;
-  transform: none;
-  animation: tijerapp-fade-in 180ms var(--ease-out-soft);
+  animation: tijerapp-reveal 640ms var(--ease-out-soft) backwards;
+}
+.reveal.is-still {
+  animation: none;
+}
+
+/* Un tilde que salta. Solo escala: lo que acompaña se ve desde el primer
+   cuadro. */
+@keyframes tijerapp-check-pop {
+  from {
+    transform: scale(0.3) rotate(-30deg);
+  }
+  to {
+    transform: scale(1) rotate(0);
+  }
+}
+.animate-check-pop {
+  animation: tijerapp-check-pop 480ms cubic-bezier(0.34, 1.56, 0.64, 1)
+    backwards;
+}
+
+/* Un reflejo que cruza el botón principal cada tanto: es la única llamada de
+   atención que se repite en la página, y por eso pasa rápido y descansa
+   mucho. */
+.cta-sheen {
+  position: relative;
+  overflow: hidden;
+}
+.cta-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 65%
+  );
+  transform: translateX(-120%);
+  animation: tijerapp-cta-sheen 5.5s var(--ease-out-soft) 1.2s infinite;
+  pointer-events: none;
+}
+@keyframes tijerapp-cta-sheen {
+  0% {
+    transform: translateX(-120%);
+  }
+  18%,
+  100% {
+    transform: translateX(120%);
+  }
 }
 
 /* Hover de la card premium — DESPUÉS de .reveal.is-visible a propósito:

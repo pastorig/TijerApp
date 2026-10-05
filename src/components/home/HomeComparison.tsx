@@ -102,7 +102,7 @@ export function HomeComparison() {
         }}
       />
       <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
-        <header className="text-center">
+        <Reveal as="header" className="text-center">
           <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Comparativa
           </p>
@@ -113,7 +113,7 @@ export function HomeComparison() {
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)] sm:mt-5 sm:text-base sm:leading-7">
             Mirá lado a lado qué hace TijerApp que tu setup actual no puede.
           </p>
-        </header>
+        </Reveal>
 
         <p className="mt-6 text-center text-xs uppercase tracking-normal text-[color:var(--text-muted)] sm:hidden">
           ← Deslizá para comparar →
@@ -182,7 +182,7 @@ export function HomeComparison() {
                 as="div"
                 key={c.name}
                 delay={index * 90}
-                className="card-premium  flex w-[85%] shrink-0 snap-center flex-col p-5 opacity-90 sm:w-auto sm:shrink sm:snap-align-none sm:p-6"
+                className="card-premium card-premium-hover flex w-[85%] shrink-0 snap-center flex-col p-5 opacity-90 sm:w-auto sm:shrink sm:snap-align-none sm:p-6"
               >
                 <div className="flex items-center gap-3">
                   <div

@@ -7,6 +7,7 @@ import { CommercialFooter } from "@/components/home/CommercialFooter";
 import { CommercialNav } from "@/components/home/CommercialNav";
 import { HeroShowcase } from "@/components/home/ui/HeroShowcase";
 import { PWARedirector } from "@/components/pwa/PWARedirector";
+import { LuzQueSigue } from "@/components/public/LandingMotion";
 import { monthlyPriceLabel } from "@/lib/plans";
 
 // Below-the-fold: dynamic con ssr:true mantiene SEO y reduce el chunk
@@ -90,12 +91,13 @@ export default function Home() {
       <section className="relative isolate overflow-hidden">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10"
+          className="animate-glow-breathe pointer-events-none absolute inset-0 -z-10 origin-top"
           style={{
             background:
               "radial-gradient(70% 50% at 50% 0%, color-mix(in oklab, var(--brand-gold) 14%, transparent) 0%, transparent 70%)",
           }}
         />
+        <LuzQueSigue />
         <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-14 pt-10 sm:px-8 sm:pb-20 sm:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10 lg:px-12 lg:pb-24 lg:pt-20">
           {/* `animate-rise` y no `animate-fade-up`: acá arriba del pliegue no
               se puede arrancar en opacity 0 sin retrasar el LCP. Ver globals.css. */}
@@ -128,10 +130,10 @@ export default function Home() {
             <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row">
               <Link
                 href="/registro"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
+                className="cta-sheen group inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110"
               >
                 Empezar prueba gratis
-                <ArrowUpRight className="size-4" />
+                <ArrowUpRight className="size-4 transition-transform duration-[var(--duration-base)] ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               </Link>
               <Button
                 as="link"
@@ -149,28 +151,32 @@ export default function Home() {
               <li className="flex items-center gap-1.5">
                 <Check
                   aria-hidden="true"
-                  className="size-3.5 shrink-0 text-[color:var(--brand-gold)]"
+                  style={{ animationDelay: "350ms" }}
+                  className="animate-check-pop size-3.5 shrink-0 text-[color:var(--brand-gold)]"
                 />
                 14 días gratis
               </li>
               <li className="flex items-center gap-1.5">
                 <Check
                   aria-hidden="true"
-                  className="size-3.5 shrink-0 text-[color:var(--brand-gold)]"
+                  style={{ animationDelay: "440ms" }}
+                  className="animate-check-pop size-3.5 shrink-0 text-[color:var(--brand-gold)]"
                 />
                 Sin tarjeta
               </li>
               <li className="flex items-center gap-1.5">
                 <Check
                   aria-hidden="true"
-                  className="size-3.5 shrink-0 text-[color:var(--brand-gold)]"
+                  style={{ animationDelay: "530ms" }}
+                  className="animate-check-pop size-3.5 shrink-0 text-[color:var(--brand-gold)]"
                 />
                 Cancelás cuando quieras
               </li>
               <li className="flex items-center gap-1.5">
                 <Check
                   aria-hidden="true"
-                  className="size-3.5 shrink-0 text-[color:var(--brand-gold)]"
+                  style={{ animationDelay: "620ms" }}
+                  className="animate-check-pop size-3.5 shrink-0 text-[color:var(--brand-gold)]"
                 />
                 Hecho en Argentina
               </li>

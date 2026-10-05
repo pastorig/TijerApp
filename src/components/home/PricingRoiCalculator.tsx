@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ArrowUpRight, Calculator, TrendingDown, TrendingUp } from "lucide-react";
 
 import { PLAN_META } from "@/lib/plans";
+import { NumeroVivo } from "@/components/public/LandingMotion";
+import { Reveal } from "./ui/Reveal";
 
 const TIJERAPP_PRO_ARS = PLAN_META.pro.priceArs;
 
@@ -12,6 +14,12 @@ function formatArs(value: number): string {
   return new Intl.NumberFormat("es-AR", {
     maximumFractionDigits: 0,
   }).format(Math.round(value));
+}
+
+// Fuera del componente: si se creara en cada render, el número animado la
+// vería como una función nueva cada vez.
+function formatoPesos(value: number): string {
+  return `$${formatArs(value)}`;
 }
 
 export function PricingRoiCalculator() {
@@ -33,7 +41,7 @@ export function PricingRoiCalculator() {
         }}
       />
       <div className="mx-auto w-full max-w-5xl px-4 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
-        <header className="text-center">
+        <Reveal as="header" className="text-center">
           <div className="inline-flex items-center gap-2 text-[color:var(--brand-gold)]">
             <Calculator className="size-5" />
             <p className="text-xs font-semibold uppercase tracking-normal">
@@ -51,7 +59,7 @@ export function PricingRoiCalculator() {
             Calculá en 10 segundos cuánto pierde tu barbería por turnos
             olvidados, doble-bookings y agenda desorganizada.
           </p>
-        </header>
+        </Reveal>
 
         <div className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 sm:mt-12 sm:p-8">
           <div className="grid gap-5 sm:gap-8 lg:grid-cols-2">
@@ -145,7 +153,10 @@ export function PricingRoiCalculator() {
                   Lo que perdés sin TijerApp
                 </div>
                 <div className="mt-2 text-3xl font-black tracking-normal text-[color:var(--danger)] sm:text-4xl">
-                  ${formatArs(dineroPerdidoPorMes)}
+                  <NumeroVivo
+                    value={dineroPerdidoPorMes}
+                    formato={formatoPesos}
+                  />
                 </div>
                 <div className="text-xs text-[color:var(--text-muted)]">
                   por mes en turnos perdidos
@@ -183,7 +194,10 @@ export function PricingRoiCalculator() {
                       : "text-white"
                   }`}
                 >
-                  ${formatArs(Math.abs(ahorroNeto))}
+                  <NumeroVivo
+                    value={Math.abs(ahorroNeto)}
+                    formato={formatoPesos}
+                  />
                 </div>
                 <div className="text-xs text-[color:var(--text-secondary)]">
                   {roiPositivo
@@ -197,10 +211,10 @@ export function PricingRoiCalculator() {
           <div className="mt-6 flex justify-center sm:mt-8">
             <Link
               href="/#contacto"
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
+              className="group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
             >
               Empezar prueba gratis
-              <ArrowUpRight aria-hidden="true" className="size-4" />
+              <ArrowUpRight aria-hidden="true" className="size-4 transition-transform duration-[var(--duration-base)] ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </Link>
           </div>
 

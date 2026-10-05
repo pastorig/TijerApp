@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { CheckCircle2, MessageCircle } from "lucide-react";
 import { FOUNDER } from "@/lib/founder";
+import { Reveal } from "./ui/Reveal";
 
 export function HomeContact() {
   const [name, setName] = useState("");
@@ -112,7 +113,7 @@ export function HomeContact() {
     >
       <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
         <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
-          <header>
+          <Reveal as="header">
             <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
               Contacto
             </p>
@@ -132,7 +133,7 @@ export function HomeContact() {
               <MessageCircle className="size-4" />
               Escribinos por WhatsApp
             </a>
-          </header>
+          </Reveal>
 
           <form
             onSubmit={handleSubmit}

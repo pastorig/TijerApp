@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { Reveal } from "./ui/Reveal";
 
 /**
  * Bloque pasarela a /producto y /precios.
@@ -19,7 +20,7 @@ export function HomeProductGate() {
         }}
       />
       <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
-        <div className="mx-auto max-w-3xl text-center">
+        <Reveal className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Conocé el producto completo
           </p>
@@ -36,10 +37,10 @@ export function HomeProductGate() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href="/producto"
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
+              className="cta-sheen group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-7 text-sm font-bold uppercase tracking-normal text-black transition-colors duration-[var(--duration-fast)] hover:brightness-110 sm:w-auto"
             >
               Ver producto completo
-              <ArrowUpRight aria-hidden="true" className="size-4" />
+              <ArrowUpRight aria-hidden="true" className="size-4 transition-transform duration-[var(--duration-base)] ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </Link>
             <Link
               href="/precios"
@@ -49,7 +50,7 @@ export function HomeProductGate() {
               Ver precios
             </Link>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

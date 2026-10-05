@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Quote } from "lucide-react";
 import { founderInitials, founders } from "@/data/founders";
+import { Reveal } from "./ui/Reveal";
 
 /**
  * Prueba social de la home: los testimonios REALES de barberos que usan
@@ -23,14 +24,14 @@ export function HomeTestimonials() {
   return (
     <section className="border-t border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]">
       <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
-        <header className="text-center">
+        <Reveal as="header" className="text-center">
           <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Barberos reales
           </p>
           <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
             Lo que dicen los que ya lo usan
           </h2>
-        </header>
+        </Reveal>
 
         <div
           className={
@@ -39,14 +40,16 @@ export function HomeTestimonials() {
               : "mx-auto mt-10 grid max-w-4xl gap-4 sm:mt-12 sm:grid-cols-2"
           }
         >
-          {withQuote.map((founder) => (
-            <figure
+          {withQuote.map((founder, index) => (
+            <Reveal
+              as="figure"
               key={founder.slug}
-              className="card-premium relative flex h-full flex-col p-6 sm:p-8"
+              delay={(index % 2) * 90}
+              className="card-premium card-premium-hover relative flex h-full flex-col p-6 sm:p-8"
             >
               <Quote
                 aria-hidden="true"
-                className="size-11 text-[color:var(--brand-gold)]/40"
+                className="icon-pop size-11 text-[color:var(--brand-gold)]/40"
               />
 
               {/* flex-1: empuja el pie (logo + nombre) al fondo, así en la
@@ -89,7 +92,7 @@ export function HomeTestimonials() {
                   </span>
                 </span>
               </figcaption>
-            </figure>
+            </Reveal>
           ))}
         </div>
       </div>

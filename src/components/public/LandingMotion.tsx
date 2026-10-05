@@ -322,3 +322,44 @@ export function LuzQueSigue() {
     />
   );
 }
+
+/**
+ * Un número que, cuando cambia, cuenta desde el valor anterior hasta el nuevo.
+ * Para resultados que el visitante mueve con sus propias manos (una
+ * calculadora): el número acompaña al control en vez de saltar.
+ */
+export function NumeroVivo({
+  value,
+  formato,
+  className,
+}: {
+  value: number;
+  formato: (valor: number) => string;
+  className?: string;
+}) {
+  const reducido = useReducedMotion();
+  const [mostrado, setMostrado] = useState(value);
+  const anterior = useRef(value);
+
+  useEffect(() => {
+    const desde = anterior.current;
+    anterior.current = value;
+    if (desde === value) return;
+    if (reducido) {
+      const id = requestAnimationFrame(() => setMostrado(value));
+      return () => cancelAnimationFrame(id);
+    }
+    const control = animate(desde, value, {
+      duration: 0.35,
+      ease: EASE_SUAVE,
+      onUpdate: (v) => setMostrado(v),
+    });
+    return () => control.stop();
+  }, [value, reducido]);
+
+  return (
+    <span className={className} aria-label={formato(value)}>
+      <span aria-hidden="true">{formato(mostrado)}</span>
+    </span>
+  );
+}

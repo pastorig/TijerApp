@@ -60,7 +60,7 @@ export default function GuiasPage() {
               <li key={guia.slug}>
                 <Link
                   href={`/guias/${guia.slug}`}
-                  className="card-premium  group flex h-full flex-col p-5 sm:p-6"
+                  className="card-premium card-premium-hover group flex h-full flex-col p-5 sm:p-6"
                 >
                   <div className="flex items-center gap-2">
                     <span className="chip-gold !px-2 !py-1 !text-xs">

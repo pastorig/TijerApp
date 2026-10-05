@@ -183,7 +183,7 @@ export function PricingPlans() {
               <div
                 key={plan.id}
                 className={cn(
-                  "card-premium  relative flex w-[85%] shrink-0 snap-center flex-col p-6 sm:w-auto sm:shrink sm:snap-align-none sm:p-8",
+                  "card-premium card-premium-hover relative flex w-[85%] shrink-0 snap-center flex-col p-6 sm:w-auto sm:shrink sm:snap-align-none sm:p-8",
                   plan.highlight && "card-premium-glow",
                 )}
               >
@@ -360,7 +360,7 @@ export function FoundersProgram() {
           ].map((perk) => (
             <li
               key={perk.title}
-              className="card-premium  p-3 sm:p-6"
+              className="card-premium card-premium-hover p-3 sm:p-6"
             >
               <div className="flex items-start gap-2 sm:gap-3">
                 <Check

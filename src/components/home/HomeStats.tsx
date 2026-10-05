@@ -55,7 +55,7 @@ export function HomeStats() {
                 as="li"
                 key={benefit.title}
                 delay={(index % 4) * 70}
-                className="card-premium  group flex flex-col items-start gap-2 p-4 sm:p-5"
+                className="card-premium card-premium-hover group flex flex-col items-start gap-2 p-4 sm:p-5"
               >
                 <div
                   aria-hidden="true"

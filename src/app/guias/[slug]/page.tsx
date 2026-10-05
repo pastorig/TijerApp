@@ -162,7 +162,7 @@ export default async function GuiaPage({ params }: Props) {
                   <li key={otra.slug}>
                     <Link
                       href={`/guias/${otra.slug}`}
-                      className="card-premium  flex h-full flex-col p-4"
+                      className="card-premium card-premium-hover flex h-full flex-col p-4"
                     >
                       <span className="text-sm font-bold text-white">
                         {otra.cardTitle}

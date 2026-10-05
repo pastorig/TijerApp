@@ -30,14 +30,14 @@ export function HomeHowItWorks() {
   return (
     <section className="border-t border-[color:var(--border-subtle)]">
       <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
-        <header className="text-center sm:text-left">
+        <Reveal as="header" className="text-center sm:text-left">
           <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Cómo funciona
           </p>
           <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
             Tres pasos y tu barbería online
           </h2>
-        </header>
+        </Reveal>
 
         <StepsProgressLine className="relative mt-10 grid gap-6 sm:grid-cols-3 sm:gap-4 lg:gap-6">
           {STEPS.map((step, index) => {
@@ -47,7 +47,7 @@ export function HomeHowItWorks() {
                 as="li"
                 key={step.number}
                 delay={index * 90}
-                className="card-premium  group relative p-6"
+                className="card-premium card-premium-hover group relative p-6"
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-mono text-3xl font-black tabular-nums leading-none text-[color:var(--brand-gold)]">

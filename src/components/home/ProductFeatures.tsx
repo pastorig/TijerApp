@@ -132,7 +132,7 @@ export function ProductFeatures() {
                 as="li"
                 key={feature.title}
                 delay={(index % 3) * 80}
-                className="card-premium  group flex flex-col p-4 sm:p-5"
+                className="card-premium card-premium-hover group flex flex-col p-4 sm:p-5"
               >
                 <Viz />
                 <div className="mt-4 flex items-center gap-2.5">

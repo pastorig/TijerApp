@@ -1,4 +1,5 @@
 import { FaqAccordion, type FaqItem } from "./FaqAccordion";
+import { Reveal } from "./ui/Reveal";
 import { ANNUAL_DISCOUNT_PERCENT, monthlyPriceLabel } from "@/lib/plans";
 
 const FAQ_ITEMS: FaqItem[] = [
@@ -60,14 +61,14 @@ export function HomeFaq() {
       className="border-t border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]"
     >
       <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
-        <header className="text-center sm:text-left">
+        <Reveal as="header" className="text-center sm:text-left">
           <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Preguntas frecuentes
           </p>
           <h2 className="mt-3 text-3xl font-black uppercase tracking-normal text-balance text-white sm:mt-4 sm:text-4xl lg:text-5xl">
             Lo que más nos preguntan
           </h2>
-        </header>
+        </Reveal>
 
         <div className="mt-10">
           <FaqAccordion items={FAQ_ITEMS} idPrefix="home-faq" />
