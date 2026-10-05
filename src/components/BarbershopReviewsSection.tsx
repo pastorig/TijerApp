@@ -1,6 +1,13 @@
 import { Quote, Star } from "lucide-react";
 import type { PublicReview } from "@/lib/appointment-reviews";
 import { cn } from "@/lib/cn";
+import {
+  Brillo,
+  Escalera,
+  EstrellasEnCascada,
+  NumeroQueCuenta,
+  Peldano,
+} from "@/components/public/LandingMotion";
 
 type BarbershopReviewsSectionProps = {
   reviews: PublicReview[];
@@ -52,21 +59,9 @@ export function BarbershopReviewsSection({
             Reseñas reales
           </h2>
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <Star
-                  key={n}
-                  className={cn(
-                    "size-5",
-                    n <= Math.round(avgRating)
-                      ? "fill-[color:var(--brand-gold)] text-[color:var(--brand-gold)]"
-                      : "text-[color:var(--text-subtle)]",
-                  )}
-                />
-              ))}
-            </div>
+            <EstrellasEnCascada rating={avgRating} />
             <p className="font-mono text-sm font-bold tabular-nums text-white">
-              {avgRating.toFixed(1)}
+              <NumeroQueCuenta value={avgRating} decimales={1} />
             </p>
             <span className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
               · {totalCount} {totalCount === 1 ? "reseña" : "reseñas"}
@@ -74,14 +69,16 @@ export function BarbershopReviewsSection({
           </div>
         </header>
 
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Escalera className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {reviews.map((review) => (
-            <li
+            <Peldano
               key={review.id}
-              className="relative flex flex-col gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--border-default)]"
+              levanta
+              className="group relative flex flex-col gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--border-default)]"
             >
+              <Brillo reflejo={false} />
               <Quote
-                className="size-11 text-[color:var(--brand-gold)]/20"
+                className="size-11 text-[color:var(--brand-gold)]/20 transition-transform duration-[var(--duration-base)] ease-out group-hover:-translate-y-0.5 group-hover:scale-110"
                 aria-hidden="true"
               />
               <div className="flex items-center gap-0.5">
@@ -116,9 +113,9 @@ export function BarbershopReviewsSection({
                   {formatRelativeDate(review.created_at)}
                 </span>
               </div>
-            </li>
+            </Peldano>
           ))}
-        </ul>
+        </Escalera>
 
         {googleReviewsUrl ? (
           <div className="mt-8 text-center">

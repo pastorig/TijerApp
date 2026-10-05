@@ -1,5 +1,6 @@
 import { Clock, MapPin, MessageCircle } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
+import { Brillo, Escalera, Peldano } from "@/components/public/LandingMotion";
 
 function InstagramGlyph({ className }: { className?: string }) {
   return (
@@ -51,25 +52,26 @@ export function BarbershopInfoSection({
   return (
     <section className="border-t border-[color:var(--border-subtle)]">
       <div className="mx-auto w-full max-w-6xl px-4 py-7 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
-        <header className="text-center sm:text-left">
-          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
+        <Escalera as="header" paso={0.09} className="text-center sm:text-left">
+          <Peldano as="p" className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Información
-          </p>
-          <h2 className="mt-3 text-2xl font-black uppercase tracking-normal text-white sm:mt-4 sm:text-3xl lg:text-4xl">
+          </Peldano>
+          <Peldano as="h2" className="mt-3 text-2xl font-black uppercase tracking-normal text-white sm:mt-4 sm:text-3xl lg:text-4xl">
             Cómo encontrarnos
-          </h2>
-        </header>
+          </Peldano>
+        </Escalera>
 
-        <div className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4">
+        <Escalera as="div" className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4">
           {/* Horario */}
-          <article className="flex items-start gap-4 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5">
+          <Peldano as="article" levanta className="group relative flex items-start gap-4 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40">
+              <Brillo reflejo={false} />
             <div
               aria-hidden="true"
-              className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
+              className="relative flex size-10 shrink-0 items-center justify-center rounded-full transition-transform duration-[var(--duration-base)] ease-out group-hover:scale-110 border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
             >
               <Clock className="size-4" />
             </div>
-            <div className="min-w-0">
+            <div className="relative min-w-0">
               <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
                 Horario base
               </p>
@@ -80,18 +82,19 @@ export function BarbershopInfoSection({
                 Cada barbero puede tener su propio horario semanal.
               </p>
             </div>
-          </article>
+          </Peldano>
 
           {/* Dirección */}
           {barbershop.address && mapsLink ? (
-            <article className="flex items-start gap-4 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5">
+            <Peldano as="article" levanta className="group relative flex items-start gap-4 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40">
+              <Brillo reflejo={false} />
               <div
                 aria-hidden="true"
-                className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
+                className="relative flex size-10 shrink-0 items-center justify-center rounded-full transition-transform duration-[var(--duration-base)] ease-out group-hover:scale-110 border border-[color:var(--brand-gold)]/30 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]"
               >
                 <MapPin className="size-4" />
               </div>
-              <div className="min-w-0">
+              <div className="relative min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
                   Dirección
                 </p>
@@ -107,19 +110,20 @@ export function BarbershopInfoSection({
                   Ver en Google Maps →
                 </a>
               </div>
-            </article>
+            </Peldano>
           ) : null}
 
           {/* WhatsApp */}
           {whatsappLink ? (
-            <article className="flex items-start gap-4 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5">
+            <Peldano as="article" levanta className="group relative flex items-start gap-4 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40">
+              <Brillo reflejo={false} />
               <div
                 aria-hidden="true"
-                className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--success)]/30 bg-[color:var(--success-soft)] text-[color:var(--success)]"
+                className="relative flex size-10 shrink-0 items-center justify-center rounded-full transition-transform duration-[var(--duration-base)] ease-out group-hover:scale-110 border border-[color:var(--success)]/30 bg-[color:var(--success-soft)] text-[color:var(--success)]"
               >
                 <MessageCircle className="size-4" />
               </div>
-              <div className="min-w-0">
+              <div className="relative min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
                   WhatsApp
                 </p>
@@ -135,19 +139,20 @@ export function BarbershopInfoSection({
                   Escribir →
                 </a>
               </div>
-            </article>
+            </Peldano>
           ) : null}
 
           {/* Instagram */}
           {barbershop.instagram ? (
-            <article className="flex items-start gap-4 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5">
+            <Peldano as="article" levanta className="group relative flex items-start gap-4 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5 transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40">
+              <Brillo reflejo={false} />
               <div
                 aria-hidden="true"
-                className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-default)] text-[color:var(--text-secondary)]"
+                className="relative flex size-10 shrink-0 items-center justify-center rounded-full transition-transform duration-[var(--duration-base)] ease-out group-hover:scale-110 border border-[color:var(--border-default)] text-[color:var(--text-secondary)]"
               >
                 <InstagramGlyph className="size-4" />
               </div>
-              <div className="min-w-0">
+              <div className="relative min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
                   Instagram
                 </p>
@@ -166,9 +171,9 @@ export function BarbershopInfoSection({
                   Ver perfil →
                 </a>
               </div>
-            </article>
+            </Peldano>
           ) : null}
-        </div>
+        </Escalera>
       </div>
     </section>
   );

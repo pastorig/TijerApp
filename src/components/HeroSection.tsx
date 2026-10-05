@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { BookingCTA } from "./BookingCTA";
+import { LuzQueSigue } from "@/components/public/LandingMotion";
 
 function InstagramGlyph({ className }: { className?: string }) {
   return (
@@ -59,27 +60,30 @@ export function HeroSection({
   const whatsappLink = barbershop.whatsapp
     ? buildWhatsAppLink(barbershop.whatsapp)
     : null;
+  const palabras = barbershop.name.split(/\s+/).filter(Boolean);
 
   return (
     <section className="relative isolate overflow-hidden">
-      {/* Gradient background */}
+      {/* Gradient background: respira despacio, para que la cabecera no sea
+          una foto quieta. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10"
+        className="animate-glow-breathe pointer-events-none absolute inset-0 -z-10 origin-top"
         style={{
           background:
             "radial-gradient(70% 50% at 50% 0%, color-mix(in oklab, var(--brand-gold) 10%, transparent) 0%, transparent 70%)",
         }}
       />
+      <LuzQueSigue />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-px bg-[color:var(--border-subtle)]"
       />
 
       <div className="mx-auto w-full max-w-6xl px-4 pb-10 pt-8 sm:px-8 sm:pb-14 sm:pt-12 lg:px-12 lg:pb-16 lg:pt-14">
-        <div className="animate-fade-up text-center sm:text-left">
+        <div className="text-center sm:text-left">
           {barbershop.logoUrl ? (
-            <div className="mx-auto mb-6 flex size-24 items-center justify-center overflow-hidden rounded-full border-2 border-[color:var(--brand-gold)]/40 bg-[color:var(--surface-1)] shadow-[0_0_40px_color-mix(in_oklab,var(--brand-gold)_15%,transparent)] sm:mx-0 sm:size-28">
+            <div className="animate-logo-in mx-auto mb-6 flex size-24 items-center justify-center overflow-hidden rounded-full border-2 border-[color:var(--brand-gold)]/40 bg-[color:var(--surface-1)] shadow-[0_0_40px_color-mix(in_oklab,var(--brand-gold)_15%,transparent)] sm:mx-0 sm:size-28">
               <Image
                 src={barbershop.logoUrl}
                 alt={`Logo de ${barbershop.name}`}
@@ -92,19 +96,35 @@ export function HeroSection({
             </div>
           ) : null}
 
-          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
+          <p className="animate-rise text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Reservas online
           </p>
 
-          <h1 className="mt-4 text-[2.25rem] font-black uppercase leading-[0.95] tracking-normal text-balance text-white sm:mt-5 sm:text-5xl lg:text-6xl">
-            {barbershop.name}
+          <h1 aria-label={barbershop.name} className="mt-4 text-[2.25rem] font-black uppercase leading-[0.95] tracking-normal text-balance text-white sm:mt-5 sm:text-5xl lg:text-6xl">
+            {/* El nombre sube palabra por palabra. El texto entero va en
+                `aria-label` para que un lector de pantalla no lo lea cortado. */}
+            {palabras.map((palabra, i) => (
+              <span
+                key={`${palabra}-${i}`}
+                aria-hidden="true"
+                className="inline-block overflow-hidden pb-[0.08em] align-bottom"
+              >
+                <span
+                  className="animate-word-rise inline-block"
+                  style={{ animationDelay: `${i * 70}ms` }}
+                >
+                  {palabra}
+                  {i < palabras.length - 1 ? "\u00a0" : ""}
+                </span>
+              </span>
+            ))}
           </h1>
 
-          <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-[color:var(--text-secondary)] sm:mx-0 sm:mt-5 sm:text-lg sm:leading-8">
+          <p style={{ animationDelay: "120ms" }} className="animate-rise mx-auto mt-4 max-w-xl text-base leading-7 text-[color:var(--text-secondary)] sm:mx-0 sm:mt-5 sm:text-lg sm:leading-8">
             {barbershop.description}
           </p>
 
-          <div className="mt-7 flex flex-col items-stretch gap-3 sm:mt-8 sm:flex-row sm:items-center sm:gap-4">
+          <div style={{ animationDelay: "200ms" }} className="animate-rise mt-7 flex flex-col items-stretch gap-3 sm:mt-8 sm:flex-row sm:items-center sm:gap-4">
             {bookingEnabled ? (
               <BookingCTA barbershopSlug={barbershop.slug} />
             ) : null}

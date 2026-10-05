@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { X } from "lucide-react";
+import { Escalera, Peldano } from "@/components/public/LandingMotion";
 import {
   listGalleryPhotosByBarbershop,
   type GalleryPhoto,
@@ -49,32 +51,32 @@ export function BarbershopGallerySection({
       className="border-t border-[color:var(--border-subtle)] bg-[color:var(--surface-0)]"
     >
       <div className="mx-auto w-full max-w-6xl px-4 py-7 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
-        <header className="text-center sm:text-left">
-          <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
+        <Escalera as="header" paso={0.09} className="text-center sm:text-left">
+          <Peldano as="p" className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
             Galería
-          </p>
-          <h2 className="mt-3 text-2xl font-black uppercase tracking-normal text-white sm:mt-4 sm:text-3xl lg:text-4xl">
+          </Peldano>
+          <Peldano as="h2" className="mt-3 text-2xl font-black uppercase tracking-normal text-white sm:mt-4 sm:text-3xl lg:text-4xl">
             Mirá nuestro local
-          </h2>
-        </header>
+          </Peldano>
+        </Escalera>
 
-        <ul className="mt-6 grid grid-cols-2 gap-2 sm:mt-8 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
+        <Escalera paso={0.05} className="mt-6 grid grid-cols-2 gap-2 sm:mt-8 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
           {photos.map((photo, index) => (
-            <li key={photo.id}>
+            <Peldano key={photo.id}>
               <button
                 type="button"
                 onClick={() => setLightboxIndex(index)}
                 aria-label={
                   photo.caption ?? `Abrir foto ${index + 1} en grande`
                 }
-                className="group relative block aspect-square w-full overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-black transition-transform duration-[var(--duration-fast)] hover:scale-[1.02]"
+                className="group relative block aspect-square w-full overflow-hidden rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-black transition-colors duration-[var(--duration-base)] hover:border-[color:var(--brand-gold)]/50"
               >
                 <Image
                   src={photo.public_url}
                   alt={photo.caption ?? `Foto ${index + 1}`}
                   fill
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className="object-cover transition-opacity duration-[var(--duration-fast)] group-hover:opacity-90"
+                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
                   unoptimized
                 />
                 {photo.caption ? (
@@ -83,14 +85,22 @@ export function BarbershopGallerySection({
                   </span>
                 ) : null}
               </button>
-            </li>
+            </Peldano>
           ))}
-        </ul>
+        </Escalera>
       </div>
 
-      {/* Lightbox */}
+      {/* Lightbox: el fondo funde y la foto se acerca; al cerrar, lo mismo
+          al revés (por eso `AnimatePresence`). */}
+      <MotionConfig reducedMotion="user">
+      <AnimatePresence>
       {lightboxPhoto ? (
-        <div
+        <motion.div
+          key="lightbox"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
           role="dialog"
           aria-modal="true"
           aria-label={lightboxPhoto.caption ?? "Foto ampliada"}
@@ -105,7 +115,11 @@ export function BarbershopGallerySection({
           >
             <X className="size-4" />
           </button>
-          <div
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.97 }}
+            transition={{ duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
             className="relative h-full max-h-[85vh] w-full max-w-5xl"
             onClick={(event) => event.stopPropagation()}
           >
@@ -122,9 +136,11 @@ export function BarbershopGallerySection({
                 {lightboxPhoto.caption}
               </p>
             ) : null}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       ) : null}
+      </AnimatePresence>
+      </MotionConfig>
     </section>
   );
 }
