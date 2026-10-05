@@ -859,23 +859,36 @@ option:hover {
 /* Reveal on scroll — el wrapper client (Reveal.tsx) togglea .is-visible. */
 /* Tres momentos, y el HTML del servidor no trae ninguno (se ve todo):
    - `is-waiting`: el navegador confirmó que está debajo de la pantalla.
-   - `is-visible`: entró. La animación usa `backwards`, no `both`: mientras
-     espera su demora queda escondido, pero al terminar suelta el `transform`
-     para que el hover de la tarjeta lo pueda usar.
-   - `is-still`: ya estaba a la vista al cargar; no se anima. */
+   - `is-visible`: está por entrar. La animación usa `backwards`, no `both`:
+     mientras espera su demora queda escondido, pero al terminar suelta el
+     `transform` para que el hover de la tarjeta lo pueda usar.
+   - `is-still`: ya estaba a la vista al cargar; no se anima.
+
+   La subida es corta y la opacidad llega antes que el movimiento: la pieza se
+   puede leer casi enseguida y lo que queda es solo acomodarse. */
 .reveal.is-waiting {
   opacity: 0;
-  transform: translateY(26px);
+  transform: translateY(14px);
   transition: none;
 }
 @keyframes tijerapp-reveal {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(26px);
+    transform: translateY(14px);
+  }
+  55% {
+    opacity: 1;
   }
 }
 .reveal.is-visible {
-  animation: tijerapp-reveal 640ms var(--ease-out-soft) backwards;
+  animation: tijerapp-reveal 520ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+/* La demora escalonada solo donde las tarjetas van lado a lado. En una sola
+   columna ya entran de a una al bajar, y demorarlas deja huecos. */
+@media (min-width: 640px) {
+  .reveal.is-visible {
+    animation-delay: var(--reveal-delay, 0ms);
+  }
 }
 .reveal.is-still {
   animation: none;
