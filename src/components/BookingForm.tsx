@@ -1444,9 +1444,9 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       </section>
 
       {/* Resumen — columna lateral minimalista */}
-      <aside className="min-w-0 lg:sticky lg:top-12">
+      <aside className="min-w-0 lg:sticky lg:top-6">
         <div
-          className="card-premium animate-fade-up p-5 sm:p-6 lg:p-8"
+          className="card-premium animate-fade-up p-5 sm:p-6 lg:p-6"
           style={{ animationDelay: "120ms" }}
         >
           <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
@@ -1474,7 +1474,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               <p
                 className={cn(
                   appliedCoupon ? "mt-1" : "mt-2",
-                  "text-gold-gradient font-mono text-3xl font-black tabular-nums leading-none sm:text-5xl lg:text-6xl",
+                  "text-gold-gradient font-mono text-3xl font-black tabular-nums leading-none sm:text-5xl",
                 )}
               >
                 <PrecioAnimado
@@ -1499,7 +1499,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             </div>
           ) : null}
 
-          <dl className="mt-6 grid grid-cols-1 gap-3 sm:mt-10 sm:gap-5">
+          <dl className="mt-6 grid grid-cols-1 gap-3 sm:mt-10 sm:gap-5 lg:mt-6 lg:gap-3">
             {summaryRows.map((row) => (
               <div
                 key={row.label}
@@ -1534,7 +1534,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             </div>
           ) : null}
 
-          <p className="mt-8 text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
+          <p className="mt-8 lg:mt-5 text-[10px] uppercase tracking-[0.2em] text-[color:var(--text-subtle)]">
             Al reservar, guardamos el turno y abrimos WhatsApp.
           </p>
 
@@ -1544,7 +1544,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             fullWidth
             loading={isSaving}
             disabled={isSubmitDisabled}
-            className="gloss-gold mt-8 hidden lg:inline-flex"
+            className="gloss-gold mt-5 hidden lg:inline-flex"
           >
             {isSaving ? "Guardando…" : "Reservar turno"}
           </Button>
