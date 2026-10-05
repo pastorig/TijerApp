@@ -313,7 +313,14 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     if (!slot.isAvailable) return;
     // Solo la primera vez: el que cambia de horario está comparando, y que la
     // página se le mueva en cada toque estorba.
-    if (!selectedTime) bajarHastaElPaso("paso-datos");
+    if (!selectedTime) {
+      bajarHastaElPaso("paso-datos");
+      // Despierta al servidor de reservas mientras el cliente escribe sus
+      // datos. Si nadie reservó en un rato, el primer pedido tarda cerca de
+      // 1,5 s más solo en arrancar, y ese tiempo caía justo sobre "Reservar".
+      // El pedido no hace nada: la ruta solo acepta POST y contesta 405.
+      void fetch("/api/appointments/book", { method: "HEAD" }).catch(() => {});
+    }
     setSelectedTime(slot.time);
     setFormError("");
   }
