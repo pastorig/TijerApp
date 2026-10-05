@@ -64,6 +64,9 @@ export function StaffAccessSection({
    * cuánto le sacaron. Igual que en Dentidad.
    */
   const [abierto, setAbierto] = useState<string | null>(null);
+  // Los accesos los maneja solo el dueño. Arranca en true para no mostrarle el
+  // aviso a quien sí puede mientras carga; el servidor rechaza igual.
+  const [puedeAdministrar, setPuedeAdministrar] = useState(true);
 
   useEffect(() => {
     let vivo = true;
@@ -84,6 +87,7 @@ export function StaffAccessSection({
         );
         const payload = (await res.json().catch(() => ({}))) as {
           accesos?: Array<{ barber_id: string; permisos?: StaffPermissions }>;
+          puedeAdministrar?: boolean;
         };
         if (!vivo) return;
         // Sin esto, un fallo dejaba la lista como si nadie tuviera acceso y el
@@ -93,6 +97,7 @@ export function StaffAccessSection({
           return;
         }
         const accesos = payload.accesos;
+        setPuedeAdministrar(payload.puedeAdministrar !== false);
         setConAcceso(accesos.map((a) => a.barber_id));
         setPermisos(
           Object.fromEntries(
@@ -291,6 +296,13 @@ export function StaffAccessSection({
             Reintentar
           </Button>
         </div>
+      ) : !puedeAdministrar ? (
+        <p className="mt-4 rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] px-3 py-3 text-xs leading-5 text-[color:var(--text-muted)]">
+          Los accesos de los empleados los maneja solo el dueño de la barbería.
+          {conAcceso.length > 0
+            ? ` Hoy ${conAcceso.length === 1 ? "tiene acceso 1 barbero" : `tienen acceso ${conAcceso.length} barberos`}.`
+            : " Hoy ningún barbero tiene acceso."}
+        </p>
       ) : barberos.length === 0 ? (
         <p className="mt-4 text-xs text-[color:var(--text-muted)]">
           Cargá primero a tus barberos y después les das acceso.

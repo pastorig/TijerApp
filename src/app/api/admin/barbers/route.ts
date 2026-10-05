@@ -119,7 +119,9 @@ export async function POST(request: Request) {
           ? body.commission_percent
           : null,
       is_active: body.is_active !== false,
-      is_owner: body.is_owner === true,
+      // Marcar a un barbero como dueño lo decide solo el dueño: esa marca es
+      // la que después impide darle un acceso de empleado sobre su ficha.
+      is_owner: body.is_owner === true && auth.isBarbershopOwner,
     };
 
     const { data: barber, error } = await supabase

@@ -47,11 +47,22 @@ export const runtime = "nodejs";
  *   servidor, además de no ofrecerse en la pantalla.
  */
 
+/**
+ * Quién puede tocar los accesos de empleados.
+ *
+ * - **Ver** la lista: cualquier administrador de la barbería.
+ * - **Crear, cambiar permisos y quitar** (`soloDueno`): únicamente el dueño.
+ *   Decidido con Bautista el 05/10/2026. Un acceso de empleado es una cuenta
+ *   nueva con contraseña; que la pueda crear un co-administrador significaba
+ *   que alguien invitado al panel podía, a su vez, repartir cuentas.
+ */
 async function assertOwner(
   authHeader: string | null,
   barbershopSlug: string,
+  { soloDueno = false }: { soloDueno?: boolean } = {},
 ): Promise<
-  { ok: true; userId: string } | { ok: false; status: number; error: string }
+  | { ok: true; userId: string; esDueno: boolean }
+  | { ok: false; status: number; error: string }
 > {
   // Quién puede entrar lo decide el helper compartido (admin de la barbería u
   // owner de la plataforma). Acá solo se conserva el mensaje de 403 que esta
@@ -62,7 +73,14 @@ async function assertOwner(
       ? { ok: false, status: 403, error: "No administrás esta barbería." }
       : access;
   }
-  return { ok: true, userId: access.userId };
+  if (soloDueno && !access.isBarbershopOwner) {
+    return {
+      ok: false,
+      status: 403,
+      error: "Solo el dueño de la barbería puede manejar los accesos de empleados.",
+    };
+  }
+  return { ok: true, userId: access.userId, esDueno: access.isBarbershopOwner };
 }
 
 export async function GET(request: Request) {
@@ -97,6 +115,9 @@ export async function GET(request: Request) {
   }
   return NextResponse.json({
     ok: true,
+    // La pantalla lo usa para avisar de entrada, en vez de dejar que un
+    // co-administrador llene el formulario y recién ahí reciba el rechazo.
+    puedeAdministrar: owner.esDueno,
     accesos: (data ?? []).map((fila) => ({
       barber_id: fila.barber_id,
       granted_at: fila.granted_at,
@@ -119,7 +140,9 @@ export async function POST(request: Request) {
     typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const password = typeof body.password === "string" ? body.password : "";
 
-  const owner = await assertOwner(request.headers.get("authorization"), slug);
+  const owner = await assertOwner(request.headers.get("authorization"), slug, {
+    soloDueno: true,
+  });
   if (!owner.ok) {
     return NextResponse.json({ error: owner.error }, { status: owner.status });
   }
@@ -265,7 +288,9 @@ export async function PATCH(request: Request) {
   const slug = typeof body.bs === "string" ? body.bs : "";
   const barberId = typeof body.barberId === "string" ? body.barberId : "";
 
-  const owner = await assertOwner(request.headers.get("authorization"), slug);
+  const owner = await assertOwner(request.headers.get("authorization"), slug, {
+    soloDueno: true,
+  });
   if (!owner.ok) {
     return NextResponse.json({ error: owner.error }, { status: owner.status });
   }
@@ -344,7 +369,9 @@ export async function DELETE(request: Request) {
   const slug = typeof body.bs === "string" ? body.bs : "";
   const barberId = typeof body.barberId === "string" ? body.barberId : "";
 
-  const owner = await assertOwner(request.headers.get("authorization"), slug);
+  const owner = await assertOwner(request.headers.get("authorization"), slug, {
+    soloDueno: true,
+  });
   if (!owner.ok) {
     return NextResponse.json({ error: owner.error }, { status: owner.status });
   }
