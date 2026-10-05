@@ -655,8 +655,11 @@ option:hover {
     opacity: 0;
   }
 }
+/* Sin relleno (`both`) y con la capa en opacidad 0 de base: fuera de la
+   animación no se ve. Si la animación no llega a correr, tampoco. */
 .animate-row-flash {
-  animation: tijerapp-row-flash 700ms var(--ease-out-soft) both;
+  opacity: 0;
+  animation: tijerapp-row-flash 700ms var(--ease-out-soft);
 }
 
 .animate-sheet-up {

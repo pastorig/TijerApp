@@ -368,13 +368,18 @@ export function AppointmentRow({
     >
       {/* Destello de un solo pase cuando el turno cambia de estado con la fila
           en pantalla: confirma, sin leer nada, que la acción entró. Se remonta
-          por `key` en cada cambio; solo cambia de opacidad. */}
+          por `key` en cada cambio; solo cambia de opacidad.
+
+          La capa es INVISIBLE por defecto (`opacity-0`) y solo la animación
+          la hace asomar. La primera versión era al revés —visible, y la
+          animación la apagaba— y si la animación no corría quedaba un bloque
+          de color tapando la tarjeta entera. Así, si falla, no se ve nada. */}
       {status !== estadoAlCargar ? (
         <span
           key={status}
           aria-hidden="true"
           className={cn(
-            "animate-row-flash pointer-events-none absolute inset-0",
+            "animate-row-flash pointer-events-none absolute inset-0 opacity-0",
             status === "confirmed"
               ? "bg-[color:var(--success)]"
               : status === "cancelled" || status === "deleted"
