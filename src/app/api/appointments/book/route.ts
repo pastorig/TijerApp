@@ -125,13 +125,58 @@ export async function POST(request: Request) {
   // tres cubetas distintas. O sea que el freno por teléfono —que es el que de
   // verdad distingue a una persona de un script, porque la IP no sirve con el
   // CGNAT argentino— se esquivaba cambiando el formato.
-  const [ipLimit, phoneLimit] = await Promise.all([
-    checkRateLimit("reserva", getRequestIdentifier(request, slug)),
-    checkRateLimit(
-      "reserva-telefono",
-      getValueIdentifier(customerPhone.replace(/\D/g, "")),
-    ),
-  ]);
+  //
+  // ── Una sola tanda para todo lo que no depende entre sí ─────────────────
+  // El freno, el plan, la barbería, el servicio y el barbero se resuelven con
+  // lo que mandó el cliente: ninguno necesita el resultado de otro. Iban uno
+  // atrás del otro, y cada uno es un viaje a la base que el cliente espera
+  // mirando la pestaña "Abriendo WhatsApp…". Salen juntos y más abajo se
+  // revisan EN EL MISMO ORDEN de siempre, así que los rechazos y sus mensajes
+  // no cambian: lo único distinto es que ya no se suman los tiempos.
+  const supabase = getSupabaseAdminClient();
+  const [[ipLimit, phoneLimit], bookingGate, shopRes, serviceRes, barberRes] =
+    await Promise.all([
+      Promise.all([
+        checkRateLimit("reserva", getRequestIdentifier(request, slug)),
+        checkRateLimit(
+          "reserva-telefono",
+          getValueIdentifier(customerPhone.replace(/\D/g, "")),
+        ),
+      ]),
+      assertPublicBookingEnabled(slug),
+      // 1. Barbería + config de seña.
+      supabase
+        .from("barbershops")
+        .select(
+          "slug, name, mp_enabled, mp_access_token, mp_refresh_token, mp_token_expires_at, deposit_percent, deposit_min_amount, deposit_auto_cancel_hours, require_client_email, auto_confirm_appointments",
+        )
+        .eq("slug", slug)
+        .maybeSingle(),
+      // 2. Servicio desde la DB (precio/duración confiables).
+      supabase
+        .from("barber_services")
+        .select("id, name, price, duration_minutes, barber_id")
+        .eq("id", serviceId)
+        .eq("barbershop_slug", slug)
+        .eq("barber_id", barberId)
+        // Un servicio desactivado no se ofrece en la pantalla; sin este filtro
+        // se podía reservar igual armando el pedido a mano.
+        .eq("is_active", true)
+        .is("deleted_at", null)
+        .maybeSingle(),
+      // 2a. El barbero, desde la base: que sea de ESTA barbería, que no esté
+      // borrado ni pausado, y su nombre. Antes el nombre llegaba del navegador
+      // y quedaba guardado en el turno tal cual: se podía reservar con un
+      // barbero pausado y escribir cualquier cosa donde el dueño lee quién
+      // atiende.
+      supabase
+        .from("barbers")
+        .select("id, name, display_name, is_active")
+        .eq("id", barberId)
+        .eq("barbershop_slug", slug)
+        .is("deleted_at", null)
+        .maybeSingle(),
+    ]);
   const limit = ipLimit.allowed ? phoneLimit : ipLimit;
   if (!limit.allowed) {
     return NextResponse.json(
@@ -145,7 +190,6 @@ export async function POST(request: Request) {
 
   // Plan vencido => la barbería queda en modo lectura y la reserva online se
   // apaga. El cliente final va por WhatsApp.
-  const bookingGate = await assertPublicBookingEnabled(slug);
   if (!bookingGate.ok) {
     return NextResponse.json(
       { error: bookingGate.error },
@@ -153,16 +197,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabase = getSupabaseAdminClient();
-
-  // 1. Barbería + config de seña.
-  const { data: shop, error: shopError } = await supabase
-    .from("barbershops")
-    .select(
-      "slug, name, mp_enabled, mp_access_token, mp_refresh_token, mp_token_expires_at, deposit_percent, deposit_min_amount, deposit_auto_cancel_hours, require_client_email, auto_confirm_appointments",
-    )
-    .eq("slug", slug)
-    .maybeSingle();
+  const { data: shop, error: shopError } = shopRes;
 
   if (shopError) {
     Sentry.captureException(shopError, { tags: { route: "appointments/book" } });
@@ -219,18 +254,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // 2. Servicio desde la DB (precio/duración confiables).
-  const { data: service, error: serviceError } = await supabase
-    .from("barber_services")
-    .select("id, name, price, duration_minutes, barber_id")
-    .eq("id", serviceId)
-    .eq("barbershop_slug", slug)
-    .eq("barber_id", barberId)
-    // Un servicio desactivado no se ofrece en la pantalla; sin este filtro se
-    // podía reservar igual armando el pedido a mano.
-    .eq("is_active", true)
-    .is("deleted_at", null)
-    .maybeSingle();
+  const { data: service, error: serviceError } = serviceRes;
 
   const serviceRow = service as {
     id: string;
@@ -247,17 +271,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // 2a. El barbero, desde la base: que sea de ESTA barbería, que no esté
-  // borrado ni pausado, y su nombre. Antes el nombre llegaba del navegador y
-  // quedaba guardado en el turno tal cual: se podía reservar con un barbero
-  // pausado y escribir cualquier cosa donde el dueño lee quién atiende.
-  const { data: barberRow, error: barberError } = await supabase
-    .from("barbers")
-    .select("id, name, display_name, is_active")
-    .eq("id", barberId)
-    .eq("barbershop_slug", slug)
-    .is("deleted_at", null)
-    .maybeSingle();
+  const { data: barberRow, error: barberError } = barberRes;
 
   if (barberError) {
     return NextResponse.json(
@@ -276,13 +290,29 @@ export async function POST(request: Request) {
   // horario semanal, pausa al medio, excepción del día, bloqueos, anticipación
   // mínima y tope de 180 días. Es la misma función que arma la lista que ve el
   // cliente, así que no pueden discrepar.
-  const slotCheck = await assertSlotBookable({
-    barbershopSlug: slug,
-    barberId,
-    date: appointmentDate,
-    time: appointmentTime,
-    durationMinutes: serviceRow.duration_minutes,
-  });
+  //
+  // Sale junto con la validación del cupón (2c): los dos necesitan el
+  // servicio, pero no se necesitan entre sí. Se revisan en el orden de siempre.
+  const couponCode =
+    typeof body.couponCode === "string" && body.couponCode.trim()
+      ? body.couponCode.trim().toUpperCase()
+      : null;
+  const [slotCheck, couponRes] = await Promise.all([
+    assertSlotBookable({
+      barbershopSlug: slug,
+      barberId,
+      date: appointmentDate,
+      time: appointmentTime,
+      durationMinutes: serviceRow.duration_minutes,
+    }),
+    couponCode
+      ? supabase.rpc("validate_coupon_for_booking", {
+          p_barbershop_slug: slug,
+          p_code: couponCode,
+          p_service_price: serviceRow.price,
+        })
+      : null,
+  ]);
   if (!slotCheck.ok) {
     return NextResponse.json(
       { error: slotCheck.error },
@@ -294,20 +324,9 @@ export async function POST(request: Request) {
   // cliente. La RPC chequea vigencia, activo y tope de usos.
   let couponId: string | null = null;
   let discountAmount: number | null = null;
-  const couponCode =
-    typeof body.couponCode === "string" && body.couponCode.trim()
-      ? body.couponCode.trim().toUpperCase()
-      : null;
 
   if (couponCode) {
-    const { data: couponRows } = await supabase.rpc(
-      "validate_coupon_for_booking",
-      {
-        p_barbershop_slug: slug,
-        p_code: couponCode,
-        p_service_price: serviceRow.price,
-      },
-    );
+    const couponRows = couponRes?.data ?? null;
     const row = (couponRows as Array<{
       is_valid: boolean;
       coupon_id: string | null;
