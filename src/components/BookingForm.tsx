@@ -8,6 +8,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { MotionConfig, motion } from "framer-motion";
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import {
   type Barber,
@@ -40,6 +41,16 @@ import { ServicePicker } from "./booking/ServicePicker";
 import { DateStrip } from "./booking/DateStrip";
 import { StepHeader } from "./booking/StepHeader";
 import { PasoPendiente } from "./booking/PasoPendiente";
+import {
+  Aparecer,
+  Destellos,
+  EASE_SUAVE,
+  LatidoUnaVez,
+  PrecioAnimado,
+  TildeDeExito,
+  TituloPorPalabras,
+  bajarHastaElPaso,
+} from "./booking/BookingMotion";
 import { DepositPaymentPanel } from "./DepositPaymentPanel";
 import { SimulatePaymentButton } from "./SimulatePaymentButton";
 import type { CouponValidation } from "@/lib/public-coupons";
@@ -125,6 +136,9 @@ export function BookingForm({ barbershop }: BookingFormProps) {
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [selectedDate, setSelectedDate] = useState(getTodayInputValue());
   const [selectedTime, setSelectedTime] = useState("");
+  // De qué barbero/servicio/día son los horarios en pantalla. Cuando cambia,
+  // la grilla entra en cascada; si solo se refresca la misma, no se mueve nada.
+  const [tandaDeHorarios, setTandaDeHorarios] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientEmail, setClientEmail] = useState("");
@@ -215,6 +229,10 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     !selectedBarber ||
     !selectedService ||
     availableServices.length === 0;
+  // Ya no falta nada: es cuando el botón del celular late una vez.
+  const listoParaReservar =
+    !isSubmitDisabled &&
+    Boolean(selectedTime && clientName.trim() && clientPhone.trim());
   const compactSummary = [
     selectedService?.name,
     selectedBarberName,
@@ -233,15 +251,19 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     setSelectedBarberServices(barber?.services ?? []);
     // Cambiar de barbero borra el servicio: son listas distintas. La misma
     // regla de siempre decide si queda uno puesto (sólo si tiene uno solo).
-    setSelectedServiceId(elegirServicioInicial(barber?.services ?? []));
+    const servicioPuesto = elegirServicioInicial(barber?.services ?? []);
+    setSelectedServiceId(servicioPuesto);
     setSelectedTime("");
     setFormError("");
+    // Si el barbero tiene un solo servicio ya quedó elegido: se sigue al día.
+    bajarHastaElPaso(servicioPuesto ? "paso-dia" : "paso-servicio");
   }
 
   function handleServiceChange(serviceId: string) {
     setSelectedServiceId(serviceId);
     setSelectedTime("");
     setFormError("");
+    bajarHastaElPaso("paso-dia");
   }
 
   async function handleSubmitWaitlist() {
@@ -289,6 +311,9 @@ export function BookingForm({ barbershop }: BookingFormProps) {
 
   function handleSlotSelect(slot: AvailabilitySlot) {
     if (!slot.isAvailable) return;
+    // Solo la primera vez: el que cambia de horario está comparando, y que la
+    // página se le mueva en cada toque estorba.
+    if (!selectedTime) bajarHastaElPaso("paso-datos");
     setSelectedTime(slot.time);
     setFormError("");
   }
@@ -470,6 +495,9 @@ export function BookingForm({ barbershop }: BookingFormProps) {
         }
 
         setAvailabilitySlots(data);
+        setTandaDeHorarios(
+          `${selectedBarberId}|${selectedService.id}|${selectedDate}`,
+        );
 
         if (
           selectedTime &&
@@ -897,7 +925,9 @@ export function BookingForm({ barbershop }: BookingFormProps) {
   }
 
   return (
-    <>
+    // "user": con "reducir movimiento" en el sistema, Framer Motion deja de
+    // mover y de animar el layout, y solo conserva los cambios de opacidad.
+    <MotionConfig reducedMotion="user">
       {showWaitlistForm ? (
         <div
           role="dialog"
@@ -1061,16 +1091,18 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 Este barbero no tiene servicios activos.
               </p>
             ) : (
-              <ServicePicker
-                services={availableServices}
-                selectedId={selectedService?.id ?? ""}
-                disabled={isSaving || isLoadingServices}
-                onSelect={handleServiceChange}
-              />
+              <Aparecer key={selectedBarberId}>
+                <ServicePicker
+                  services={availableServices}
+                  selectedId={selectedService?.id ?? ""}
+                  disabled={isSaving || isLoadingServices}
+                  onSelect={handleServiceChange}
+                />
+              </Aparecer>
             )}
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3" id="paso-dia">
             <StepHeader
               number={3}
               title="¿Qué día?"
@@ -1211,20 +1243,49 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                     (s) => parseInt(s.time.slice(0, 2), 10) >= 12,
                   );
 
-                  function renderSlot(slot: typeof availabilitySlots[number]) {
+                  function renderSlot(
+                    slot: typeof availabilitySlots[number],
+                    orden: number,
+                  ) {
                     const isSelected = slot.time === selectedTime;
                     const title = SLOT_REASON_TITLE[slot.reason] || undefined;
+                    const sePuedeTocar = slot.isAvailable && !isSaving;
+                    // Con un horario ya elegido, los otros libres se apagan un
+                    // poco para que el elegido sea lo que se ve. Vuelven al
+                    // pasarles por encima: siguen siendo elegibles.
+                    const apagado =
+                      Boolean(selectedTime) && !isSelected && slot.isAvailable;
                     return (
-                      <button
-                        key={slot.time}
+                      // La entrada va en un envoltorio aparte: así la demora de
+                      // la cascada no retrasa también el toque.
+                      <motion.div
+                        key={`${tandaDeHorarios}-${slot.time}`}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          duration: 0.22,
+                          ease: EASE_SUAVE,
+                          // Tope: una grilla larga no puede tardar un segundo.
+                          delay: Math.min(orden, 20) * 0.025,
+                        }}
+                      >
+                      <motion.button
                         type="button"
                         role="radio"
                         aria-checked={isSelected}
                         disabled={!slot.isAvailable || isSaving}
                         onClick={() => handleSlotSelect(slot)}
                         title={title}
+                        initial={false}
+                        animate={{
+                          scale: isSelected ? [1, 1.08, 1] : 1,
+                          opacity: apagado ? 0.6 : 1,
+                        }}
+                        whileHover={sePuedeTocar ? { opacity: 1 } : undefined}
+                        whileTap={sePuedeTocar ? { scale: 0.95 } : undefined}
+                        transition={{ duration: 0.24, ease: EASE_SUAVE }}
                         className={cn(
-                          "min-h-11 rounded-[var(--radius-sm)] border font-mono text-xs font-bold tabular-nums transition-colors duration-[var(--duration-fast)]",
+                          "min-h-11 w-full rounded-[var(--radius-sm)] border font-mono text-xs font-bold tabular-nums transition-colors duration-[var(--duration-fast)]",
                           isSelected
                             ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                             : slot.isAvailable
@@ -1233,7 +1294,8 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                         )}
                       >
                         {slot.time}
-                      </button>
+                      </motion.button>
+                      </motion.div>
                     );
                   }
 
@@ -1263,7 +1325,9 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                             aria-label="Horarios tarde"
                             className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5"
                           >
-                            {afternoonSlots.map(renderSlot)}
+                            {afternoonSlots.map((slot, i) =>
+                              renderSlot(slot, morningSlots.length + i),
+                            )}
                           </div>
                         </div>
                       ) : null}
@@ -1280,7 +1344,8 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           </div>
 
           {selectedTime ? (
-          <div className="space-y-3">
+          <div id="paso-datos">
+          <Aparecer className="space-y-3">
             <StepHeader
               number={5}
               title="Tus datos"
@@ -1361,6 +1426,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               rows={2}
             />
           </Field>
+          </Aparecer>
           </div>
           ) : (
             <p className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--border-default)] px-4 py-6 text-center text-xs text-[color:var(--text-muted)]">
@@ -1386,19 +1452,32 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                 Total
               </p>
               {appliedCoupon ? (
-                <>
-                  <p className="mt-1 font-mono text-base font-semibold tabular-nums leading-none text-[color:var(--text-muted)] line-through">
-                    {formatPrice(selectedService.price)}
-                  </p>
-                  <p className="mt-1 font-mono text-3xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl lg:text-6xl">
-                    {formatPrice(appliedCoupon.finalPrice)}
-                  </p>
-                </>
-              ) : (
-                <p className="mt-2 font-mono text-3xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl lg:text-6xl">
+                <motion.p
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.24, ease: EASE_SUAVE }}
+                  className="mt-1 font-mono text-base font-semibold tabular-nums leading-none text-[color:var(--text-muted)] line-through"
+                >
                   {formatPrice(selectedService.price)}
-                </p>
-              )}
+                </motion.p>
+              ) : null}
+              {/* Un solo número para el total: al aplicar un cupón cuenta
+                  desde el precio de lista hasta el final, en vez de cambiar
+                  de golpe. */}
+              <p
+                className={cn(
+                  appliedCoupon ? "mt-1" : "mt-2",
+                  "font-mono text-3xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl lg:text-6xl",
+                )}
+              >
+                <PrecioAnimado
+                  value={
+                    appliedCoupon
+                      ? appliedCoupon.finalPrice
+                      : selectedService.price
+                  }
+                />
+              </p>
 
               {/* Input de cupón — solo visible si hay servicio elegido */}
               <div className="mt-5">
@@ -1471,9 +1550,13 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           <div className="min-w-0 flex-1">
             {selectedService ? (
               <p className="font-mono text-xl font-black tabular-nums leading-none text-[color:var(--brand-gold)]">
-                {appliedCoupon
-                  ? formatPrice(appliedCoupon.finalPrice)
-                  : formatPrice(selectedService.price)}
+                <PrecioAnimado
+                  value={
+                    appliedCoupon
+                      ? appliedCoupon.finalPrice
+                      : selectedService.price
+                  }
+                />
               </p>
             ) : (
               <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-subtle)]">
@@ -1484,6 +1567,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               {compactSummary || "Completá los datos"}
             </p>
           </div>
+          <LatidoUnaVez activo={listoParaReservar} className="shrink-0">
           <Button
             type="submit"
             size="lg"
@@ -1492,14 +1576,15 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             iconRight={
               isSaving ? undefined : <ArrowUpRight className="size-4" />
             }
-            className="shrink-0 px-7 text-sm shadow-[0_0_0_1px_var(--brand-gold-ring),0_8px_24px_-8px_rgba(201,162,62,0.5)]"
+            className="px-7 text-sm shadow-[0_0_0_1px_var(--brand-gold-ring),0_8px_24px_-8px_rgba(201,162,62,0.5)]"
           >
             {isSaving ? "Guardando…" : "Reservar"}
           </Button>
+          </LatidoUnaVez>
         </div>
       </div>
     </form>
-    </>
+    </MotionConfig>
   );
 }
 
@@ -1543,15 +1628,34 @@ function BookingSuccess({
   const payHref =
     result.initPoint ?? `/api/mp/pay?token=${result.confirmationToken}`;
 
+  // Esta pantalla reemplaza al formulario sin cambiar de página, así que el
+  // scroll quedaba donde estaba el botón "Reservar": el cliente caía en la
+  // mitad del detalle y no veía la confirmación.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, []);
+
   return (
+    <MotionConfig reducedMotion="user">
     <section className="grid grid-cols-1 gap-12 pb-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start lg:gap-20 lg:pb-0">
-      <div className="animate-fade-up">
-        <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
-          Turno reservado
-        </p>
-        <h1 className="mt-6 text-4xl font-black uppercase leading-[0.95] tracking-normal text-balance sm:text-5xl lg:text-6xl">
-          ¡Listo, {firstNameOf(result.customerName)}!
-        </h1>
+      {/* El orden de entrada es el orden de lectura: tilde, título, qué pasó,
+          qué hacer ahora y, al final, el detalle. */}
+      <div>
+        <div className="relative inline-flex">
+          <Destellos />
+          <TildeDeExito />
+        </div>
+        <Aparecer demora={0.2}>
+          <p className="mt-6 text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
+            Turno reservado
+          </p>
+        </Aparecer>
+        <TituloPorPalabras
+          texto={`¡Listo, ${firstNameOf(result.customerName)}!`}
+          demora={0.3}
+          className="mt-4 text-4xl font-black uppercase leading-[0.95] tracking-normal text-balance sm:text-5xl lg:text-6xl"
+        />
+        <Aparecer demora={0.5}>
         <p className="mt-6 max-w-xl text-sm leading-7 text-[color:var(--text-secondary)] sm:text-base">
           Tu turno en{" "}
           <span className="text-white font-semibold">{barbershop.name}</span>{" "}
@@ -1584,9 +1688,10 @@ function BookingSuccess({
             </>
           )}
         </p>
+        </Aparecer>
 
         {isDeposit ? (
-          <div className="mt-8">
+          <Aparecer demora={0.6} className="mt-8">
             <DepositPaymentPanel
               amount={result.depositAmount}
               status="pending"
@@ -1594,10 +1699,10 @@ function BookingSuccess({
               barbershopName={barbershop.name}
             />
             <SimulatePaymentButton token={result.confirmationToken} />
-          </div>
+          </Aparecer>
         ) : null}
 
-        <div className="mt-8 grid gap-3">
+        <Aparecer demora={0.68} className="mt-8 grid gap-3">
           <Button
             as="link"
             href={confirmHref}
@@ -1618,18 +1723,20 @@ function BookingSuccess({
               Reabrir WhatsApp con la reserva
             </a>
           ) : null}
-        </div>
+        </Aparecer>
 
-        <p className="mt-8 text-xs uppercase tracking-normal text-[color:var(--text-subtle)]">
-          Guardá este link · podés volver acá cuando quieras
-        </p>
+        <Aparecer demora={0.76}>
+          <p className="mt-8 text-xs uppercase tracking-normal text-[color:var(--text-subtle)]">
+            Guardá este link · podés volver acá cuando quieras
+          </p>
+        </Aparecer>
       </div>
 
       {/* Aside: resumen del turno */}
       <aside className="min-w-0 lg:sticky lg:top-12">
-        <div
-          className="animate-fade-up border-t border-[color:var(--border-subtle)] pt-8 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0 lg:pl-10"
-          style={{ animationDelay: "120ms" }}
+        <Aparecer
+          demora={0.4}
+          className="border-t border-[color:var(--border-subtle)] pt-8 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0 lg:pl-10"
         >
           <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
             Detalle del turno
@@ -1664,9 +1771,10 @@ function BookingSuccess({
               { label: "Barbero", value: result.barberName },
               { label: "Tu nombre", value: result.customerName },
               { label: "Tel", value: result.customerPhone },
-            ].map((row) => (
-              <div
+            ].map((row, i) => (
+              <Aparecer
                 key={row.label}
+                demora={0.5 + i * 0.05}
                 className="grid grid-cols-[auto_1fr] items-baseline gap-4"
               >
                 <dt className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
@@ -1675,12 +1783,13 @@ function BookingSuccess({
                 <dd className="text-right text-sm font-semibold text-white">
                   {row.value}
                 </dd>
-              </div>
+              </Aparecer>
             ))}
           </dl>
-        </div>
+        </Aparecer>
       </aside>
     </section>
+    </MotionConfig>
   );
 }
 

@@ -1,9 +1,12 @@
-import { Check } from "lucide-react";
+"use client";
+
+import { motion } from "framer-motion";
 import {
   getBarberDisplayName,
   type Barber,
 } from "@/data/demo-barbershops";
 import { cn } from "@/lib/cn";
+import { FondoElegido, TARJETA_ELEGIBLE, TildeElegido } from "./BookingMotion";
 import { InitialsAvatar } from "./InitialsAvatar";
 
 type BarberPickerProps = {
@@ -34,22 +37,24 @@ export function BarberPicker({
         const name = getBarberDisplayName(barber);
         const isSelected = barber.id === selectedId;
         return (
-          <button
+          <motion.button
             key={barber.id}
             type="button"
             role="radio"
             aria-checked={isSelected}
             disabled={disabled}
             onClick={() => onSelect(barber.id)}
+            {...TARJETA_ELEGIBLE.gestos(Boolean(disabled))}
             className={cn(
-              "flex min-h-11 items-center gap-3 rounded-[var(--radius-md)] border px-3 py-2.5 text-left transition-colors duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed disabled:opacity-60",
-              isSelected
-                ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] ring-1 ring-[color:var(--brand-gold)]/25"
-                : "border-[color:var(--border-default)] bg-[color:var(--surface-1)] hover:border-[color:var(--brand-gold)]/50",
+              TARJETA_ELEGIBLE.base,
+              "px-3 py-2.5",
+              isSelected ? TARJETA_ELEGIBLE.elegida : TARJETA_ELEGIBLE.libre,
             )}
           >
-            <InitialsAvatar name={name} active={isSelected} />
-            <span className="min-w-0 flex-1">
+            {isSelected ? <FondoElegido grupo="barbero" /> : null}
+            <span className={TARJETA_ELEGIBLE.brillo} aria-hidden="true" />
+            <InitialsAvatar name={name} active={isSelected} className="relative" />
+            <span className="relative min-w-0 flex-1">
               <span className="block truncate text-sm font-bold text-white">
                 {name}
               </span>
@@ -59,13 +64,8 @@ export function BarberPicker({
                 </span>
               ) : null}
             </span>
-            {isSelected ? (
-              <Check
-                className="size-4 shrink-0 text-[color:var(--brand-gold)]"
-                aria-hidden="true"
-              />
-            ) : null}
-          </button>
+            {isSelected ? <TildeElegido className="relative shrink-0" /> : null}
+          </motion.button>
         );
       })}
     </div>

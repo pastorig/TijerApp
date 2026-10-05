@@ -1,4 +1,9 @@
+"use client";
+
+import { AnimatePresence, motion } from "framer-motion";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { EASE_SUAVE } from "./BookingMotion";
 
 type StepHeaderProps = {
   /** Número del paso (1, 2, 3…). */
@@ -19,6 +24,9 @@ type StepHeaderProps = {
 /**
  * Encabezado de paso para el flujo de reserva: número en círculo + título +
  * subtítulo opcional. Da orden y guía visual sin ser un wizard.
+ *
+ * Cuando el paso se completa, el círculo da un salto corto y el número se
+ * cambia por un tilde: es la confirmación de que la elección quedó tomada.
  */
 export function StepHeader({
   number,
@@ -27,15 +35,21 @@ export function StepHeader({
   done,
   locked,
 }: StepHeaderProps) {
+  // `locked` gana sobre `done`: el paso de la fecha arranca con hoy puesto, así
+  // que se pintaba como completado incluso mientras seguía cerrado — justo el
+  // paso donde se pierde la gente.
+  const completo = Boolean(done) && !locked;
+
   return (
     <div className="flex items-center gap-3">
-      <span
+      <motion.span
         aria-hidden="true"
+        // `initial={false}`: lo que ya viene completo al cargar no salta.
+        initial={false}
+        animate={{ scale: completo ? [1, 1.22, 1] : 1 }}
+        transition={{ duration: 0.36, ease: EASE_SUAVE }}
         className={cn(
           "flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-black tabular-nums transition-colors",
-          // `locked` gana sobre `done`: el paso de la fecha arranca con hoy
-          // puesto, así que se pintaba como completado incluso mientras seguía
-          // cerrado — justo el paso donde se pierde la gente.
           locked
             ? "border-[color:var(--border-default)] bg-[color:var(--surface-1)] text-[color:var(--text-subtle)]"
             : done
@@ -43,8 +57,19 @@ export function StepHeader({
               : "border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]",
         )}
       >
-        {number}
-      </span>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={completo ? "tilde" : "numero"}
+            initial={{ opacity: 0, scale: 0.5, rotate: completo ? -45 : 0 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.14, ease: EASE_SUAVE }}
+            className="flex items-center justify-center"
+          >
+            {completo ? <Check className="size-3.5" strokeWidth={3.5} /> : number}
+          </motion.span>
+        </AnimatePresence>
+      </motion.span>
       <div className="min-w-0">
         <p
           className={cn(

@@ -1,7 +1,11 @@
-import { Check, Clock, Scissors } from "lucide-react";
+"use client";
+
+import { motion } from "framer-motion";
+import { Clock, Scissors } from "lucide-react";
 import { type BarberService } from "@/data/demo-barbershops";
 import { cn } from "@/lib/cn";
 import { formatPrice } from "@/lib/format";
+import { FondoElegido, TARJETA_ELEGIBLE, TildeElegido } from "./BookingMotion";
 
 type ServicePickerProps = {
   services: BarberService[];
@@ -29,24 +33,26 @@ export function ServicePicker({
       {services.map((service) => {
         const isSelected = service.id === selectedId;
         return (
-          <button
+          <motion.button
             key={service.id}
             type="button"
             role="radio"
             aria-checked={isSelected}
             disabled={disabled}
             onClick={() => onSelect(service.id)}
+            {...TARJETA_ELEGIBLE.gestos(Boolean(disabled))}
             className={cn(
-              "flex min-h-11 items-center gap-3 rounded-[var(--radius-md)] border px-3.5 py-3 text-left transition-colors duration-[var(--duration-fast)] press-shrink disabled:cursor-not-allowed disabled:opacity-60",
-              isSelected
-                ? "border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] ring-1 ring-[color:var(--brand-gold)]/25"
-                : "border-[color:var(--border-default)] bg-[color:var(--surface-1)] hover:border-[color:var(--brand-gold)]/50",
+              TARJETA_ELEGIBLE.base,
+              "px-3.5 py-3",
+              isSelected ? TARJETA_ELEGIBLE.elegida : TARJETA_ELEGIBLE.libre,
             )}
           >
+            {isSelected ? <FondoElegido grupo="servicio" /> : null}
+            <span className={TARJETA_ELEGIBLE.brillo} aria-hidden="true" />
             <span
               aria-hidden="true"
               className={cn(
-                "flex size-11 shrink-0 items-center justify-center rounded-full border transition-colors",
+                "relative flex size-11 shrink-0 items-center justify-center rounded-full border transition-colors",
                 isSelected
                   ? "border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold)]/15 text-[color:var(--brand-gold)]"
                   : "border-[color:var(--border-default)] bg-[color:var(--surface-2)] text-[color:var(--text-muted)]",
@@ -54,7 +60,7 @@ export function ServicePicker({
             >
               <Scissors className="size-4" />
             </span>
-            <span className="min-w-0 flex-1">
+            <span className="relative min-w-0 flex-1">
               <span className="block truncate text-sm font-bold text-white">
                 {service.name}
               </span>
@@ -63,18 +69,13 @@ export function ServicePicker({
                 {service.durationMinutes} min
               </span>
             </span>
-            <span className="shrink-0 text-right">
+            <span className="relative shrink-0 text-right">
               <span className="block font-mono text-base font-black tabular-nums text-[color:var(--brand-gold)]">
                 {formatPrice(service.price)}
               </span>
-              {isSelected ? (
-                <Check
-                  className="ml-auto mt-0.5 size-4 text-[color:var(--brand-gold)]"
-                  aria-hidden="true"
-                />
-              ) : null}
+              {isSelected ? <TildeElegido className="ml-auto mt-0.5" /> : null}
             </span>
-          </button>
+          </motion.button>
         );
       })}
     </div>
