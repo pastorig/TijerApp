@@ -279,6 +279,10 @@ export function AppointmentRow({
 
   const status = appointment.status ?? "pending";
   const meta = getStatusMeta(status);
+  // El estado con el que la fila se dibujó por primera vez. Sirve para que el
+  // destello de "cambió de estado" salga solo cuando el estado cambia con la
+  // fila en pantalla, y no en cada turno al cargar la lista.
+  const [estadoAlCargar] = useState(status);
   const isConfirmed = status === "confirmed";
   const isCancelled = status === "cancelled";
   const isDeleted = status === "deleted";
@@ -362,6 +366,23 @@ export function AppointmentRow({
         isPast ? "opacity-70" : "",
       )}
     >
+      {/* Destello de un solo pase cuando el turno cambia de estado con la fila
+          en pantalla: confirma, sin leer nada, que la acción entró. Se remonta
+          por `key` en cada cambio; solo cambia de opacidad. */}
+      {status !== estadoAlCargar ? (
+        <span
+          key={status}
+          aria-hidden="true"
+          className={cn(
+            "animate-row-flash pointer-events-none absolute inset-0",
+            status === "confirmed"
+              ? "bg-[color:var(--success)]"
+              : status === "cancelled" || status === "deleted"
+                ? "bg-[color:var(--danger)]"
+                : "bg-[color:var(--brand-gold)]",
+          )}
+        />
+      ) : null}
       {/* X hard delete absoluta — solo en eliminados */}
       {showHardDelete ? (
         <button
@@ -668,7 +689,7 @@ export function AppointmentRow({
               onClick={() => onConfirm?.(appointment)}
               disabled={isConfirmed || isCancelled || isBusy}
               className={cn(
-                "inline-flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] px-1 text-xs font-semibold transition-colors disabled:cursor-not-allowed sm:flex-row sm:gap-2 sm:px-4 sm:text-sm",
+                "inline-flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] px-1 text-xs font-semibold transition duration-[var(--duration-fast)] enabled:active:scale-[0.97] disabled:cursor-not-allowed sm:flex-row sm:gap-2 sm:px-4 sm:text-sm",
                 isConfirmed
                   ? "border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] text-[color:var(--success)]"
                   : isCancelled
@@ -691,7 +712,7 @@ export function AppointmentRow({
                 type="button"
                 onClick={() => onWhatsApp?.(appointment)}
                 disabled={isCancelled || isBusy}
-                className="inline-flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-1 text-xs font-semibold text-[color:var(--success)] transition-colors hover:bg-[color:var(--success)]/20 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm"
+                className="inline-flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--success)]/40 bg-[color:var(--success-soft)] px-1 text-xs font-semibold text-[color:var(--success)] transition duration-[var(--duration-fast)] enabled:active:scale-[0.97] hover:bg-[color:var(--success)]/20 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm"
               >
                 <MessageCircle
                   className="size-5 sm:size-4"
@@ -706,7 +727,7 @@ export function AppointmentRow({
                 onClick={() => onCancel?.(appointment)}
                 disabled={isCancelled || isBusy}
                 className={cn(
-                  "inline-flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] border px-1 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm",
+                  "inline-flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-sm)] border px-1 text-xs font-semibold transition duration-[var(--duration-fast)] enabled:active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 sm:flex-row sm:gap-2 sm:px-3 sm:text-sm",
                   isCancelled
                     ? "animate-success-pop border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] text-[color:var(--danger)]"
                     : "border-[color:var(--danger)]/40 bg-[color:var(--danger-soft)] text-[color:var(--danger)] hover:border-[color:var(--danger)]/70 hover:bg-[color:var(--danger)]/20 hover:shadow-[0_0_0_3px_var(--danger-soft)]",

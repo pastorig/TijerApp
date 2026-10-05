@@ -633,6 +633,32 @@ option:hover {
   animation: tijerapp-slide-in-right var(--duration-base)
     var(--ease-out-soft) both;
 }
+/* La salida de un aviso: la entrada al revés y más corta (lo que se va no
+   tiene que hacerse esperar). Dura lo mismo que TOAST_EXIT_MS en Toast.tsx. */
+@keyframes tijerapp-toast-out {
+  to {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+.animate-toast-out {
+  animation: tijerapp-toast-out 160ms var(--ease-out-soft) forwards;
+}
+
+/* Destello de una fila cuando el turno cambia de estado. Un solo pase y solo
+   opacidad: es un panel de trabajo, no tiene que distraer. */
+@keyframes tijerapp-row-flash {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.animate-row-flash {
+  animation: tijerapp-row-flash 700ms var(--ease-out-soft) both;
+}
+
 .animate-sheet-up {
   animation: tijerapp-slide-up-sheet var(--duration-slow)
     var(--ease-out-soft) both;

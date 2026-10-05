@@ -94,6 +94,9 @@ const DEFAULT_DURATION: Record<ToastVariant, number | null> = {
   loading: null,
 };
 
+/** Lo que dura la salida de un aviso. Tiene que coincidir con `.animate-toast-out`. */
+const TOAST_EXIT_MS = 160;
+
 let toastIdCounter = 0;
 function nextToastId(): string {
   toastIdCounter += 1;
@@ -105,9 +108,30 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   // Tracking de hover por id para pausar el auto-dismiss timer
   const [hoveringIds, setHoveringIds] = useState<Set<string>>(new Set());
 
-  const dismiss = useCallback((id: string) => {
+  // Los avisos que se están yendo: siguen en pantalla lo que dura la salida.
+  const [leavingIds, setLeavingIds] = useState<Set<string>>(new Set());
+
+  const remove = useCallback((id: string) => {
     setToasts((current) => current.filter((t) => t.id !== id));
+    setLeavingIds((current) => {
+      if (!current.has(id)) return current;
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
   }, []);
+
+  // Antes el aviso desaparecía de golpe. Ahora se retira por donde entró y
+  // recién después se saca de la lista.
+  const dismiss = useCallback(
+    (id: string) => {
+      setLeavingIds((current) =>
+        current.has(id) ? current : new Set(current).add(id),
+      );
+      window.setTimeout(() => remove(id), TOAST_EXIT_MS);
+    },
+    [remove],
+  );
 
   const push = useCallback(
     (
@@ -154,20 +178,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       const loadingId = push("loading", opts.loading);
       try {
         const value = await promise;
-        dismiss(loadingId);
+        remove(loadingId);
         const msg =
           typeof opts.success === "function" ? opts.success(value) : opts.success;
         push("success", msg);
         return value;
       } catch (err) {
-        dismiss(loadingId);
+        remove(loadingId);
         const msg =
           typeof opts.error === "function" ? opts.error(err) : opts.error;
         push("error", msg);
         throw err;
       }
     },
-  }), [push, dismiss]);
+  }), [push, dismiss, remove]);
 
   // Auto-dismiss timers — recalcula cada vez que cambian los toasts.
   useEffect(() => {
@@ -192,6 +216,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <ToastsViewport
         toasts={toasts}
+        leavingIds={leavingIds}
         onDismiss={dismiss}
         onHoverChange={(id, hovering) => {
           setHoveringIds((current) => {
@@ -210,8 +235,10 @@ function ToastsViewport({
   toasts,
   onDismiss,
   onHoverChange,
+  leavingIds,
 }: {
   toasts: ToastBase[];
+  leavingIds: Set<string>;
   onDismiss: (id: string) => void;
   onHoverChange: (id: string, hovering: boolean) => void;
 }) {
@@ -228,6 +255,7 @@ function ToastsViewport({
         <ToastItem
           key={toast.id}
           toast={toast}
+          leaving={leavingIds.has(toast.id)}
           onDismiss={() => onDismiss(toast.id)}
           onHoverChange={(hovering) => onHoverChange(toast.id, hovering)}
         />
@@ -239,10 +267,12 @@ function ToastsViewport({
 
 function ToastItem({
   toast,
+  leaving,
   onDismiss,
   onHoverChange,
 }: {
   toast: ToastBase;
+  leaving: boolean;
   onDismiss: () => void;
   onHoverChange: (hovering: boolean) => void;
 }) {
@@ -293,7 +323,8 @@ function ToastItem({
       onMouseLeave={() => onHoverChange(false)}
       onClick={onDismiss}
       className={cn(
-        "pointer-events-auto relative w-full max-w-sm cursor-pointer overflow-hidden rounded-[var(--radius-md)] border bg-[color:var(--surface-1)] shadow-2xl ring-1 ring-black/40 animate-slide-right sm:w-auto sm:min-w-[280px]",
+        "pointer-events-auto relative w-full max-w-sm cursor-pointer overflow-hidden rounded-[var(--radius-md)] border bg-[color:var(--surface-1)] shadow-2xl ring-1 ring-black/40 sm:w-auto sm:min-w-[280px]",
+        leaving ? "animate-toast-out" : "animate-slide-right",
         style.border,
       )}
     >

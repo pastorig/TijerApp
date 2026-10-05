@@ -44,7 +44,11 @@ type ButtonProps = ButtonAsButton | ButtonAsLink;
 
 const base =
   "inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-[0.12em] " +
-  "transition-colors duration-[var(--duration-base)] ease-[var(--ease-out-soft)] " +
+  // `transition` (y no `transition-colors`) para que también anime la escala:
+  // el botón se hunde apenas al apretarlo, que es la confirmación de que el
+  // toque entró. Deshabilitado o cargando no se mueve.
+  "transition duration-[var(--duration-base)] ease-[var(--ease-out-soft)] " +
+  "active:scale-[0.97] disabled:active:scale-100 aria-disabled:active:scale-100 " +
   "outline-none focus-visible:outline-1 focus-visible:outline-[color:var(--brand-gold)] focus-visible:outline-offset-2 " +
   "disabled:cursor-not-allowed disabled:opacity-40 select-none";
 
