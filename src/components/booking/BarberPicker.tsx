@@ -59,7 +59,7 @@ export function BarberPicker({
                 {name}
               </span>
               {barber.role ? (
-                <span className="block truncate text-xs text-[color:var(--text-muted)]">
+                <span className="block truncate text-[11px] text-[color:var(--text-muted)]">
                   {barber.role}
                 </span>
               ) : null}

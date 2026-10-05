@@ -49,7 +49,7 @@ export function StepHeader({
         animate={{ scale: completo ? [1, 1.22, 1] : 1 }}
         transition={{ duration: 0.36, ease: EASE_SUAVE }}
         className={cn(
-          "flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-black tabular-nums transition-colors",
+          "flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-black tabular-nums transition-colors",
           locked
             ? "border-[color:var(--border-default)] bg-[color:var(--surface-1)] text-[color:var(--text-subtle)]"
             : done
@@ -80,7 +80,7 @@ export function StepHeader({
           {title}
         </p>
         {subtitle ? (
-          <p className="text-xs leading-4 text-[color:var(--text-muted)]">
+          <p className="text-[11px] leading-4 text-[color:var(--text-muted)]">
             {subtitle}
           </p>
         ) : null}

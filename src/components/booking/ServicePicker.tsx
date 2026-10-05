@@ -52,7 +52,7 @@ export function ServicePicker({
             <span
               aria-hidden="true"
               className={cn(
-                "relative flex size-11 shrink-0 items-center justify-center rounded-full border transition-colors",
+                "relative flex size-9 shrink-0 items-center justify-center rounded-full border transition-colors",
                 isSelected
                   ? "border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold)]/15 text-[color:var(--brand-gold)]"
                   : "border-[color:var(--border-default)] bg-[color:var(--surface-2)] text-[color:var(--text-muted)]",
@@ -64,7 +64,7 @@ export function ServicePicker({
               <span className="block truncate text-sm font-bold text-white">
                 {service.name}
               </span>
-              <span className="mt-0.5 flex items-center gap-1 text-xs text-[color:var(--text-muted)]">
+              <span className="mt-0.5 flex items-center gap-1 text-[11px] text-[color:var(--text-muted)]">
                 <Clock className="size-3" aria-hidden="true" />
                 {service.durationMinutes} min
               </span>

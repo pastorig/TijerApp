@@ -21,7 +21,7 @@ export function InitialsAvatar({ name, active, className }: InitialsAvatarProps)
     <span
       aria-hidden="true"
       className={cn(
-        "flex size-10 shrink-0 items-center justify-center rounded-full border text-[13px] font-black uppercase tracking-normal transition-colors",
+        "flex size-10 shrink-0 items-center justify-center rounded-full border text-[13px] font-black uppercase tracking-tight transition-colors",
         active
           ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
           : "border-[color:var(--border-default)] bg-[color:var(--surface-2)] text-[color:var(--text-secondary)]",
