@@ -1294,9 +1294,9 @@ export function BookingForm({ barbershop }: BookingFormProps) {
                         className={cn(
                           "min-h-11 w-full rounded-[var(--radius-sm)] border font-mono text-xs font-bold tabular-nums transition-colors duration-[var(--duration-fast)]",
                           isSelected
-                            ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
+                            ? "gloss-gold border-[color:var(--brand-gold)] bg-gold-grad text-black"
                             : slot.isAvailable
-                              ? "border-[color:var(--border-default)] text-white hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+                              ? "key-dark border-[color:var(--border-default)] text-white hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
                               : "cursor-not-allowed border-[color:var(--border-subtle)] text-[color:var(--text-subtle)] line-through",
                         )}
                       >
@@ -1446,7 +1446,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       {/* Resumen — columna lateral minimalista */}
       <aside className="min-w-0 lg:sticky lg:top-12">
         <div
-          className="animate-fade-up border-t border-[color:var(--border-subtle)] pt-6 sm:border-t-0 sm:border-l sm:pl-6 sm:pt-0 lg:pl-10"
+          className="card-premium animate-fade-up p-5 sm:p-6 lg:p-8"
           style={{ animationDelay: "120ms" }}
         >
           <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
@@ -1474,7 +1474,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               <p
                 className={cn(
                   appliedCoupon ? "mt-1" : "mt-2",
-                  "font-mono text-3xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl lg:text-6xl",
+                  "text-gold-gradient font-mono text-3xl font-black tabular-nums leading-none sm:text-5xl lg:text-6xl",
                 )}
               >
                 <PrecioAnimado
@@ -1544,7 +1544,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             fullWidth
             loading={isSaving}
             disabled={isSubmitDisabled}
-            className="mt-8 hidden lg:inline-flex"
+            className="gloss-gold mt-8 hidden lg:inline-flex"
           >
             {isSaving ? "Guardando…" : "Reservar turno"}
           </Button>
@@ -1583,7 +1583,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             iconRight={
               isSaving ? undefined : <ArrowUpRight className="size-4" />
             }
-            className="px-7 text-sm shadow-[0_0_0_1px_var(--brand-gold-ring),0_8px_24px_-8px_rgba(201,162,62,0.5)]"
+            className="gloss-gold px-7 text-sm"
           >
             {isSaving ? "Guardando…" : "Reservar"}
           </Button>
@@ -1716,7 +1716,7 @@ function BookingSuccess({
             size="lg"
             fullWidth
             iconRight={<ArrowUpRight className="size-4" />}
-            className="sm:w-auto"
+            className="gloss-gold sm:w-auto"
           >
             Ver mi turno
           </Button>
@@ -1743,7 +1743,7 @@ function BookingSuccess({
       <aside className="min-w-0 lg:sticky lg:top-12">
         <Aparecer
           demora={0.4}
-          className="border-t border-[color:var(--border-subtle)] pt-8 sm:border-l sm:border-t-0 sm:pl-6 sm:pt-0 lg:pl-10"
+          className="card-premium p-5 sm:p-6 lg:p-8"
         >
           <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
             Detalle del turno
@@ -1753,7 +1753,7 @@ function BookingSuccess({
               <p className="mt-1 font-mono text-base font-semibold tabular-nums leading-none text-[color:var(--text-muted)] line-through">
                 {formatPrice(result.servicePrice)}
               </p>
-              <p className="mt-1 font-mono text-4xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl">
+              <p className="text-gold-gradient mt-1 font-mono text-4xl font-black tabular-nums leading-none sm:text-5xl">
                 {formatPrice(result.finalPrice)}
               </p>
               <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
@@ -1762,7 +1762,7 @@ function BookingSuccess({
               </p>
             </>
           ) : (
-            <p className="mt-2 font-mono text-4xl font-black tabular-nums leading-none text-[color:var(--brand-gold)] sm:text-5xl">
+            <p className="text-gold-gradient mt-2 font-mono text-4xl font-black tabular-nums leading-none sm:text-5xl">
               {formatPrice(result.servicePrice)}
             </p>
           )}

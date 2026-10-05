@@ -43,7 +43,17 @@ export default async function BookingPage({ params }: BookingPageProps) {
   const plan = await getBarbershopPlan(barbershopSlug);
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="relative isolate min-h-screen overflow-hidden bg-black text-white">
+      {/* El mismo resplandor dorado de la página de la barbería: la reserva es
+          la continuación de esa página, no una pantalla aparte. */}
+      <div
+        aria-hidden="true"
+        className="animate-glow-breathe pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] origin-top"
+        style={{
+          background:
+            "radial-gradient(70% 60% at 50% 0%, color-mix(in oklab, var(--brand-gold) 13%, transparent) 0%, transparent 72%)",
+        }}
+      />
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-5 sm:px-8 sm:py-6 lg:px-12">
         <Link
           href={`/${barbershopSlug}`}

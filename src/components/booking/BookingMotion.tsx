@@ -283,7 +283,7 @@ export const TARJETA_ELEGIBLE = {
   // El borde y el fondo dorados los dibuja `FondoElegido`, que es el que viaja.
   elegida: "border-transparent",
   libre:
-    "border-[color:var(--border-default)] bg-[color:var(--surface-1)] hover:border-[color:var(--brand-gold)]/50",
+    "border-[color:var(--border-default)] bg-[color:var(--surface-1)] bg-[image:radial-gradient(120%_140%_at_0%_0%,rgba(201,162,62,0.09),transparent_55%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] hover:border-[color:var(--brand-gold)]/50",
   // El brillo es una capa aparte que solo cambia de opacidad: animar la sombra
   // de la tarjeta la haría repintar entera.
   brillo:
@@ -308,7 +308,7 @@ export function FondoElegido({ grupo }: { grupo: string }) {
     <motion.span
       layoutId={`reserva-elegido-${grupo}`}
       aria-hidden="true"
-      className="pointer-events-none absolute -inset-px rounded-[inherit] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] ring-1 ring-[color:var(--brand-gold)]/25"
+      className="pointer-events-none absolute -inset-px rounded-[inherit] border border-[color:var(--brand-gold)] bg-[color:var(--brand-gold-soft)] bg-[image:radial-gradient(120%_140%_at_0%_0%,rgba(201,162,62,0.22),transparent_60%)] shadow-[0_0_34px_-12px_rgba(201,162,62,0.65),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-[color:var(--brand-gold)]/25"
       transition={{ type: "spring", duration: 0.4, bounce: 0.18 }}
     />
   );

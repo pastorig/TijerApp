@@ -53,7 +53,7 @@ export function StepHeader({
           locked
             ? "border-[color:var(--border-default)] bg-[color:var(--surface-1)] text-[color:var(--text-subtle)]"
             : done
-              ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
+              ? "border-[color:var(--brand-gold)] bg-gold-grad text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_0_14px_-4px_rgba(201,162,62,0.7)]"
               : "border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]",
         )}
       >

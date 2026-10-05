@@ -54,7 +54,7 @@ export function ServicePicker({
               className={cn(
                 "relative flex size-9 shrink-0 items-center justify-center rounded-full border transition-colors",
                 isSelected
-                  ? "border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold)]/15 text-[color:var(--brand-gold)]"
+                  ? "border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold)]/15 text-[color:var(--brand-gold)] shadow-[0_0_18px_-6px_rgba(201,162,62,0.7)]"
                   : "border-[color:var(--border-default)] bg-[color:var(--surface-2)] text-[color:var(--text-muted)]",
               )}
             >

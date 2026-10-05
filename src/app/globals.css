@@ -209,6 +209,28 @@ option:hover {
 .bg-gold-grad:hover {
   filter: brightness(1.08);
 }
+/* El "brillo" de una pieza dorada: un filo de luz arriba, uno de sombra abajo
+   y un resplandor por fuera. Es lo que hace que un botón dorado parezca metal
+   y no un rectángulo pintado. Se suma a `bg-gold-grad`, no lo reemplaza. */
+.gloss-gold {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 10px 26px -12px rgba(201, 162, 62, 0.7);
+}
+
+/* Una "tecla" oscura: superficie con un toque de luz arriba, para lo que se
+   puede tocar y todavía no está elegido (un horario, un día). */
+.key-dark {
+  background-color: var(--surface-1);
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.045),
+    transparent 60%
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
 /* Variante hover: elementos que se vuelven dorados al pasar el mouse
    (antes hover:bg-[--brand-gold]). Definido a mano porque bg-gold-grad no es
    una utilidad de Tailwind y no genera su variante hover automáticamente. */
