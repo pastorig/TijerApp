@@ -86,7 +86,9 @@ check(
 check("a las 9 todavía no se piden reseñas", enVentanaDeResena(9), false);
 check("a las 10 sí", enVentanaDeResena(10), true);
 check("a las 12 sí", enVentanaDeResena(12), true);
-check("a las 13 ya no", enVentanaDeResena(13), false);
+check("a las 13 sigue (el cron no es puntual)", enVentanaDeResena(13), true);
+check("a las 20 sí", enVentanaDeResena(20), true);
+check("a las 21 ya no", enVentanaDeResena(21), false);
 check("a la medianoche no", enVentanaDeResena(0), false);
 check("el día anterior", diaAnterior("2026-10-04"), "2026-10-03");
 check("cruza el mes", diaAnterior("2026-10-01"), "2026-09-30");

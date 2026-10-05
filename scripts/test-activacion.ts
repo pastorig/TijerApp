@@ -136,7 +136,8 @@ check(
 // ── Ventana y textos ────────────────────────────────────────────────────────
 check("a las 9 no", enVentanaDeActivacion(9), false);
 check("a las 10 sí", enVentanaDeActivacion(10), true);
-check("a las 13 ya no", enVentanaDeActivacion(13), false);
+check("a las 13 sigue", enVentanaDeActivacion(13), true);
+check("a las 21 ya no", enVentanaDeActivacion(21), false);
 check(
   "la url de reservas no duplica la barra",
   urlDeReservas("https://tijerapp.com/", "leocuts"),

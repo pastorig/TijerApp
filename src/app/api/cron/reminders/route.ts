@@ -517,13 +517,17 @@ export async function GET(request: Request) {
   // plan no puede impedir que a los clientes les lleguen los recordatorios de
   // sus turnos, que es lo que este cron viene haciendo hace meses.
   //
-  // Ventana 10-13 ART: el cron corre cada hora, pero el aviso sale una sola
-  // vez (lo garantiza el índice único de plan_notice_log) y a una hora en la
-  // que despertar a alguien no es un problema.
+  // Ventana 10-21 ART: el aviso sale una sola vez (lo garantiza el índice
+  // único de plan_notice_log) y a una hora en la que despertar a alguien no es
+  // un problema.
+  //
+  // Era 10-13, pensada para un cron que corre cada hora. El de GitHub no lo
+  // hace: corre cada 3 a 9 horas, y hay días en que ninguna pasada cae en una
+  // franja de tres. Con eso un aviso de vencimiento podía no salir nunca.
   let planNotices: PlanNoticeResult[] = [];
   let planNoticesError: string | undefined;
   const planNoticesInWindow =
-    forceMode || (currentHour >= 10 && currentHour <= 13);
+    forceMode || (currentHour >= 10 && currentHour < 21);
 
   if (planNoticesInWindow) {
     try {
@@ -575,7 +579,7 @@ export async function GET(request: Request) {
     forceMode,
     scanned: appointments?.length ?? 0,
     decisions,
-    planNotices: planNoticesInWindow ? planNotices : "fuera de la ventana 10-13",
+    planNotices: planNoticesInWindow ? planNotices : "fuera de la ventana 10-21",
     planNoticesDryRun: planNoticesDryRun || undefined,
     planNoticesError,
     loyaltyStamped,

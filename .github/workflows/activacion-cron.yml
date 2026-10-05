@@ -1,7 +1,7 @@
 name: Activación Cron
 
 # Serie de mails a barberías recién registradas sin turnos (feature 034).
-# Cada hora; el endpoint manda solo entre las 10 y las 13 (Argentina) y decide
+# Cada hora; el endpoint manda solo entre las 10 y las 21 (Argentina) y decide
 # a quién le toca qué. Acá solo se lo llama.
 
 on:
@@ -19,7 +19,7 @@ on:
           - "true"
           - "false"
       force:
-        description: "Ignorar la ventana horaria (10 a 13)"
+        description: "Ignorar la ventana horaria (10 a 21)"
         required: false
         default: "false"
         type: choice

@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
  * GET /api/cron/activacion — la serie de mails a barberías recién registradas
  * que todavía no recibieron un turno (feature 034).
  *
- * Lo llama GitHub Actions cada hora; manda solo entre las 10 y las 13
+ * Lo llama GitHub Actions cada hora; manda solo entre las 10 y las 21
  * (Argentina). Por barbería, como mucho un mail al dueño por pasada (día 1, 3
  * o 7) y, una sola vez, un aviso al fundador desde el día 3.
  *

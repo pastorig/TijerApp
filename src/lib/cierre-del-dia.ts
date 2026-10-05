@@ -21,8 +21,18 @@ export const AUTOR_CIERRE = "Cierre automático";
 /** Un cliente frecuente no recibe un pedido después de cada corte. */
 export const DIAS_ENTRE_PEDIDOS = 90;
 
-/** Hora argentina. De 10 a 13: se lee, y el barbero ya pudo marcar un "no vino". */
-export const VENTANA_RESENA = { desde: 10, hasta: 13 } as const;
+/**
+ * Hora argentina. Desde las 10 (se lee, y el barbero ya pudo marcar un "no
+ * vino") hasta las 21.
+ *
+ * Era de 10 a 13 y el primer día no salió NINGÚN pedido: el cron de GitHub está
+ * programado "cada hora" pero en la práctica corre cada 3 a 9 horas (el 05/10
+ * corrió a las 6:13, 15:34 y 23:07 de Argentina) y ninguna pasada cayó en esas
+ * tres horas. Una ventana angosta solo sirve con un reloj puntual, y este no lo
+ * es. Como cada pedido se anota antes de mandarse, pasar varias veces dentro de
+ * la ventana no repite nada.
+ */
+export const VENTANA_RESENA = { desde: 10, hasta: 21 } as const;
 
 export type TurnoParaCerrar = {
   status: string;

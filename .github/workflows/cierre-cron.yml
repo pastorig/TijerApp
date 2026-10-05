@@ -2,7 +2,7 @@ name: Cierre del día Cron
 
 # Cierre automático del día y pedido de reseña (feature 033).
 # Cada hora: los turnos pendientes de días ya terminados pasan a confirmado, y
-# entre las 10 y las 13 (Argentina) se les pide reseña a los clientes de ayer.
+# entre las 10 y las 21 (Argentina) se les pide reseña a los clientes de ayer.
 # El endpoint decide solo qué toca en cada pasada; acá solo se lo llama.
 
 on:
@@ -20,7 +20,7 @@ on:
           - "true"
           - "false"
       force:
-        description: "Ignorar la ventana horaria de las reseñas (10 a 13)"
+        description: "Ignorar la ventana horaria de las reseñas (10 a 21)"
         required: false
         default: "false"
         type: choice

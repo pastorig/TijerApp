@@ -22,8 +22,11 @@ export type TipoDeActivacion = "bienvenida" | PasoDeActivacion | "aviso_fundador
 /** Pasados estos días, "compartí tu link" ya es ruido. */
 export const DIAS_DE_ACTIVACION = 14;
 
-/** Hora argentina. La misma ventana que el pedido de reseña: se lee. */
-export const VENTANA_ACTIVACION = { desde: 10, hasta: 13 } as const;
+/**
+ * Hora argentina. La misma ventana que el pedido de reseña, y ancha por el
+ * mismo motivo: el cron no es puntual (ver `VENTANA_RESENA`).
+ */
+export const VENTANA_ACTIVACION = { desde: 10, hasta: 21 } as const;
 
 export function enVentanaDeActivacion(horaArgentina: number): boolean {
   return (

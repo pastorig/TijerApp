@@ -28,7 +28,7 @@ export const dynamic = "force-dynamic";
  *    pasan a confirmado. Antes dependía de que el barbero tocara "Confirmar"
  *    turno por turno, y la barbería con más turnos tenía más de la mitad de su
  *    trabajo sin contar.
- * 2. **Pedir reseña.** Entre las 10 y las 13, a los turnos de AYER confirmados
+ * 2. **Pedir reseña.** Entre las 10 y las 21, a los turnos de AYER confirmados
  *    que dejaron mail.
  *
  * ── Por qué el cierre no le avisa a nadie ───────────────────────────────────
