@@ -482,7 +482,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                     type="button"
                     onClick={() => setPeriod(opt.value)}
                     className={cn(
-                      "inline-flex min-h-9 shrink-0 items-center rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
+                      "inline-flex min-h-11 shrink-0 items-center rounded-[var(--radius-sm)] border px-3 text-xs font-bold normal-case tracking-normal transition-colors duration-[var(--duration-fast)]",
                       isActive
                         ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                         : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
@@ -746,7 +746,7 @@ Te corresponde: ${formatPrice(row.commission)}`;
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   aria-label={`Mandarle la liquidación a ${row.name}`}
-                                  className="inline-flex min-h-8 items-center rounded-[var(--radius-xs)] border border-[color:var(--border-subtle)] px-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--text-secondary)] transition-colors hover:border-[color:var(--brand-gold-ring)] hover:text-white"
+                                  className="inline-flex min-h-11 items-center rounded-[var(--radius-xs)] border border-[color:var(--border-subtle)] px-2 text-xs font-bold normal-case tracking-normal text-[color:var(--text-secondary)] transition-colors hover:border-[color:var(--brand-gold-ring)] hover:text-white"
                                 >
                                   Enviar
                                 </a>

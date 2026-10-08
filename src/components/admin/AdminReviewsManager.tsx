@@ -217,7 +217,7 @@ export function AdminReviewsManager({ barbershop }: AdminReviewsManagerProps) {
                   type="button"
                   onClick={() => setRatingFilter(value)}
                   className={cn(
-                    "inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-xs)] border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
+                    "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[var(--radius-xs)] border px-2.5 py-1 text-xs font-bold normal-case tracking-normal transition-colors duration-[var(--duration-fast)]",
                     isActive
                       ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                       : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)]/50 hover:text-[color:var(--brand-gold)]",

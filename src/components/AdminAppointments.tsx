@@ -1576,7 +1576,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
               disabled={isReadOnly}
               title={isReadOnly ? READ_ONLY_REASON : undefined}
               aria-label="Agregar turno"
-              className="bg-gold-grad inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-bold uppercase tracking-[0.12em] text-black shadow-[0_8px_20px_-10px_var(--brand-gold-ring)] transition-all duration-[var(--duration-fast)] press-shrink hover:brightness-110 disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none"
+              className="bg-gold-grad inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-xs font-bold normal-case tracking-normal text-black shadow-[0_8px_20px_-10px_var(--brand-gold-ring)] transition-all duration-[var(--duration-fast)] press-shrink hover:brightness-110 disabled:pointer-events-none disabled:opacity-40 disabled:shadow-none"
             >
               <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
               <span className="sm:hidden">Turno</span>
@@ -1793,7 +1793,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                         type="button"
                         onClick={() => setActiveFilter(opt.value)}
                         className={cn(
-                          "inline-flex min-h-9 shrink-0 items-center gap-2 rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
+                          "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[var(--radius-sm)] border px-3 text-xs font-bold normal-case tracking-normal transition-colors duration-[var(--duration-fast)]",
                           isActive
                             ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                             : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",
@@ -1827,7 +1827,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                   type="button"
                   onClick={handleHardDeleteAllDeleted}
                   disabled={isBulkHardDeleting}
-                  className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[color:var(--danger)]/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-xs)] border border-[color:var(--danger)]/40 px-3 py-1.5 text-xs font-bold normal-case tracking-normal text-[color:var(--danger)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <X className="size-3.5" aria-hidden="true" />
                   {isBulkHardDeleting
@@ -1864,7 +1864,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                         aria-selected={isActive}
                         onClick={() => changeAgendaViewMode(opt.value)}
                         className={cn(
-                          "inline-flex min-h-8 items-center justify-center rounded-[var(--radius-xs)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
+                          "inline-flex min-h-11 items-center justify-center rounded-[var(--radius-xs)] px-3 text-xs font-bold normal-case tracking-normal transition-colors duration-[var(--duration-fast)]",
                           isActive
                             ? "bg-gold-grad text-black"
                             : "text-[color:var(--text-secondary)] hover:text-white",
@@ -1892,7 +1892,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                   role="switch"
                   aria-checked={effectiveGroupByBarber}
                   className={cn(
-                    "inline-flex min-h-8 items-center gap-2 rounded-[var(--radius-sm)] border px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors duration-[var(--duration-fast)]",
+                    "inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-sm)] border px-3 text-xs font-bold normal-case tracking-normal transition-colors duration-[var(--duration-fast)]",
                     effectiveGroupByBarber
                       ? "border-[color:var(--brand-gold)] bg-gold-grad text-black"
                       : "border-[color:var(--border-default)] text-[color:var(--text-secondary)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]",

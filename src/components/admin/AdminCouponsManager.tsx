@@ -200,7 +200,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
                 minLength={3}
                 maxLength={30}
                 placeholder="VERANO20"
-                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 font-mono uppercase tracking-wider text-white outline-none focus:border-[color:var(--brand-gold)]"
+                className="mt-2 min-h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 font-mono uppercase tracking-wider text-white outline-none focus:border-[color:var(--brand-gold)]"
               />
             </div>
             <div>
@@ -213,7 +213,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={100}
                 placeholder="Promo verano"
-                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
+                className="mt-2 min-h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
               />
             </div>
           </div>
@@ -228,7 +228,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
                   type="button"
                   onClick={() => setDiscountType("percent")}
                   className={cn(
-                    "min-h-10 rounded-[var(--radius-xs)] px-4 text-xs font-bold uppercase tracking-[0.14em] transition-colors",
+                    "min-h-11 rounded-[var(--radius-xs)] px-4 text-xs font-bold normal-case tracking-normal transition-colors",
                     discountType === "percent"
                       ? "bg-gold-grad text-black"
                       : "text-[color:var(--text-secondary)]",
@@ -240,7 +240,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
                   type="button"
                   onClick={() => setDiscountType("fixed")}
                   className={cn(
-                    "min-h-10 rounded-[var(--radius-xs)] px-4 text-xs font-bold uppercase tracking-[0.14em] transition-colors",
+                    "min-h-11 rounded-[var(--radius-xs)] px-4 text-xs font-bold normal-case tracking-normal transition-colors",
                     discountType === "fixed"
                       ? "bg-gold-grad text-black"
                       : "text-[color:var(--text-secondary)]",
@@ -262,7 +262,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
                 min={1}
                 max={discountType === "percent" ? 100 : undefined}
                 step={discountType === "percent" ? 1 : 100}
-                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
+                className="mt-2 min-h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
               />
             </div>
           </div>
@@ -276,7 +276,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
                 type="date"
                 value={validUntil}
                 onChange={(e) => setValidUntil(e.target.value)}
-                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
+                className="mt-2 min-h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
               />
             </div>
             <div>
@@ -289,7 +289,7 @@ export function AdminCouponsManager({ barbershop }: Props) {
                 onChange={(e) => setUsageLimit(e.target.value)}
                 min={1}
                 placeholder="Ej. 50"
-                className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
+                className="mt-2 min-h-11 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 text-white outline-none focus:border-[color:var(--brand-gold)]"
               />
             </div>
           </div>
@@ -378,14 +378,14 @@ export function AdminCouponsManager({ barbershop }: Props) {
                     <button
                       type="button"
                       onClick={() => void handleToggleActive(c)}
-                      className="inline-flex min-h-10 items-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+                      className="inline-flex min-h-11 items-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-3 text-xs font-bold normal-case tracking-normal transition-colors hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
                     >
                       {c.is_active ? "Pausar" : "Activar"}
                     </button>
                     <button
                       type="button"
                       onClick={() => void handleDelete(c)}
-                      className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 px-3 text-[color:var(--danger)] transition-colors hover:bg-[color:var(--danger-soft)]"
+                      className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--danger)]/40 px-3 text-[color:var(--danger)] transition-colors hover:bg-[color:var(--danger-soft)]"
                     >
                       <Trash2 className="size-4" />
                     </button>

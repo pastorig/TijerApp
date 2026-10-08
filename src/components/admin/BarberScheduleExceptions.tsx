@@ -53,7 +53,7 @@ const inputClass =
   "min-h-11 rounded-md border border-[color:var(--border-default)] bg-black px-3 text-sm text-white outline-none transition focus:border-[color:var(--brand-gold)]";
 
 const botonModo =
-  "min-h-11 flex-1 rounded-md border px-3 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors";
+  "min-h-11 flex-1 rounded-md border px-3 text-xs font-bold normal-case tracking-normal transition-colors";
 
 /** Hoy según el reloj de la barbería, no el del aparato que abre el panel. */
 function hoyEnLaBarberia(): string {
@@ -452,7 +452,7 @@ export function BarberScheduleExceptions({ barbershop, barber, reglaSemanal }: P
         <button
           type="submit"
           disabled={guardando || !previa?.ok}
-          className="min-h-11 rounded-md bg-gold-grad px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-11 rounded-md bg-gold-grad px-4 text-xs font-bold normal-case tracking-normal text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {guardando ? "Guardando…" : "Guardar horario especial"}
         </button>
