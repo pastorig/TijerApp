@@ -71,6 +71,7 @@ function FeaturePaywall({
     push_notifications: "Notificaciones push",
     fidelizacion: "Sistema de fidelización",
     cuentas_empleados: "Cuentas para tus empleados",
+    catalogo_productos: "Catálogo de productos",
   multi_admin: "Multi-admin (equipo)",
     reportes_mensuales_email: "Reportes mensuales por email",
     soporte_prioritario: "Soporte prioritario",
