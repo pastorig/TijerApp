@@ -58,6 +58,8 @@ type ActionHandlers = {
     nextNotes: string,
   ) => Promise<void>;
   onDuplicate?: (appointment: AppointmentData) => void;
+  /** Abre el diálogo para corregir nombre, teléfono, mail o comentario. */
+  onEdit?: (appointment: AppointmentData) => void;
 };
 
 type PendingState = {
@@ -255,6 +257,7 @@ export function AppointmentRow({
   onAdjustActualDuration,
   onSaveInternalNotes,
   onDuplicate,
+  onEdit,
   confirmingId,
   cancellingId,
   restoringId,
@@ -462,12 +465,14 @@ export function AppointmentRow({
               (delayWhatsAppHref ||
                 reviewWhatsAppHref ||
                 onDuplicate ||
+                onEdit ||
                 canAdjustDuration) ? (
                 <KebabMenu
                   appointment={appointment}
                   delayWhatsAppHref={delayWhatsAppHref}
                   reviewWhatsAppHref={reviewWhatsAppHref}
                   onDuplicate={onDuplicate}
+                  onEdit={onEdit}
                   canAdjustDuration={canAdjustDuration}
                   durationChanged={durationChanged}
                   effectiveDurationMinutes={effectiveDurationMinutes}
@@ -1075,6 +1080,7 @@ function KebabMenu({
   delayWhatsAppHref,
   reviewWhatsAppHref,
   onDuplicate,
+  onEdit,
   canAdjustDuration,
   durationChanged,
   effectiveDurationMinutes,
@@ -1085,6 +1091,7 @@ function KebabMenu({
   delayWhatsAppHref?: string;
   reviewWhatsAppHref?: string;
   onDuplicate?: (appointment: AppointmentData) => void;
+  onEdit?: (appointment: AppointmentData) => void;
   canAdjustDuration?: boolean;
   durationChanged?: boolean;
   effectiveDurationMinutes: number;
@@ -1121,6 +1128,7 @@ function KebabMenu({
     Number(Boolean(delayWhatsAppHref)) +
     Number(Boolean(reviewWhatsAppHref)) +
     Number(Boolean(onDuplicate)) +
+    Number(Boolean(onEdit)) +
     (canAdjustDuration ? 1 : 0);
 
   return (
@@ -1179,6 +1187,20 @@ function KebabMenu({
               <Star className="size-4 shrink-0" aria-hidden="true" />
               Pedir reseña
             </a>
+          ) : null}
+          {onEdit ? (
+            <button
+              role="menuitem"
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                onEdit(appointment);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-semibold text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:var(--surface-2)] hover:text-white"
+            >
+              <Pencil className="size-4 shrink-0" aria-hidden="true" />
+              Corregir datos del cliente
+            </button>
           ) : null}
           {onDuplicate ? (
             <button

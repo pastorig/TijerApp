@@ -68,6 +68,10 @@ import {
 } from "./admin/AgendaCalendarGridView";
 import { AgendaBadge, AgendaSheet } from "./admin/agenda/AgendaSheet";
 import { AppointmentRow as AppointmentCard } from "./admin/AppointmentRow";
+import {
+  EditAppointmentDialog,
+  type AppointmentEdits,
+} from "./admin/EditAppointmentDialog";
 import { AppointmentRowSkeletonList } from "./admin/AppointmentRowSkeleton";
 import {
   CancelAppointmentDialog,
@@ -196,6 +200,8 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   >(null);
   const [isBulkHardDeleting, setIsBulkHardDeleting] = useState(false);
   const [duplicatingAppointment, setDuplicatingAppointment] =
+    useState<AppointmentRow | null>(null);
+  const [editingAppointment, setEditingAppointment] =
     useState<AppointmentRow | null>(null);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   // Lo que precarga el alta manual cuando se abre desde un hueco del calendario.
@@ -991,6 +997,51 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     }
   }
 
+  /** Corrige nombre, teléfono, mail o comentario de un turno ya reservado. */
+  async function handleSaveEdits(edits: AppointmentEdits) {
+    const appointment = editingAppointment;
+    if (!appointment?.id) throw new Error("No encontramos ese turno.");
+    const { data: sessionData } = await getCurrentSession();
+    const accessToken = sessionData.session?.access_token;
+    if (!accessToken) {
+      throw new Error("Se venció la sesión. Volvé a entrar y probá de nuevo.");
+    }
+    const response = await fetch("/api/admin/appointments", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        appointmentId: appointment.id,
+        barbershopSlug: barbershop.slug,
+        ...edits,
+      }),
+    });
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      appointment?: {
+        customer_name: string;
+        customer_phone: string;
+        customer_email: string | null;
+        comment: string;
+      };
+    };
+    if (!response.ok || !payload.appointment) {
+      throw new Error(payload.error || "No pudimos guardar los cambios.");
+    }
+    // Se pinta lo que devolvió el servidor, no lo que se mandó: es lo que
+    // quedó guardado de verdad (el mail, por ejemplo, vuelve en minúsculas).
+    const guardado = payload.appointment;
+    setAppointments((current) =>
+      current.map((a) => (a.id === appointment.id ? { ...a, ...guardado } : a)),
+    );
+    setEditingAppointment(null);
+    toast.success("Datos corregidos", {
+      description: `El turno de ${guardado.customer_name} quedó actualizado.`,
+    });
+  }
+
   async function handleSaveInternalNotes(
     appointment: AppointmentRow,
     nextNotes: string,
@@ -1456,6 +1507,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         onHardDelete={handleHardDeleteAppointment}
         onSaveInternalNotes={handleSaveInternalNotes}
         onDuplicate={setDuplicatingAppointment}
+        onEdit={setEditingAppointment}
         confirmingId={confirmingAppointmentId}
         cancellingId={cancellingAppointmentId}
         restoringId={restoringAppointmentId}
@@ -2038,6 +2090,23 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           setPendingCancelAppointment(null);
         }}
         onConfirm={handleConfirmCancellation}
+      />
+
+      <EditAppointmentDialog
+        key={editingAppointment?.id ?? "cerrado"}
+        appointment={
+          editingAppointment?.id
+            ? {
+                id: editingAppointment.id,
+                customer_name: editingAppointment.customer_name,
+                customer_phone: editingAppointment.customer_phone,
+                customer_email: editingAppointment.customer_email,
+                comment: editingAppointment.comment,
+              }
+            : null
+        }
+        onClose={() => setEditingAppointment(null)}
+        onSave={handleSaveEdits}
       />
 
       <DuplicateAppointmentModal
