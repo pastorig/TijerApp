@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { assertPlanActive } from "@/lib/api-plan-guard";
 import { resolveBarbershopAdminAccess } from "@/lib/server/barbershop-admin-access";
+import { normalizePhone } from "@/lib/barbershop-clients";
 
 export const runtime = "nodejs";
 
@@ -43,7 +44,65 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const updateValues: { internal_notes?: string | null } = {};
+  const updateValues: {
+    internal_notes?: string | null;
+    customer_name?: string;
+    customer_phone?: string;
+    customer_email?: string | null;
+    comment?: string;
+  } = {};
+
+  // ── Corregir los datos del cliente ─────────────────────────────────────
+  // Un cliente reservó con el número mal escrito y la barbería no tenía cómo
+  // arreglarlo. Se corrigen solo los datos de la persona y el comentario: el
+  // servicio, el barbero, el día y la hora NO se aceptan por acá (cambiarlos
+  // mueve la agenda y tiene sus propias validaciones en `/move`). Cada campo
+  // se valida igual que cuando el cliente reserva.
+  if ("customerName" in payload) {
+    const nombre =
+      typeof payload.customerName === "string" ? payload.customerName.trim() : "";
+    if (!nombre || nombre.length > 80) {
+      return NextResponse.json(
+        { error: "El nombre no puede quedar vacío ni pasar de 80 letras." },
+        { status: 400 },
+      );
+    }
+    updateValues.customer_name = nombre;
+  }
+  if ("customerPhone" in payload) {
+    const telefono =
+      typeof payload.customerPhone === "string" ? payload.customerPhone.trim() : "";
+    if (!normalizePhone(telefono) || telefono.length > 30) {
+      return NextResponse.json(
+        { error: "El teléfono tiene que tener al menos 8 dígitos." },
+        { status: 400 },
+      );
+    }
+    updateValues.customer_phone = telefono;
+  }
+  if ("customerEmail" in payload) {
+    const mail =
+      typeof payload.customerEmail === "string" ? payload.customerEmail.trim() : "";
+    if (mail && (mail.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail))) {
+      return NextResponse.json(
+        { error: "Ese mail no parece válido." },
+        { status: 400 },
+      );
+    }
+    updateValues.customer_email = mail ? mail.toLowerCase() : null;
+  }
+  if ("comment" in payload) {
+    const comentario =
+      typeof payload.comment === "string" ? payload.comment.trim() : "";
+    if (comentario.length > 500) {
+      return NextResponse.json(
+        { error: "El comentario no puede pasar de 500 letras." },
+        { status: 400 },
+      );
+    }
+    // La columna no admite null: un comentario vacío se guarda como texto vacío.
+    updateValues.comment = comentario;
+  }
 
   if ("internalNotes" in payload) {
     const rawNotes =
@@ -64,7 +123,7 @@ export async function PATCH(request: Request) {
     .update(updateValues)
     .eq("id", appointmentId)
     .eq("barbershop_slug", barbershopSlug)
-    .select("id, internal_notes")
+    .select("id, internal_notes, customer_name, customer_phone, customer_email, comment")
     .single();
 
   if (error || !data) {
