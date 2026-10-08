@@ -9,6 +9,8 @@ import { InstallBanner } from "@/components/pwa/InstallBanner";
 import { LastContextTracker } from "@/components/pwa/LastContextTracker";
 import { BarbershopGallerySection } from "./BarbershopGallerySection";
 import { BarbershopInfoSection } from "./BarbershopInfoSection";
+import { BarbershopProductsSection } from "./BarbershopProductsSection";
+import type { ProductoPublico } from "@/lib/server/productos";
 import { BarbershopReviewsSection } from "./BarbershopReviewsSection";
 import { BarbershopTeamSection } from "./BarbershopTeamSection";
 import { HeroSection } from "./HeroSection";
@@ -18,6 +20,8 @@ import { ServicesSection } from "./ServicesSection";
 type PublicBarbershopLandingProps = {
   barbershop: DemoBarbershop;
   reviews?: PublicReview[];
+  /** Productos disponibles del catálogo (035). Vacío = la sección no se dibuja. */
+  productos?: ProductoPublico[];
   /**
    * False cuando la barbería está en modo lectura (plan vencido): se caen los
    * CTA de reservar y el cliente va por WhatsApp. La landing se muestra
@@ -30,6 +34,7 @@ type PublicBarbershopLandingProps = {
 export function PublicBarbershopLanding({
   barbershop,
   reviews = [],
+  productos = [],
   bookingEnabled = true,
 }: PublicBarbershopLandingProps) {
   return (
@@ -72,6 +77,12 @@ export function PublicBarbershopLanding({
 
       <ServicesSection
         services={getPublicServices(barbershop)}
+        barbershopSlug={barbershop.slug}
+        bookingEnabled={bookingEnabled}
+      />
+
+      <BarbershopProductsSection
+        productos={productos}
         barbershopSlug={barbershop.slug}
         bookingEnabled={bookingEnabled}
       />

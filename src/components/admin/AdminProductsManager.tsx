@@ -245,9 +245,10 @@ export function AdminProductsManager({
           reserven y te los pagan en el local.
         </p>
         <p className="mt-3 max-w-2xl rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/25 bg-[color:var(--brand-gold-soft)] px-3 py-2.5 text-xs leading-5 text-[color:var(--text-secondary)]">
-          <strong className="text-[color:var(--brand-gold)]">Todavía no se muestran.</strong>{" "}
-          Por ahora podés ir dejando tu catálogo listo; en los próximos días
-          van a aparecer en tu página y en la reserva.
+          <strong className="text-[color:var(--brand-gold)]">Ya se ven en tu página.</strong>{" "}
+          Los que estén disponibles aparecen en la página pública de{" "}
+          {barbershop.name}. Que el cliente los sume a su turno al reservar
+          llega en los próximos días.
         </p>
       </header>
 

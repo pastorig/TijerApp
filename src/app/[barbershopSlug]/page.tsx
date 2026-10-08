@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PublicBarbershopLanding } from "@/components/PublicBarbershopLanding";
 import { listPublicReviewsByBarbershop } from "@/lib/appointment-reviews";
+import { hasFeature } from "@/lib/plans";
+import { listAvailableProducts } from "@/lib/server/productos";
 import { resolveBarbershopBySlug } from "@/lib/barbershops";
 import { DEMO_BARBERSHOP_SLUGS } from "@/data/demo-barbershops";
 import { getBarbershopPlan } from "@/lib/plan-access";
@@ -89,10 +91,17 @@ export default async function BarbershopPage({
   // de reserva online. Ver specs/009-modo-lectura/spec.md.
   const plan = await getBarbershopPlan(barbershopSlug);
 
+  // Catálogo de productos (035): solo si el plan lo trae. Con el plan vencido
+  // se sigue mostrando, igual que los servicios; lo que se apaga es reservar.
+  const productos = hasFeature(plan.tier, "catalogo_productos")
+    ? await listAvailableProducts(barbershopSlug)
+    : [];
+
   return (
     <PublicBarbershopLanding
       barbershop={barbershop}
       reviews={reviews}
+      productos={productos}
       bookingEnabled={!plan.isReadOnly}
     />
   );
