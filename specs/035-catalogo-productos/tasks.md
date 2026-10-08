@@ -32,7 +32,7 @@ Preguntas abiertas resueltas el 8/10/2026 (ver spec).
 
 - [x] D1 "Productos vendidos" en `AdminReportes` (unidades y plata por producto)
 - [x] D2 Preview → OK de Bautista → merge
-- [ ] D3 `PENDIENTES.md` + qué mirar a los 30 días (SC-005)
+- [x] D3 `PENDIENTES.md` + qué mirar a los 30 días (SC-005)
 
 ## Verificación hecha
 

@@ -4,6 +4,45 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## ✅ 035 — Catálogo de productos — EN PROD (2026-10-09)
+
+Las barberías cargan lo que venden en el mostrador (ceras, pomadas, polvos) y el cliente lo
+suma a su turno al reservar. Lo paga en el local. Planes Esencial y Pro.
+
+- **Panel**: Mi barbería → Productos. Alta con foto, precio y categoría; disponible/agotado a
+  mano; cualquier administrador.
+- **Página de la barbería**: sección "Productos" (solo si hay alguno disponible).
+- **Reserva**: paso opcional "¿Te llevás algo?". Cupón y seña se calculan solo sobre el servicio.
+- **El turno** muestra los productos y el total a cobrar: turnero, agenda del empleado, link del
+  cliente y WhatsApp.
+- **Reportes**: "Productos vendidos" (turnos confirmados). No suma a ingresos ni a comisiones.
+
+Las dos migraciones (`barbershop_products`, `appointment_products`) ya están corridas.
+
+**Falta probar a mano (Bautista):**
+- Cargar un producto CON FOTO desde el celular. La subida de la foto contra el storage real no
+  se ejerció nunca: al 09/10 nadie cargó un producto.
+- Ver un turno con productos en la agenda de un empleado.
+
+**Qué mirar el 08/11/2026 (a los 30 días):** ¿alguna barbería que paga tiene productos cargados?
+¿hay algún turno con producto? Si la respuesta es no, no construir nada encima (stock, cobro
+online, reportes en PDF) y preguntarles a SV Barber y Leo Cuts por qué no lo usaron.
+
+**Quedó afuera a propósito:** cobro online, stock por unidades, sumar productos a un turno desde
+el panel, comisión al empleado, y los productos en el PDF de reportes.
+
+Spec, plan y tasks en `specs/035-catalogo-productos/`.
+
+---
+
+## ✅ 036 — Corregir los datos del cliente en un turno — EN PROD (2026-10-08)
+
+En los tres puntos de cada turno: "Corregir datos del cliente" (nombre, teléfono, mail y
+comentario). Salió de un cliente que reservó con el número mal escrito. El servicio, el día y la
+hora no se editan ahí: eso se hace arrastrando el turno en el calendario.
+
+---
+
 ## 🗄️ Correr la migración de la activación (2026-10-04)
 
 `supabase/migrations/20261004130000_barbershop_activation_log.sql`, en el SQL
