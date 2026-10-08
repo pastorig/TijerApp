@@ -345,6 +345,11 @@ check(
   true,
 );
 
+// ─── Catálogo de productos (035) ────────────────────────────────────────────
+check("el catálogo de productos no está en Solo", hasFeature("solo", "catalogo_productos"), false);
+check("sí en Esencial", hasFeature("esencial", "catalogo_productos"), true);
+check("y en Pro", hasFeature("pro", "catalogo_productos"), true);
+
 // ─── El precio de fundador vence; el status de fundador no ─────────────────
 // Las dos cosas colgaban de isFounder, así que sacarle el descuento a alguien
 // le borraba también el badge y el muro de /precios.

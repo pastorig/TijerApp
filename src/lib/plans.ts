@@ -34,7 +34,8 @@ export type Feature =
   | "multi_admin" // permite agregar más de 1 admin (Equipo)
   | "reportes_mensuales_email"
   | "soporte_prioritario"
-  | "cuentas_empleados";
+  | "cuentas_empleados"
+  | "catalogo_productos";
 
 /**
  * Matriz feature → tiers que la incluyen.
@@ -57,6 +58,10 @@ export const PLAN_FEATURES: Record<Feature, ReadonlyArray<PlanTier>> = {
   // Desde Esencial porque en Solo el tope es de 1 barbero y no hay empleado a
   // quien invitar.
   cuentas_empleados: ["esencial", "pro"],
+  // Catálogo de productos que se ofrece al reservar (feature 035). Desde
+  // Esencial, decidido con Bautista el 08/10/2026: es el plan de las dos
+  // barberías que hoy pagan, así que las dos lo reciben.
+  catalogo_productos: ["esencial", "pro"],
   reportes_mensuales_email: ["pro"],
   soporte_prioritario: ["pro"],
 } as const;

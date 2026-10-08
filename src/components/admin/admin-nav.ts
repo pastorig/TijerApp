@@ -8,6 +8,7 @@ import {
   Image as ImageIcon,
   LayoutDashboard,
   LineChart,
+  Package,
   Settings,
   Share2,
   Star,
@@ -130,6 +131,12 @@ export function getAdminNavGroups(barbershopSlug: string): AdminNavGroup[] {
       icon: Store,
       items: [
         { label: "Galería", href: `${base}/galeria`, icon: ImageIcon },
+        {
+          label: "Productos",
+          href: `${base}/productos`,
+          icon: Package,
+          requiresFeature: "catalogo_productos",
+        },
         { label: "Configuración", href: `${base}/settings`, icon: Settings },
         { label: "Compartir", href: `${base}/compartir`, icon: Share2 },
       ],

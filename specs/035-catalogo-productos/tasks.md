@@ -4,12 +4,12 @@ Preguntas abiertas resueltas el 8/10/2026 (ver spec).
 
 ## Etapa A — El dueño carga su catálogo
 
-- [ ] A1 Migración `barbershop_products` + bucket `barbershop-products` (la corre Bautista)
-- [ ] A2 Feature `catalogo_productos` en `src/lib/plans.ts`
-- [ ] A3 `src/lib/productos.ts` + `scripts/test-productos.ts` (sumarlo a `test:unit`)
-- [ ] A4 `/api/admin/products` (GET, POST con foto, PATCH, DELETE)
-- [ ] A5 Pantalla `/[slug]/admin/productos` + subpestaña en "Mi barbería"
-- [ ] A6 tsc + lint + test:unit + build
+- [ ] A1 Migración `barbershop_products` + bucket `barbershop-products` — ESCRITA (`20261008120000_barbershop_products.sql`), falta que la corra Bautista
+- [x] A2 Feature `catalogo_productos` en `src/lib/plans.ts`
+- [x] A3 `src/lib/productos.ts` + `scripts/test-productos.ts` (sumarlo a `test:unit`)
+- [x] A4 `/api/admin/products` (GET, POST con foto, PATCH, DELETE)
+- [x] A5 Pantalla `/[slug]/admin/productos` + subpestaña en "Mi barbería"
+- [x] A6 tsc + lint + test:unit + build
 - [ ] A7 Preview en rama → OK de Bautista logueado → merge
 
 ## Etapa B — La página pública
