@@ -5,6 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Minus } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { listAppointmentsByBarbershop } from "@/lib/appointments";
+import { listAppointmentProductsByBarbershop } from "@/lib/appointment-products";
+import { hasFeature } from "@/lib/plans";
+import { productosVendidos, type ProductoDeTurno } from "@/lib/productos";
+import { useCurrentPlan } from "./PlanContext";
 import { listBarbersByBarbershop } from "@/lib/barbers";
 import { calculateCommissions } from "@/lib/commissions";
 import { whatsAppLinkWithMessage } from "@/lib/whatsapp";
@@ -116,6 +120,11 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
   // Sube en 1 con "Reintentar". No toca `period` ni `selectedBarber`: el
   // reintento vuelve con el mismo período y el mismo barbero elegidos.
   const [recarga, setRecarga] = useState(0);
+  // Productos que los clientes sumaron a sus turnos (035), por id de turno.
+  const [productosPorTurno, setProductosPorTurno] = useState<
+    Record<string, ProductoDeTurno[]>
+  >({});
+  const tieneCatalogo = hasFeature(useCurrentPlan().tier, "catalogo_productos");
   const [period, setPeriod] = useState<PeriodKey>("month");
   const [selectedBarber, setSelectedBarber] = useState("all");
 
@@ -139,6 +148,11 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
         }
         setAppointments(appsResult.data ?? []);
         setBarbers(barbersResult.data ?? []);
+        // Aparte y sin esperarlo: si los productos fallan, el reporte se ve
+        // igual y esa sección queda vacía.
+        void listAppointmentProductsByBarbershop(barbershop.slug).then((mapa) => {
+          if (isMounted) setProductosPorTurno(mapa);
+        });
       } catch {
         if (isMounted) {
           setErrorMessage("No pudimos traer el reporte.");
@@ -270,6 +284,14 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
     );
   }, [byBarber, barbers]);
 
+
+  // Productos vendidos (035): los de los turnos confirmados del período y del
+  // barbero elegidos. Van aparte: no suman a los ingresos por servicios ni a
+  // las comisiones.
+  const ventasDeProductos = useMemo(
+    () => productosVendidos(currentAppointments, productosPorTurno),
+    [currentAppointments, productosPorTurno],
+  );
 
   // Top servicios
   const topServices = useMemo(() => {
@@ -865,6 +887,64 @@ Te corresponde: ${formatPrice(row.commission)}`;
               )}
             </div>
           </section>
+
+          {/* Productos vendidos (035). Solo si el plan trae el catálogo o si
+              hay ventas para mostrar (una barbería que bajó de plan no pierde
+              su historial). */}
+          {tieneCatalogo || ventasDeProductos.filas.length > 0 ? (
+            <section>
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--text-muted)]">
+                  Productos vendidos
+                </p>
+                {ventasDeProductos.filas.length > 0 ? (
+                  <p className="text-xs text-[color:var(--text-muted)]">
+                    {ventasDeProductos.unidades}{" "}
+                    {ventasDeProductos.unidades === 1 ? "unidad" : "unidades"}
+                    <span className="mx-1.5 text-[color:var(--text-subtle)]">·</span>
+                    <span className="font-mono text-sm font-bold tabular-nums text-[color:var(--brand-gold)]">
+                      {formatPrice(ventasDeProductos.total)}
+                    </span>
+                  </p>
+                ) : null}
+              </div>
+              {ventasDeProductos.filas.length === 0 ? (
+                <p className="mt-4 text-sm text-[color:var(--text-subtle)]">
+                  Sin productos vendidos en este período.
+                </p>
+              ) : (
+                <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {ventasDeProductos.filas.map((producto, index) => (
+                    <li
+                      key={producto.name}
+                      className="flex items-center gap-3 rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-3"
+                    >
+                      <span className="font-mono text-xs font-bold tabular-nums text-[color:var(--brand-gold)]">
+                        #{index + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-white">
+                          {producto.name}
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-[color:var(--text-muted)]">
+                          {producto.unidades}{" "}
+                          {producto.unidades === 1 ? "unidad" : "unidades"}
+                          <span className="mx-1.5 text-[color:var(--text-subtle)]">·</span>
+                          <span className="font-mono font-bold text-[color:var(--brand-gold)]">
+                            {formatPrice(producto.total)}
+                          </span>
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-3 text-[11px] leading-5 text-[color:var(--text-subtle)]">
+                Lo que tus clientes sumaron al reservar, en turnos confirmados.
+                No está incluido en los ingresos de arriba ni en las comisiones.
+              </p>
+            </section>
+          ) : null}
 
           {/* Día más activo + Clientes nuevos vs recurrentes */}
           <section className="grid gap-8 lg:grid-cols-2">

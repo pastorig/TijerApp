@@ -7,6 +7,7 @@ import {
   etiquetaDeCategoria,
   leerPrecio,
   normalizarPedido,
+  productosVendidos,
   totalDeProductos,
   validarProducto,
 } from "../src/lib/productos.ts";
@@ -112,6 +113,79 @@ check(
     { unit_price: 12500, quantity: 1 },
   ]),
   28500,
+);
+
+// ── Productos vendidos (reportes) ───────────────────────────────────────────
+const cera = { product_name: "Cera mate", unit_price: 8000, quantity: 1 };
+const polvo = { product_name: "Polvo", unit_price: 12500, quantity: 1 };
+const porTurno = {
+  t1: [{ ...cera, quantity: 2 }, polvo],
+  t2: [cera],
+  t3: [polvo],
+  t4: [cera],
+  t5: [{ ...cera, unit_price: 9000 }],
+};
+check("sin turnos no hay ventas", productosVendidos([], porTurno), {
+  filas: [],
+  unidades: 0,
+  total: 0,
+});
+check(
+  "suma unidades y plata por producto, ordenado por plata",
+  productosVendidos(
+    [
+      { id: "t1", status: "confirmed" },
+      { id: "t2", status: "confirmed" },
+    ],
+    porTurno,
+  ),
+  {
+    filas: [
+      { name: "Cera mate", unidades: 3, total: 24000 },
+      { name: "Polvo", unidades: 1, total: 12500 },
+    ],
+    unidades: 4,
+    total: 36500,
+  },
+);
+check(
+  "un turno pendiente todavía no es una venta",
+  productosVendidos([{ id: "t3", status: "pending" }], porTurno).total,
+  0,
+);
+check(
+  "uno cancelado o eliminado tampoco",
+  productosVendidos(
+    [
+      { id: "t3", status: "cancelled" },
+      { id: "t4", status: "deleted" },
+    ],
+    porTurno,
+  ).unidades,
+  0,
+);
+check(
+  "un turno sin productos no suma ni rompe",
+  productosVendidos([{ id: "sin-productos", status: "confirmed" }], porTurno).filas,
+  [],
+);
+check(
+  "un turno sin id se saltea",
+  productosVendidos([{ id: null, status: "confirmed" }], porTurno).filas,
+  [],
+);
+// El precio que cuenta es el de cada venta, no el de hoy: si el producto
+// subió de precio, lo vendido antes sigue valiendo lo que se cobró.
+check(
+  "cada venta vale el precio de su momento",
+  productosVendidos(
+    [
+      { id: "t2", status: "confirmed" },
+      { id: "t5", status: "confirmed" },
+    ],
+    porTurno,
+  ),
+  { filas: [{ name: "Cera mate", unidades: 2, total: 17000 }], unidades: 2, total: 17000 },
 );
 
 console.log(`\n${passed} pasaron, ${failed} fallaron`);

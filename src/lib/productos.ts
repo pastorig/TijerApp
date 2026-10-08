@@ -175,6 +175,50 @@ export function renglonEnTexto(p: ProductoDeTurno): string {
   return p.quantity > 1 ? `${p.product_name} ×${p.quantity}` : p.product_name;
 }
 
+export type ProductoVendido = { name: string; unidades: number; total: number };
+
+/**
+ * "Productos vendidos" para reportes (035, etapa D).
+ *
+ * Un producto cuenta como VENDIDO cuando está en un turno confirmado. No hay un
+ * botón de "entregado": sería un paso manual más que nadie haría, y el reporte
+ * quedaría siempre en cero. Los turnos pendientes de días pasados se confirman
+ * solos (033), así que al día siguiente ya entran.
+ *
+ * Quien llama pasa los turnos YA filtrados por período y por barbero: esta
+ * función no sabe de fechas. Agrupa por nombre —la copia guardada en el
+ * turno—, así un producto que después se renombró o se borró sigue apareciendo
+ * con el nombre con el que se vendió.
+ */
+export function productosVendidos(
+  turnos: ReadonlyArray<{ id?: string | null; status?: string | null }>,
+  productosPorTurno: Readonly<Record<string, ReadonlyArray<ProductoDeTurno>>>,
+): { filas: ProductoVendido[]; unidades: number; total: number } {
+  const porNombre = new Map<string, ProductoVendido>();
+  for (const turno of turnos) {
+    if (turno.status !== "confirmed" || !turno.id) continue;
+    for (const p of productosPorTurno[turno.id] ?? []) {
+      const fila = porNombre.get(p.product_name) ?? {
+        name: p.product_name,
+        unidades: 0,
+        total: 0,
+      };
+      fila.unidades += p.quantity;
+      fila.total += p.unit_price * p.quantity;
+      porNombre.set(p.product_name, fila);
+    }
+  }
+  // Por plata, y a igual plata por nombre: el orden no baila entre recargas.
+  const filas = [...porNombre.values()].sort(
+    (a, b) => b.total - a.total || a.name.localeCompare(b.name),
+  );
+  return {
+    filas,
+    unidades: filas.reduce((n, f) => n + f.unidades, 0),
+    total: filas.reduce((n, f) => n + f.total, 0),
+  };
+}
+
 /** Cuánto suman los productos de un turno. */
 export function totalDeProductos(
   renglones: ReadonlyArray<{ unit_price: number; quantity: number }>,
