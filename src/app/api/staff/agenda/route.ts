@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { productosDeTurnos } from "@/lib/server/productos";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { calculateCommissions } from "@/lib/commissions";
@@ -74,6 +75,13 @@ export async function GET(request: Request) {
   }
 
   const permisos = access.access.permisos;
+
+  // Productos que los clientes sumaron a estos turnos (035). El empleado los
+  // ve siempre, sin un permiso aparte: es parte de lo que tiene que saber para
+  // atender. Una consulta para todos los turnos del día; si falla, vacío.
+  const productosPorTurno = await productosDeTurnos(
+    (data ?? []).map((turno) => turno.id as string),
+  );
 
   // Los bloqueos del día (feature 023). Van con los turnos y no en un pedido
   // aparte: son parte de "qué pasa hoy en mi agenda".
@@ -162,7 +170,10 @@ export async function GET(request: Request) {
     // Plan vencido: se ve todo y no se escribe nada, igual que el dueño.
     soloLectura: plan.isReadOnly,
     bloqueos: bloqueos ?? [],
-    turnos: (data ?? []).map((turno) => recortarTurno(turno, permisos)),
+    turnos: (data ?? []).map((turno) => ({
+      ...recortarTurno(turno, permisos),
+      productos: productosPorTurno[turno.id as string] ?? [],
+    })),
     // La plata solo si la puede ver. `undefined` no llega al JSON, así que la
     // pantalla no tiene que distinguir "no permitido" de "sin configurar".
     produccionDelDia: permisos.verGanancias ? produccion : undefined,

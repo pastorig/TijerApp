@@ -12,6 +12,14 @@ import {
 import { createDepositPreference } from "@/lib/mercadopago/client";
 import { refreshAccessToken, expiresAtFrom } from "@/lib/mercadopago/oauth";
 
+import { hasFeature } from "@/lib/plans";
+import { getBarbershopPlan } from "@/lib/plan-access";
+import { normalizarPedido } from "@/lib/productos";
+import {
+  guardarProductosDelTurno,
+  resolverPedidoDeProductos,
+} from "@/lib/server/productos";
+
 export const runtime = "nodejs";
 
 /**
@@ -93,6 +101,16 @@ export async function POST(request: Request) {
     typeof body.appointmentTime === "string" ? body.appointmentTime : "";
   const comment = typeof body.comment === "string" ? body.comment.trim() : "";
 
+  // Productos del catálogo que el cliente sumó a su turno (feature 035). Del
+  // navegador se acepta solo QUÉ y CUÁNTOS; el precio y el nombre salen de la
+  // base más abajo. Un pedido que no respeta los topes se rechaza entero: no
+  // se recorta en silencio.
+  const pedido = normalizarPedido((body as { products?: unknown }).products);
+  if (!pedido.ok) {
+    return NextResponse.json({ error: pedido.error }, { status: 400 });
+  }
+  const renglonesPedidos = pedido.valor;
+
   if (
     !slug ||
     !barberId ||
@@ -134,8 +152,14 @@ export async function POST(request: Request) {
   // revisan EN EL MISMO ORDEN de siempre, así que los rechazos y sus mensajes
   // no cambian: lo único distinto es que ya no se suman los tiempos.
   const supabase = getSupabaseAdminClient();
-  const [[ipLimit, phoneLimit], bookingGate, shopRes, serviceRes, barberRes] =
-    await Promise.all([
+  const [
+    [ipLimit, phoneLimit],
+    bookingGate,
+    shopRes,
+    serviceRes,
+    barberRes,
+    productosResueltos,
+  ] = await Promise.all([
       Promise.all([
         checkRateLimit("reserva", getRequestIdentifier(request, slug)),
         checkRateLimit(
@@ -176,7 +200,44 @@ export async function POST(request: Request) {
         .eq("barbershop_slug", slug)
         .is("deleted_at", null)
         .maybeSingle(),
+      // Productos: solo si el pedido trae alguno (una reserva sin productos no
+      // hace ni una consulta más), y solo si el plan trae el catálogo.
+      renglonesPedidos.length > 0
+        ? getBarbershopPlan(slug).then((plan) =>
+            hasFeature(plan.tier, "catalogo_productos")
+              ? resolverPedidoDeProductos(slug, renglonesPedidos)
+              : { filas: [], noSumados: renglonesPedidos.map(() => "un producto") },
+          )
+        : null,
     ]);
+
+  /**
+   * Anota en el turno recién creado los productos que sí se pudieron resolver
+   * y devuelve lo que hay que contarle al cliente: cuáles quedaron y cuáles
+   * no. Nunca hace fallar la reserva.
+   */
+  async function anotarProductos(appointmentId: string) {
+    if (!productosResueltos) return { productos: [], productosNoSumados: [] };
+    const guardados = await guardarProductosDelTurno(
+      appointmentId,
+      slug,
+      productosResueltos.filas,
+    );
+    const filas = guardados ? productosResueltos.filas : [];
+    return {
+      productos: filas.map((f) => ({
+        product_name: f.product_name,
+        unit_price: f.unit_price,
+        quantity: f.quantity,
+      })),
+      productosNoSumados: guardados
+        ? productosResueltos.noSumados
+        : [
+            ...productosResueltos.noSumados,
+            ...productosResueltos.filas.map((f) => f.product_name),
+          ],
+    };
+  }
   const limit = ipLimit.allowed ? phoneLimit : ipLimit;
   if (!limit.allowed) {
     return NextResponse.json(
@@ -390,6 +451,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
+      ...(await anotarProductos((simple as { id: string }).id)),
       appointmentId: (simple as { id: string }).id,
       token: (simple as { confirmation_token: string }).confirmation_token,
       initPoint: null,
@@ -461,6 +523,10 @@ export async function POST(request: Request) {
   const appointmentId = (inserted as { id: string }).id;
   const token = (inserted as { confirmation_token: string }).confirmation_token;
 
+  // Los productos se anotan apenas existe el turno, antes de hablar con
+  // MercadoPago. No entran en la seña: se pagan en el local.
+  const productosDelTurno = await anotarProductos(appointmentId);
+
   // 5. Modo simulación: NO creamos preference (no hay MP). El turno queda
   // pending con seña, y se confirma desde el botón "Simular pago".
   if (simMode && !shopRow.mp_access_token) {
@@ -472,6 +538,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({
       ok: true,
+      ...productosDelTurno,
       appointmentId,
       token,
       initPoint: null,
@@ -548,6 +615,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ok: true,
+    ...productosDelTurno,
     appointmentId,
     token,
     initPoint: pref.initPoint,

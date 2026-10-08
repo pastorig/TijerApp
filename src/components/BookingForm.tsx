@@ -41,6 +41,12 @@ import { ServicePicker } from "./booking/ServicePicker";
 import { DateStrip } from "./booking/DateStrip";
 import { StepHeader } from "./booking/StepHeader";
 import { PasoPendiente } from "./booking/PasoPendiente";
+import { ProductPicker, type ProductoParaElegir } from "./booking/ProductPicker";
+import {
+  renglonEnTexto,
+  totalDeProductos,
+  type ProductoDeTurno,
+} from "@/lib/productos";
 import {
   Aparecer,
   Destellos,
@@ -139,6 +145,12 @@ export function BookingForm({ barbershop }: BookingFormProps) {
   // De qué barbero/servicio/día son los horarios en pantalla. Cuando cambia,
   // la grilla entra en cascada; si solo se refresca la misma, no se mueve nada.
   const [tandaDeHorarios, setTandaDeHorarios] = useState("");
+  // Catálogo de productos (035): lo que la barbería ofrece para sumar al
+  // turno, y cuántas unidades de cada uno eligió el cliente. Si la barbería no
+  // tiene productos (o su plan no los trae) la lista queda vacía y el paso no
+  // existe: la reserva es exactamente la de siempre.
+  const [productos, setProductos] = useState<ProductoParaElegir[]>([]);
+  const [cantidades, setCantidades] = useState<Record<string, number>>({});
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientEmail, setClientEmail] = useState("");
@@ -202,6 +214,10 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     // Seña MercadoPago: si están, el cierre muestra el panel de pago.
     depositAmount?: number | null;
     initPoint?: string | null;
+    // Productos que quedaron anotados en el turno, y los que no se pudieron
+    // sumar (se agotaron mientras reservaba). Los dos vienen del servidor.
+    productos?: ProductoDeTurno[];
+    productosNoSumados?: string[];
   };
   const [bookingResult, setBookingResult] = useState<BookingResult | null>(
     null,
@@ -229,6 +245,21 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     !selectedBarber ||
     !selectedService ||
     availableServices.length === 0;
+  // Lo que el cliente sumó, con el precio que ve en pantalla. El servidor
+  // vuelve a resolver precio y disponibilidad: esto es solo para mostrar.
+  const productosElegidos: ProductoDeTurno[] = productos
+    .filter((p) => (cantidades[p.id] ?? 0) > 0)
+    .map((p) => ({
+      product_name: p.name,
+      unit_price: p.price,
+      quantity: cantidades[p.id],
+    }));
+  const totalProductos = totalDeProductos(productosElegidos);
+  const pedidoDeProductos = productos
+    .filter((p) => (cantidades[p.id] ?? 0) > 0)
+    .map((p) => ({ id: p.id, cantidad: cantidades[p.id] }));
+  const hayCatalogo = productos.length > 0;
+
   // Ya no falta nada: es cuando el botón del celular late una vez.
   const listoParaReservar =
     !isSubmitDisabled &&
@@ -241,6 +272,32 @@ export function BookingForm({ barbershop }: BookingFormProps) {
   ]
     .filter(Boolean)
     .join(" · ");
+
+  useEffect(() => {
+    let vivo = true;
+    // Si falla, la reserva sigue igual sin el paso de productos: no se avisa
+    // de un error en algo que el cliente ni sabía que existía.
+    fetch(`/api/products?bs=${encodeURIComponent(barbershop.slug)}`)
+      .then((res) => (res.ok ? res.json() : { productos: [] }))
+      .then((payload: { productos?: ProductoParaElegir[] }) => {
+        if (vivo && Array.isArray(payload.productos)) {
+          setProductos(payload.productos);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, [barbershop.slug]);
+
+  function handleProductChange(productId: string, cantidad: number) {
+    setCantidades((actual) => {
+      const siguiente = { ...actual };
+      if (cantidad <= 0) delete siguiente[productId];
+      else siguiente[productId] = cantidad;
+      return siguiente;
+    });
+  }
 
   function handleBarberChange(barberId: string) {
     const barber = activeBarbers.find(
@@ -314,7 +371,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     // Solo la primera vez: el que cambia de horario está comparando, y que la
     // página se le mueva en cada toque estorba.
     if (!selectedTime) {
-      bajarHastaElPaso("paso-datos");
+      bajarHastaElPaso(hayCatalogo ? "paso-productos" : "paso-datos");
       // Despierta al servidor de reservas mientras el cliente escribe sus
       // datos. Si nadie reservó en un rato, el primer pedido tarda cerca de
       // 1,5 s más solo en arrancar, y ese tiempo caía justo sobre "Reservar".
@@ -627,6 +684,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             appointmentDate: selectedDate,
             appointmentTime: selectedTime,
             comment: comment.trim(),
+            products: pedidoDeProductos,
           }),
         });
         const data = (await res.json()) as {
@@ -635,6 +693,8 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           initPoint?: string;
           depositAmount?: number;
           error?: string;
+          productos?: ProductoDeTurno[];
+          productosNoSumados?: string[];
         };
 
         if (!res.ok || !data.ok || !data.token) {
@@ -668,6 +728,8 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           whatsappLink: "",
           depositAmount: data.depositAmount ?? null,
           initPoint: data.initPoint ?? null,
+          productos: data.productos ?? [],
+          productosNoSumados: data.productosNoSumados ?? [],
         });
       } catch {
         failBooking("No pudimos crear la reserva. Probá de nuevo.");
@@ -700,6 +762,11 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     };
 
     let confirmationToken: string | undefined;
+    // Lo que el SERVIDOR dijo que quedó anotado. El WhatsApp y la pantalla de
+    // éxito usan esto, no lo que el cliente tenía tildado: si un producto se
+    // agotó en el medio, no puede aparecer en el mensaje al barbero.
+    let productosAnotados: ProductoDeTurno[] = [];
+    let productosNoSumados: string[] = [];
 
     try {
       // La reserva la crea el SERVER, no el browser. Antes esto era un insert
@@ -723,13 +790,18 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           appointmentTime: selectedTime,
           comment,
           couponCode: appliedCoupon?.code ?? null,
+          products: pedidoDeProductos,
         }),
       });
       const payload = (await res.json()) as {
         ok?: boolean;
         token?: string;
         error?: string;
+        productos?: ProductoDeTurno[];
+        productosNoSumados?: string[];
       };
+      productosAnotados = payload.productos ?? [];
+      productosNoSumados = payload.productosNoSumados ?? [];
       const data = payload.ok && payload.token
         ? { confirmation_token: payload.token }
         : null;
@@ -788,6 +860,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       date: formatDateForDisplay(selectedDate),
       time: selectedTime,
       comment,
+      products: productosAnotados.map(renglonEnTexto),
     });
 
     // Cambiamos la UI a "pantalla de éxito" con el link de confirmación
@@ -809,6 +882,8 @@ export function BookingForm({ barbershop }: BookingFormProps) {
         couponCode: appliedCoupon?.code ?? null,
         couponDiscountAmount: appliedCoupon?.discountAmount ?? null,
         finalPrice: appliedCoupon?.finalPrice ?? null,
+        productos: productosAnotados,
+        productosNoSumados,
       });
     }
 
@@ -832,6 +907,10 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     { label: "Horario", value: selectedTime || "—" },
     { label: "Cliente", value: clientName || "—" },
     { label: "Teléfono", value: clientPhone || "—" },
+    ...productosElegidos.map((p) => ({
+      label: "Llevás",
+      value: `${renglonEnTexto(p)} · ${formatPrice(p.unit_price * p.quantity)}`,
+    })),
   ];
 
   // Si el booking fue exitoso, mostramos la pantalla de éxito en lugar
@@ -1350,11 +1429,33 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             )}
           </div>
 
+          {/* Paso opcional: sumar productos del catálogo al turno (035). Solo
+              existe si la barbería tiene productos disponibles, y nunca
+              bloquea: se puede seguir de largo sin tocar nada. */}
+          {selectedTime && hayCatalogo ? (
+            <div id="paso-productos">
+              <Aparecer className="space-y-3">
+                <StepHeader
+                  number={5}
+                  title="¿Te llevás algo?"
+                  subtitle="Opcional · lo pagás en el local"
+                  done={productosElegidos.length > 0}
+                />
+                <ProductPicker
+                  productos={productos}
+                  cantidades={cantidades}
+                  disabled={isSaving}
+                  onChange={handleProductChange}
+                />
+              </Aparecer>
+            </div>
+          ) : null}
+
           {selectedTime ? (
           <div id="paso-datos">
           <Aparecer className="space-y-5">
             <StepHeader
-              number={5}
+              number={hayCatalogo ? 6 : 5}
               title="Tus datos"
               subtitle="Último paso"
               done={Boolean(clientName.trim() && clientPhone.trim())}
@@ -1444,7 +1545,10 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       </section>
 
       {/* Resumen — columna lateral minimalista */}
-      <aside className="min-w-0 lg:sticky lg:top-6">
+      {/* Con productos el resumen crece. Si llegara a ser más alto que la
+          pantalla, se desliza por dentro: el botón de reservar no puede quedar
+          fuera de alcance. */}
+      <aside className="min-w-0 lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto">
         <div
           className="card-premium animate-fade-up p-5 sm:p-6 lg:p-6"
           style={{ animationDelay: "120ms" }}
@@ -1479,12 +1583,23 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               >
                 <PrecioAnimado
                   value={
-                    appliedCoupon
+                    (appliedCoupon
                       ? appliedCoupon.finalPrice
-                      : selectedService.price
+                      : selectedService.price) + totalProductos
                   }
                 />
               </p>
+
+              {productosElegidos.length > 0 ? (
+                <p className="mt-2 text-xs leading-5 text-[color:var(--text-muted)]">
+                  {selectedService.name}{" "}
+                  {formatPrice(
+                    appliedCoupon ? appliedCoupon.finalPrice : selectedService.price,
+                  )}{" "}
+                  + productos {formatPrice(totalProductos)}. Los productos los
+                  pagás en el local.
+                </p>
+              ) : null}
 
               {/* Input de cupón — solo visible si hay servicio elegido */}
               <div className="mt-5">
@@ -1500,9 +1615,9 @@ export function BookingForm({ barbershop }: BookingFormProps) {
           ) : null}
 
           <dl className="mt-6 grid grid-cols-1 gap-3 sm:mt-10 sm:gap-5 lg:mt-6 lg:gap-3">
-            {summaryRows.map((row) => (
+            {summaryRows.map((row, i) => (
               <div
-                key={row.label}
+                key={`${row.label}-${i}`}
                 className="grid grid-cols-[auto_1fr] items-baseline gap-4"
               >
                 <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:tracking-[0.2em]">
@@ -1559,9 +1674,9 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               <p className="font-mono text-xl font-black tabular-nums leading-none text-[color:var(--brand-gold)]">
                 <PrecioAnimado
                   value={
-                    appliedCoupon
+                    (appliedCoupon
                       ? appliedCoupon.finalPrice
-                      : selectedService.price
+                      : selectedService.price) + totalProductos
                   }
                 />
               </p>
@@ -1619,6 +1734,8 @@ type BookingSuccessResult = {
   // Seña MercadoPago.
   depositAmount?: number | null;
   initPoint?: string | null;
+  productos?: ProductoDeTurno[];
+  productosNoSumados?: string[];
 };
 
 function BookingSuccess({
@@ -1634,6 +1751,9 @@ function BookingSuccess({
   const isDeposit = Boolean(result.initPoint) || typeof result.depositAmount === "number";
   const payHref =
     result.initPoint ?? `/api/mp/pay?token=${result.confirmationToken}`;
+  const productosDelTurno = result.productos ?? [];
+  const noSumados = result.productosNoSumados ?? [];
+  const totalDeLosProductos = totalDeProductos(productosDelTurno);
 
   // Esta pantalla reemplaza al formulario sin cambiar de página, así que el
   // scroll quedaba donde estaba el botón "Reservar": el cliente caía en la
@@ -1696,6 +1816,19 @@ function BookingSuccess({
           )}
         </p>
         </Aparecer>
+
+        {noSumados.length > 0 ? (
+          <Aparecer demora={0.55}>
+            <p
+              role="status"
+              className="mt-6 rounded-[var(--radius-sm)] border border-amber-400/40 bg-amber-400/10 px-3 py-2.5 text-xs leading-5 text-amber-200"
+            >
+              Tu turno quedó reservado, pero no pudimos sumar{" "}
+              <strong>{noSumados.join(", ")}</strong>: ya no está disponible.
+              Consultale al barbero cuando vayas.
+            </p>
+          </Aparecer>
+        ) : null}
 
         {isDeposit ? (
           <Aparecer demora={0.6} className="mt-8">
@@ -1778,9 +1911,21 @@ function BookingSuccess({
               { label: "Barbero", value: result.barberName },
               { label: "Tu nombre", value: result.customerName },
               { label: "Tel", value: result.customerPhone },
+              ...productosDelTurno.map((p) => ({
+                label: "Llevás",
+                value: `${renglonEnTexto(p)} · ${formatPrice(p.unit_price * p.quantity)}`,
+              })),
+              ...(productosDelTurno.length > 0
+                ? [
+                    {
+                      label: "Productos",
+                      value: `${formatPrice(totalDeLosProductos)} · se pagan en el local`,
+                    },
+                  ]
+                : []),
             ].map((row, i) => (
               <Aparecer
-                key={row.label}
+                key={`${row.label}-${i}`}
                 demora={0.5 + i * 0.05}
                 className="grid grid-cols-[auto_1fr] items-baseline gap-4"
               >

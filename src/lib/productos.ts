@@ -163,6 +163,18 @@ export function normalizarPedido(raw: unknown): Resultado<RenglonDePedido[]> {
   };
 }
 
+/** Un producto ya anotado en un turno: copia del nombre y el precio del momento. */
+export type ProductoDeTurno = {
+  product_name: string;
+  unit_price: number;
+  quantity: number;
+};
+
+/** "Cera mate ×2": cómo se nombra un renglón en una línea de texto. */
+export function renglonEnTexto(p: ProductoDeTurno): string {
+  return p.quantity > 1 ? `${p.product_name} ×${p.quantity}` : p.product_name;
+}
+
 /** Cuánto suman los productos de un turno. */
 export function totalDeProductos(
   renglones: ReadonlyArray<{ unit_price: number; quantity: number }>,

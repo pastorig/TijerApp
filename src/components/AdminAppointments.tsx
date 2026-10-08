@@ -68,6 +68,8 @@ import {
 } from "./admin/AgendaCalendarGridView";
 import { AgendaBadge, AgendaSheet } from "./admin/agenda/AgendaSheet";
 import { AppointmentRow as AppointmentCard } from "./admin/AppointmentRow";
+import { listAppointmentProductsByBarbershop } from "@/lib/appointment-products";
+import type { ProductoDeTurno } from "@/lib/productos";
 import {
   EditAppointmentDialog,
   type AppointmentEdits,
@@ -201,6 +203,11 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const [isBulkHardDeleting, setIsBulkHardDeleting] = useState(false);
   const [duplicatingAppointment, setDuplicatingAppointment] =
     useState<AppointmentRow | null>(null);
+  // Productos que los clientes sumaron a sus turnos (035), por id de turno.
+  // Se cargan aparte de los turnos: si fallan, el turnero se ve igual.
+  const [productosPorTurno, setProductosPorTurno] = useState<
+    Record<string, ProductoDeTurno[]>
+  >({});
   const [editingAppointment, setEditingAppointment] =
     useState<AppointmentRow | null>(null);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
@@ -1293,6 +1300,11 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         );
         if (!isMounted) return;
         setAppointments(appsResult.data ?? []);
+        // Sin esperarlo: los productos llegan cuando llegan, no demoran la
+        // lista de turnos.
+        void listAppointmentProductsByBarbershop(barbershop.slug).then((mapa) => {
+          if (isMounted) setProductosPorTurno(mapa);
+        });
         setBarbers(currentBarbers);
         setServices(servicesResult.data ?? []);
         setClients(clientsResult.data ?? []);
@@ -1538,6 +1550,9 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         isNextUp={
           Boolean(appointment.id) &&
           appointment.id === nextUpAppointmentId
+        }
+        productos={
+          appointment.id ? productosPorTurno[appointment.id] : undefined
         }
       />
     );

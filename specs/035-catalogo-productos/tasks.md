@@ -20,11 +20,11 @@ Preguntas abiertas resueltas el 8/10/2026 (ver spec).
 
 ## Etapa C — Sumarlo al turno
 
-- [ ] C1 Migración `appointment_products` (la corre Bautista)
-- [ ] C2 `GET /api/products`
-- [ ] C3 `/api/appointments/book` acepta y guarda productos
-- [ ] C4 `booking/ProductPicker.tsx` + resumen + pantalla de éxito
-- [ ] C5 Productos en `AppointmentRow`, `StaffAgenda`, `/r/[token]` y el WhatsApp
+- [ ] C1 Migración `appointment_products` — ESCRITA (`20261009120000_appointment_products.sql`), falta que la corra Bautista
+- [x] C2 `GET /api/products`
+- [x] C3 `/api/appointments/book` acepta y guarda productos
+- [x] C4 `booking/ProductPicker.tsx` + resumen + pantalla de éxito
+- [x] C5 Productos en `AppointmentRow`, `StaffAgenda`, `/r/[token]` y el WhatsApp
 - [ ] C6 Reserva real en la demo, con y sin productos, midiendo el tiempo
 - [ ] C7 Preview → OK de Bautista → merge
 

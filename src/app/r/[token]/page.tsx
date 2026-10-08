@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { renglonEnTexto, totalDeProductos } from "@/lib/productos";
+import { productosDelTurnoPorToken } from "@/lib/server/productos";
+import { formatPrice } from "@/lib/format";
 import { notFound } from "next/navigation";
 import { Logo } from "@/components/ui";
 import { resolveBarbershopBySlug } from "@/lib/barbershops";
@@ -45,9 +48,11 @@ export default async function PublicAppointmentPage({
   // El RPC cae al slug si la barbería no está en la tabla `barbershops`
   // (caso típico de las demos como SV Barber). Resolvemos el nombre real
   // desde la misma fuente que la landing pública usa.
-  const [{ data: resolvedBarbershop }, deposit] = await Promise.all([
+  const [{ data: resolvedBarbershop }, deposit, productos] = await Promise.all([
     resolveBarbershopBySlug(appointment.barbershop_slug),
     getAppointmentDepositByToken(token),
+    // Productos que sumó al reservar (035). Si falla, lista vacía.
+    productosDelTurnoPorToken(token),
   ]);
   const barbershopName =
     resolvedBarbershop?.name ?? appointment.barbershop_name;
@@ -74,6 +79,40 @@ export default async function PublicAppointmentPage({
           initialAppointment={appointmentWithName}
           showActions={false}
         />
+        {productos.length > 0 ? (
+          <section
+            aria-label="Productos de tu turno"
+            className="card-premium mt-6 p-5"
+          >
+            <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--brand-gold)]">
+              También te llevás
+            </p>
+            <ul className="mt-3 grid gap-2">
+              {productos.map((p, i) => (
+                <li
+                  key={`${p.product_name}-${i}`}
+                  className="flex items-baseline justify-between gap-4 text-sm"
+                >
+                  <span className="min-w-0 break-words font-semibold text-white">
+                    {renglonEnTexto(p)}
+                  </span>
+                  <span className="shrink-0 font-mono tabular-nums text-[color:var(--text-secondary)]">
+                    {formatPrice(p.unit_price * p.quantity)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 flex items-baseline justify-between gap-4 border-t border-[color:var(--border-subtle)] pt-3 text-sm font-bold text-[color:var(--brand-gold)]">
+              <span>Productos</span>
+              <span className="font-mono tabular-nums">
+                {formatPrice(totalDeProductos(productos))}
+              </span>
+            </p>
+            <p className="mt-1 text-xs text-[color:var(--text-muted)]">
+              Los pagás en el local, junto con tu turno.
+            </p>
+          </section>
+        ) : null}
         {deposit ? (
           <div className="mt-6">
             <DepositPaymentPanel

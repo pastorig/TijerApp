@@ -40,9 +40,9 @@ import { useIsReadOnly } from "./PlanContext";
  * "Productos" (feature 035, etapa A): el catálogo que la barbería carga para
  * ofrecerlo después al reservar — ceras, pomadas, polvos texturizadores.
  *
- * En esta etapa solo se cargan. Todavía no aparecen en la página pública ni
- * en la reserva; la pantalla lo dice para que nadie cargue cinco productos y
- * salga a buscarlos sin encontrarlos.
+ * Los disponibles se muestran en la página pública de la barbería y en la
+ * reserva, donde el cliente los suma a su turno. La pantalla dice dónde se
+ * ven, para que nadie cargue cinco productos y salga a buscarlos.
  */
 
 type Producto = {
@@ -245,10 +245,10 @@ export function AdminProductsManager({
           reserven y te los pagan en el local.
         </p>
         <p className="mt-3 max-w-2xl rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/25 bg-[color:var(--brand-gold-soft)] px-3 py-2.5 text-xs leading-5 text-[color:var(--text-secondary)]">
-          <strong className="text-[color:var(--brand-gold)]">Ya se ven en tu página.</strong>{" "}
+          <strong className="text-[color:var(--brand-gold)]">Dónde se ven.</strong>{" "}
           Los que estén disponibles aparecen en la página pública de{" "}
-          {barbershop.name}. Que el cliente los sume a su turno al reservar
-          llega en los próximos días.
+          {barbershop.name} y en la reserva, donde el cliente los puede sumar
+          a su turno. Te llegan anotados en el turno y en el WhatsApp.
         </p>
       </header>
 

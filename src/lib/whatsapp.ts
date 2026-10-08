@@ -1,4 +1,6 @@
 type WhatsAppBookingLinkInput = {
+  /** Productos sumados al turno, ya en texto ("Cera mate ×2"). */
+  products?: string[];
   barbershopName: string;
   barbershopWhatsapp: string;
   /**
@@ -103,6 +105,7 @@ export function createWhatsAppBookingLink({
   time,
   comment,
   confirmationToken,
+  products,
 }: WhatsAppBookingLinkInput) {
   // El pedido va al WhatsApp del barbero elegido si tiene uno propio; si no,
   // al número general de la barbería. `normalizeWhatsAppPhone` deja solo
@@ -127,6 +130,12 @@ export function createWhatsAppBookingLink({
 
   if (comment?.trim()) {
     messageLines.push(`Comentario: ${comment.trim()}`);
+  }
+
+  // Productos del catálogo sumados al turno (035): el barbero tiene que saber
+  // qué tenerle listo al cliente.
+  if (products && products.length > 0) {
+    messageLines.push(`Tambien llevo: ${products.join(", ")}`);
   }
 
   if (confirmationToken) {

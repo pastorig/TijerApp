@@ -44,7 +44,8 @@ export function BarbershopProductsSection({
             Llevate el look a casa
           </Peldano>
           <Peldano as="p" className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[color:var(--text-secondary)] sm:mx-0">
-            Lo que usamos en el sillón, disponible en el local.
+            Lo que usamos en el sillón. Sumalo a tu turno al reservar y lo
+            pagás en el local.
           </Peldano>
         </Escalera>
 

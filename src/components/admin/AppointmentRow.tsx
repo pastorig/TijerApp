@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { renglonEnTexto, totalDeProductos, type ProductoDeTurno } from "@/lib/productos";
 import {
   AlertTriangle,
   Check,
@@ -19,6 +20,7 @@ import {
   TimerReset,
   User,
   X,
+  ShoppingBag,
 } from "lucide-react";
 import { getTagTone, tagClassesFor } from "@/components/admin/ClientTagsEditor";
 import {
@@ -94,6 +96,8 @@ type AppointmentRowProps = ActionHandlers &
     delayWhatsAppHref?: string;
     /** True si este turno es el próximo en empezar (hoy, futuro, más cercano). */
     isNextUp?: boolean;
+    /** Productos del catálogo que el cliente sumó al reservar (035). */
+    productos?: ProductoDeTurno[];
   };
 
 type StatusMeta = {
@@ -273,6 +277,7 @@ export function AppointmentRow({
   reviewWhatsAppHref,
   delayWhatsAppHref,
   isNextUp,
+  productos,
 }: AppointmentRowProps) {
   // Tick cada 60s para refrescar relative time
   useTickingMinute();
@@ -632,6 +637,43 @@ export function AppointmentRow({
               Duración real: {actualDurationMinutes} min (base{" "}
               {baseDurationMinutes})
             </p>
+          ) : null}
+
+          {/* Productos que el cliente sumó al reservar (035). Va antes del
+              comentario: es lo que el barbero tiene que tenerle listo, y el
+              total es lo que le va a cobrar. */}
+          {productos && productos.length > 0 ? (
+            <div className="mt-3 flex items-start gap-2 rounded-r-[var(--radius-xs)] border-l-2 border-[color:var(--brand-gold)]/60 bg-[color:var(--brand-gold-soft)] px-3 py-2">
+              <ShoppingBag
+                className="mt-0.5 size-4 shrink-0 text-[color:var(--brand-gold)]"
+                aria-hidden="true"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-gold)]/80">
+                  También lleva
+                </p>
+                <ul className="mt-0.5 text-[13px] leading-relaxed text-white sm:text-sm">
+                  {productos.map((p, i) => (
+                    <li key={`${p.product_name}-${i}`} className="flex items-baseline justify-between gap-3">
+                      <span className="min-w-0 break-words">{renglonEnTexto(p)}</span>
+                      <span className="shrink-0 font-mono text-xs tabular-nums text-[color:var(--text-secondary)]">
+                        {formatPrice(p.unit_price * p.quantity)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1.5 flex items-baseline justify-between gap-3 border-t border-[color:var(--brand-gold)]/20 pt-1.5 text-xs font-bold text-[color:var(--brand-gold)]">
+                  <span>Total a cobrar</span>
+                  <span className="font-mono tabular-nums">
+                    {formatPrice(
+                      (appointment.service_price ?? 0) -
+                        (appointment.discount_amount ?? 0) +
+                        totalDeProductos(productos),
+                    )}
+                  </span>
+                </p>
+              </div>
+            </div>
           ) : null}
 
           {/* Comentario del cliente */}

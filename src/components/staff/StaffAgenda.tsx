@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
+import { renglonEnTexto, totalDeProductos, type ProductoDeTurno } from "@/lib/productos";
 import { cn } from "@/lib/cn";
 import { formatPrice } from "@/lib/format";
 import { agruparPorFranja } from "@/lib/staff-agenda-grouping";
@@ -96,6 +97,8 @@ type Turno = {
   is_sobreturno?: boolean | null;
   appointment_time: string;
   comment: string | null;
+  /** Productos del catálogo que el cliente sumó al reservar (035). */
+  productos?: ProductoDeTurno[];
   status: "pending" | "confirmed" | "cancelled";
   /**
    * Estado de la seña. El endpoint ya lo traía desde la feature 016 y la
@@ -618,6 +621,14 @@ export function StaffAgenda({
                   ? ` · ${formatPrice(turno.service_price)}`
                   : ""}
               </p>
+              {turno.productos && turno.productos.length > 0 ? (
+                <p className="mt-1 break-words text-xs font-semibold text-[color:var(--brand-gold)]">
+                  También lleva: {turno.productos.map(renglonEnTexto).join(", ")}{" "}
+                  <span className="font-mono tabular-nums text-[color:var(--text-muted)]">
+                    · {formatPrice(totalDeProductos(turno.productos))}
+                  </span>
+                </p>
+              ) : null}
               {turno.comment ? (
                 <p className="mt-1 text-xs italic text-[color:var(--text-subtle)]">
                   “{turno.comment}”
