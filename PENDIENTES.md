@@ -13,11 +13,12 @@ El detalle de cada punto está más abajo, en su sección.
 0. **Correr `supabase/migrations/20261010120000_reprogramar_turno_atomico.sql`** en el SQL
    Editor. Es el candado de la reserva (037) para cuando el cliente mueve su turno desde
    el link. Hasta que se corra, reprogramar funciona como siempre, sin la protección.
-1. **Crons puntuales — trabado.** `supabase/migrations/20261008190000_crons_puntuales.sql`
-   sigue sin correr porque no aparece el `CRON_SECRET`. Está en Vercel → Environment
-   Variables; si figura como Sensitive no se puede leer y hay que rotarlo en los tres
-   lados: Vercel, el secreto de GitHub y Vault (`tijerapp_cron_secret`). Mientras tanto
-   sigue el cron de GitHub, que no es puntual.
+1. **Crons puntuales — ANDANDO desde el 08/10.** El `CRON_SECRET` se perdió y se generó
+   uno nuevo; está cargado en Vercel y en Vault (`tijerapp_cron_secret`). Los cinco crons
+   quedaron programados en la base y la llamada de prueba a `/api/cron/deposits` contestó
+   200. **Falta confirmar** que el secreto nuevo también esté en GitHub (Settings →
+   Secrets → Actions → `CRON_SECRET`): si quedó el viejo, los crons de respaldo dan 401.
+   Se ve corriendo "Cierre del día Cron" a mano desde Actions.
 2. **21/10 — cobrarle a Leo Cuts $27.000.** Sigue en Esencial; el panel y el aviso de
    vencimiento ya muestran ese monto.
 3. **MercadoPago por el camino real.** Sigue siendo el riesgo más grande: falta la prueba
