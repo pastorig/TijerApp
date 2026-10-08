@@ -76,6 +76,61 @@ function siteUrl(request: Request) {
   }
 }
 
+/**
+ * Guarda el turno chequeando la superposición EN LA MISMA TRANSACCIÓN
+ * (feature 037).
+ *
+ * Antes eran dos pasos: `assertSlotBookable` miraba la agenda y después se
+ * insertaba. Dos clientes reservando a la vez podían pasar los dos el chequeo.
+ * El índice único frena la misma hora de inicio, pero no dos turnos que se
+ * pisan con horas distintas (40 minutos a las 9:00 y otro a las 9:20).
+ *
+ * `reservar_turno_atomico` toma un candado por barbero y día, vuelve a mirar
+ * la agenda y recién ahí inserta. Si el horario se ocupó en el medio devuelve
+ * el error 23505, el mismo del índice único: quien llama ya lo traduce a "ese
+ * horario acaba de ocuparse".
+ *
+ * Si la función no existe (migración sin correr) se guarda por el camino
+ * anterior. Es a propósito: la reserva no puede dejar de andar por una
+ * migración pendiente — queda como estaba, sin la protección nueva.
+ */
+async function guardarTurno(
+  supabase: ReturnType<typeof getSupabaseAdminClient>,
+  turno: Record<string, unknown>,
+): Promise<{
+  data: { id: string; confirmation_token: string } | null;
+  error: { code?: string; message?: string } | null;
+}> {
+  const { data, error } = await supabase.rpc(
+    "reservar_turno_atomico" as never,
+    { p_turno: turno } as never,
+  );
+
+  if (!error) {
+    const fila = (data as unknown as Array<{
+      turno_id: string;
+      turno_token: string;
+    }> | null)?.[0];
+    return fila
+      ? { data: { id: fila.turno_id, confirmation_token: fila.turno_token }, error: null }
+      : { data: null, error: { message: "La reserva no devolvió el turno." } };
+  }
+
+  // PGRST202: PostgREST no encuentra la función. 42883: Postgres tampoco.
+  const sinFuncion = error.code === "PGRST202" || error.code === "42883";
+  if (!sinFuncion) return { data: null, error };
+
+  const anterior = await supabase
+    .from("appointments")
+    .insert(turno as never)
+    .select("id, confirmation_token")
+    .single();
+  return {
+    data: anterior.data as { id: string; confirmation_token: string } | null,
+    error: anterior.error,
+  };
+}
+
 export async function POST(request: Request) {
   let body: BookBody;
   try {
@@ -411,9 +466,7 @@ export async function POST(request: Request) {
   // cliente. Todos los campos con valor (precio, duración, descuento) ya
   // fueron resueltos server-side arriba.
   if (!wantsDeposit) {
-    const { data: simple, error: simpleError } = await supabase
-      .from("appointments")
-      .insert({
+    const { data: simple, error: simpleError } = await guardarTurno(supabase, {
         barbershop_slug: slug,
         barber_id: barberId,
         barber_name: barberName,
@@ -429,9 +482,7 @@ export async function POST(request: Request) {
         status: shopRow.auto_confirm_appointments ? "confirmed" : "pending",
         coupon_id: couponId,
         discount_amount: discountAmount,
-      })
-      .select("id, confirmation_token")
-      .single();
+      });
 
     if (simpleError || !simple) {
       if (simpleError?.code === "23505") {
@@ -478,9 +529,7 @@ export async function POST(request: Request) {
   ).toISOString();
 
   // 4. Insert del turno (pending → retiene el slot).
-  const { data: inserted, error: insertError } = await supabase
-    .from("appointments")
-    .insert({
+  const { data: inserted, error: insertError } = await guardarTurno(supabase, {
       barbershop_slug: slug,
       barber_id: barberId,
       barber_name: barberName,
@@ -500,9 +549,7 @@ export async function POST(request: Request) {
       deposit_amount: depositAmount,
       deposit_status: "pending",
       deposit_expires_at: expiresAt,
-    })
-    .select("id, confirmation_token")
-    .single();
+    });
 
   if (insertError || !inserted) {
     if (insertError?.code === "23505") {
