@@ -1,7 +1,6 @@
 # Tasks: 035 catálogo de productos en la reserva
 
-Antes de empezar: Bautista contesta las tres preguntas abiertas de la spec (o acepta las
-propuestas).
+Preguntas abiertas resueltas el 8/10/2026 (ver spec).
 
 ## Etapa A — El dueño carga su catálogo
 
@@ -28,4 +27,9 @@ propuestas).
 - [ ] C5 Productos en `AppointmentRow`, `StaffAgenda`, `/r/[token]` y el WhatsApp
 - [ ] C6 Reserva real en la demo, con y sin productos, midiendo el tiempo
 - [ ] C7 Preview → OK de Bautista → merge
-- [ ] C8 `PENDIENTES.md` + qué mirar a los 30 días (SC-005)
+
+## Etapa D — Reportes
+
+- [ ] D1 "Productos vendidos" en `AdminReportes` (unidades y plata por producto)
+- [ ] D2 Preview → OK de Bautista → merge
+- [ ] D3 `PENDIENTES.md` + qué mirar a los 30 días (SC-005)

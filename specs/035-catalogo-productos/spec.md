@@ -2,7 +2,7 @@
 
 **Branch**: `035-catalogo-productos`
 **Created**: 2026-10-08
-**Status**: Draft — esperando el OK de Bautista para pasar a implementación
+**Status**: Aprobada (8/10/2026) — en implementación por etapas
 **Input**: "quiero que armemos un roadmap o speckit para crear un apartado de catálogo en
 donde se ofrecerán en la parte de reservar, estos serán ceras, polvos texturizadores, etc"
 (Bautista, 8/10/2026).
@@ -31,6 +31,10 @@ paga. Lo que cambia ahora:
 | Stock | **Disponible / agotado**, a mano. Sin contar unidades. |
 | Plan | **Esencial y Pro.** |
 | Dónde más se ve | En la **página pública de la barbería**. |
+| Reportes | Una sección **"Productos vendidos"** aparte. No se mezclan con los ingresos por servicios. |
+| Comisión del empleado | **No hay.** Los productos no generan comisión. |
+| Quién carga productos | **Cualquier administrador** de la barbería. |
+| El empleado | **Siempre ve** los productos de sus turnos, sin permiso aparte. |
 
 ## User Scenarios & Testing
 
@@ -60,7 +64,7 @@ el turno dice "Lleva: Cera mate ×1" y cuánto tiene que cobrar en total.
 5. **Given** una barbería en plan Solo, **When** el dueño entra a "Productos", **Then** ve
    qué es y que está disponible desde Esencial, sin poder cargar.
 6. **Given** un co-administrador (no dueño), **When** entra a "Productos", **Then** puede
-   cargar y editar productos igual que el dueño. *(Ver "Preguntas abiertas".)*
+   cargar y editar productos igual que el dueño.
 
 **El cliente lo suma al reservar**
 
@@ -149,6 +153,11 @@ el turno dice "Lleva: Cera mate ×1" y cuánto tiene que cobrar en total.
 - **FR-012**: Cupón y seña se calculan únicamente sobre el servicio.
 - **FR-013**: Un producto nunca se "desagota" solo ni se descuenta: el estado lo maneja
   el dueño a mano.
+- **FR-016**: Reportes tiene una sección "Productos vendidos" para el período elegido:
+  cuántas unidades de cada producto y cuánta plata, con el total. Cuenta los productos de
+  turnos confirmados cuya fecha ya pasó o es hoy (el mismo criterio que los ingresos).
+- **FR-017**: Los productos no suman a los ingresos por servicios, al cierre de caja ni a
+  la comisión de ningún barbero.
 
 ### Should Have
 
@@ -161,8 +170,8 @@ el turno dice "Lleva: Cera mate ×1" y cuánto tiene que cobrar en total.
 
 - **Cobro online de productos.** Se paga en el local.
 - **Stock por unidades**, alertas de faltante, proveedores, costos o margen.
-- **Sumar los productos a los ingresos, reportes, cierre de caja o comisiones.** Ver
-  "Preguntas abiertas": es la decisión más delicada que queda.
+- **Sumar los productos a los ingresos por servicios, al cierre de caja o a las
+  comisiones.** Van en su propia sección de reportes (FR-016).
 - **Vender un producto sin turno** (carrito, envío, retiro).
 - **Agregar productos a un turno desde el panel** (turno cargado a mano, o "al final se
   llevó una cera").
@@ -197,7 +206,10 @@ el turno dice "Lleva: Cera mate ×1" y cuánto tiene que cobrar en total.
 - El cliente no espera que el producto esté "reservado" en sentido estricto: si al llegar
   no hay, lo resuelve con el barbero.
 
-## Preguntas abiertas
+## Preguntas abiertas — RESUELTAS (8/10/2026)
+
+Quedan como registro de lo que se preguntó; las respuestas están en la tabla de
+"Decisiones ya tomadas".
 
 1. **¿Los productos cuentan como ingreso?** Si un turno de $10.000 lleva una cera de
    $8.000, hoy los reportes, el cierre de caja y la comisión del barbero mirarían solo los

@@ -2,7 +2,7 @@
 
 **Spec**: [spec.md](./spec.md) · **Fecha**: 2026-10-08 · **Migraciones**: dos (las corre Bautista).
 
-Se entrega en tres etapas. Cada una se puede subir sola y deja algo usable; ninguna rompe
+Se entrega en cuatro etapas. Cada una se puede subir sola y deja algo usable; ninguna rompe
 la reserva de hoy si la siguiente se demora.
 
 ## Etapa A — El dueño carga su catálogo (nada público todavía)
@@ -55,6 +55,13 @@ la reserva de hoy si la siguiente se demora.
     con el turno en las mismas consultas que ya lo traen (un `select` anidado), no en una
     consulta aparte por turno.
 
+## Etapa D — Reportes
+
+13. **"Productos vendidos"** en `AdminReportes`: unidades y plata por producto en el
+    período, con el total. Sale de `appointment_products` unido a turnos confirmados con
+    fecha hasta hoy (el período de reportes termina hoy: incluir días futuros rompía los
+    totales, y acá pasaría lo mismo). Sección aparte; no toca los KPIs de ingresos.
+
 ## Decisiones
 
 - **Copia del nombre y el precio en el renglón del turno.** Es lo que hace que editar o
@@ -66,9 +73,11 @@ la reserva de hoy si la siguiente se demora.
   aparte), los productos pueden mudarse adentro.
 - **Sin políticas de RLS para el público.** El formulario lee por un endpoint del
   servidor. Coherente con haber cerrado `appointments` al público en agosto.
-- **Los productos no tocan `service_price`, ingresos, caja ni comisiones** en esta
-  versión (pregunta abierta 1 de la spec). El "total a cobrar" del turno se calcula al
-  mostrarlo.
+- **Los productos no tocan `service_price`, ingresos, caja ni comisiones.** Decidido:
+  sin comisión para el empleado, y en reportes van en una sección propia. El "total a
+  cobrar" del turno se calcula al mostrarlo.
+- **"Vendido" = pedido en un turno confirmado que ya pasó.** No hay un botón de
+  "entregado": sería un paso manual más que nadie haría, y el reporte quedaría en cero.
 - **El paso de la reserva es una tira horizontal, no una lista.** En el celular una lista
   de diez productos empuja "Tus datos" dos pantallas para abajo, y el botón de reservar
   con ellos.
