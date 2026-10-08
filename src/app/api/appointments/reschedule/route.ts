@@ -15,12 +15,50 @@ export const runtime = "nodejs";
  * Validaciones:
  * - Token válido + turno NO cancelled/deleted.
  * - Nueva fecha futura (no se puede reagendar para el pasado).
- * - El slot nuevo no choca con otro turno activo del mismo barbero
- *   (lo protege también el unique partial index appointments_unique_active_slot).
+ * - El slot nuevo no choca con otro turno activo del mismo barbero: se
+ *   verifica y se guarda en un solo paso (`reprogramar_turno_atomico`).
  *
  * El turno conserva el mismo confirmation_token y vuelve a status='pending'
  * para que el barbero deba confirmar de nuevo.
  */
+
+/**
+ * Mueve el turno chequeando la superposición EN LA MISMA TRANSACCIÓN.
+ *
+ * Es la otra mitad de la 037: la reserva ya guardaba con candado, pero
+ * reprogramar seguía en dos pasos — `assertSlotBookable` y después el update.
+ * `reprogramar_turno_atomico` usa el mismo candado por barbero y día, así que
+ * una reserva y una reprogramación simultáneas se esperan entre sí.
+ *
+ * Si la función no existe (migración sin correr) se mueve por el camino
+ * anterior: reprogramar no puede dejar de andar por una migración pendiente.
+ */
+async function moverTurno(
+  supabase: ReturnType<typeof getSupabaseAdminClient>,
+  turno: { id: string; fecha: string; hora: string },
+): Promise<{ error: { code?: string; message?: string } | null }> {
+  const { error } = await supabase.rpc(
+    "reprogramar_turno_atomico" as never,
+    { p_turno_id: turno.id, p_fecha: turno.fecha, p_hora: turno.hora } as never,
+  );
+  if (!error) return { error: null };
+
+  // PGRST202: PostgREST no encuentra la función. 42883: Postgres tampoco.
+  const sinFuncion = error.code === "PGRST202" || error.code === "42883";
+  if (!sinFuncion) return { error };
+
+  // El índice único appointments_unique_active_slot frena la misma hora de
+  // inicio; si choca, viene 23505.
+  const anterior = await supabase
+    .from("appointments")
+    .update({
+      appointment_date: turno.fecha,
+      appointment_time: turno.hora,
+      status: "pending",
+    })
+    .eq("id", turno.id);
+  return { error: anterior.error };
+}
 
 export async function POST(request: Request) {
   let payload: {
@@ -185,28 +223,29 @@ export async function POST(request: Request) {
     );
   }
 
-  // Update. El unique partial index appointments_unique_active_slot
-  // protege contra choques entre turnos activos. Si choca, viene 23505.
-  const { error: updateError } = await supabase
-    .from("appointments")
-    .update({
-      appointment_date: newDate,
-      appointment_time: newTimeNormalized,
-      status: "pending",
-    })
-    .eq("id", appointment.id);
+  const { error: updateError } = await moverTurno(supabase, {
+    id: appointment.id,
+    fecha: newDate,
+    hora: newTimeNormalized,
+  });
 
   if (updateError) {
-    Sentry.captureException(updateError);
+    // 23505: alguien tomó ese horario entre el chequeo y el guardado. No es un
+    // error del sistema, así que no va a Sentry.
     if (updateError.code === "23505") {
       return NextResponse.json(
-        {
-          error:
-            "Ese horario ya está reservado por otro turno. Elegí otro slot.",
-        },
+        { error: "Ese horario acaba de ocuparse. Elegí otro." },
         { status: 409 },
       );
     }
+    // P0002: el turno se canceló mientras el cliente elegía el horario nuevo.
+    if (updateError.code === "P0002") {
+      return NextResponse.json(
+        { error: "El turno fue cancelado, no se puede reagendar." },
+        { status: 409 },
+      );
+    }
+    Sentry.captureException(updateError);
     return NextResponse.json(
       { error: "No pudimos reagendar el turno." },
       { status: 500 },

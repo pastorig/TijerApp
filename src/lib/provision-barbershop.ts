@@ -3,6 +3,7 @@ import { demoBarbershops } from "@/data/demo-barbershops";
 // en runtime: no hay ciclo real entre los dos módulos.
 import { isDefaultWorkingDay } from "@/lib/onboarding-defaults";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { buscarUsuarioPorEmail } from "@/lib/server/buscar-usuario-por-email";
 
 /**
  * Motor de alta de una barbería. Crea, en orden: usuario admin en Auth (si no
@@ -132,14 +133,19 @@ export async function provisionBarbershop(
 
   // ── Usuario admin ────────────────────────────────────────────────────────
   const normalizedEmail = input.adminEmail.trim().toLowerCase();
-  const usersResult = await supabaseAdmin.auth.admin.listUsers({
-    page: 1,
-    perPage: 200,
-  });
+  // Si la búsqueda falla NO se sigue como si la cuenta no existiera: se
+  // intentaría crearla de nuevo y el error que vería quien se registra sería
+  // otro, sin relación con la causa.
+  const busqueda = await buscarUsuarioPorEmail(normalizedEmail);
+  if (!busqueda.ok) {
+    return {
+      ok: false,
+      error: "No pudimos verificar ese email. Probá de nuevo en un momento.",
+      status: 503,
+    };
+  }
 
-  let adminUser = usersResult.data.users.find(
-    (currentUser) => currentUser.email?.toLowerCase() === normalizedEmail,
-  );
+  let adminUser: { id: string; email?: string } | null = busqueda.user;
   const reusedExistingUser = Boolean(adminUser);
   let temporaryPassword: string | null = null;
 

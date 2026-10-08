@@ -6,6 +6,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { resolveEmailFrom } from "@/lib/email/from";
 import { assertPlanActive, assertPlanFeature } from "@/lib/api-plan-guard";
 import { resolveBarbershopAdminAccess } from "@/lib/server/barbershop-admin-access";
+import { buscarUsuarioPorEmail } from "@/lib/server/buscar-usuario-por-email";
 
 export const runtime = "nodejs";
 
@@ -26,38 +27,6 @@ function generateTemporaryPassword(): string {
   }
   pw += symbols[randomInt(symbols.length)];
   return pw;
-}
-
-const USUARIOS_POR_PAGINA = 200;
-/** Tope de páginas a recorrer: 50 × 200 = 10.000 cuentas. */
-const MAX_PAGINAS_DE_USUARIOS = 50;
-
-type ResultadoBusqueda =
-  | { ok: true; user: { id: string; email?: string } | null }
-  | { ok: false };
-
-/**
- * Busca una cuenta por email recorriendo TODAS las páginas de Auth.
- *
- * Antes se miraba solo la primera página de 200: con más cuentas que eso, un
- * email existente "no aparecía", se intentaba crear de nuevo y fallaba. Y si la
- * consulta falla se devuelve `ok: false` en vez de "no existe": confundir un
- * error con una cuenta nueva es lo que no puede pasar acá.
- */
-async function buscarUsuarioPorEmail(email: string): Promise<ResultadoBusqueda> {
-  const supabase = getSupabaseAdminClient();
-  for (let page = 1; page <= MAX_PAGINAS_DE_USUARIOS; page++) {
-    const { data, error } = await supabase.auth.admin.listUsers({
-      page,
-      perPage: USUARIOS_POR_PAGINA,
-    });
-    if (error) return { ok: false };
-    const users = data?.users ?? [];
-    const encontrado = users.find((u) => (u.email ?? "").toLowerCase() === email);
-    if (encontrado) return { ok: true, user: encontrado };
-    if (users.length < USUARIOS_POR_PAGINA) return { ok: true, user: null };
-  }
-  return { ok: false };
 }
 
 /**

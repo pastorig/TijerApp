@@ -68,9 +68,24 @@ mirar la agenda y ya ve el turno del otro.
 
 ## Fuera de alcance
 
-- El turno cargado a mano por el dueño, el del empleado, mover un turno en el calendario y
-  reprogramar desde el link del cliente. Ahí el que carga está mirando la agenda y los
-  sobreturnos son a propósito. Si alguno muestra el mismo problema, se suma después.
+- El turno cargado a mano por el dueño, el del empleado y mover un turno en el calendario.
+  Ahí el que carga está mirando la agenda y los sobreturnos son a propósito. Si alguno
+  muestra el mismo problema, se suma después.
+
+## Agregado el 08/10/2026: reprogramar desde el link del cliente
+
+Había quedado afuera junto con los de arriba, pero no es el mismo caso: el que reprograma
+desde el link es el cliente, no alguien mirando la agenda, y la ruta tenía la misma forma que
+la reserva — chequear y después guardar. Se cerró con la misma receta:
+
+- `reprogramar_turno_atomico(turno, fecha, hora)` (migración `20261010120000`). Usa la
+  **misma clave de candado** que la reserva, así que una reserva y una reprogramación para el
+  mismo barbero y día se esperan entre sí. El candado va sobre el día de destino.
+- Excluye al propio turno del chequeo y lo deja en "pendiente", igual que antes.
+- Si el turno se canceló mientras el cliente elegía, responde que no se puede reagendar.
+- Si la función no existe, se mueve por el camino anterior.
+
+Sin verificar con una carrera real: la migración todavía no está corrida.
 
 ## Verificación
 

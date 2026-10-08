@@ -10,6 +10,9 @@ El detalle de cada punto está más abajo, en su sección.
 
 ### De Bautista
 
+0. **Correr `supabase/migrations/20261010120000_reprogramar_turno_atomico.sql`** en el SQL
+   Editor. Es el candado de la reserva (037) para cuando el cliente mueve su turno desde
+   el link. Hasta que se corra, reprogramar funciona como siempre, sin la protección.
 1. **Crons puntuales — trabado.** `supabase/migrations/20261008190000_crons_puntuales.sql`
    sigue sin correr porque no aparece el `CRON_SECRET`. Está en Vercel → Environment
    Variables; si figura como Sensitive no se puede leer y hay que rotarlo en los tres
@@ -28,18 +31,23 @@ El detalle de cada punto está más abajo, en su sección.
    - Escanear con el celular el QR de la pantalla Compartir.
    - Confirmar que llega el mail de recuperar contraseña (desde el 03/10 lo manda la app).
 5. **Comercial:** Mateo Cuts lleva 0 turnos desde que se registró el 05/10; Barbería ID no
-   cargó turnos nuevos en 7 días; ofrecerles los referidos (20% por cada referido que
-   pague, tope 100%) a Leo Cuts y a SV Barber.
+   cargó turnos nuevos en 7 días. Los referidos (20% por cada referido que pague, tope
+   100%) ya se les ofrecieron a Leo Cuts y a SV Barber; se llevan a mano.
 
-### De código (nada urgente)
+### De código
 
-1. Un horario recién ocupado contesta "no está en la agenda de ese barbero" en vez de
-   "acaba de ocuparse": los ocupados no vuelven en `slots` con su motivo.
-2. La reserva atómica (037) solo cubre la reserva pública. Reprogramar sigue sin candado.
-3. Los modales de `/owner/planes` se cierran mientras se está guardando.
-4. Búsqueda de cuentas por email limitada a la primera página (registro y accesos de
-   empleado).
-5. "Registrar pago" no valida el monto: ya entró uno de $22 en vez de $22.000.
+No queda nada abierto. Lo que había, cerrado el 08/10:
+
+- Un horario recién ocupado ya contesta "acaba de ocuparse" (antes decía "no está en la
+  agenda de ese barbero"). Si lo pisa un bloqueo, dice que está bloqueado.
+- Reprogramar desde el link del cliente verifica y guarda en un solo paso, con el mismo
+  candado que la reserva. Mover turnos desde el panel o la agenda del empleado no lleva
+  candado a propósito: ahí encimar es decisión de quien atiende.
+- Los modales de `/owner/planes` no se cierran mientras se está guardando.
+- La búsqueda de cuentas por email recorre todas las páginas en los tres lugares (Equipo,
+  accesos de empleado y registro): `src/lib/server/buscar-usuario-por-email.ts`.
+- "Registrar pago" ya pedía confirmación si el monto no es un precio de lista. Ojo: los
+  $27.000 de Leo Cuts no son de lista, así que va a pedir confirmar; es lo esperado.
 
 ### Fechas
 
@@ -231,19 +239,19 @@ Los tres primeros eran bugs que YA estaban en prod, no de la remasterización.
 1. ~~**Dos reservas al mismo tiempo que se pisan sin empezar a la misma hora.**~~
    **HECHO el 08/10 (037)**: la reserva pública verifica y guarda en un solo
    paso (`reservar_turno_atomico`), migración corrida y carrera verificada en
-   prod. **Queda reprogramar**, que no pasa por esa función.
+   prod. Reprogramar desde el link del cliente tiene su propia función
+   (`reprogramar_turno_atomico`, migración `20261010120000`, **falta correrla**).
 2. ~~**¿Los accesos de empleados los da cualquier admin o solo el dueño?**~~
    **DECIDIDO el 05/10: solo el dueño** crea, cambia permisos y quita. Ver la
    lista, cualquier admin.
 3. ~~**`barbers` POST acepta `is_owner: true` del pedido**~~ **HECHO**: solo lo
    respeta si quien lo pide es el dueño de la barbería
    (`src/app/api/admin/barbers/route.ts`).
-4. **En los modales de `/owner/planes`**, Cancelar, la X y el clic afuera siguen
-   cerrando mientras se está guardando (solo Escape lo respeta).
-5. **Búsqueda de cuentas por email limitada a la primera página** en el
-   registro (`provision-barbershop.ts`, 200) y en accesos de empleado
-   (`staff-access`, 1000). Hoy hay 19 cuentas. En Equipo ya está resuelto con
-   `buscarUsuarioPorEmail`: cuando se toque, reusar eso.
+4. ~~**En los modales de `/owner/planes`**, Cancelar, la X y el clic afuera
+   cerraban mientras se estaba guardando.~~ **HECHO el 08/10.**
+5. ~~**Búsqueda de cuentas por email limitada a la primera página**~~ **HECHO
+   el 08/10**: registro, accesos de empleado y Equipo usan el mismo
+   `buscarUsuarioPorEmail`, que recorre todas las páginas.
 6. **Probar con plata real**: MercadoPago, crons y push no se pueden verificar
    sin aislar destinatarios. Sigue siendo el riesgo más grande.
 7. ~~**Preview sin aprobar**: `preview/controles-resto`~~ **APROBADA y en prod

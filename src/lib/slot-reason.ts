@@ -24,6 +24,41 @@ const TEXTOS: Record<Exclude<Motivo, "available">, string> = {
   "too-soon": "Falta muy poco para ese turno. Elegí uno más adelante.",
 };
 
+/** Un tramo del día, en minutos desde las 00:00. */
+export type Tramo = { inicio: number; fin: number };
+
+/** "HH:MM" o "HH:MM:SS" → minutos desde las 00:00. */
+export function aMinutos(hora: string): number {
+  const [h, m] = hora.split(":");
+  return Number(h) * 60 + Number(m);
+}
+
+/**
+ * Por qué un horario NO figura en la grilla.
+ *
+ * La grilla solo trae los horarios que se pueden ofrecer: los que pisan un
+ * turno o un bloqueo directamente no aparecen. Entonces un horario que se
+ * ocupó mientras el cliente llenaba el formulario desaparecía de la grilla y
+ * caía en el mismo cartel que un horario que nunca existió: "no está en la
+ * agenda de ese barbero". Era el error inverso al que este archivo vino a
+ * arreglar — ahí se inventaba un choque, acá se escondía uno real.
+ *
+ * Devuelve `null` cuando no pisa nada: ahí sí es que para ese barbero ese
+ * horario no existe (fuera de su día, o en su pausa).
+ */
+export function motivoFueraDeGrilla(params: {
+  inicio: number;
+  duracion: number;
+  turnos: Tramo[];
+  bloqueos: Tramo[];
+}): Extract<Motivo, "occupied" | "blocked"> | null {
+  const fin = params.inicio + params.duracion;
+  const pisa = (t: Tramo) => t.inicio < fin && t.fin > params.inicio;
+  if (params.turnos.some(pisa)) return "occupied";
+  if (params.bloqueos.some(pisa)) return "blocked";
+  return null;
+}
+
 /**
  * `null` cuando el horario ni figura en la grilla de ese barbero: no es que
  * esté tomado, es que para él ese horario no existe.

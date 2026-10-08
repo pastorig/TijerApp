@@ -501,6 +501,10 @@ function EditPlanModal({
   const dialogRef = useDialogFocus<HTMLDivElement>(true, {
     onEscape: isSaving ? undefined : onClose,
   });
+  // Lo mismo para Cancelar, la X y el clic afuera.
+  const cerrar = () => {
+    if (!isSaving) onClose();
+  };
 
   async function handleSave() {
     setIsSaving(true);
@@ -547,7 +551,7 @@ function EditPlanModal({
       aria-modal="true"
       aria-labelledby={titleId}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-      onClick={onClose}
+      onClick={cerrar}
     >
       <div
         className="w-full max-w-lg rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-6"
@@ -567,7 +571,8 @@ function EditPlanModal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={cerrar}
+            disabled={isSaving}
             aria-label="Cerrar"
             className="rounded-[var(--radius-xs)] border border-[color:var(--border-default)] p-1.5 text-[color:var(--text-muted)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
           >
@@ -714,8 +719,9 @@ function EditPlanModal({
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
             <button
               type="button"
-              onClick={onClose}
-              className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-xs font-bold uppercase tracking-[0.14em] text-white"
+              onClick={cerrar}
+              disabled={isSaving}
+              className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-xs font-bold uppercase tracking-[0.14em] text-white disabled:opacity-50"
             >
               Cancelar
             </button>
@@ -769,6 +775,10 @@ function RegisterPaymentModal({
   const dialogRef = useDialogFocus<HTMLDivElement>(true, {
     onEscape: isSaving ? undefined : onClose,
   });
+  // Lo mismo para Cancelar, la X y el clic afuera.
+  const cerrar = () => {
+    if (!isSaving) onClose();
+  };
   // El monto que el server marcó como raro y todavía no se confirmó.
   const [unusualAmount, setUnusualAmount] = useState<string | null>(null);
 
@@ -840,7 +850,7 @@ function RegisterPaymentModal({
       aria-modal="true"
       aria-labelledby={titleId}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-      onClick={onClose}
+      onClick={cerrar}
     >
       <div
         className="w-full max-w-md rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-6"
@@ -862,7 +872,8 @@ function RegisterPaymentModal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={cerrar}
+            disabled={isSaving}
             aria-label="Cerrar"
             className="rounded-[var(--radius-xs)] border border-[color:var(--border-default)] p-1.5 text-[color:var(--text-muted)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
           >
@@ -949,8 +960,9 @@ function RegisterPaymentModal({
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
             <button
               type="button"
-              onClick={onClose}
-              className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-xs font-bold uppercase tracking-[0.14em] text-white"
+              onClick={cerrar}
+              disabled={isSaving}
+              className="inline-flex min-h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] px-4 text-xs font-bold uppercase tracking-[0.14em] text-white disabled:opacity-50"
             >
               Cancelar
             </button>

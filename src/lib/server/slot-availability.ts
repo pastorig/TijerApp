@@ -7,7 +7,12 @@ import {
 } from "@/lib/availability";
 import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
-import { motivoDeHorario } from "@/lib/slot-reason";
+import {
+  aMinutos,
+  motivoDeHorario,
+  motivoFueraDeGrilla,
+  type Tramo,
+} from "@/lib/slot-reason";
 import { ahoraEnArgentina } from "@/lib/hora-argentina";
 import type {
   BarberDayOverrideRow,
@@ -61,7 +66,12 @@ export const MAX_BOOKING_DAYS_AHEAD = 180;
 
 export async function getServerAvailability(
   params: ServerAvailabilityParams,
-): Promise<{ available: string[]; slots: AvailabilitySlot[] }> {
+): Promise<{
+  available: string[];
+  slots: AvailabilitySlot[];
+  /** Lo que ocupa el día, para poder decir POR QUÉ un horario no está. */
+  ocupado: { turnos: Tramo[]; bloqueos: Tramo[] };
+}> {
   const { barbershopSlug, barberId, date, durationMinutes, excludeAppointmentId } =
     params;
   const supabase = getSupabaseAdminClient();
@@ -136,6 +146,16 @@ export async function getServerAvailability(
     intervalMinutes: shopRes.data?.slot_interval_minutes ?? 30,
   };
 
+  const turnosDelDia = (apptsRes.data ?? [])
+    .filter((r) => !excludeAppointmentId || r.id !== excludeAppointmentId)
+    .map((r) => ({
+      startTime: r.appointment_time,
+      // Misma regla que la RPC pública: si el barbero alargó el turno, el
+      // servidor también tiene que bloquear esos minutos de más.
+      durationMinutes:
+        minutosQueOcupa(r.service_duration_minutes, r.actual_duration_minutes) ?? 0,
+    }));
+
   const slots = buildAvailabilitySlots({
     appointmentDate: date,
     appointmentDurationMinutes: durationMinutes || workingHours.intervalMinutes,
@@ -166,15 +186,7 @@ export async function getServerAvailability(
       is_active: true,
       deleted_at: null,
     })) as unknown as BarberTimeBlockRow[],
-    appointments: (apptsRes.data ?? [])
-      .filter((r) => !excludeAppointmentId || r.id !== excludeAppointmentId)
-      .map((r) => ({
-        startTime: r.appointment_time,
-        // Misma regla que la RPC pública: si el barbero alargó el turno, el
-        // servidor también tiene que bloquear esos minutos de más.
-        durationMinutes:
-          minutosQueOcupa(r.service_duration_minutes, r.actual_duration_minutes) ?? 0,
-      })),
+    appointments: turnosDelDia,
     minBookingNoticeMinutes: shopRes.data?.min_booking_notice_minutes ?? 0,
     // Sin esto el servidor mide con el reloj de Vercel, que corre en UTC: tres
     // horas adelante del de la barbería. Rechazaba por "falta muy poco" turnos
@@ -185,6 +197,20 @@ export async function getServerAvailability(
   return {
     available: slots.filter((s) => s.isAvailable).map((s) => s.time),
     slots,
+    ocupado: {
+      turnos: turnosDelDia.map((t) => {
+        const inicio = aMinutos(t.startTime);
+        // Un turno viejo sin duración ocupa un intervalo, igual que en la grilla.
+        return {
+          inicio,
+          fin: inicio + (t.durationMinutes || workingHours.intervalMinutes),
+        };
+      }),
+      bloqueos: (blocksRes.data ?? []).map((b) => ({
+        inicio: aMinutos(b.start_time),
+        fin: aMinutos(b.end_time),
+      })),
+    },
   };
 }
 
@@ -230,18 +256,26 @@ export async function assertSlotBookable(
     }
     throw error;
   }
-  const { available, slots } = disponibilidad;
+  const { available, slots, ocupado } = disponibilidad;
   const buscado = time.slice(0, 5);
 
   if (!available.includes(buscado)) {
-    // Si el horario ni figura en la grilla del barbero es que para él no
-    // existe: pasa cuando dos barberos arrancan a horas distintas y sus
-    // grillas no coinciden. `motivoDeHorario` cubre ese caso.
+    // Si el horario ni figura en la grilla puede ser por dos cosas opuestas:
+    // que lo pise un turno o un bloqueo (la grilla no los trae), o que para
+    // ese barbero no exista — dos barberos que arrancan a horas distintas no
+    // comparten grilla. Se distinguen mirando contra qué choca.
     const slot = slots.find((s) => s.time === buscado);
+    const motivo =
+      slot?.reason ??
+      motivoFueraDeGrilla({
+        inicio: aMinutos(buscado),
+        duracion: params.durationMinutes,
+        ...ocupado,
+      });
     return {
       ok: false,
       status: 409,
-      error: motivoDeHorario(slot?.reason),
+      error: motivoDeHorario(motivo),
     };
   }
   return { ok: true };

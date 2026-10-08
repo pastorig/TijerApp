@@ -6,6 +6,7 @@ import {
   assertTierIncludesFeature,
 } from "@/lib/api-plan-guard";
 import { resolveBarbershopAdminAccess } from "@/lib/server/barbershop-admin-access";
+import { buscarUsuarioPorEmail } from "@/lib/server/buscar-usuario-por-email";
 import {
   aColumnas,
   normalizarPermisos,
@@ -211,13 +212,8 @@ export async function POST(request: Request) {
   } else {
     // Ya tenía cuenta. NO se le pisa la contraseña: puede estar usándola en
     // otra barbería, o ser el mail personal de alguien. Entra con la suya.
-    const { data: lista } = await supabase.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000,
-    });
-    const existente = lista?.users.find(
-      (u) => (u.email ?? "").toLowerCase() === email,
-    );
+    const busqueda = await buscarUsuarioPorEmail(email);
+    const existente = busqueda.ok ? busqueda.user : null;
     if (!existente) {
       Sentry.captureException(createError, {
         tags: { route: "admin/staff-access", step: "create-user" },

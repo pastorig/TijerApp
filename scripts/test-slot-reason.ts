@@ -11,7 +11,11 @@
  * Correr: node --experimental-strip-types scripts/test-slot-reason.ts
  */
 import type { AvailabilitySlot } from "../src/lib/availability.ts";
-import { motivoDeHorario } from "../src/lib/slot-reason.ts";
+import {
+  aMinutos,
+  motivoDeHorario,
+  motivoFueraDeGrilla,
+} from "../src/lib/slot-reason.ts";
 
 let passed = 0;
 let failed = 0;
@@ -63,6 +67,60 @@ check(
   "'available' no debería llegar acá, pero no rompe",
   typeof motivoDeHorario("available"),
   "string",
+);
+
+// ── Un horario que NO está en la grilla ─────────────────────────────────────
+// La grilla no trae los horarios que pisan un turno. Uno que se ocupó mientras
+// el cliente llenaba el formulario desaparecía y recibía "no está en la agenda
+// de ese barbero", cuando lo cierto es que se lo ganaron de mano.
+const turnos = [{ inicio: aMinutos("09:00"), fin: aMinutos("09:45") }];
+const bloqueos = [{ inicio: aMinutos("13:00:00"), fin: aMinutos("14:00:00") }];
+
+check(
+  "la misma hora que un turno: se ocupó",
+  motivoFueraDeGrilla({ inicio: aMinutos("09:00"), duracion: 30, turnos, bloqueos }),
+  "occupied",
+);
+check(
+  "empieza en el medio de un turno: se ocupó",
+  motivoFueraDeGrilla({ inicio: aMinutos("09:20"), duracion: 20, turnos, bloqueos }),
+  "occupied",
+);
+check(
+  "empieza antes y termina adentro de un turno: se ocupó",
+  motivoFueraDeGrilla({ inicio: aMinutos("08:40"), duracion: 30, turnos, bloqueos }),
+  "occupied",
+);
+check(
+  "pegado al final de un turno NO lo pisa",
+  motivoFueraDeGrilla({ inicio: aMinutos("09:45"), duracion: 30, turnos, bloqueos }),
+  null,
+);
+check(
+  "termina justo cuando empieza un turno NO lo pisa",
+  motivoFueraDeGrilla({ inicio: aMinutos("08:30"), duracion: 30, turnos, bloqueos }),
+  null,
+);
+check(
+  "pisa un bloqueo: está bloqueado, no ocupado",
+  motivoFueraDeGrilla({ inicio: aMinutos("13:30"), duracion: 30, turnos, bloqueos }),
+  "blocked",
+);
+// El caso de SV Barber no cambia: no pisa nada, así que sigue sin motivo y el
+// cartel sigue diciendo que ese horario no es de ese barbero.
+check(
+  "fuera del día del barbero y sin pisar nada: sin motivo",
+  motivoDeHorario(
+    motivoFueraDeGrilla({ inicio: aMinutos("07:15"), duracion: 30, turnos, bloqueos }),
+  ),
+  "Ese horario no está en la agenda de ese barbero. Elegí otro.",
+);
+check(
+  "y el que se ocupó ahora lo dice",
+  motivoDeHorario(
+    motivoFueraDeGrilla({ inicio: aMinutos("09:20"), duracion: 20, turnos, bloqueos }),
+  ),
+  "Ese horario acaba de ocuparse. Elegí otro.",
 );
 
 // Si mañana se agrega un motivo nuevo a la grilla y nadie le escribe un texto,
