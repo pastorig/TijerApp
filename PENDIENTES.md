@@ -4,6 +4,50 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
+## 📌 Lo que queda al 08/10/2026
+
+El detalle de cada punto está más abajo, en su sección.
+
+### De Bautista
+
+1. **Crons puntuales — trabado.** `supabase/migrations/20261008190000_crons_puntuales.sql`
+   sigue sin correr porque no aparece el `CRON_SECRET`. Está en Vercel → Environment
+   Variables; si figura como Sensitive no se puede leer y hay que rotarlo en los tres
+   lados: Vercel, el secreto de GitHub y Vault (`tijerapp_cron_secret`). Mientras tanto
+   sigue el cron de GitHub, que no es puntual.
+2. **21/10 — cobrarle a Leo Cuts $27.000.** Sigue en Esencial; el panel y el aviso de
+   vencimiento ya muestran ese monto.
+3. **MercadoPago por el camino real.** Sigue siendo el riesgo más grande: falta la prueba
+   con usuarios de prueba de MP (vendedor + comprador), ninguna barbería real tiene MP
+   conectado, y la seña de `primebarber` quedó apagada. Confirmar también que
+   `NEXT_PUBLIC_ALLOW_DEPOSIT_SIMULATION` no esté cargada en producción.
+4. **Pruebas a mano que nadie hizo:**
+   - Catálogo (035): cargar un producto con foto desde el celular y ver un turno con
+     productos en la agenda de un empleado.
+   - Calendario del empleado (032): los cinco puntos de "Para mirar logueado".
+   - Escanear con el celular el QR de la pantalla Compartir.
+   - Confirmar que llega el mail de recuperar contraseña (desde el 03/10 lo manda la app).
+5. **Comercial:** Mateo Cuts lleva 0 turnos desde que se registró el 05/10; Barbería ID no
+   cargó turnos nuevos en 7 días; ofrecerles los referidos (20% por cada referido que
+   pague, tope 100%) a Leo Cuts y a SV Barber.
+
+### De código (nada urgente)
+
+1. Un horario recién ocupado contesta "no está en la agenda de ese barbero" en vez de
+   "acaba de ocuparse": los ocupados no vuelven en `slots` con su motivo.
+2. La reserva atómica (037) solo cubre la reserva pública. Reprogramar sigue sin candado.
+3. Los modales de `/owner/planes` se cierran mientras se está guardando.
+4. Búsqueda de cuentas por email limitada a la primera página (registro y accesos de
+   empleado).
+5. "Registrar pago" no valida el monto: ya entró uno de $22 en vez de $22.000.
+
+### Fechas
+
+- **08/11/2026** — ¿alguna barbería que paga usó el catálogo? Si no, no construir encima.
+- **Noviembre 2026** — checkpoint de SEO (impresiones de `/guias` en Search Console).
+
+---
+
 ## ✅ 035 — Catálogo de productos — EN PROD (2026-10-08)
 
 Las barberías cargan lo que venden en el mostrador (ceras, pomadas, polvos) y el cliente lo
@@ -43,16 +87,11 @@ hora no se editan ahí: eso se hace arrastrando el turno en el calendario.
 
 ---
 
-## 🗄️ Correr la migración de la activación (2026-10-04)
+## ✅ Migración de la activación — CORRIDA
 
-`supabase/migrations/20261004130000_barbershop_activation_log.sql`, en el SQL
-Editor. Crea la tabla donde se anota qué mail de activación ya recibió cada
-barbería.
-
-**Hasta que se corra, a las barberías nuevas no les llega ningún mail** (ni la
-bienvenida). Es a propósito: cada mail se anota antes de mandarse para no
-repetirlo, y sin la tabla no se puede anotar. El registro sigue funcionando
-igual; la pantalla "Compartir" tampoco depende de esto.
+`supabase/migrations/20261004130000_barbershop_activation_log.sql` ya está
+corrida. La serie funciona: Mateo Cuts (registrada el 05/10) recibió la
+bienvenida, el mail del día 1 y el del día 3.
 
 ---
 
@@ -140,10 +179,8 @@ Lo que entró a prod el 03/10 y no pude ver con sesión:
    - sacarle a Esteban "cargar turnos" desde Equipo y ver que el hueco solo
      ofrece Bloquear.
 
-> El checkout `ProyectG/TijerApp` quedó en la rama `design/admin-shell-remaster`
-> con los cambios de Codex sin commitear. Ya están en main: hay que volverlo a
-> main (`git checkout main && git pull`, descartando lo local) antes de que
-> alguien trabaje ahí, o va a arrancar de una base vieja.
+> El checkout `ProyectG/TijerApp` ya está en `main` y limpio (la rama
+> `design/admin-shell-remaster` se borró el 03/10).
 
 ---
 
@@ -191,20 +228,16 @@ Los tres primeros eran bugs que YA estaban en prod, no de la remasterización.
 
 ### Queda (nada urgente, por orden)
 
-1. **Dos reservas al mismo tiempo que se pisan sin empezar a la misma hora.**
-   El índice único frena dos turnos en el MISMO minuto, no un 15:00–15:40 y un
-   15:30–16:00 pedidos a la vez. No se puede prohibir en la base que dos turnos
-   se superpongan: rompería los sobreturnos y los encimados que el panel permite
-   a propósito. Lo correcto: que la reserva pública (y reprogramar) verifique y
-   guarde en UN paso, con un candado por barbero y día (función SQL +
-   `pg_advisory_xact_lock`). Toca el corazón de la reserva y pide migración:
-   va con Spec Kit, no como arreglo suelto.
-2. **¿Los accesos de empleados los da cualquier admin o solo el dueño?**
-   `staff-access` dice "solo el dueño" en los comentarios pero nunca miró
-   `is_owner`: hoy cualquier co-admin crea cuentas de empleados, cambia permisos
-   y revoca. Es una decisión de producto; si es "solo el dueño", es una línea.
-3. **`barbers` POST acepta `is_owner: true` del pedido**: cualquier admin puede
-   crear un barbero marcado como "cabeza". Misma decisión que el punto 2.
+1. ~~**Dos reservas al mismo tiempo que se pisan sin empezar a la misma hora.**~~
+   **HECHO el 08/10 (037)**: la reserva pública verifica y guarda en un solo
+   paso (`reservar_turno_atomico`), migración corrida y carrera verificada en
+   prod. **Queda reprogramar**, que no pasa por esa función.
+2. ~~**¿Los accesos de empleados los da cualquier admin o solo el dueño?**~~
+   **DECIDIDO el 05/10: solo el dueño** crea, cambia permisos y quita. Ver la
+   lista, cualquier admin.
+3. ~~**`barbers` POST acepta `is_owner: true` del pedido**~~ **HECHO**: solo lo
+   respeta si quien lo pide es el dueño de la barbería
+   (`src/app/api/admin/barbers/route.ts`).
 4. **En los modales de `/owner/planes`**, Cancelar, la X y el clic afuera siguen
    cerrando mientras se está guardando (solo Escape lo respeta).
 5. **Búsqueda de cuentas por email limitada a la primera página** en el
@@ -213,8 +246,9 @@ Los tres primeros eran bugs que YA estaban en prod, no de la remasterización.
    `buscarUsuarioPorEmail`: cuando se toque, reusar eso.
 6. **Probar con plata real**: MercadoPago, crons y push no se pueden verificar
    sin aislar destinatarios. Sigue siendo el riesgo más grande.
-7. **Preview sin aprobar**: `preview/controles-resto` (controles de 44 px en
-   barberos, clientes, lista de espera, galería, cupones y turnero).
+7. ~~**Preview sin aprobar**: `preview/controles-resto`~~ **APROBADA y en prod
+   el 08/10** (controles de 44 px en barberos, clientes, lista de espera,
+   galería, cupones y turnero).
 
 ---
 
@@ -477,16 +511,15 @@ Spec en `specs/015-aviso-vencimiento-plan/`.
 
 ---
 
-## 📅 21/10/2026 — a Leo Cuts se le termina el Fundador (y se le cobra)
+## 📅 21/10/2026 — a Leo Cuts se le termina el Fundador: cobrarle $27.000
 
-Sin recordatorio automático en el producto. Ese día pasa de Esencial (gratis
-desde el 21/07) a Solo, **pagando lo mismo: $22.000**, y es también el día que
-se le cobra. Menos producto por igual precio es el momento típico en que un
-cliente se va: llegar ANTES con una oferta armada (tipo Esencial a precio de
-Fundador, ~$26–28k).
+**Resuelto el 08/10:** Leo aceptó seguir en **Esencial a $27.000** (lista
+$33.000), congelado 6 meses, hasta el 21/04/2027. No baja a Solo: su tier sigue
+`esencial` y el 21/10 no hay que tocarlo.
 
-El precio que ve sale de `billedMonthlyArs(tier, isFounder)`: al volver a Solo
-ya no hay escalón para abajo y ve el precio de Solo, que es lo correcto.
+Lo único que queda es **cobrarle ese día**. El monto sale de `PRECIO_ACORDADO`
+en `src/data/founders.ts`: el panel, el aviso de vencimiento y el monto
+sugerido al registrar el pago ya dicen 27.000.
 
 > Bajar Solo a $19.000: **descartado por ahora** (decisión del 02/10/2026).
 
