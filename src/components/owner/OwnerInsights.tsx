@@ -13,11 +13,10 @@ import type { OwnerBarbershopSummary } from "@/lib/owner-metrics";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import {
-  billedMonthlyArs,
   type PlanTier,
   type SubscriptionStatus,
 } from "@/lib/plans";
-import { tienePrecioDeFundador } from "@/data/founders";
+import { precioMensualQuePaga } from "@/data/founders";
 import { StackedBar } from "./charts";
 
 /**
@@ -182,7 +181,7 @@ export function OwnerInsights() {
       const status: SubscriptionStatus = row.status ?? "trial";
       // Lo que factura de verdad. Con el precio del tier asignado, cada
       // fundador infla el MRR con la diferencia que nadie pagó.
-      const precio = billedMonthlyArs(tier, tienePrecioDeFundador(bs.slug));
+      const precio = precioMensualQuePaga(bs.slug, tier);
       const paidUntilMs = row?.current_period_ends_at
         ? new Date(row.current_period_ends_at).getTime()
         : null;

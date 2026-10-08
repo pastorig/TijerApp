@@ -24,7 +24,12 @@ import {
   resolvePlanStatus,
   tierBelow,
 } from "../src/lib/plans.ts";
-import { isFounder, tienePrecioDeFundador } from "../src/data/founders.ts";
+import {
+  isFounder,
+  precioDelProximoPeriodo,
+  precioMensualQuePaga,
+  tienePrecioDeFundador,
+} from "../src/data/founders.ts";
 
 let passed = 0;
 let failed = 0;
@@ -393,6 +398,60 @@ check(
   billedMonthlyArs("esencial", tienePrecioDeFundador("leocuts", enArgentina("2026-10-22"))),
   33000,
 );
+// ─── Precio acordado a mano: Leo Cuts, Esencial a $27.000 ──────────────────
+check(
+  "Leo, el último día del Fundador, todavía paga 22.000",
+  precioMensualQuePaga("leocuts", "esencial", enArgentina("2026-10-21")),
+  22000,
+);
+check(
+  "al día siguiente paga lo acordado, no la lista",
+  precioMensualQuePaga("leocuts", "esencial", enArgentina("2026-10-22")),
+  27000,
+);
+check(
+  "el último día del acuerdo sigue en 27.000",
+  precioMensualQuePaga("leocuts", "esencial", enArgentina("2027-04-21")),
+  27000,
+);
+check(
+  "terminado el acuerdo, la lista",
+  precioMensualQuePaga("leocuts", "esencial", enArgentina("2027-04-22")),
+  33000,
+);
+check(
+  "el acuerdo es solo para Esencial: si pasa a Pro paga la lista de Pro",
+  precioMensualQuePaga("leocuts", "pro", enArgentina("2026-11-01")),
+  46000,
+);
+check(
+  "y no le cambia nada a otra barbería",
+  precioMensualQuePaga("barber", "esencial", enArgentina("2026-11-01")),
+  33000,
+);
+// El aviso de vencimiento del 18/10 y del 21/10 tiene que decir lo que va a
+// pagar por la renovación, no lo que paga ese día.
+check(
+  "el aviso de 3 días antes ya dice 27.000",
+  precioDelProximoPeriodo("leocuts", "esencial", "2026-10-22T01:55:55.265+00:00", enArgentina("2026-10-18")),
+  27000,
+);
+check(
+  "y el del día del vencimiento también",
+  precioDelProximoPeriodo("leocuts", "esencial", "2026-10-22T01:55:55.265+00:00", enArgentina("2026-10-21")),
+  27000,
+);
+check(
+  "sin fecha de período, el precio de hoy",
+  precioDelProximoPeriodo("leocuts", "esencial", null, enArgentina("2026-10-10")),
+  22000,
+);
+check(
+  "con el período vencido hace rato, el precio de hoy",
+  precioDelProximoPeriodo("barber", "esencial", "2026-08-01T12:00:00Z", enArgentina("2026-11-01")),
+  33000,
+);
+
 check(
   "una barbería que nunca fue fundadora no cambia",
   tienePrecioDeFundador("primebarber", enArgentina("2026-09-09")),

@@ -15,12 +15,11 @@ import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import {
-  billedMonthlyArs,
   PLAN_META,
   type PlanTier,
   type SubscriptionStatus,
 } from "@/lib/plans";
-import { tienePrecioDeFundador } from "@/data/founders";
+import { precioDelProximoPeriodo } from "@/data/founders";
 
 type PlanRow = {
   slug: string;
@@ -754,7 +753,9 @@ function RegisterPaymentModal({
   // precio del tier asignado, el fundador quedaría cargado a $33.000 cuando
   // transfirió $22.000.
   const defaultAmount = row.plan_tier
-    ? billedMonthlyArs(row.plan_tier, tienePrecioDeFundador(row.slug))
+    ? // El cobro que se registra suele ser el de la renovación: se sugiere
+      // el precio del período que arranca, no el del que termina.
+      precioDelProximoPeriodo(row.slug, row.plan_tier, row.current_period_ends_at)
     : 0;
   const [amount, setAmount] = useState<string>(String(defaultAmount));
   const [method, setMethod] = useState<"transferencia" | "efectivo" | "otro">(

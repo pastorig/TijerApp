@@ -9,9 +9,8 @@ import {
   minTierForFeature,
   PLAN_META,
   type Feature,
-  billedMonthlyArs,
 } from "@/lib/plans";
-import { tienePrecioDeFundador } from "@/data/founders";
+import { precioMensualQuePaga } from "@/data/founders";
 import { founderWaLink } from "@/lib/founder";
 import { TransferDetailsCard } from "./TransferDetailsCard";
 
@@ -137,7 +136,7 @@ function ExpiredPaywall({
   // Mismo criterio que el banner: el precio que se le muestra es el que
   // paga, no el del tier que tiene asignado.
   const precio = formatArs(
-    billedMonthlyArs(tier, tienePrecioDeFundador(barbershopSlug)),
+    precioMensualQuePaga(barbershopSlug, tier),
   );
   const waLink = founderWaLink(
     `¡Hola! Soy admin de ${barbershopSlug} y mi plan venció. Quiero activarlo (${precio}/mes).`,

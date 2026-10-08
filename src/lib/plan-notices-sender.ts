@@ -6,8 +6,8 @@ import {
   toArgYmd,
   type PlanNoticeKind,
 } from "@/lib/plan-notices";
-import { billedMonthlyArs, formatArs, type PlanTier } from "@/lib/plans";
-import { tienePrecioDeFundador } from "@/data/founders";
+import { formatArs, type PlanTier } from "@/lib/plans";
+import { precioDelProximoPeriodo } from "@/data/founders";
 
 /**
  * Envío de los avisos de vencimiento de plan.
@@ -108,7 +108,9 @@ export async function sendPlanNotices({
         daysLeft: daysUntil(periodEndsAt, todayYmd),
         // Lo que paga, no el precio del tier asignado.
         priceLabel: sub.plan_tier
-          ? formatArs(billedMonthlyArs(sub.plan_tier, tienePrecioDeFundador(slug)))
+          ? // El aviso es de una renovación: dice lo que va a pagar por el
+            // período que arranca, que puede no ser lo que paga hoy.
+            formatArs(precioDelProximoPeriodo(slug, sub.plan_tier, periodEndsAt))
           : undefined,
       });
 

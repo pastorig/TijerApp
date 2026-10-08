@@ -10,6 +10,7 @@
  */
 
 import { ahoraEnArgentina } from "@/lib/hora-argentina";
+import { billedMonthlyArs, type PlanTier } from "@/lib/plans";
 
 export type Founder = {
   /** Slug de la barbería en TijerApp. */
@@ -83,6 +84,70 @@ export function tienePrecioDeFundador(
   const hasta = FOUNDER_PRICE_UNTIL[barbershopSlug];
   if (!hasta) return false;
   return aYmd(hoyEnArgentina) <= hasta;
+}
+
+/**
+ * Precios acordados a mano con una barbería, por un período.
+ *
+ * No es el precio de fundador (ese es "el tier de abajo") ni la lista: es un
+ * número puntual que Bautista cerró por WhatsApp. Vale solo para el tier
+ * acordado y entre las dos fechas, inclusive; fuera de eso rige lo de siempre.
+ *
+ * Existe para que el arreglo no viva solo en un chat: sin esto, el panel, el
+ * aviso de vencimiento y el monto sugerido al registrar el cobro le mostraban
+ * a la barbería el precio de lista.
+ */
+export const PRECIO_ACORDADO: Readonly<
+  Record<string, { tier: PlanTier; monto: number; desde: string; hasta: string }>
+> = {
+  // Leo Cuts: al terminar el Fundador (21/10/2026) eligió seguir en Esencial
+  // a $27.000 en vez de bajar a Solo. Congelado 6 meses. Acordado el 08/10/2026.
+  leocuts: { tier: "esencial", monto: 27000, desde: "2026-10-22", hasta: "2027-04-21" },
+};
+
+/**
+ * Lo que la barbería paga por mes en una fecha dada, en pesos. Es LA función
+ * para mostrar o sugerir un precio: mira el acuerdo puntual, después el precio
+ * de fundador y, si no hay ninguno, la lista.
+ */
+export function precioMensualQuePaga(
+  barbershopSlug: string,
+  tier: PlanTier,
+  fechaEnArgentina: Date = ahoraEnArgentina(),
+): number {
+  const acuerdo = PRECIO_ACORDADO[barbershopSlug];
+  const ymd = aYmd(fechaEnArgentina);
+  if (acuerdo && acuerdo.tier === tier && ymd >= acuerdo.desde && ymd <= acuerdo.hasta) {
+    return acuerdo.monto;
+  }
+  return billedMonthlyArs(tier, tienePrecioDeFundador(barbershopSlug, fechaEnArgentina));
+}
+
+/**
+ * Lo que va a pagar por el PRÓXIMO período, que arranca al día siguiente de
+ * que termina el actual. Es el número que tiene que decir un aviso de
+ * vencimiento y el que se sugiere al registrar el cobro de la renovación: si
+ * el precio cambia justo ese día, el de hoy es el equivocado.
+ *
+ * Sin fecha de fin de período, devuelve el de hoy.
+ */
+export function precioDelProximoPeriodo(
+  barbershopSlug: string,
+  tier: PlanTier,
+  periodoTerminaIso: string | null | undefined,
+  hoyEnArgentina: Date = ahoraEnArgentina(),
+): number {
+  if (!periodoTerminaIso) {
+    return precioMensualQuePaga(barbershopSlug, tier, hoyEnArgentina);
+  }
+  const fin = ahoraEnArgentina(new Date(periodoTerminaIso));
+  if (Number.isNaN(fin.getTime())) {
+    return precioMensualQuePaga(barbershopSlug, tier, hoyEnArgentina);
+  }
+  const siguiente = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate() + 1);
+  // Un período ya vencido hace rato: lo que paga es lo de hoy.
+  const fecha = siguiente.getTime() > hoyEnArgentina.getTime() ? siguiente : hoyEnArgentina;
+  return precioMensualQuePaga(barbershopSlug, tier, fecha);
 }
 
 /** `YYYY-MM-DD` de un Date ya expresado en hora argentina. */
