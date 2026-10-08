@@ -2,7 +2,7 @@
 
 **Branch**: `037-reserva-atomica`
 **Created**: 2026-10-08
-**Status**: Implementado — esperando la migración y la verificación en preview
+**Status**: En producción (8/10/2026). Migración corrida y carrera verificada.
 **Input**: "hacer lo de reserva a prueba de choques" (Bautista, 8/10/2026).
 
 ## Contexto
@@ -77,3 +77,9 @@ mirar la agenda y ya ve el turno del otro.
 - Script `carrera` (fuera del repo): dispara reservas que se pisan, todas a la vez, contra la
   demo, cuenta cuántas entraron y revisa la agenda. **Antes del arreglo: 2 o 3 de 3 entran y
   quedan pisados.** Después de la migración tiene que entrar 1.
+
+### Resultado después de la migración (8/10/2026, preview)
+
+Cuatro corridas del mismo disparo simultáneo. En las cuatro la agenda quedó sin turnos
+pisados: o entró el de 45 minutos solo, o entraron los dos de 20 (que no se pisan entre sí).
+Los rechazados recibieron "ese horario acaba de ocuparse".
