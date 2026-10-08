@@ -85,7 +85,8 @@ la reserva — chequear y después guardar. Se cerró con la misma receta:
 - Si el turno se canceló mientras el cliente elegía, responde que no se puede reagendar.
 - Si la función no existe, se mueve por el camino anterior.
 
-Sin verificar con una carrera real: la migración todavía no está corrida.
+Migración corrida el 08/10/2026. Comprobado que el servidor encuentra la función (con un
+turno inexistente responde "Turno no encontrado"). Sin verificar con una carrera real.
 
 ## Verificación
 

@@ -10,9 +10,6 @@ El detalle de cada punto está más abajo, en su sección.
 
 ### De Bautista
 
-0. **Correr `supabase/migrations/20261010120000_reprogramar_turno_atomico.sql`** en el SQL
-   Editor. Es el candado de la reserva (037) para cuando el cliente mueve su turno desde
-   el link. Hasta que se corra, reprogramar funciona como siempre, sin la protección.
 1. **Crons puntuales — ANDANDO desde el 08/10.** El `CRON_SECRET` se perdió y se generó
    uno nuevo; está cargado en Vercel y en Vault (`tijerapp_cron_secret`). Los cinco crons
    quedaron programados en la base y la llamada de prueba a `/api/cron/deposits` contestó
@@ -43,7 +40,9 @@ No queda nada abierto. Lo que había, cerrado el 08/10:
   agenda de ese barbero"). Si lo pisa un bloqueo, dice que está bloqueado.
 - Reprogramar desde el link del cliente verifica y guarda en un solo paso, con el mismo
   candado que la reserva. Mover turnos desde el panel o la agenda del empleado no lleva
-  candado a propósito: ahí encimar es decisión de quien atiende.
+  candado a propósito: ahí encimar es decisión de quien atiende. Migración
+  `20261010120000` corrida el 08/10; el servidor ya encuentra la función. Sin probar con
+  una carrera real.
 - Los modales de `/owner/planes` no se cierran mientras se está guardando.
 - La búsqueda de cuentas por email recorre todas las páginas en los tres lugares (Equipo,
   accesos de empleado y registro): `src/lib/server/buscar-usuario-por-email.ts`.
@@ -241,7 +240,7 @@ Los tres primeros eran bugs que YA estaban en prod, no de la remasterización.
    **HECHO el 08/10 (037)**: la reserva pública verifica y guarda en un solo
    paso (`reservar_turno_atomico`), migración corrida y carrera verificada en
    prod. Reprogramar desde el link del cliente tiene su propia función
-   (`reprogramar_turno_atomico`, migración `20261010120000`, **falta correrla**).
+   (`reprogramar_turno_atomico`, migración `20261010120000`, corrida el 08/10).
 2. ~~**¿Los accesos de empleados los da cualquier admin o solo el dueño?**~~
    **DECIDIDO el 05/10: solo el dueño** crea, cambia permisos y quita. Ver la
    lista, cualquier admin.
