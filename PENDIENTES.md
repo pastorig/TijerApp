@@ -4,7 +4,7 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
-## ✅ 035 — Catálogo de productos — EN PROD (2026-10-09)
+## ✅ 035 — Catálogo de productos — EN PROD (2026-10-08)
 
 Las barberías cargan lo que venden en el mostrador (ceras, pomadas, polvos) y el cliente lo
 suma a su turno al reservar. Lo paga en el local. Planes Esencial y Pro.
@@ -21,7 +21,7 @@ Las dos migraciones (`barbershop_products`, `appointment_products`) ya están co
 
 **Falta probar a mano (Bautista):**
 - Cargar un producto CON FOTO desde el celular. La subida de la foto contra el storage real no
-  se ejerció nunca: al 09/10 nadie cargó un producto.
+  se ejerció nunca: al 08/10 nadie cargó un producto.
 - Ver un turno con productos en la agenda de un empleado.
 
 **Qué mirar el 08/11/2026 (a los 30 días):** ¿alguna barbería que paga tiene productos cargados?

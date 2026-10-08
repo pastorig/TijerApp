@@ -20,7 +20,7 @@ Preguntas abiertas resueltas el 8/10/2026 (ver spec).
 
 ## Etapa C — Sumarlo al turno
 
-- [x] C1 Migración `appointment_products` (corrida por Bautista el 09/10)
+- [x] C1 Migración `appointment_products` (corrida por Bautista el 08/10)
 - [x] C2 `GET /api/products`
 - [x] C3 `/api/appointments/book` acepta y guarda productos
 - [x] C4 `booking/ProductPicker.tsx` + resumen + pantalla de éxito
@@ -38,7 +38,7 @@ Preguntas abiertas resueltas el 8/10/2026 (ver spec).
 
 - **Reglas** (`scripts/test-productos.ts`, 52 tests): precio escrito a mano, validación de un
   producto, topes del pedido, total y "productos vendidos".
-- **Etapa C contra el servidor real** (demo, 09/10): reserva con un producto → quedó guardado
+- **Etapa C contra el servidor real** (demo, 08/10): reserva con un producto → quedó guardado
   en `appointment_products` con nombre y precio copiados, y el link del cliente lo muestra.
   Pedido de 6 unidades → 400. Producto de otra barbería → descartado. Reserva sin productos:
   0,36 s (no empeoró). Todo lo de prueba se borró.
