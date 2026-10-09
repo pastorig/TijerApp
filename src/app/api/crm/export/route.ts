@@ -118,7 +118,7 @@ export async function GET(request: Request) {
         const barbershopId = porSlug.get(fila.slug);
         // Sin id no hay cuenta a la que colgar la senal.
         if (!barbershopId) return [];
-        return toUsageRecords({ barbershopId, turnos: fila.turnos, ultimoTurno: fila.ultimoTurno });
+        return toUsageRecords({ ...fila, barbershopId });
       });
       return NextResponse.json({
         ...sobre,

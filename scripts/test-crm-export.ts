@@ -166,6 +166,71 @@ check("y el Instagram del local", contactosDe(barberia())[1]?.value, "@barberial
 check("una barbería sin contactos publicados exporta ninguno", contactosDe(barberia({ whatsapp: null, instagram: null })).length, 0);
 check("un contacto en blanco no cuenta", contactosDe(barberia({ whatsapp: "   ", instagram: null })).length, 0);
 
+console.log("\n— Uso de la barbería —");
+{
+  const uso = (extra = {}) => ({
+    barbershopId: ID,
+    turnos: 120,
+    turnos7d: 12,
+    clientes: 40,
+    equipo: 2,
+    barberosActivos: 2,
+    servicios: 5,
+    ultimaActividad: "2026-09-08T18:00:00.000Z",
+    ...extra,
+  });
+  const valor = (clave: string, extra = {}) =>
+    toUsageRecords(uso(extra)).find((r) => r.signalKey === clave)?.value;
+
+  // Las claves las fija el CRM: son las mismas para las cinco apps.
+  check(
+    "salen las cinco señales que TijerApp puede dar",
+    toUsageRecords(uso()).map((r) => r.signalKey).join(","),
+    "core_records_total,core_records_7d,customers_total,team_members,setup_done",
+  );
+  check("los turnos totales", valor("core_records_total"), 120);
+  check("los de la semana", valor("core_records_7d"), 12);
+  check("los clientes, sólo el número", valor("customers_total"), 40);
+  check("el equipo", valor("team_members"), 2);
+  check("con barbero y servicio, la configuración está terminada", valor("setup_done"), true);
+  check("sin barbero activo no", valor("setup_done", { barberosActivos: 0 }), false);
+  check("sin servicios tampoco", valor("setup_done", { servicios: 0 }), false);
+  // "Tomó 0 turnos" es el dato que se busca, no un hueco.
+  check("el cero se informa", valor("core_records_total", { turnos: 0 }), 0);
+  // El CRM saca de acá el «último ingreso»: tiene que ser la misma en todas.
+  check(
+    "todas llevan la fecha de la última actividad",
+    [...new Set(toUsageRecords(uso()).map((r) => r.occurredAt))].join(","),
+    "2026-09-08T18:00:00.000Z",
+  );
+  check(
+    "sin actividad no se inventa una fecha",
+    toUsageRecords(uso({ ultimaActividad: null })).every((r) => r.occurredAt === null),
+    true,
+  );
+  check(
+    "una señal por barbería y por clave: reimportar no duplica",
+    toUsageRecords(uso())[0].externalId,
+    `core_records_total:${ID}`,
+  );
+  check(
+    "que crezca el conteo cambia el hash",
+    toUsageRecords(uso())[0].versionHash !== toUsageRecords(uso({ turnos: 121 }))[0].versionHash,
+    true,
+  );
+  // Si no, el CRM no se entera de que hubo actividad sin cambio de conteo.
+  check(
+    "actividad nueva también lo cambia",
+    toUsageRecords(uso())[0].versionHash !==
+      toUsageRecords(uso({ ultimaActividad: "2026-09-09T10:00:00.000Z" }))[0].versionHash,
+    true,
+  );
+  const todoElUso = JSON.stringify(toUsageRecords(uso())).toLowerCase();
+  for (const palabra of ["nombre", "telefono", "phone", "email", "precio"]) {
+    check(`el uso no lleva "${palabra}"`, todoElUso.includes(palabra), false);
+  }
+}
+
 console.log("\n— Hash de versión —");
 check("dos exportaciones sin cambios dan el mismo hash", toAccountRecord(barberia()).versionHash, toAccountRecord(barberia()).versionHash);
 check("el orden de las claves no cambia el hash", versionHashOf({ a: 1, b: 2 }), versionHashOf({ b: 2, a: 1 }));

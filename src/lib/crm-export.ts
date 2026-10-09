@@ -348,33 +348,62 @@ export function esCursorValido(cursor: string): boolean {
 /** Uso agregado de una barbería. Conteos y fechas: ni un cliente. */
 export type BarbershopUsage = {
   barbershopId: string;
+  /** Turnos no eliminados. */
   turnos: number;
-  ultimoTurno: string | null;
+  /** Turnos tomados en los últimos 7 días. */
+  turnos7d: number;
+  /** Clientes en la libreta de la barbería. Sólo el número. */
+  clientes: number;
+  /** Personas con acceso: administradores y empleados con agenda propia. */
+  equipo: number;
+  barberosActivos: number;
+  servicios: number;
+  /** El último momento en que la barbería tuvo actividad. null = nunca. */
+  ultimaActividad: string | null;
 };
 
 /**
- * Señal de uso de una barbería: cuántos turnos tomó y cuándo fue el último.
+ * Señales de uso de una barbería, con las claves que fija crmsaas para las
+ * cinco apps (`docs/superpowers/specs/2026-10-09-uso-de-la-app-design.md` de
+ * ese repo).
  *
- * El cero se informa —"tomó 0 turnos" es el dato que se busca, no un hueco— y
- * sin actividad no se inventa una fecha.
+ * - **El cero se informa.** "Tomó 0 turnos" es el dato que se busca, no un
+ *   hueco.
+ * - **`occurredAt` es la última actividad de la barbería**, la misma para todas
+ *   las señales, y nunca la fecha de la consulta: si fuera "ahora", cada
+ *   sincronización parecería actividad y una barbería abandonada no se
+ *   detectaría jamás. El CRM saca de ahí el "último ingreso".
+ * - **No salen `active_days_7d` ni `key_feature_used`**: TijerApp no guarda qué
+ *   días entró cada uno, y no hay una función aparte de la reserva que valga
+ *   como "clave". Lo que no se sabe no se manda.
  */
 export function toUsageRecords(row: BarbershopUsage) {
-  const campos = {
-    accountExternalId: row.barbershopId,
-    signalKey: "turnos",
-    value: row.turnos,
-    occurredAt: iso(row.ultimoTurno),
-  };
+  const ultimaActividad = iso(row.ultimaActividad);
+  const señales: { key: string; value: number | boolean }[] = [
+    { key: "core_records_total", value: row.turnos },
+    { key: "core_records_7d", value: row.turnos7d },
+    { key: "customers_total", value: row.clientes },
+    { key: "team_members", value: row.equipo },
+    // Lo mínimo para que alguien pueda reservar: un barbero y un servicio.
+    { key: "setup_done", value: row.barberosActivos > 0 && row.servicios > 0 },
+  ];
 
-  return [
-    {
+  return señales.map((señal) => {
+    const campos = {
+      accountExternalId: row.barbershopId,
+      signalKey: señal.key,
+      value: señal.value,
+      occurredAt: ultimaActividad,
+    };
+
+    return {
       type: "usage" as const,
       // Una señal por barbería y por clave: reimportar actualiza, no duplica.
-      externalId: `turnos:${row.barbershopId}`,
+      externalId: `${señal.key}:${row.barbershopId}`,
       sourceUpdatedAt: null,
       versionHash: versionHashOf(campos),
       deletedAt: null,
       ...campos,
-    },
-  ];
+    };
+  });
 }
