@@ -97,46 +97,174 @@ export async function fetchIdsPorSlug(slugs: string[]): Promise<Map<string, stri
 export type BarbershopUsageRow = {
   slug: string;
   turnos: number;
-  ultimoTurno: string | null;
+  turnos7d: number;
+  clientes: number;
+  equipo: number;
+  barberosActivos: number;
+  servicios: number;
+  ultimaActividad: string | null;
 };
 
+/** Cuántas barberías se consultan a la vez. Cada una son unas ocho lecturas. */
+const BARBERIAS_EN_PARALELO = 8;
+
+type Supabase = ReturnType<typeof getSupabaseAdminClient>;
+
+/** Cuenta filas sin traerlas. Con error no devuelve cero: tira. */
+async function contar(
+  consulta: PromiseLike<{ count: number | null; error: { message: string } | null }>,
+): Promise<number> {
+  const { count, error } = await consulta;
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
+/** El último ingreso con contraseña de quienes administran la barbería. */
+async function ultimoIngreso(supabase: Supabase, userIds: string[]): Promise<string | null> {
+  const ingresos = await Promise.all(
+    userIds.map(async (id) => {
+      const { data } = await supabase.auth.admin.getUserById(id);
+      return data?.user?.last_sign_in_at ?? null;
+    }),
+  );
+  return ingresos.reduce<string | null>(
+    (ultimo, actual) => (actual && (!ultimo || actual > ultimo) ? actual : ultimo),
+    null,
+  );
+}
+
+async function usoDe(
+  supabase: Supabase,
+  slug: string,
+  adminIds: string[],
+  desde7d: string,
+): Promise<BarbershopUsageRow> {
+  const turnosVivos = () =>
+    supabase
+      .from("appointments")
+      .select("id", { count: "exact", head: true })
+      .eq("barbershop_slug", slug)
+      .neq("status", "deleted");
+
+  const [turnos, turnos7d, clientes, barberosActivos, servicios, empleados, ultimoTurno, ingreso] =
+    await Promise.all([
+      contar(turnosVivos()),
+      contar(turnosVivos().gte("created_at", desde7d)),
+      contar(
+        supabase
+          .from("barbershop_clients")
+          .select("id", { count: "exact", head: true })
+          .eq("barbershop_slug", slug),
+      ),
+      contar(
+        supabase
+          .from("barbers")
+          .select("id", { count: "exact", head: true })
+          .eq("barbershop_slug", slug)
+          .eq("is_active", true),
+      ),
+      contar(
+        supabase
+          .from("barber_services")
+          .select("id", { count: "exact", head: true })
+          .eq("barbershop_slug", slug),
+      ),
+      contar(
+        supabase
+          .from("barber_staff_access")
+          .select("barber_id", { count: "exact", head: true })
+          .eq("barbershop_slug", slug)
+          .is("revoked_at", null),
+      ),
+      supabase
+        .from("appointments")
+        .select("created_at")
+        .eq("barbershop_slug", slug)
+        .neq("status", "deleted")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .then(({ data, error }) => {
+          if (error) throw new Error(error.message);
+          return ((data?.[0] as { created_at?: string } | undefined)?.created_at ?? null) as
+            | string
+            | null;
+        }),
+      ultimoIngreso(supabase, adminIds),
+    ]);
+
+  // Las dos fechas vienen en ISO pero con formatos distintos: se comparan como
+  // instantes, no como texto.
+  const instantes = [ultimoTurno, ingreso]
+    .filter((valor): valor is string => Boolean(valor))
+    .map((valor) => new Date(valor).getTime())
+    .filter((ms) => Number.isFinite(ms));
+
+  return {
+    slug,
+    turnos,
+    turnos7d,
+    clientes,
+    equipo: adminIds.length + empleados,
+    barberosActivos,
+    servicios,
+    ultimaActividad: instantes.length ? new Date(Math.max(...instantes)).toISOString() : null,
+  };
+}
+
 /**
- * Señales de uso por barbería: **cuántos turnos** tomó y **cuándo fue el
- * último**.
+ * Señales de uso por barbería: cuánto la usan, si terminaron de configurarla y
+ * **cuándo fue la última señal de vida**.
  *
- * Contesta si la están usando o se dieron de alta y nunca entraron. En una
- * barbería el turno es la unidad de trabajo: sin turnos no hay uso.
+ * Contesta si la están usando o se dieron de alta y nunca entraron.
  *
- * Son conteos y fechas. No sale el nombre de un cliente, ni un teléfono, ni un
- * servicio, ni un precio. `ultimoTurno` es la fecha del último turno real,
- * nunca la de esta consulta: si fuera "ahora", cada sincronización parecería
- * actividad y una barbería abandonada no se detectaría jamás.
+ * Son conteos y una fecha. No sale el nombre de un cliente, ni un teléfono, ni
+ * un servicio, ni un precio.
  *
- * Va con una consulta por barbería. Es N+1, pero N está acotado por el tamaño
- * de página y evita agregar una función en la base sólo para esto.
+ * **Qué cuenta como actividad**: que entre un turno, o que un administrador
+ * inicie sesión. En una barbería los turnos los toman los clientes desde el
+ * link, y eso *es* la barbería usando TijerApp — el dueño puede pasar semanas
+ * sin loguearse con la agenda llena. Por eso el ingreso solo no alcanza, y por
+ * eso acá un turno que entra sí mueve la fecha.
+ *
+ * La fecha es la del **último hecho real**, nunca la de esta consulta: si fuera
+ * "ahora", cada sincronización parecería actividad y una barbería abandonada no
+ * se detectaría jamás.
+ *
+ * Son varias lecturas por barbería, en tandas. Evita agregar una función en la
+ * base sólo para esto, y N está acotado por el tamaño de página.
  */
-export async function fetchBarbershopUsage(slugs: string[]): Promise<BarbershopUsageRow[]> {
+export async function fetchBarbershopUsage(
+  slugs: string[],
+  ahora: Date = new Date(),
+): Promise<BarbershopUsageRow[]> {
   const unicos = [...new Set(slugs.filter(Boolean))];
   if (unicos.length === 0) return [];
 
   const supabase = getSupabaseAdminClient();
-  const salida: BarbershopUsageRow[] = [];
+  const desde7d = new Date(ahora.getTime() - 7 * 86_400_000).toISOString();
 
-  for (const slug of unicos) {
-    const { data, count, error } = await supabase
-      .from("appointments")
-      .select("appointment_date", { count: "exact" })
-      .eq("barbershop_slug", slug)
-      .order("appointment_date", { ascending: false })
-      .limit(1);
+  const { data: admins, error } = await supabase
+    .from("barbershop_admins")
+    .select("barbershop_slug, user_id")
+    .in("barbershop_slug", unicos);
+  if (error) throw new Error(error.message);
 
-    if (error) throw new Error(error.message);
-    salida.push({
-      slug,
-      turnos: count ?? 0,
-      ultimoTurno: (data?.[0]?.appointment_date as string | undefined) ?? null,
-    });
+  const adminsPorSlug = new Map<string, string[]>();
+  for (const fila of (admins ?? []) as { barbershop_slug: string; user_id: string }[]) {
+    adminsPorSlug.set(fila.barbershop_slug, [
+      ...(adminsPorSlug.get(fila.barbershop_slug) ?? []),
+      fila.user_id,
+    ]);
   }
 
+  const salida: BarbershopUsageRow[] = [];
+  for (let i = 0; i < unicos.length; i += BARBERIAS_EN_PARALELO) {
+    const tanda = unicos.slice(i, i + BARBERIAS_EN_PARALELO);
+    salida.push(
+      ...(await Promise.all(
+        tanda.map((slug) => usoDe(supabase, slug, adminsPorSlug.get(slug) ?? [], desde7d)),
+      )),
+    );
+  }
   return salida;
 }
