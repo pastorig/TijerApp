@@ -148,8 +148,10 @@ fecha pasada.
 igual que siempre, antes o después del cierre.
 
 **Reseñas** (migración corrida el 04/10; el primer envío es el 05/10). Entre las 10 y las 13, a los clientes de AYER que dejaron mail: un
-mail con un botón al formulario de reseña. Uno por turno, y como mucho uno cada
-90 días por cliente y barbería. No a barberías en modo lectura.
+mail con un botón al formulario de reseña. Uno por turno. **Desde el 11/10:** al que
+ya dejó una reseña en esa barbería no se le pide nunca más; al que no contestó,
+un segundo intento a los 90 días y ahí se corta (dos pedidos como mucho en total).
+No a barberías en modo lectura.
 
 **Para probar o mirar sin tocar nada:** GitHub → Actions → "Cierre del día Cron"
 → Run workflow (por defecto corre en modo prueba y solo informa qué haría).

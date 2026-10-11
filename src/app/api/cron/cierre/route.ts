@@ -49,6 +49,8 @@ export const dynamic = "force-dynamic";
  */
 
 const TANDA = 200;
+/** Filas por página al leer una tabla entera. */
+const PAGINA = 1000;
 
 type TurnoPendiente = {
   id: string;
@@ -196,7 +198,13 @@ async function pedirResenas(supabase: Supabase, hoy: string, dryRun: boolean) {
 
   // Cada lectura que falla corta: sin saber a quién ya se le pidió, o quién ya
   // dejó reseña, no se manda nada. Mejor un día sin pedidos que un mail de más.
-  const [resenasRes, pedidosRes, recientesRes] = await Promise.all([
+  const slugs = [...new Set(turnos.map((t) => t.barbershop_slug))];
+  const noSePudo = (error: unknown) => {
+    Sentry.captureException(error, { tags: { cron: "cierre", paso: "resenas" } });
+    return { error: "No pudimos verificar a quién ya se le pidió reseña." };
+  };
+
+  const [resenasRes, pedidosRes] = await Promise.all([
     supabase.from("appointment_reviews").select("appointment_id").in("appointment_id", ids),
     supabase
       .from("reminder_log")
@@ -204,46 +212,82 @@ async function pedirResenas(supabase: Supabase, hoy: string, dryRun: boolean) {
       .eq("kind", "review_request")
       .eq("status", "sent")
       .in("appointment_id", ids),
-    supabase
+  ]);
+  for (const res of [resenasRes, pedidosRes]) {
+    if (res.error) return noSePudo(res.error);
+  }
+
+  // Toda la historia de pedidos y de reseñas, no solo los últimos 90 días: hay
+  // que saber cuántas veces se le pidió a cada cliente y si ya opinó alguna
+  // vez. Paginado, porque la base corta en 1000 filas sin avisar.
+  const historialPedidos: Array<{ appointment_id: string; sent_at: string }> = [];
+  for (let desde = 0; ; desde += PAGINA) {
+    const { data, error } = await supabase
       .from("reminder_log")
-      .select("appointment_id")
+      .select("appointment_id, sent_at")
       .eq("kind", "review_request")
       .eq("status", "sent")
-      .gte(
-        "sent_at",
-        new Date(Date.now() - DIAS_ENTRE_PEDIDOS * 86_400_000).toISOString(),
-      ),
-  ]);
-  for (const res of [resenasRes, pedidosRes, recientesRes]) {
-    if (res.error) {
-      Sentry.captureException(res.error, { tags: { cron: "cierre", paso: "resenas" } });
-      return { error: "No pudimos verificar a quién ya se le pidió reseña." };
+      .order("sent_at", { ascending: true })
+      .range(desde, desde + PAGINA - 1);
+    if (error) return noSePudo(error);
+    historialPedidos.push(...((data ?? []) as typeof historialPedidos));
+    if (!data || data.length < PAGINA) break;
+  }
+  const turnosConResena: string[] = [];
+  for (let desde = 0; ; desde += PAGINA) {
+    const { data, error } = await supabase
+      .from("appointment_reviews")
+      .select("appointment_id")
+      .in("barbershop_slug", slugs)
+      .order("created_at", { ascending: true })
+      .range(desde, desde + PAGINA - 1);
+    if (error) return noSePudo(error);
+    turnosConResena.push(...(data ?? []).map((r) => r.appointment_id as string));
+    if (!data || data.length < PAGINA) break;
+  }
+
+  // De qué cliente y barbería era cada uno de esos turnos.
+  const clienteDeTurno = new Map<string, string>();
+  const idsABuscar = [
+    ...new Set([...historialPedidos.map((p) => p.appointment_id), ...turnosConResena]),
+  ];
+  for (let i = 0; i < idsABuscar.length; i += TANDA) {
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("id, barbershop_slug, customer_email")
+      .in("id", idsABuscar.slice(i, i + TANDA));
+    if (error) return noSePudo(error);
+    for (const fila of data ?? []) {
+      if (fila.customer_email) {
+        clienteDeTurno.set(
+          fila.id as string,
+          claveCliente(fila.barbershop_slug, fila.customer_email),
+        );
+      }
     }
   }
 
-  // De los pedidos de los últimos 90 días, de qué cliente y barbería eran.
+  const desdeReciente = new Date(
+    Date.now() - DIAS_ENTRE_PEDIDOS * 86_400_000,
+  ).toISOString();
   const pedidosRecientes = new Set<string>();
-  const idsRecientes = (recientesRes.data ?? []).map((r) => r.appointment_id as string);
-  for (let i = 0; i < idsRecientes.length; i += TANDA) {
-    const { data, error } = await supabase
-      .from("appointments")
-      .select("barbershop_slug, customer_email")
-      .in("id", idsRecientes.slice(i, i + TANDA));
-    if (error) {
-      Sentry.captureException(error, { tags: { cron: "cierre", paso: "resenas" } });
-      return { error: "No pudimos verificar a quién ya se le pidió reseña." };
-    }
-    for (const fila of data ?? []) {
-      if (fila.customer_email) {
-        pedidosRecientes.add(claveCliente(fila.barbershop_slug, fila.customer_email));
-      }
-    }
+  const pedidosPorCliente = new Map<string, number>();
+  for (const pedido of historialPedidos) {
+    const clave = clienteDeTurno.get(pedido.appointment_id);
+    if (!clave) continue;
+    pedidosPorCliente.set(clave, (pedidosPorCliente.get(clave) ?? 0) + 1);
+    if (pedido.sent_at >= desdeReciente) pedidosRecientes.add(clave);
+  }
+  const yaOpinaron = new Set<string>();
+  for (const id of turnosConResena) {
+    const clave = clienteDeTurno.get(id);
+    if (clave) yaOpinaron.add(clave);
   }
 
   // Barberías con el plan vencido: no se les mandan pedidos.
   const barberiasEnLectura = new Set<string>();
   const nombres = new Map<string, string>();
-  for (const slug of new Set(turnos.map((t) => t.barbershop_slug))) {
+  for (const slug of slugs) {
     const plan = await getBarbershopPlan(slug);
     if (plan.isReadOnly) barberiasEnLectura.add(slug);
     const { data } = await supabase
@@ -259,6 +303,8 @@ async function pedirResenas(supabase: Supabase, hoy: string, dryRun: boolean) {
     conResena: new Set((resenasRes.data ?? []).map((r) => r.appointment_id as string)),
     yaPedidos: new Set((pedidosRes.data ?? []).map((r) => r.appointment_id as string)),
     pedidosRecientes,
+    yaOpinaron,
+    pedidosPorCliente,
     barberiasEnLectura,
   });
 

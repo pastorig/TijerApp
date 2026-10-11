@@ -108,6 +108,8 @@ const vacio = {
   conResena: new Set<string>(),
   yaPedidos: new Set<string>(),
   pedidosRecientes: new Set<string>(),
+  yaOpinaron: new Set<string>(),
+  pedidosPorCliente: new Map<string, number>(),
   barberiasEnLectura: new Set<string>(),
 };
 const ids = (r: ReturnType<typeof elegirPedidosDeResena>) => r.pedir.map((t) => t.id);
@@ -184,6 +186,56 @@ check(
   motivo(r, "hijo"),
   "mismo cliente, otro turno de ayer",
 );
+
+// ── Como mucho dos pedidos en la vida, y ninguno al que ya opinó ────────────
+// Antes solo se miraba si ESE turno tenía reseña: el que dejó 5 estrellas en
+// octubre recibía otro pedido en enero, y el que nunca contestó, uno cada 90
+// días para siempre.
+r = elegirPedidosDeResena({
+  ...vacio,
+  turnos: [
+    turno("opino", { customer_email: "Ana@Mail.com" }),
+    turno("opino-en-otra", { customer_email: "ana@mail.com", barbershop_slug: "leocuts" }),
+  ],
+  yaOpinaron: new Set([claveCliente("barber", "ana@mail.com")]),
+});
+check("al que ya dejó una reseña en esa barbería no se le pide más", motivo(r, "opino"), "ya dejó una reseña");
+check("pero en OTRA barbería, donde no opinó, sí", ids(r), ["opino-en-otra"]);
+
+r = elegirPedidosDeResena({
+  ...vacio,
+  turnos: [turno("uno"), turno("dos"), turno("nuevo")],
+  pedidosPorCliente: new Map([
+    [claveCliente("barber", "uno@mail.com"), 1],
+    [claveCliente("barber", "dos@mail.com"), 2],
+  ]),
+});
+check(
+  "con un pedido previo (de hace más de 90 días) recibe el segundo intento; con dos, no",
+  ids(r),
+  ["uno", "nuevo"],
+);
+check("y queda explicado", motivo(r, "dos"), "ya se le pidió dos veces");
+
+r = elegirPedidosDeResena({
+  ...vacio,
+  turnos: [turno("reciente")],
+  pedidosPorCliente: new Map([[claveCliente("barber", "reciente@mail.com"), 1]]),
+  pedidosRecientes: new Set([claveCliente("barber", "reciente@mail.com")]),
+});
+check(
+  "el segundo intento espera los 90 días",
+  motivo(r, "reciente"),
+  "se le pidió hace poco",
+);
+
+r = elegirPedidosDeResena({
+  ...vacio,
+  turnos: [turno("opino-y-dos")],
+  yaOpinaron: new Set([claveCliente("barber", "opino-y-dos@mail.com")]),
+  pedidosPorCliente: new Map([[claveCliente("barber", "opino-y-dos@mail.com"), 2]]),
+});
+check("haber opinado manda sobre todo lo demás", motivo(r, "opino-y-dos"), "ya dejó una reseña");
 
 console.log(`\n${passed} pasaron, ${failed} fallaron`);
 if (failed > 0) process.exit(1);

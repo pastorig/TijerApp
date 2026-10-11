@@ -20,6 +20,11 @@ export const AUTOR_CIERRE = "Cierre automático";
 
 /** Un cliente frecuente no recibe un pedido después de cada corte. */
 export const DIAS_ENTRE_PEDIDOS = 90;
+/**
+ * Cuántas veces en total se le pide una reseña a un cliente que no contesta.
+ * El primer pedido y un segundo intento a los 90 días; después, nunca más.
+ */
+export const MAX_PEDIDOS_POR_CLIENTE = 2;
 
 /**
  * Hora argentina. Desde las 10 (se lee, y el barbero ya pudo marcar un "no
@@ -84,8 +89,10 @@ export type MotivoSinPedido =
   | "sin mail"
   | "sin link"
   | "ya tiene reseña"
+  | "ya dejó una reseña"
   | "ya se le pidió por este turno"
   | "se le pidió hace poco"
+  | "ya se le pidió dos veces"
   | "barbería en modo lectura"
   | "mismo cliente, otro turno de ayer";
 
@@ -108,6 +115,15 @@ export function elegirPedidosDeResena(entrada: {
   yaPedidos: Set<string>;
   /** `claveCliente` de quienes recibieron un pedido en los últimos 90 días. */
   pedidosRecientes: Set<string>;
+  /**
+   * `claveCliente` de quienes ya dejaron una reseña en esa barbería, por
+   * cualquier turno. A esos no se les pide nunca más: antes solo se miraba si
+   * ESTE turno tenía reseña, así que el que opinó en octubre recibía otro
+   * pedido en enero.
+   */
+  yaOpinaron: Set<string>;
+  /** Cuántos pedidos recibió cada `claveCliente` en toda su historia. */
+  pedidosPorCliente: Map<string, number>;
   /** Slugs con el plan vencido. */
   barberiasEnLectura: Set<string>;
 }): {
@@ -148,8 +164,17 @@ export function elegirPedidosDeResena(entrada: {
       continue;
     }
     const clave = claveCliente(turno.barbershop_slug, email);
+    if (entrada.yaOpinaron.has(clave)) {
+      descartar("ya dejó una reseña");
+      continue;
+    }
     if (entrada.pedidosRecientes.has(clave)) {
       descartar("se le pidió hace poco");
+      continue;
+    }
+    // No contestó ni el primero ni el segundo intento: no se insiste.
+    if ((entrada.pedidosPorCliente.get(clave) ?? 0) >= MAX_PEDIDOS_POR_CLIENTE) {
+      descartar("ya se le pidió dos veces");
       continue;
     }
     // El padre que sacó turno para él y para el hijo: un mail, no dos.
