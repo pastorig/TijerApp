@@ -1502,7 +1502,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
             hint={
               barbershop.requireClientEmail
                 ? "Te enviamos la confirmación y el recordatorio del turno a este email."
-                : "Solo para que te contactemos si hay que cambiar el turno."
+                : "Dejalo y te mandamos la confirmación y el recordatorio del turno."
             }
           >
             <Input

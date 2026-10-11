@@ -191,6 +191,12 @@ export async function provisionBarbershop(
       working_hours_end: input.workingHoursEnd,
       slot_interval_minutes: input.slotIntervalMinutes,
       is_active: true,
+      // Las barberías nuevas arrancan pidiendo el mail al reservar. Todo lo
+      // automático va por mail (confirmación, recordatorio del día anterior,
+      // pedido de reseña), y con el mail opcional queda afuera la mayoría: al
+      // 11/10/2026 SV Barber tenía mail en 92 de 243 turnos (38%) contra 68%
+      // de Leo Cuts, que lo exige. Se apaga desde Configuración.
+      require_client_email: true,
     })
     .select("id, slug, name")
     .single();
