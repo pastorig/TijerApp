@@ -23,6 +23,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarX, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { nivelDeOcupacion, type NivelDeOcupacion } from "@/lib/ocupacion-del-mes";
 import {
   formatDayHeading,
   formatMonthYear,
@@ -39,6 +40,12 @@ type AgendaCalendarProps = {
   onFocusDateChange: (date: string) => void;
   /** Map "YYYY-MM-DD" → cantidad de turnos. Opcional, para mostrar dots. */
   countsByDay?: Record<string, number>;
+  /**
+   * Map "YYYY-MM-DD" → porcentaje ocupado del día (0 a 100). Es lo que decide
+   * el COLOR del punto. Un día que no figura acá cae a los cortes por
+   * cantidad: pasa mientras carga el horario del mes, o si esa carga falla.
+   */
+  occupancyByDay?: Record<string, number>;
   /**
    * Quick action contextual al pie del calendario para el día enfocado.
    * Si está presente, se muestra una fila con botones de acción para
@@ -70,21 +77,28 @@ type AgendaCalendarProps = {
   compact?: boolean;
 };
 
+const COLOR_POR_NIVEL: Record<NivelDeOcupacion, string> = {
+  "con-lugar": "bg-[color:var(--success)]",
+  medio: "bg-amber-400",
+  lleno: "bg-[color:var(--danger)]",
+};
+
 /**
- * Colores del dot según cantidad de turnos:
- * - 0: no dot
- * - 1-3: verde (tranquilo)
- * - 4-6: amber (lleno)
- * - 7+: rojo (sobrecarga)
+ * Color del punto: qué tan OCUPADO está el día, no cuántos turnos tiene.
+ * - verde: hay lugar de sobra (menos de la mitad tomado)
+ * - ámbar: va por la mitad o más
+ * - rojo: lleno o casi (85% para arriba), no entra casi nadie
+ *
+ * Antes iba por cantidad con cortes fijos (4 y 7 turnos), que no dicen lo
+ * mismo para un barbero solo que para una barbería de tres. Esos cortes
+ * quedan solo de respaldo, para cuando todavía no se conoce la ocupación.
  */
-function dotColorClass(count: number | undefined, isToday: boolean): string {
+function dotColorClass(count: number | undefined, occupancy: number | undefined): string {
   if (!count || count === 0) return "";
-  if (count >= 7) return "bg-[color:var(--danger)]";
-  if (count >= 4) return "bg-amber-400";
-  if (count >= 1) return "bg-[color:var(--success)]";
-  return isToday
-    ? "bg-gold-grad"
-    : "bg-[color:var(--brand-silver)]";
+  if (occupancy !== undefined) return COLOR_POR_NIVEL[nivelDeOcupacion(occupancy)];
+  if (count >= 7) return COLOR_POR_NIVEL.lleno;
+  if (count >= 4) return COLOR_POR_NIVEL.medio;
+  return COLOR_POR_NIVEL["con-lugar"];
 }
 
 const SWIPE_THRESHOLD = 40;
@@ -93,6 +107,7 @@ export function AgendaCalendar({
   focusDate,
   onFocusDateChange,
   countsByDay,
+  occupancyByDay,
   onQuickBlock,
   todayYmd,
   onVisibleMonthChange,
@@ -339,6 +354,7 @@ export function AgendaCalendar({
                 isToday={cell.ymd === today}
                 inCurrentMonth={cell.inCurrentMonth}
                 count={countsByDay?.[cell.ymd]}
+                occupancy={occupancyByDay?.[cell.ymd]}
                 onClick={() => handleSelectDay(cell.ymd)}
               />
             ))}
@@ -354,6 +370,7 @@ export function AgendaCalendar({
                 isToday={ymd === today}
                 inCurrentMonth
                 count={countsByDay?.[ymd]}
+                occupancy={occupancyByDay?.[ymd]}
                 onClick={() => handleSelectDay(ymd)}
               />
             ))}
@@ -414,6 +431,7 @@ function DayCell({
   isToday,
   inCurrentMonth,
   count,
+  occupancy,
   onClick,
 }: {
   day: number;
@@ -422,6 +440,7 @@ function DayCell({
   isToday: boolean;
   inCurrentMonth: boolean;
   count?: number;
+  occupancy?: number;
   onClick: () => void;
 }) {
   return (
@@ -447,10 +466,13 @@ function DayCell({
       {count && count > 0 && !isFocused ? (
         <span
           aria-hidden="true"
-          title={`${count} ${count === 1 ? "turno" : "turnos"}`}
+          title={
+            `${count} ${count === 1 ? "turno" : "turnos"}` +
+            (occupancy !== undefined ? ` · ${occupancy}% ocupado` : "")
+          }
           className={cn(
             "absolute bottom-1.5 size-1.5 rounded-full",
-            dotColorClass(count, isToday),
+            dotColorClass(count, occupancy),
           )}
         />
       ) : null}

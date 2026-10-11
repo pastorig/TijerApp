@@ -265,6 +265,8 @@ export function StaffAgenda({
   const [porMover, setPorMover] = useState<Turno | null>(null);
   const [recarga, setRecarga] = useState(0);
   const [conteos, setConteos] = useState<Record<string, number>>({});
+  /** Porcentaje ocupado de cada día: decide el color del punto. */
+  const [ocupacion, setOcupacion] = useState<Record<string, number>>({});
   /**
    * Lista o Calendario. Arranca en Lista —la que el barbero ya conoce— y se
    * recuerda en el dispositivo.
@@ -371,8 +373,12 @@ export function StaffAgenda({
         if (!res.ok) return;
         const payload = (await res.json().catch(() => ({}))) as {
           conteos?: Record<string, number>;
+          ocupacion?: Record<string, number>;
         };
         if (vivo && payload.conteos) setConteos(payload.conteos);
+        // Sin ocupación (falló la lectura del horario) el calendario pinta por
+        // cantidad, como antes.
+        if (vivo) setOcupacion(payload.ocupacion ?? {});
       } catch {
         // Silencio a propósito: sin puntitos se sigue trabajando igual.
       }
@@ -746,6 +752,7 @@ export function StaffAgenda({
               onFocusDateChange={setFecha}
               compact
               countsByDay={conteos}
+              occupancyByDay={ocupacion}
               todayYmd={hoy}
               onVisibleMonthChange={alCambiarMes}
             />

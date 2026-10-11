@@ -185,6 +185,53 @@ export async function listTimeBlocksByBarbershopDate({
   return { data, error };
 }
 
+/**
+ * Bloqueos y excepciones de TODOS los barberos entre dos fechas. Los usa el
+ * calendario del mes para pintar cada día según lo ocupado que está: sin el
+ * horario real de cada día, un sábado de medio día o un día con franco se
+ * medirían contra una jornada que no es.
+ */
+export async function listTimeBlocksByBarbershopRango({
+  barbershopSlug,
+  from,
+  to,
+}: {
+  barbershopSlug: string;
+  from: string;
+  to: string;
+}) {
+  const { data, error } = await getSupabaseClient()
+    .from("barber_time_blocks")
+    .select(timeBlocksSelect)
+    .eq("barbershop_slug", barbershopSlug)
+    .gte("block_date", from)
+    .lte("block_date", to)
+    .eq("is_active", true)
+    .is("deleted_at", null);
+
+  return { data, error };
+}
+
+export async function listDayOverridesByBarbershopRango({
+  barbershopSlug,
+  from,
+  to,
+}: {
+  barbershopSlug: string;
+  from: string;
+  to: string;
+}) {
+  const { data, error } = await getSupabaseClient()
+    .from("barber_day_overrides")
+    .select(dayOverridesSelect)
+    .eq("barbershop_slug", barbershopSlug)
+    .gte("override_date", from)
+    .lte("override_date", to)
+    .is("deleted_at", null);
+
+  return { data, error };
+}
+
 export async function listDayOverridesByBarber({
   barbershopSlug,
   barberId,

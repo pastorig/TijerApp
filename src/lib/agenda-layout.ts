@@ -323,6 +323,26 @@ export function ocupacionDelDia(
   turnos: Array<{ inicioMin: number; duracionMin: number }>,
   bloqueos: Intervalo[],
 ): number | null {
+  const minutos = minutosDelDia(jornada, turnos, bloqueos);
+  if (!minutos) return null;
+  if (minutos.disponible <= 0) return 100;
+  return Math.round(
+    Math.min(100, Math.max(0, (minutos.ocupado / minutos.disponible) * 100)),
+  );
+}
+
+/**
+ * La misma cuenta que `ocupacionDelDia`, en minutos en vez de porcentaje.
+ *
+ * Existe para poder SUMAR barberos: el punto del calendario del mes resume a
+ * todos, y promediar porcentajes daría mal (uno que trabaja 4 horas pesaría lo
+ * mismo que uno que trabaja 10). Se suman minutos y se divide al final.
+ */
+export function minutosDelDia(
+  jornada: JornadaParaLayout | null,
+  turnos: Array<{ inicioMin: number; duracionMin: number }>,
+  bloqueos: Intervalo[],
+): { disponible: number; ocupado: number } | null {
   if (!jornada || !jornada.trabaja || jornada.finMin <= jornada.inicioMin) return null;
   const recortar = (i: Intervalo): Intervalo => ({
     inicioMin: Math.max(i.inicioMin, jornada.inicioMin),
@@ -341,12 +361,12 @@ export function ocupacionDelDia(
     cursor = Math.max(cursor, i.finMin);
   }
   const disponible = jornada.finMin - jornada.inicioMin - minutosNoDisponibles;
-  if (disponible <= 0) return 100;
+  if (disponible <= 0) return { disponible: 0, ocupado: 0 };
   const libre = huecosLibres(jornada, turnos, bloqueos).reduce(
     (total, h) => total + (h.finMin - h.inicioMin),
     0,
   );
-  return Math.round(Math.min(100, Math.max(0, ((disponible - libre) / disponible) * 100)));
+  return { disponible, ocupado: Math.min(disponible, Math.max(0, disponible - libre)) };
 }
 
 /** ¿Un turno nuevo se pisaría con alguno de los existentes? */

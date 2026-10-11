@@ -16,11 +16,12 @@ import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { mergeWeeklySchedulesWithDefaults, getDayOfWeekFromDate } from "@/lib/availability";
 import { normalizeDateValue } from "@/lib/format";
 import { resolverJornadaDelDia } from "@/lib/jornada-del-dia";
+import { ocupacionPorDia } from "@/lib/ocupacion-del-mes";
 import type {
   BarberDayOverrideRow,
   BarberWeeklyScheduleRow,
 } from "@/lib/supabase";
-import { normalizeTimeShort } from "./date-utils";
+import { normalizeTimeShort } from "@/components/calendar/date-utils";
 
 export type BarberDaySchedule = {
   startTime: string;
@@ -109,4 +110,101 @@ export function getBarberDaySchedule(params: {
     isWorking: weeklySchedule!.isWorking,
     pausa,
   };
+}
+
+/* ───────────────────────── Ocupación del mes ───────────────────────── */
+
+/** "HH:MM" o "HH:MM:SS" → minutos desde las 00:00. */
+function aMinutos(hora: string): number {
+  const [h, m] = hora.split(":");
+  return Number(h) * 60 + Number(m);
+}
+
+export type ExcepcionDelMes = Pick<
+  BarberDayOverrideRow,
+  "override_date" | "start_time" | "end_time" | "is_working"
+> & {
+  barber_id: string;
+  hereda_pausa?: boolean | null;
+  break_start?: string | null;
+  break_end?: string | null;
+};
+
+/**
+ * La ocupación de cada día, a partir de las filas crudas de la base.
+ *
+ * La usan el turnero del dueño (en el navegador) y la agenda del empleado (en
+ * el servidor). Resuelve la jornada con `getBarberDaySchedule`, la misma que
+ * dibuja el calendario del día: si cada lado la armara a su modo, el punto del
+ * mes y el "% ocupado" del día terminarían discrepando.
+ */
+export function ocupacionDelMesDesdeFilas(params: {
+  barberIds: string[];
+  weeklySchedulesByBarber: Record<string, BarberWeeklyScheduleRow[]>;
+  excepciones: ExcepcionDelMes[];
+  bloqueos: Array<{
+    barber_id: string;
+    block_date: string;
+    start_time: string;
+    end_time: string;
+  }>;
+  turnos: Array<{
+    barber_id: string;
+    appointment_date: string;
+    appointment_time: string;
+    status: string;
+    service_duration_minutes: number | null;
+    actual_duration_minutes?: number | null;
+  }>;
+  workingHours: DemoBarbershop["workingHours"];
+}): Record<string, number> {
+  const { barberIds, weeklySchedulesByBarber, excepciones, bloqueos, turnos, workingHours } =
+    params;
+  const intervalo = workingHours.intervalMinutes > 0 ? workingHours.intervalMinutes : 30;
+
+  const excepcionPorBarberoYDia = new Map<string, ExcepcionDelMes>();
+  for (const e of excepciones) {
+    excepcionPorBarberoYDia.set(`${e.barber_id}|${normalizeDateValue(e.override_date)}`, e);
+  }
+
+  return ocupacionPorDia({
+    barberIds,
+    jornadaDe: (barberId, fecha) => {
+      const excepcion = excepcionPorBarberoYDia.get(`${barberId}|${fecha}`) ?? null;
+      const dia = getBarberDaySchedule({
+        barberId,
+        date: fecha,
+        weeklySchedulesByBarber,
+        dayOverridesByBarber: {
+          [barberId]: excepcion as unknown as BarberDayOverrideRow | null,
+        },
+        workingHours,
+        focusDate: fecha,
+      });
+      if (!dia) return null;
+      return {
+        trabaja: dia.isWorking,
+        inicioMin: aMinutos(dia.startTime),
+        finMin: aMinutos(dia.endTime),
+        pausa: dia.pausa
+          ? { inicioMin: aMinutos(dia.pausa.startTime), finMin: aMinutos(dia.pausa.endTime) }
+          : null,
+      };
+    },
+    turnos: turnos
+      .filter((t) => t.status === "pending" || t.status === "confirmed")
+      .map((t) => ({
+        fecha: normalizeDateValue(t.appointment_date),
+        barberId: t.barber_id,
+        inicioMin: aMinutos(t.appointment_time),
+        // La misma duración que dibuja el calendario del día.
+        duracionMin: t.actual_duration_minutes ?? t.service_duration_minutes ?? intervalo,
+      })),
+    bloqueos: bloqueos.map((b) => ({
+      fecha: normalizeDateValue(b.block_date),
+      barberId: b.barber_id,
+      inicioMin: aMinutos(b.start_time),
+      finMin: aMinutos(b.end_time),
+    })),
+  });
 }

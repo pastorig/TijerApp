@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CalendarClock,
   Plus,
@@ -41,7 +41,9 @@ import {
 } from "@/lib/availability";
 import {
   listDayOverridesByBarber,
+  listDayOverridesByBarbershopRango,
   listTimeBlocksByBarbershopDate,
+  listTimeBlocksByBarbershopRango,
   listWeeklySchedulesByBarber,
   upsertDayOverrideForBarber,
 } from "@/lib/barber-availability";
@@ -62,6 +64,11 @@ import {
 } from "@/lib/whatsapp";
 import { Select, useConfirm, useToast } from "@/components/ui";
 import { AgendaCalendar } from "./calendar/AgendaCalendar";
+import { addDays, toYmd } from "./calendar/date-utils";
+import {
+  ocupacionDelMesDesdeFilas,
+  type ExcepcionDelMes,
+} from "./admin/agenda-schedule-helpers";
 import {
   AgendaCalendarGridView,
   type AgendaCreateMode,
@@ -226,6 +233,16 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     Record<string, BarberTimeBlockRow[]>
   >({});
   const [timeBlocksVersion, setTimeBlocksVersion] = useState(0);
+  // El mes que muestra el calendario (con una semana de cada lado, para el
+  // strip semanal de los bordes) y el horario real de esos días: excepciones y
+  // bloqueos. Con eso el punto de cada día se pinta por ocupación.
+  const [rangoDelCalendario, setRangoDelCalendario] = useState(() =>
+    rangoDelMes(Number(focusDate.slice(0, 4)), Number(focusDate.slice(5, 7))),
+  );
+  const [horarioDelMes, setHorarioDelMes] = useState<{
+    excepciones: ExcepcionDelMes[];
+    bloqueos: BarberTimeBlockRow[];
+  } | null>(null);
   const confirm = useConfirm();
   const toast = useToast();
   const [calendarQuickBlockDate, setCalendarQuickBlockDate] = useState<
@@ -265,6 +282,44 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     });
     return counts;
   }, [visibleAppointments]);
+
+  // Qué tan ocupado está cada día, con la misma cuenta que el "% ocupado" del
+  // calendario del día. Respeta el filtro de barbero. Mientras el horario del
+  // mes no llegó queda vacío y el calendario usa los cortes por cantidad.
+  const occupancyByDay = useMemo(() => {
+    if (!horarioDelMes) return {};
+    return ocupacionDelMesDesdeFilas({
+      barberIds: (selectedBarberFilter !== "all"
+        ? barbers.filter((b) => b.id === selectedBarberFilter)
+        : barbers
+      ).map((b) => b.id),
+      weeklySchedulesByBarber,
+      excepciones: horarioDelMes.excepciones,
+      bloqueos: horarioDelMes.bloqueos,
+      turnos: visibleAppointments.filter((a) => {
+        const fecha = normalizeDateValue(a.appointment_date);
+        return fecha >= rangoDelCalendario.from && fecha <= rangoDelCalendario.to;
+      }),
+      workingHours: barbershop.workingHours,
+    });
+  }, [
+    horarioDelMes,
+    selectedBarberFilter,
+    barbers,
+    weeklySchedulesByBarber,
+    visibleAppointments,
+    rangoDelCalendario,
+    barbershop.workingHours,
+  ]);
+
+  const alCambiarMesDelCalendario = useCallback((anio: number, mes: number) => {
+    const nuevo = rangoDelMes(anio, mes);
+    // Comparación por valor: el calendario avisa en cada cambio de su estado y
+    // un objeto nuevo cada vez dispararía un pedido tras otro.
+    setRangoDelCalendario((actual) =>
+      actual.from === nuevo.from && actual.to === nuevo.to ? actual : nuevo,
+    );
+  }, []);
 
   const focusDateAppointments = useMemo(
     () =>
@@ -1389,6 +1444,40 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     };
   }, [barbershop.slug, focusDate, timeBlocksVersion]);
 
+  // Excepciones y bloqueos del mes a la vista, para pintar los puntos del
+  // calendario por ocupación. Si falla, los puntos caen a los cortes por
+  // cantidad: es una ayuda visual y no puede romper el turnero.
+  //
+  // `dayOverridesByBarber` va en las dependencias aunque no se lea: cambia
+  // cuando se edita la excepción del día abierto, y ahí hay que volver a pedir.
+  useEffect(() => {
+    let isMounted = true;
+    void (async () => {
+      const [excepciones, bloqueos] = await Promise.all([
+        listDayOverridesByBarbershopRango({
+          barbershopSlug: barbershop.slug,
+          ...rangoDelCalendario,
+        }),
+        listTimeBlocksByBarbershopRango({
+          barbershopSlug: barbershop.slug,
+          ...rangoDelCalendario,
+        }),
+      ]);
+      if (!isMounted) return;
+      if (excepciones.error || bloqueos.error) {
+        setHorarioDelMes(null);
+        return;
+      }
+      setHorarioDelMes({
+        excepciones: excepciones.data ?? [],
+        bloqueos: bloqueos.data ?? [],
+      });
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [barbershop.slug, rangoDelCalendario, timeBlocksVersion, dayOverridesByBarber]);
+
   const openAppointment = openAppointmentId
     ? (appointments.find((a) => a.id === openAppointmentId) ?? null)
     : null;
@@ -1614,6 +1703,8 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                   setActiveFilter("day");
                 }}
                 countsByDay={countsByDay}
+                occupancyByDay={occupancyByDay}
+                onVisibleMonthChange={alCambiarMesDelCalendario}
                 onQuickBlock={(date) => setCalendarQuickBlockDate(date)}
               />
             </div>
@@ -2256,6 +2347,17 @@ function formatDayCompact(dateValue: string) {
   }).format(date);
 
   return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+/**
+ * El mes del calendario más una semana de cada lado: el strip semanal de los
+ * bordes muestra días del mes vecino y también llevan punto.
+ */
+function rangoDelMes(anio: number, mes: number): { from: string; to: string } {
+  return {
+    from: addDays(toYmd(new Date(anio, mes - 1, 1)), -7),
+    to: addDays(toYmd(new Date(anio, mes, 0)), 7),
+  };
 }
 
 function getBarberDaySchedule(params: {
