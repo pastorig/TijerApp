@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,8 +31,7 @@
 
 ## Notes
 
-- Quedan tres decisiones de Bautista, cada una con recomendación, en "Decisiones abiertas":
-  el plan, si se incluye al cliente de una sola visita, y si arranca prendida o apagada en las
-  barberías existentes. Hasta tenerlas no se pasa a `/speckit-plan`.
+- Las tres decisiones se tomaron el 11/10/2026 y están en "Decisiones tomadas", con lo que
+  implica el mínimo de 4 visitas medido contra la base.
 - La sección Dependencies nombra los crons de la base y de GitHub: es contexto de qué ya
   existe, no una decisión de implementación.
