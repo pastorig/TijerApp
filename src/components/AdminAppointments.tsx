@@ -277,6 +277,9 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   const countsByDay = useMemo(() => {
     const counts: Record<string, number> = {};
     visibleAppointments.forEach((a) => {
+      // Solo los que ocupan el día. Un día con todos sus turnos cancelados no
+      // lleva punto: no hay nada para atender, y el punto decía que sí.
+      if (a.status !== "pending" && a.status !== "confirmed") return;
       const date = normalizeDateValue(a.appointment_date);
       counts[date] = (counts[date] ?? 0) + 1;
     });
