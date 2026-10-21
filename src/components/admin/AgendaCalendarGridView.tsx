@@ -510,6 +510,7 @@ function DroppableSlot({
   top,
   height,
   isHourStart,
+  isHalfHour,
   isInWorkingHours,
   isOccupied,
   isCovered,
@@ -523,6 +524,8 @@ function DroppableSlot({
   top: number;
   height: number;
   isHourStart: boolean;
+  /** Las filas son de 10 minutos; la raya fina va solo en las medias horas. */
+  isHalfHour: boolean;
   isInWorkingHours: boolean;
   isOccupied: boolean;
   /** Algún turno pasa por encima de este horario (aunque no empiece acá). */
@@ -551,7 +554,11 @@ function DroppableSlot({
       onClick={canPick ? () => onPick(barberId, time, top) : undefined}
       className={cn(
         "group/slot absolute inset-x-0 border-t transition-colors duration-150",
-        isHourStart ? "border-[color:var(--border-default)]" : "border-[color:var(--border-subtle)]/50",
+        isHourStart
+          ? "border-[color:var(--border-default)]"
+          : isHalfHour
+            ? "border-[color:var(--border-subtle)]/50"
+            : "border-transparent",
         canPick && "cursor-pointer hover:bg-[color:var(--surface-2)]/50",
         showDragHint && !isOver && "bg-[color:var(--brand-gold-soft)]/25",
         isOver &&
@@ -560,7 +567,7 @@ function DroppableSlot({
       )}
       style={{ top, height }}
     >
-      {canPick && height >= 24 ? (
+      {canPick && height >= 20 ? (
         <span className="pointer-events-none absolute inset-0 hidden items-center justify-center opacity-0 transition-opacity duration-150 group-hover/slot:opacity-100 sm:flex">
           <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--surface-1)]/90 px-2 py-0.5 text-xs font-semibold text-[color:var(--brand-gold)]">
             <Plus aria-hidden="true" className="size-3" />
@@ -651,6 +658,21 @@ function SlotMenu({
     </div>
   );
 }
+
+/**
+ * Cada cuántos minutos se puede soltar o cargar un turno en el calendario.
+ *
+ * Antes era el "intervalo" de la barbería, un dato que se elige al registrarse
+ * y que ya no se puede cambiar desde la pantalla. SV Barber lo tenía en 40 con
+ * cortes de 30: el calendario solo dejaba poner turnos a las 15:00, 15:40,
+ * 16:20…, le quedaban 10 minutos muertos entre cada corte y no podía correr un
+ * turno a las 15:30 porque esa fila no existía.
+ *
+ * Con filas de 10 minutos entra cualquier duración que se usa hoy (25, 30, 35,
+ * 40, 45) sin depender de esa configuración. Las líneas se siguen dibujando
+ * solo en las horas y medias horas, para que no se llene de rayas.
+ */
+const PASO_GRILLA_MIN = 10;
 
 type Column = {
   barber: AgendaBarbero;
@@ -791,12 +813,14 @@ export function AgendaCalendarGridView({
   }, [columns, dayAppointments, interval, workingHours.start, workingHours.end]);
 
   const gridHeight = (rango.finMin - rango.inicioMin) * PX_POR_MIN;
-  const slotHeight = interval * PX_POR_MIN;
+  const slotHeight = PASO_GRILLA_MIN * PX_POR_MIN;
   const timeSlots = useMemo(() => {
     const slots: string[] = [];
-    for (let t = rango.inicioMin; t < rango.finMin; t += interval) slots.push(minutesToTimeLabel(t));
+    for (let t = rango.inicioMin; t < rango.finMin; t += PASO_GRILLA_MIN) {
+      slots.push(minutesToTimeLabel(t));
+    }
     return slots;
-  }, [rango, interval]);
+  }, [rango]);
 
   // Ocupación de los slots droppables: cada turno marca la fila que contiene
   // su inicio (la hora de un turno no siempre cae justo en la grilla).
@@ -806,12 +830,13 @@ export function AgendaCalendarGridView({
       const apptMin = timeToMinutes(appointment.appointment_time.slice(0, 5));
       const slotMin =
         apptMin >= rango.inicioMin
-          ? rango.inicioMin + Math.floor((apptMin - rango.inicioMin) / interval) * interval
+          ? rango.inicioMin +
+            Math.floor((apptMin - rango.inicioMin) / PASO_GRILLA_MIN) * PASO_GRILLA_MIN
           : apptMin;
       set.add(`${appointment.barber_id}:${minutesToTimeLabel(slotMin)}`);
     }
     return set;
-  }, [dayAppointments, rango.inicioMin, interval]);
+  }, [dayAppointments, rango.inicioMin]);
 
   // Reparto de los bloques por barbero.
   const layoutByBarber = useMemo(() => {
@@ -1263,6 +1288,7 @@ export function AgendaCalendarGridView({
                   top={i * slotHeight}
                   height={slotHeight}
                   isHourStart={time.endsWith(":00")}
+                  isHalfHour={time.endsWith(":30")}
                   isInWorkingHours={slotMin >= scheduleStart && slotMin < scheduleEnd}
                   isOccupied={occupiedSlots.has(`${barber.id}:${time}`)}
                   isCovered={
@@ -1272,7 +1298,7 @@ export function AgendaCalendarGridView({
                     franjas.some(
                       (f) =>
                         f.tipo !== "fuera-de-horario" &&
-                        f.inicioMin < slotMin + interval &&
+                        f.inicioMin < slotMin + PASO_GRILLA_MIN &&
                         slotMin < f.finMin,
                     ) ||
                     // Donde está la etiqueta "Libre": la etiqueta ya es el botón.
