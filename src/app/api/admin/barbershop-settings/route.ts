@@ -3,6 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { assertPlanActive } from "@/lib/api-plan-guard";
 import { resolveBarbershopAdminAccess } from "@/lib/server/barbershop-admin-access";
+import { pasoDeAgenda } from "@/lib/paso-agenda";
 
 export const runtime = "nodejs";
 
@@ -76,12 +77,11 @@ export async function PATCH(request: Request) {
     );
   }
 
-  // El intervalo ya no se edita desde la UI (la grilla de horarios sigue la
-  // duración del servicio de cada barbero). Se conserva como fallback interno
-  // para turnos viejos sin duración; default 30 si no viene o es inválido.
-  const rawInterval = Number(payload.slotIntervalMinutes);
-  const intervalValue =
-    Number.isFinite(rawInterval) && rawInterval > 0 ? rawInterval : 30;
+  // Cada cuánto se acomodan los turnos en el calendario de la agenda
+  // (`paso-agenda.ts`). Solo los valores de la lista: un número cualquiera
+  // dejaría filas que no calzan con ninguna duración, que es lo que le pasó a
+  // SV Barber con 40.
+  const intervalValue = pasoDeAgenda(Number(payload.slotIntervalMinutes));
 
   const auth = await resolveBarbershopAdminAccess(
     request.headers.get("authorization"),

@@ -58,6 +58,7 @@ import {
 } from "@/lib/agenda-layout";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
+import { pasoDeAgenda } from "@/lib/paso-agenda";
 import type {
   AppointmentRow,
   BarberDayOverrideRow,
@@ -659,21 +660,6 @@ function SlotMenu({
   );
 }
 
-/**
- * Cada cuántos minutos se puede soltar o cargar un turno en el calendario.
- *
- * Antes era el "intervalo" de la barbería, un dato que se elige al registrarse
- * y que ya no se puede cambiar desde la pantalla. SV Barber lo tenía en 40 con
- * cortes de 30: el calendario solo dejaba poner turnos a las 15:00, 15:40,
- * 16:20…, le quedaban 10 minutos muertos entre cada corte y no podía correr un
- * turno a las 15:30 porque esa fila no existía.
- *
- * Con filas de 10 minutos entra cualquier duración que se usa hoy (25, 30, 35,
- * 40, 45) sin depender de esa configuración. Las líneas se siguen dibujando
- * solo en las horas y medias horas, para que no se llene de rayas.
- */
-const PASO_GRILLA_MIN = 10;
-
 type Column = {
   barber: AgendaBarbero;
   schedule: BarberDaySchedule;
@@ -737,6 +723,10 @@ export function AgendaCalendarGridView({
   const isDayLocked = isPastDay || isReadOnly;
   const isToday = useMemo(() => focusDate === getTodayYmd(), [focusDate]);
   const interval = workingHours.intervalMinutes > 0 ? workingHours.intervalMinutes : 30;
+  // Cada cuántos minutos se puede soltar o cargar un turno: lo elige la
+  // barbería en Configuración (`paso-agenda.ts`). Las líneas se dibujan solo
+  // en las horas y medias horas, para que con filas chicas no se llene de rayas.
+  const PASO_GRILLA_MIN = pasoDeAgenda(workingHours.intervalMinutes);
 
   const dayAppointments = useMemo(
     () => appointments.filter((a) => a.appointment_date === focusDate && isActive(a)),
@@ -820,7 +810,7 @@ export function AgendaCalendarGridView({
       slots.push(minutesToTimeLabel(t));
     }
     return slots;
-  }, [rango]);
+  }, [rango, PASO_GRILLA_MIN]);
 
   // Ocupación de los slots droppables: cada turno marca la fila que contiene
   // su inicio (la hora de un turno no siempre cae justo en la grilla).
@@ -836,7 +826,7 @@ export function AgendaCalendarGridView({
       set.add(`${appointment.barber_id}:${minutesToTimeLabel(slotMin)}`);
     }
     return set;
-  }, [dayAppointments, rango.inicioMin]);
+  }, [dayAppointments, rango.inicioMin, PASO_GRILLA_MIN]);
 
   // Reparto de los bloques por barbero.
   const layoutByBarber = useMemo(() => {

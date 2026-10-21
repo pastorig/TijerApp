@@ -17,6 +17,7 @@ import { useConfirm, useToast } from "@/components/ui";
 import { PushNotificationsCard } from "@/components/push/PushNotificationsCard";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
+import { PASOS_DE_AGENDA, pasoDeAgenda } from "@/lib/paso-agenda";
 
 type AdminSettingsFormProps = {
   barbershop: DemoBarbershop;
@@ -147,8 +148,10 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
   );
   const [startTime, setStartTime] = useState(barbershop.workingHours.start);
   const [endTime, setEndTime] = useState(barbershop.workingHours.end);
+  // Un valor viejo fuera de la lista (40, 45) se muestra como el que el
+  // calendario ya está usando en su lugar, así guardar no cambia nada.
   const [slotIntervalMinutes, setSlotIntervalMinutes] = useState(
-    String(barbershop.workingHours.intervalMinutes),
+    String(pasoDeAgenda(barbershop.workingHours.intervalMinutes)),
   );
   const [isActive, setIsActive] = useState(barbershop.isActive ?? true);
   const [autoConfirmAppointments, setAutoConfirmAppointments] = useState(
@@ -188,9 +191,8 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    // El intervalo ya no se edita en la UI (la grilla sigue la duración del
-    // servicio de cada barbero). Se sigue enviando para preservar el valor
-    // guardado; si faltara, el backend lo defaultea a 30.
+    // Cada cuánto se acomodan los turnos en el calendario (`paso-agenda.ts`).
+    // La reserva del cliente no lo usa: sigue la duración de cada servicio.
     const intervalValue = Number(slotIntervalMinutes);
 
     // Como solo se ve una sección por vez, ante un error de validación
@@ -289,7 +291,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
       setGoogleReviewsUrl(fresh.google_reviews_url ?? "");
       setStartTime(fresh.working_hours_start);
       setEndTime(fresh.working_hours_end);
-      setSlotIntervalMinutes(String(fresh.slot_interval_minutes));
+      setSlotIntervalMinutes(String(pasoDeAgenda(fresh.slot_interval_minutes)));
       setIsActive(fresh.is_active ?? true);
       setAutoConfirmAppointments(fresh.auto_confirm_appointments ?? false);
       setWaitlistEnabled(fresh.waitlist_enabled ?? true);
@@ -697,7 +699,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
                       <SectionHeading
                         icon={Clock}
                         title="Horarios base"
-                        hint="Apertura, cierre y anticipación mínima"
+                        hint="Apertura, cierre, agenda y anticipación mínima"
                       />
 
                       <div className="grid gap-3 sm:grid-cols-2">
@@ -741,6 +743,39 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
                             required
                           />
                         </div>
+                      </div>
+
+                      {/* Cada cuánto se acomodan los turnos en el calendario */}
+                      <div>
+                        <label
+                          htmlFor="settings-slot-interval"
+                          className={LABEL_CLASS}
+                        >
+                          Intervalo de la agenda
+                        </label>
+                        <select
+                          id="settings-slot-interval"
+                          value={slotIntervalMinutes}
+                          disabled={isSaving}
+                          onChange={(event) => {
+                            setSlotIntervalMinutes(event.target.value);
+                            setErrorMessage("");
+                          }}
+                          className={FIELD_CLASS}
+                        >
+                          {PASOS_DE_AGENDA.map((minutos) => (
+                            <option key={minutos} value={minutos}>
+                              Cada {minutos} minutos
+                            </option>
+                          ))}
+                        </select>
+                        <p className="mt-1 text-[10px] leading-4 text-[color:var(--text-subtle)]">
+                          A qué horas podés poner o mover un turno en el
+                          calendario. Con 30, a las 15:00, 15:30, 16:00. Si tenés
+                          servicios de 40 o 45 minutos, elegí 10 o 15 para que
+                          los turnos queden pegados. No cambia los horarios que
+                          ven tus clientes al reservar.
+                        </p>
                       </div>
 
                       {/* Anticipación mínima para reservar */}
