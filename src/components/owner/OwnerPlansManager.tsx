@@ -20,6 +20,7 @@ import {
   type SubscriptionStatus,
 } from "@/lib/plans";
 import { precioDelProximoPeriodo } from "@/data/founders";
+import { leerNotaDePago } from "@/lib/pago-promocion";
 
 type PlanRow = {
   slug: string;
@@ -447,15 +448,22 @@ function PaymentsHistory({
         </p>
       ) : (
         <ul className="mt-4 flex flex-col gap-2">
-          {payments.map((payment) => (
+          {payments.map((payment) => {
+            const nota = leerNotaDePago(payment.note);
+            return (
             <li
               key={payment.id}
               className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] p-3"
             >
               <div className="min-w-0">
-                <p className="text-sm font-bold text-white">
+                <p className="flex flex-wrap items-center gap-2 text-sm font-bold text-white">
                   {nameBySlug[payment.barbershop_slug] ??
                     payment.barbershop_slug}
+                  {nota.esPromocion ? (
+                    <span className="rounded-full border border-[color:var(--brand-gold-ring)] bg-[color:var(--brand-gold-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand-gold)]">
+                      Promoción
+                    </span>
+                  ) : null}
                 </p>
                 <p className="text-[11px] text-[color:var(--text-muted)]">
                   {formatShortDate(payment.created_at)} · {payment.method}
@@ -463,9 +471,9 @@ function PaymentsHistory({
                     ? ` · cubre hasta ${formatShortDate(payment.period_end)}`
                     : ""}
                 </p>
-                {payment.note ? (
+                {nota.resto ? (
                   <p className="mt-0.5 text-[11px] italic text-[color:var(--text-subtle)]">
-                    {payment.note}
+                    {nota.resto}
                   </p>
                 ) : null}
               </div>
@@ -473,7 +481,8 @@ function PaymentsHistory({
                 ${Number(payment.amount).toLocaleString("es-AR")}
               </p>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </section>
@@ -768,6 +777,13 @@ function RegisterPaymentModal({
     "transferencia",
   );
   const [note, setNote] = useState("");
+  // Precio de promoción: no pasa por el aviso de "monto raro" y queda marcado
+  // en el historial. Arranca prendido si lo sugerido no es un precio de lista
+  // (un acuerdo como el de Leo Cuts).
+  const listPrice = row.plan_tier ? PLAN_META[row.plan_tier].priceArs : null;
+  const [promocion, setPromocion] = useState(
+    listPrice !== null && defaultAmount > 0 && defaultAmount !== listPrice,
+  );
   const [isSaving, setIsSaving] = useState(false);
   const titleId = useId();
   // Foco adentro, Tab contenido y fondo sin scroll. Escape cierra, salvo
@@ -808,6 +824,7 @@ function RegisterPaymentModal({
           method,
           note: note.trim() || null,
           confirmUnusualAmount,
+          promocion,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {
@@ -901,9 +918,28 @@ function RegisterPaymentModal({
               className="mt-2 w-full rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2 font-mono text-sm text-white outline-none focus:border-[color:var(--brand-gold)]"
             />
             <p className="mt-1 text-[10px] text-[color:var(--text-muted)]">
-              Prefill: precio del plan{" "}
-              {row.plan_tier ? PLAN_META[row.plan_tier].name : "—"}.
+              {listPrice !== null && defaultAmount !== listPrice
+                ? `Prefill: lo que paga esta barbería ($${defaultAmount.toLocaleString("es-AR")}). El plan ${PLAN_META[row.plan_tier!].name} de lista es $${listPrice.toLocaleString("es-AR")}.`
+                : `Prefill: precio del plan ${row.plan_tier ? PLAN_META[row.plan_tier].name : "—"}.`}
             </p>
+            <label className="mt-3 flex cursor-pointer items-start gap-2 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] px-3 py-2">
+              <input
+                type="checkbox"
+                checked={promocion}
+                onChange={(e) => {
+                  setPromocion(e.target.checked);
+                  setUnusualAmount(null);
+                }}
+                className="mt-0.5 size-4 accent-[color:var(--brand-gold)]"
+              />
+              <span className="text-[11px] leading-4 text-white">
+                <span className="font-bold">Precio de promoción</span>
+                <span className="block text-[color:var(--text-muted)]">
+                  Un precio acordado o con descuento. Se registra aunque no sea
+                  de lista y queda marcado en el historial de cobros.
+                </span>
+              </span>
+            </label>
             {unusualAmount ? (
               <p
                 role="alert"

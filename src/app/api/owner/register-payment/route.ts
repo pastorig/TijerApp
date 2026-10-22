@@ -6,7 +6,10 @@ import {
   expectedPaymentAmounts,
   formatArs,
   isExpectedPaymentAmount,
+  type PlanTier,
 } from "@/lib/plans";
+import { precioDelProximoPeriodo } from "@/data/founders";
+import { notaDePromocion } from "@/lib/pago-promocion";
 
 export const runtime = "nodejs";
 
@@ -17,13 +20,17 @@ export const runtime = "nodejs";
  * extiende su período pago (current_period_ends_at) +1 mes desde max(hoy,
  * vencimiento vigente) y la pone en 'active'. Ver spec 007-cobro-barberos.
  *
- * Body: { slug, amount, method, note?, confirmUnusualAmount? }
+ * Body: { slug, amount, method, note?, confirmUnusualAmount?, promocion? }
  *
  * Un monto que no coincide con ningún precio de lista se rechaza con
  * `code: "monto-inusual"` hasta que llegue con `confirmUnusualAmount: true`.
  * No es que esos montos estén prohibidos --hay precios congelados de
  * Fundador-- es que un cero de menos no se puede distinguir de una decisión
  * salvo preguntando.
+ *
+ * Dos excepciones que no preguntan: el precio que esa barbería paga de verdad
+ * (acuerdo o fundador, `precioDelProximoPeriodo`), y un cobro marcado como
+ * promoción, que queda identificado en la nota (`pago-promocion.ts`).
  */
 
 const VALID_METHODS = ["transferencia", "efectivo", "otro"] as const;
@@ -75,24 +82,16 @@ export async function POST(request: Request) {
   const slug = typeof body.slug === "string" ? body.slug.trim() : "";
   const amount = typeof body.amount === "number" ? body.amount : NaN;
   const method = typeof body.method === "string" ? body.method : "";
-  const note =
+  const promocion = body.promocion === true;
+  const notaEscrita =
     typeof body.note === "string" && body.note.trim() ? body.note.trim() : null;
+  const note = promocion ? notaDePromocion(notaEscrita) : notaEscrita;
 
   if (!slug) {
     return NextResponse.json({ error: "Falta la barbería." }, { status: 400 });
   }
   if (!Number.isFinite(amount) || amount < 0) {
     return NextResponse.json({ error: "Monto inválido." }, { status: 400 });
-  }
-  if (!isExpectedPaymentAmount(amount) && body.confirmUnusualAmount !== true) {
-    return NextResponse.json(
-      {
-        error: `${formatArs(amount)} no coincide con ningún precio de lista.`,
-        code: "monto-inusual",
-        expected: expectedPaymentAmounts(),
-      },
-      { status: 400 },
-    );
   }
   if (!(VALID_METHODS as readonly string[]).includes(method)) {
     return NextResponse.json({ error: "Método inválido." }, { status: 400 });
@@ -102,7 +101,7 @@ export async function POST(request: Request) {
 
   const { data: sub, error: subError } = await supabase
     .from("barbershop_subscriptions")
-    .select("current_period_ends_at")
+    .select("current_period_ends_at, plan_tier")
     .eq("barbershop_slug", slug)
     .maybeSingle();
 
@@ -119,6 +118,24 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "No encontramos esa barbería. Configurá su plan primero." },
       { status: 404 },
+    );
+  }
+
+  // El precio que esa barbería paga de verdad tampoco es "raro": los $27.000
+  // acordados con Leo Cuts no están en la lista y no tienen por qué preguntar.
+  const fila = sub as { current_period_ends_at: string | null; plan_tier: PlanTier | null };
+  const suPrecio = fila.plan_tier
+    ? precioDelProximoPeriodo(slug, fila.plan_tier, fila.current_period_ends_at)
+    : null;
+  const esperado = isExpectedPaymentAmount(amount) || amount === suPrecio;
+  if (!esperado && !promocion && body.confirmUnusualAmount !== true) {
+    return NextResponse.json(
+      {
+        error: `${formatArs(amount)} no coincide con ningún precio de lista.`,
+        code: "monto-inusual",
+        expected: expectedPaymentAmounts(),
+      },
+      { status: 400 },
     );
   }
 
