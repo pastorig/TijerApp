@@ -411,12 +411,24 @@ check(
 );
 check(
   "el último día del acuerdo sigue en 27.000",
-  precioMensualQuePaga("leocuts", "esencial", enArgentina("2027-04-21")),
+  precioMensualQuePaga("leocuts", "esencial", enArgentina("2026-12-31")),
   27000,
 );
 check(
   "terminado el acuerdo, la lista",
-  precioMensualQuePaga("leocuts", "esencial", enArgentina("2027-04-22")),
+  precioMensualQuePaga("leocuts", "esencial", enArgentina("2027-01-01")),
+  33000,
+);
+// "Hasta diciembre": la renovación del 22/12 todavía es a 27.000 y la del
+// 22/01 ya a lista. Es lo que sugiere el modal de cobro y dice el aviso.
+check(
+  "la renovación del 22/12 todavía se sugiere a 27.000",
+  precioDelProximoPeriodo("leocuts", "esencial", "2026-12-22T02:59:29.331+00:00", enArgentina("2026-12-20")),
+  27000,
+);
+check(
+  "la del 22/01 ya a lista",
+  precioDelProximoPeriodo("leocuts", "esencial", "2027-01-22T02:59:29.331+00:00", enArgentina("2027-01-20")),
   33000,
 );
 check(

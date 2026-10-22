@@ -101,8 +101,11 @@ export const PRECIO_ACORDADO: Readonly<
   Record<string, { tier: PlanTier; monto: number; desde: string; hasta: string }>
 > = {
   // Leo Cuts: al terminar el Fundador (21/10/2026) eligió seguir en Esencial
-  // a $27.000 en vez de bajar a Solo. Congelado 6 meses. Acordado el 08/10/2026.
-  leocuts: { tier: "esencial", monto: 27000, desde: "2026-10-22", hasta: "2027-04-21" },
+  // a $27.000 en vez de bajar a Solo. Acordado el 08/10/2026 por 6 meses; el
+  // 22/10/2026 Bautista lo acortó a "hasta diciembre": los períodos que
+  // arrancan el 22/10, el 22/11 y el 22/12 van a $27.000, y el que arranca el
+  // 22/01/2027 ya a lista.
+  leocuts: { tier: "esencial", monto: 27000, desde: "2026-10-22", hasta: "2026-12-31" },
 };
 
 /**

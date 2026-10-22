@@ -524,10 +524,12 @@ Spec en `specs/015-aviso-vencimiento-plan/`.
 ## 📅 21/10/2026 — a Leo Cuts se le termina el Fundador: cobrarle $27.000
 
 **Resuelto el 08/10:** Leo aceptó seguir en **Esencial a $27.000** (lista
-$33.000), congelado 6 meses, hasta el 21/04/2027. No baja a Solo: su tier sigue
-`esencial` y el 21/10 no hay que tocarlo.
+$33.000). No baja a Solo: su tier sigue `esencial`. **El 22/10 Bautista acortó
+la promo a "hasta diciembre":** las renovaciones del 22/10, 22/11 y 22/12 van a
+$27.000 y desde la del 22/01/2027 paga lista ($33.000).
 
-Lo único que queda es **cobrarle ese día**. El monto sale de `PRECIO_ACORDADO`
+**Cobrado el 22/10** ($27.000, marcado como promoción; se había cargado a
+$33.000 y se corrigió). El monto sale de `PRECIO_ACORDADO`
 en `src/data/founders.ts`: el panel, el aviso de vencimiento y el monto
 sugerido al registrar el pago ya dicen 27.000.
 
