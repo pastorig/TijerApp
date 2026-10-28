@@ -4,7 +4,7 @@ Tareas manuales (dashboards) que quedan por hacer. El código ya está listo y e
 
 ---
 
-## 📌 Lo que queda al 08/10/2026
+## 📌 Lo que queda (actualizado 28/10/2026)
 
 El detalle de cada punto está más abajo, en su sección.
 
@@ -13,11 +13,10 @@ El detalle de cada punto está más abajo, en su sección.
 1. **Crons puntuales — ANDANDO desde el 08/10.** El `CRON_SECRET` se perdió y se generó
    uno nuevo; está cargado en Vercel y en Vault (`tijerapp_cron_secret`). Los cinco crons
    quedaron programados en la base y la llamada de prueba a `/api/cron/deposits` contestó
-   200. **Falta confirmar** que el secreto nuevo también esté en GitHub (Settings →
-   Secrets → Actions → `CRON_SECRET`): si quedó el viejo, los crons de respaldo dan 401.
-   Se ve corriendo "Cierre del día Cron" a mano desde Actions.
-2. **21/10 — cobrarle a Leo Cuts $27.000.** Sigue en Esencial; el panel y el aviso de
-   vencimiento ya muestran ese monto.
+   200. GitHub también tiene el secreto nuevo: los cinco crons de respaldo corren en verde
+   (visto el 28/10).
+2. **Cobros que vienen:** SV Barber vence el 13/11 ($33.000); Leo Cuts el 22/11 ($27.000,
+   promoción hasta diciembre; desde la renovación del 22/01/2027, $33.000).
 3. **MercadoPago por el camino real.** Sigue siendo el riesgo más grande: falta la prueba
    con usuarios de prueba de MP (vendedor + comprador), ninguna barbería real tiene MP
    conectado, y la seña de `primebarber` quedó apagada. Confirmar también que
