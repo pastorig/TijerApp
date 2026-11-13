@@ -4,6 +4,7 @@ import { Logo } from "@/components/ui";
 import { resolveBarbershopBySlug } from "@/lib/barbershops";
 import { getPublicAppointmentByToken } from "@/lib/public-appointment";
 import { AppointmentActionPanel } from "../AppointmentActionPanel";
+import { telefonoParaAvisos } from "@/lib/aviso-cambio-cliente";
 
 type PublicAppointmentResponderPageProps = {
   params: Promise<{
@@ -40,6 +41,11 @@ export default async function PublicAppointmentResponderPage({
     ...appointment,
     barbershop_name: barbershopName,
   };
+  const avisoWhatsapp = telefonoParaAvisos(
+    resolvedBarbershop?.barbers ?? [],
+    appointment.barber_name,
+    resolvedBarbershop?.whatsapp,
+  );
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -58,6 +64,7 @@ export default async function PublicAppointmentResponderPage({
           token={token}
           initialAppointment={appointmentWithName}
           showActions
+          avisoWhatsapp={avisoWhatsapp}
         />
       </div>
     </main>

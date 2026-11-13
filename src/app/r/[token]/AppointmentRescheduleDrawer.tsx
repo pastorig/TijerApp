@@ -4,13 +4,16 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import type { PendingTab } from "@/lib/pending-tab";
 
 type AppointmentRescheduleDrawerProps = {
   token: string;
   currentDate: string;
   currentTime: string;
   onCancel: () => void;
-  onSuccess: (newDate: string, newTime: string) => void;
+  /** Abre (en el click) la pestaña del aviso por WhatsApp, si hay a quién avisar. */
+  pedirPestanaDeAviso?: () => PendingTab | null;
+  onSuccess: (newDate: string, newTime: string, pestana: PendingTab | null) => void;
 };
 
 function todayYmd(): string {
@@ -37,6 +40,7 @@ export function AppointmentRescheduleDrawer({
   currentDate,
   currentTime,
   onCancel,
+  pedirPestanaDeAviso,
   onSuccess,
 }: AppointmentRescheduleDrawerProps) {
   const [selectedDate, setSelectedDate] = useState(currentDate);
@@ -93,6 +97,7 @@ export function AppointmentRescheduleDrawer({
       setErrorMessage("Elegí un horario distinto al actual.");
       return;
     }
+    const pestana = pedirPestanaDeAviso?.() ?? null;
     setIsSubmitting(true);
     setErrorMessage("");
     try {
@@ -109,11 +114,13 @@ export function AppointmentRescheduleDrawer({
         const payload = (await response.json().catch(() => ({}))) as {
           error?: string;
         };
+        pestana?.cancel();
         setErrorMessage(payload.error ?? "No pudimos reagendar.");
         return;
       }
-      onSuccess(selectedDate, selectedTime);
+      onSuccess(selectedDate, selectedTime, pestana);
     } catch {
+      pestana?.cancel();
       setErrorMessage("No pudimos reagendar.");
     } finally {
       setIsSubmitting(false);

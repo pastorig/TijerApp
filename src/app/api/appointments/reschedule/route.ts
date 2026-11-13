@@ -60,6 +60,24 @@ async function moverTurno(
   return { error: anterior.error };
 }
 
+function primerNombre(nombre: string | null | undefined): string {
+  return (nombre ?? "").trim().split(/\s+/)[0] || "El cliente";
+}
+
+/**
+ * "hoy", "mañana" o "jue 05/11", con el día de Argentina. Igual que
+ * `push_date_label` de la base, que arma el aviso de cancelación.
+ */
+function etiquetaDeDia(fecha: string): string {
+  const hoy = new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
+  const manana = new Date(Date.parse(hoy + "T12:00:00Z") + 86_400_000).toISOString().slice(0, 10);
+  if (fecha === hoy) return "hoy";
+  if (fecha === manana) return "mañana";
+  const d = new Date(fecha + "T12:00:00Z");
+  const dias = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+  return `${dias[d.getUTCDay()]} ${fecha.slice(8, 10)}/${fecha.slice(5, 7)}`;
+}
+
 export async function POST(request: Request) {
   let payload: {
     token?: unknown;
@@ -104,7 +122,7 @@ export async function POST(request: Request) {
   const { data: appointment, error: fetchError } = await supabase
     .from("appointments")
     .select(
-      "id, barbershop_slug, barber_id, status, appointment_date, appointment_time, service_duration_minutes",
+      "id, barbershop_slug, barber_id, status, appointment_date, appointment_time, service_duration_minutes, customer_name",
     )
     .eq("confirmation_token", token)
     .maybeSingle();
@@ -250,6 +268,25 @@ export async function POST(request: Request) {
       { error: "No pudimos reagendar el turno." },
       { status: 500 },
     );
+  }
+
+  // Aviso al celular del barbero (y de quien administra), como al cancelar.
+  // Antes reagendar no avisaba nada: un barbero se enteraba al ver la agenda.
+  // Si falla, el turno ya se movió: no se le devuelve error al cliente.
+  try {
+    const { error: pushError } = await supabase.rpc("enqueue_admin_push" as never, {
+      p_barbershop_slug: appointment.barbershop_slug,
+      p_barber_id: appointment.barber_id,
+      p_payload: {
+        title: "Turno reagendado",
+        body: `${primerNombre(appointment.customer_name)} lo pasó a ${etiquetaDeDia(newDate)} ${newTimeNormalized.slice(0, 5)}`,
+        url: `/${appointment.barbershop_slug}/admin/turnero`,
+        tag: `appointment-${appointment.id}`,
+      },
+    } as never);
+    if (pushError) Sentry.captureException(pushError, { tags: { route: "appointments/reschedule", step: "push" } });
+  } catch (e) {
+    Sentry.captureException(e, { tags: { route: "appointments/reschedule", step: "push" } });
   }
 
   return NextResponse.json({

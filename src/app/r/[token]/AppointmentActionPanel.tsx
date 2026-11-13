@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarClock, Check, X } from "lucide-react";
+import { CalendarClock, Check, MessageCircle, X } from "lucide-react";
 import { Button, useConfirm } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
@@ -14,6 +14,12 @@ import {
   formatPrice,
   normalizeTimeValue,
 } from "@/lib/format";
+import { openPendingTab, type PendingTab } from "@/lib/pending-tab";
+import {
+  linkDeAvisoDeCambio,
+  mensajeDeCambio,
+  type CambioDelCliente,
+} from "@/lib/aviso-cambio-cliente";
 import { AppointmentRescheduleDrawer } from "./AppointmentRescheduleDrawer";
 
 type AppointmentActionPanelProps = {
@@ -25,6 +31,12 @@ type AppointmentActionPanelProps = {
    * Default: true.
    */
   showActions?: boolean;
+  /**
+   * WhatsApp al que avisar si el cliente cancela o cambia el horario: el del
+   * barbero del turno o, si no tiene, el de la barbería. Sin número no se
+   * abre nada (`aviso-cambio-cliente.ts`).
+   */
+  avisoWhatsapp?: string | null;
 };
 
 type ActionState = "idle" | "confirming" | "cancelling";
@@ -33,6 +45,7 @@ export function AppointmentActionPanel({
   token,
   initialAppointment,
   showActions = true,
+  avisoWhatsapp = null,
 }: AppointmentActionPanelProps) {
   const confirm = useConfirm();
   const [appointment, setAppointment] = useState(initialAppointment);
@@ -40,6 +53,27 @@ export function AppointmentActionPanel({
   const [errorMessage, setErrorMessage] = useState("");
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [rescheduleSuccess, setRescheduleSuccess] = useState(false);
+  // El último aviso por WhatsApp: si el navegador bloqueó la pestaña, queda
+  // el botón para mandarlo a mano.
+  const [aviso, setAviso] = useState<string | null>(null);
+
+  // La pestaña de WhatsApp se pide en el click, antes de esperar al servidor:
+  // después de un await el navegador ya no deja abrirla (`pending-tab.ts`).
+  const pedirPestanaDeAviso = (): PendingTab | null =>
+    avisoWhatsapp ? openPendingTab() : null;
+
+  const armarAviso = (cambio: CambioDelCliente) =>
+    avisoWhatsapp
+      ? linkDeAvisoDeCambio(
+          avisoWhatsapp,
+          mensajeDeCambio({
+            cliente: appointment.customer_name,
+            barbero: appointment.barber_name,
+            servicio: appointment.service_name,
+            cambio,
+          }),
+        )
+      : null;
 
   const status = appointment.status;
   const isPending = status === "pending";
@@ -78,10 +112,12 @@ export function AppointmentActionPanel({
       danger: true,
     });
     if (!ok) return;
+    const pestana = pedirPestanaDeAviso();
     setErrorMessage("");
     setActionState("cancelling");
     const result = await cancelAppointmentByToken(token);
     if (!result.ok) {
+      pestana?.cancel();
       setErrorMessage(
         result.reason === "not_found"
           ? "No encontramos tu turno. Es posible que el link no sea válido."
@@ -97,6 +133,21 @@ export function AppointmentActionPanel({
       status: (result.status as PublicAppointmentByToken["status"]) ?? "cancelled",
     }));
     setActionState("idle");
+    // Un turno que ya estaba cancelado no se vuelve a avisar.
+    const link =
+      result.reason === "already_cancelled"
+        ? null
+        : armarAviso({
+            tipo: "cancelo",
+            fecha: appointment.appointment_date,
+            hora: appointment.appointment_time,
+          });
+    if (link) {
+      setAviso(link);
+      pestana?.go(link);
+    } else {
+      pestana?.cancel();
+    }
   }
 
   // Vista de reagendar (reemplaza el detalle mientras el cliente elige).
@@ -108,7 +159,21 @@ export function AppointmentActionPanel({
           currentDate={appointment.appointment_date}
           currentTime={appointment.appointment_time}
           onCancel={() => setIsRescheduling(false)}
-          onSuccess={(newDate, newTime) => {
+          pedirPestanaDeAviso={pedirPestanaDeAviso}
+          onSuccess={(newDate, newTime, pestana) => {
+            const link = armarAviso({
+              tipo: "reagendo",
+              fecha: appointment.appointment_date,
+              hora: appointment.appointment_time,
+              fechaNueva: newDate,
+              horaNueva: newTime,
+            });
+            if (link) {
+              setAviso(link);
+              pestana?.go(link);
+            } else {
+              pestana?.cancel();
+            }
             setAppointment((current) => ({
               ...current,
               appointment_date: newDate,
@@ -201,6 +266,9 @@ export function AppointmentActionPanel({
                   {appointment.barbershop_name}.
                 </p>
               ) : null}
+              {rescheduleSuccess && aviso ? (
+                <BotonDeAviso href={aviso} barberia={appointment.barbershop_name} />
+              ) : null}
               <div className="grid gap-3 sm:grid-cols-2">
                 <Button
                   type="button"
@@ -269,10 +337,15 @@ export function AppointmentActionPanel({
               </div>
             </div>
           ) : isCancelled ? (
-            <p className="text-sm text-[color:var(--text-secondary)]">
-              Este turno está cancelado. Si querés reservar otro, podés
-              hacerlo desde la página de {appointment.barbershop_name}.
-            </p>
+            <div className="grid gap-4">
+              <p className="text-sm text-[color:var(--text-secondary)]">
+                Este turno está cancelado. Si querés reservar otro, podés
+                hacerlo desde la página de {appointment.barbershop_name}.
+              </p>
+              {aviso ? (
+                <BotonDeAviso href={aviso} barberia={appointment.barbershop_name} />
+              ) : null}
+            </div>
           ) : (
             <p className="text-sm text-[color:var(--text-muted)]">
               Este turno ya no está disponible.
@@ -306,6 +379,23 @@ export function AppointmentActionPanel({
         Powered by TijerApp
       </p>
     </article>
+  );
+}
+
+/**
+ * Por si el navegador no dejó abrir WhatsApp solo: el mismo mensaje, a mano.
+ */
+function BotonDeAviso({ href, barberia }: { href: string; barberia: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-gold-grad px-4 text-sm font-bold uppercase tracking-normal text-black"
+    >
+      <MessageCircle className="size-4" aria-hidden="true" />
+      Avisale a {barberia} por WhatsApp
+    </a>
   );
 }
 
