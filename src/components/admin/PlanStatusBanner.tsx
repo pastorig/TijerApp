@@ -8,6 +8,7 @@ import { founderWaLink } from "@/lib/founder";
 import { formatArs } from "@/lib/plans";
 import { precioMensualQuePaga } from "@/data/founders";
 import { TransferDetailsCard } from "./TransferDetailsCard";
+import { Ventana } from "@/components/ui/Ventana";
 
 /**
  * Banner sticky arriba del admin que muestra estado del plan/trial cuando
@@ -253,17 +254,12 @@ function PayModal({
   if (!open) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Activar plan pago"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-      onClick={onClose}
+    <Ventana
+      label={"Activar plan pago"}
+      onClose={onClose}
+      capa="z-50"
+      panelClassName="w-full max-w-md rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-6"
     >
-      <div
-        className="w-full max-w-md rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
         <header className="mb-4 flex items-start justify-between gap-3">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
@@ -294,7 +290,6 @@ function PayModal({
           <MessageCircle className="size-4" />
           Avisar por WhatsApp
         </a>
-      </div>
-    </div>
+      </Ventana>
   );
 }

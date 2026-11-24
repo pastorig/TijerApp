@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { Ventana } from "@/components/ui/Ventana";
 import {
   ArrowDown,
   ArrowUp,
@@ -232,7 +232,7 @@ export function AdminProductsManager({
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <header className="animate-fade-up">
+      <header className="tj-m-hero animate-fade-up">
         <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
           Productos
         </p>
@@ -553,21 +553,23 @@ function FormularioDeProducto({
     }
   }
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm animate-fade-in sm:items-center sm:p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !guardando) onClose();
-      }}
+  // Ventana (feature 041): en el celular, hoja de vidrio que se baja con el
+  // dedo; en la compu, el panel de siempre.
+  return (
+    <Ventana
+      label={existente ? "Editar producto" : "Nuevo producto"}
+      labelledBy="producto-titulo"
+      onClose={onClose}
+      capa="z-[100]"
+      sinEscape
+      puedeCerrar={() => !guardando}
+      panelClassName="relative w-full max-w-lg overflow-hidden rounded-t-[var(--radius-lg)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] shadow-2xl animate-sheet-up sm:rounded-[var(--radius-lg)]"
     >
       <form
         ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="producto-titulo"
         onSubmit={handleSubmit}
         noValidate
-        className="relative w-full max-w-lg overflow-hidden rounded-t-[var(--radius-lg)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] shadow-2xl animate-sheet-up sm:rounded-[var(--radius-lg)]"
+        className="contents"
       >
         <div className="flex items-center gap-3 border-b border-[color:var(--border-subtle)] px-5 py-4">
           <h2 id="producto-titulo" className="min-w-0 flex-1 text-base font-bold text-white sm:text-lg">
@@ -708,7 +710,6 @@ function FormularioDeProducto({
           </Button>
         </div>
       </form>
-    </div>,
-    document.body,
+    </Ventana>
   );
 }

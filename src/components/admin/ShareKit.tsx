@@ -89,7 +89,7 @@ export function ShareKit({
   return (
     <>
       <div className="flex flex-col gap-6">
-        <header className="animate-fade-up">
+        <header className="tj-m-hero animate-fade-up">
           <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
             Compartir
           </p>

@@ -1469,7 +1469,9 @@ export function AgendaCalendarGridView({
           isMobile ? "overflow-hidden" : "overflow-x-auto overflow-y-hidden overscroll-x-contain",
         )}
       >
-        <div style={{ minWidth: columnsMinWidth }}>
+        {/* tj-sin-vidrio: los bloques de la grilla quedan como son; el
+            vidrio es el recuadro de afuera (feature 041). */}
+        <div className="tj-sin-vidrio" style={{ minWidth: columnsMinWidth }}>
           {isMobile ? (
             <div className="sticky top-0 z-30 border-b border-[color:var(--border-default)] bg-[color:var(--surface-2)]">
               {columns.length > 1 ? (
