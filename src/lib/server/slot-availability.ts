@@ -104,6 +104,10 @@ export async function getServerAvailability(
         .eq("barbershop_slug", barbershopSlug)
         .eq("barber_id", barberId)
         .eq("override_date", date)
+        // Borrado blando: una excepción quitada no cuenta. Sin esto, la
+        // pantalla ofrecía horarios (ya sin la excepción) y el servidor los
+        // rechazaba con la excepción vieja.
+        .is("deleted_at", null)
         .maybeSingle(),
       supabase
         .from("barber_time_blocks")

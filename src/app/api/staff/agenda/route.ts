@@ -128,6 +128,9 @@ export async function GET(request: Request) {
       .eq("barbershop_slug", slug)
       .eq("barber_id", access.access.barberId)
       .eq("override_date", date)
+      // El borrado es blando: una excepción que el dueño quitó tiene
+      // deleted_at y no puede seguir cambiándole el horario al barbero.
+      .is("deleted_at", null)
       .maybeSingle(),
     getBarbershopPlan(slug),
   ]);
