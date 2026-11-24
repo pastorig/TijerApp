@@ -77,7 +77,10 @@ try {
         console.log(`${nombre}: no está visible ${valor} (se saltea)`);
         continue;
       }
-      if (tipo === "click") await page.click(valor);
+      if (tipo === "fill") {
+        const [sel, texto] = valor.split("@");
+        await page.locator(sel).first().fill(texto);
+      } else if (tipo === "click") await page.click(valor);
       else if (tipo === "tap") await page.tap(valor);
       else if (tipo === "wait") await page.waitForTimeout(Number(valor));
       else if (tipo === "scroll") await page.evaluate((y) => document.querySelector(".tj-panel-scroll")?.scrollTo(0, Number(y)), valor);

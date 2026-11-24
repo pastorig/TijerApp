@@ -91,7 +91,7 @@ import { ManualAppointmentModal } from "./admin/ManualAppointmentModal";
 import { READ_ONLY_REASON, useIsReadOnly } from "./admin/PlanContext";
 import { EVENTO_TURNO_NUEVO } from "./admin/AdminBottomNav";
 import { Interruptor } from "@/components/ui/Interruptor";
-import { QuickBlockTimeButton } from "./admin/QuickBlockTimeButton";
+import { AjustarDiaVentana } from "./admin/AjustarDiaVentana";
 import { getTodayYmd, normalizeTimeShort } from "./admin/date-utils";
 
 type AdminAppointmentsProps = {
@@ -235,6 +235,8 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     Record<string, BarberTimeBlockRow[]>
   >({});
   const [timeBlocksVersion, setTimeBlocksVersion] = useState(0);
+  // Sube cuando "Horario y bloqueos" cambia el horario de un día (feature 042).
+  const [dayOverridesVersion, setDayOverridesVersion] = useState(0);
   // El mes que muestra el calendario (con una semana de cada lado, para el
   // strip semanal de los bordes) y el horario real de esos días: excepciones y
   // bloqueos. Con eso el punto de cada día se pinta por ocupación.
@@ -1426,7 +1428,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     return () => {
       isMounted = false;
     };
-  }, [barbers, barbershop.slug, focusDate]);
+  }, [barbers, barbershop.slug, focusDate, dayOverridesVersion]);
 
   // Bloqueos del día: el calendario los dibuja como franjas. Si falla la carga
   // el calendario se ve igual, solo sin las franjas.
@@ -1843,8 +1845,8 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
             {/* Buscador + filtro barbero.
                 NOTA: el botón "Bloquear hora" standalone se quitó de acá —
                 quedaba duplicado con la "Acción rápida del día" del calendario.
-                Ahora se bloquea solo desde el calendario (date-aware), que
-                abre la instancia controlada de QuickBlockTimeButton al final. */}
+                Ahora se bloquea desde el calendario: "Horario y bloqueos de
+                este día" abre AjustarDiaVentana (feature 042). */}
             <div className="mb-4 space-y-3">
               <div
                 className={cn(
@@ -2267,22 +2269,26 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
         }}
       />
 
-      {/* Instancia controlada: se abre desde la quick action del calendario,
-          con la fecha que el usuario eligió pre-llena. */}
-      <QuickBlockTimeButton
-        barbershopSlug={barbershop.slug}
-        barbers={barberFilterOptions}
-        focusDate={calendarQuickBlockDate ?? focusDate}
-        preselectedBarberId={
-          selectedBarberFilter !== "all" ? selectedBarberFilter : undefined
-        }
-        controlledOpen={calendarQuickBlockDate !== null}
-        onControlledClose={() => {
-          setCalendarQuickBlockDate(null);
-          // Puede haber creado un bloqueo: el calendario lo tiene que dibujar.
-          setTimeBlocksVersion((v) => v + 1);
-        }}
-      />
+      {/* "Horario y bloqueos" del día (feature 042): se abre desde el
+          calendario. Horario distinto, no trabaja y bloqueos, editables. */}
+      {calendarQuickBlockDate !== null ? (
+        <AjustarDiaVentana
+          fecha={calendarQuickBlockDate}
+          barbershopSlug={barbershop.slug}
+          barbers={barberFilterOptions}
+          preselectedBarberId={
+            selectedBarberFilter !== "all" ? selectedBarberFilter : undefined
+          }
+          weeklySchedulesByBarber={weeklySchedulesByBarber}
+          soloLectura={isReadOnly}
+          onClose={() => setCalendarQuickBlockDate(null)}
+          onCambio={() => {
+            // El calendario redibuja los bloqueos y el horario del día.
+            setTimeBlocksVersion((v) => v + 1);
+            setDayOverridesVersion((v) => v + 1);
+          }}
+        />
+      ) : null}
 
       {/* Detalle de un turno tocado en el calendario: la misma tarjeta de la
           Lista, con sus mismas acciones. */}
