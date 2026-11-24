@@ -13,6 +13,7 @@ import {
   timeValueToMinutes,
 } from "@/lib/format";
 import type { AppointmentRow, BarberRow, BarberServiceRow } from "@/lib/supabase";
+import { Ventana } from "@/components/ui/Ventana";
 
 type AltaMode = "turno" | "sobreturno";
 
@@ -256,16 +257,13 @@ export function ManualAppointmentModal({
     "text-xs font-semibold text-[color:var(--text-secondary)]";
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={kind === "sobreturno" ? "Agregar sobreturno" : "Agregar turno"}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <Ventana
+      label={kind === "sobreturno" ? "Agregar sobreturno" : "Agregar turno"}
+      onClose={onClose}
+      capa="z-50"
+      sinEscape
+      panelClassName="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-[var(--radius-lg)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] shadow-2xl sm:rounded-[var(--radius-lg)]"
     >
-      <div className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-[var(--radius-lg)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] shadow-2xl sm:rounded-[var(--radius-lg)]">
         <div className="flex items-center justify-between border-b border-[color:var(--border-subtle)] px-5 py-4">
           <div>
             <p className="text-sm font-bold text-[color:var(--brand-gold)]">
@@ -560,7 +558,6 @@ export function ManualAppointmentModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </Ventana>
   );
 }

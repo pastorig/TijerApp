@@ -90,6 +90,7 @@ import { DuplicateAppointmentModal } from "./admin/DuplicateAppointmentModal";
 import { ManualAppointmentModal } from "./admin/ManualAppointmentModal";
 import { READ_ONLY_REASON, useIsReadOnly } from "./admin/PlanContext";
 import { EVENTO_TURNO_NUEVO } from "./admin/AdminBottomNav";
+import { Interruptor } from "@/components/ui/Interruptor";
 import { QuickBlockTimeButton } from "./admin/QuickBlockTimeButton";
 import { getTodayYmd, normalizeTimeShort } from "./admin/date-utils";
 
@@ -1676,7 +1677,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
   return (
     <div className="min-w-0">
       <section className="min-w-0">
-        <header className="mb-8 animate-fade-up">
+        <header className="tj-m-hero mb-8 animate-fade-up">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
               Turnero
@@ -1957,37 +1958,19 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
             activeFilter === "day" &&
             activeFilter !== ("deleted" as typeof activeFilter) ? (
               <div className="flex items-center justify-end">
-                <div
-                  role="tablist"
-                  aria-label="Vista de turnos"
-                  className="inline-flex rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-0.5"
-                >
-                  {(
-                    [
-                      { value: "list", label: "Lista" },
-                      { value: "calendar", label: "Calendario" },
-                    ] as const
-                  ).map((opt) => {
-                    const isActive = agendaViewMode === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        role="tab"
-                        aria-selected={isActive}
-                        onClick={() => changeAgendaViewMode(opt.value)}
-                        className={cn(
-                          "inline-flex min-h-11 items-center justify-center rounded-[var(--radius-xs)] px-3 text-xs font-bold normal-case tracking-normal transition-colors duration-[var(--duration-fast)]",
-                          isActive
-                            ? "bg-gold-grad text-black"
-                            : "text-[color:var(--text-secondary)] hover:text-white",
-                        )}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
+                {/* Interruptor: en el celular, la pastilla dorada se desliza
+                    (feature 041); en la compu, el selector de siempre. */}
+                <Interruptor
+                  rol="tab"
+                  ariaLabel="Vista de turnos"
+                  opciones={[
+                    { valor: "list", label: "Lista" },
+                    { valor: "calendar", label: "Calendario" },
+                  ]}
+                  valor={agendaViewMode}
+                  onChange={changeAgendaViewMode}
+                  className="w-48"
+                />
               </div>
             ) : null}
 

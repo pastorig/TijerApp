@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import { createWhatsAppRescheduleLink } from "@/lib/whatsapp";
+import { Ventana } from "@/components/ui/Ventana";
 
 export type RescheduleNotifyContext = {
   appointmentId: string;
@@ -148,13 +149,13 @@ function RescheduleNotifyDialogInner({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Avisar al cliente del cambio de horario"
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center"
+    <Ventana
+      label={"Avisar al cliente del cambio de horario"}
+      onClose={onClose}
+      capa="z-50"
+      sinEscape
+      panelClassName="w-full max-w-md rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 shadow-[0_24px_64px_-32px_rgba(0,0,0,0.9)] sm:p-6"
     >
-      <div className="w-full max-w-md rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-5 shadow-[0_24px_64px_-32px_rgba(0,0,0,0.9)] sm:p-6">
         <header className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
@@ -255,7 +256,6 @@ function RescheduleNotifyDialogInner({
             Cerrar sin enviar
           </button>
         </div>
-      </div>
-    </div>
+      </Ventana>
   );
 }

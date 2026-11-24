@@ -110,7 +110,7 @@ body {
   /* El encabezado de una sección: luz dorada que asoma arriba a la derecha.
      Sangra hasta los bordes de la pantalla (el contenido tiene 16 px). */
   .tj-m-hero {
-    margin: calc(-1 * var(--tj-gutter-top, 24px)) calc(-1 * var(--tj-gutter, 16px)) 0;
+    margin: calc(-1 * var(--tj-gutter-top, 24px)) calc(-1 * var(--tj-gutter, 16px)) 20px;
     padding: 22px 20px 26px;
     border-radius: 0 0 30px 30px;
     background:
@@ -407,6 +407,133 @@ body {
   z-index: 30;
   pointer-events: none;
   background: linear-gradient(180deg, transparent, rgb(0 0 0 / 0.85) 70%);
+}
+
+/* ── Las ventanas (src/components/ui/Ventana.tsx, tanda 2) ──────────────────
+   En el celular: hoja de vidrio que sube desde abajo con rebote chico y se
+   baja con el dedo (curva de las hojas de iOS). En la compu no se toca nada:
+   queda el panel de siempre, al centro. */
+@media (max-width: 767.98px) {
+  .tj-ventana-capa {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  .tj-ventana-velo {
+    background-color: rgb(0 0 0 / 0.5) !important;
+    opacity: 0;
+    transition: opacity 260ms ease;
+  }
+  .tj-ventana-capa--abierta .tj-ventana-velo {
+    opacity: 1;
+  }
+  .tj-ventana-velo--arrastre {
+    transition: none;
+  }
+  .tj-ventana {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: 92dvh !important;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 0 !important;
+    border-radius: 30px 30px 0 0 !important;
+    background:
+      radial-gradient(70% 40% at 100% 0%, rgb(201 162 62 / 0.18), transparent 70%),
+      linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.03) 40%),
+      rgb(14 11 6 / 0.9) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    backdrop-filter: blur(28px) saturate(150%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.16),
+      inset 0 0 0 1px rgb(255 255 255 / 0.08),
+      0 -24px 60px -20px rgb(0 0 0 / 0.9) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    transform: translateY(calc(100% + 24px));
+    transition: transform 340ms var(--tj-ease-baja);
+    /* Las entradas propias de cada panel (animate-sheet-up) pelean con esta. */
+    animation: none !important;
+  }
+  .tj-ventana--abierta {
+    transform: none;
+    transition: transform 460ms var(--tj-ease-sube);
+  }
+  .tj-ventana.tj-ventana--arrastre {
+    transition: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .tj-ventana-manija {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+  }
+  .tj-ventana-manija span {
+    width: 40px;
+    height: 5px;
+    border-radius: 9px;
+    background: rgb(255 255 255 / 0.28);
+  }
+  html[data-ios-gap] .tj-ios-capa {
+    position: absolute;
+  }
+}
+@media (max-width: 767.98px) and (prefers-reduced-motion: reduce) {
+  .tj-ventana,
+  .tj-ventana--abierta {
+    transition: opacity 160ms ease;
+  }
+  .tj-ventana:not(.tj-ventana--abierta) {
+    transform: none;
+    opacity: 0;
+  }
+}
+
+/* ── El interruptor (src/components/ui/Interruptor.tsx, tanda 2) ───────────
+   Una sola pastilla dorada que se desliza de una opción a otra. En la compu
+   queda como el selector de siempre (sin animación nueva). */
+.tj-interruptor-pastilla {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / var(--n, 2));
+}
+@media (max-width: 767.98px) {
+  .tj-interruptor {
+    border-radius: 999px !important;
+    border-color: transparent !important;
+    background: rgb(255 255 255 / 0.04) !important;
+    box-shadow:
+      inset 0 2px 6px -2px rgb(0 0 0 / 0.8),
+      inset 0 0 0 1px rgb(255 255 255 / 0.08);
+    padding: 4px !important;
+  }
+  .tj-interruptor-pastilla {
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc((100% - 8px) / var(--n, 2));
+    border-radius: 999px !important;
+    transition: transform 420ms cubic-bezier(0.3, 1.25, 0.5, 1);
+  }
+  .tj-interruptor-pastilla--a { animation: tj-estira-a 420ms ease-out; }
+  .tj-interruptor-pastilla--b { animation: tj-estira-b 420ms ease-out; }
+  .tj-interruptor button {
+    border-radius: 999px !important;
+  }
+}
+@keyframes tj-estira-a { 0% { scale: 1 1; } 18% { scale: 1.1 0.92; } 55%, 100% { scale: 1 1; } }
+@keyframes tj-estira-b { 0% { scale: 1 1; } 18% { scale: 1.1 0.92; } 55%, 100% { scale: 1 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .tj-interruptor-pastilla {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 /* ── Respaldos ───────────────────────────────────────────────────────────── */

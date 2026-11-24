@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CalendarX, X } from "lucide-react";
 import { createTimeBlock } from "@/lib/barber-availability";
 import { cn } from "@/lib/cn";
+import { Ventana } from "@/components/ui/Ventana";
 
 type QuickBlockBarber = {
   id: string;
@@ -145,16 +146,13 @@ export function QuickBlockTimeButton({
       ) : null}
 
       {isOpen ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Bloquear horario"
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) closeModal();
-          }}
-        >
-          <div className="w-full max-w-md overflow-hidden rounded-t-[var(--radius-lg)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] shadow-2xl sm:rounded-[var(--radius-lg)]">
+        <Ventana
+      label={"Bloquear horario"}
+      onClose={closeModal}
+      capa="z-50"
+      sinEscape
+      panelClassName="w-full max-w-md overflow-hidden rounded-t-[var(--radius-lg)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] shadow-2xl sm:rounded-[var(--radius-lg)]"
+    >
             <div className="flex items-center justify-between border-b border-[color:var(--border-subtle)] px-5 py-4">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
@@ -307,8 +305,7 @@ export function QuickBlockTimeButton({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+          </Ventana>
       ) : null}
     </>
   );

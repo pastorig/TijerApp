@@ -1,10 +1,10 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
-import { createPortal } from "react-dom";
 import { Pencil, X } from "lucide-react";
 import { Button, Field, Input, Textarea } from "@/components/ui";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
+import { Ventana } from "@/components/ui/Ventana";
 import { normalizePhone } from "@/lib/barbershop-clients";
 
 /**
@@ -103,23 +103,23 @@ export function EditAppointmentDialog({
     }
   }
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm animate-fade-in sm:items-center sm:p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !saving) onClose();
-      }}
+  return (
+    <Ventana
+      label="Editar turno"
+      labelledBy="edit-appointment-title"
+      onClose={onClose}
+      capa="z-[100]"
+      sinEscape
+      puedeCerrar={() => !saving}
+      panelClassName="relative w-full max-w-lg overflow-hidden rounded-t-[var(--radius-lg)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] shadow-2xl animate-sheet-up sm:rounded-[var(--radius-lg)]"
     >
       <form
         ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="edit-appointment-title"
         onSubmit={handleSubmit}
         // Sin la validación del navegador: los avisos son los de acá abajo, en
         // castellano y todos en el mismo lugar.
         noValidate
-        className="relative w-full max-w-lg overflow-hidden rounded-t-[var(--radius-lg)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] shadow-2xl animate-sheet-up sm:rounded-[var(--radius-lg)]"
+        className="contents"
       >
         <div className="flex items-start gap-4 border-b border-[color:var(--border-subtle)] px-5 py-4">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)]">
@@ -224,7 +224,6 @@ export function EditAppointmentDialog({
           </Button>
         </div>
       </form>
-    </div>,
-    document.body,
+    </Ventana>
   );
 }

@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/cn";
+import { Ventana } from "@/components/ui/Ventana";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -82,6 +83,39 @@ export function AgendaSheet({
   const hidden = isDesktop ? { x: "100%" } : { y: "100%" };
   const shown = isDesktop ? { x: 0 } : { y: 0 };
 
+  const encabezado = (
+    <header className="flex shrink-0 items-start gap-3 border-b border-[color:var(--border-subtle)] px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <h2 className="truncate text-base font-bold text-white">{title}</h2>
+        {subtitle ? (
+          <p className="mt-0.5 text-xs text-[color:var(--text-secondary)]">{subtitle}</p>
+        ) : null}
+        {badges ? <div className="mt-2 flex flex-wrap gap-1.5">{badges}</div> : null}
+      </div>
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Cerrar"
+        className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[color:var(--text-muted)] transition-colors hover:bg-[color:var(--surface-2)] hover:text-white"
+      >
+        <X className="size-5" aria-hidden="true" />
+      </button>
+    </header>
+  );
+
+  // En el celular, la hoja de vidrio que se baja con el dedo (feature 041).
+  // En la compu sigue entrando de costado, como siempre.
+  if (!isDesktop) {
+    return open ? (
+      <Ventana label={title} onClose={onClose} sinEscape panelClassName="flex flex-col">
+        <div ref={panelRef} tabIndex={-1} className="flex min-h-0 flex-1 flex-col outline-none">
+          {encabezado}
+          <div className="p-4">{children}</div>
+        </div>
+      </Ventana>
+    ) : null;
+  }
+
   return (
     <AnimatePresence>
       {open ? (
@@ -114,29 +148,7 @@ export function AgendaSheet({
             exit={reduceMotion ? { ...hidden, transition: { duration: 0 } } : hidden}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
           >
-            {!isDesktop ? (
-              <span
-                aria-hidden="true"
-                className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-[color:var(--border-strong)]"
-              />
-            ) : null}
-            <header className="flex shrink-0 items-start gap-3 border-b border-[color:var(--border-subtle)] px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <h2 className="truncate text-base font-bold text-white">{title}</h2>
-                {subtitle ? (
-                  <p className="mt-0.5 text-xs text-[color:var(--text-secondary)]">{subtitle}</p>
-                ) : null}
-                {badges ? <div className="mt-2 flex flex-wrap gap-1.5">{badges}</div> : null}
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Cerrar"
-                className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[color:var(--text-muted)] transition-colors hover:bg-[color:var(--surface-2)] hover:text-white"
-              >
-                <X className="size-5" aria-hidden="true" />
-              </button>
-            </header>
+            {encabezado}
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">{children}</div>
           </motion.div>
         </>

@@ -364,7 +364,8 @@ export function AppointmentRow({
   return (
     <li
       className={cn(
-        "group relative overflow-hidden rounded-[var(--radius-md)] border bg-[color:var(--surface-1)] hover-lift transition-opacity",
+        // tj-m-vidrio: en el celular, tarjeta de vidrio (feature 041).
+        "tj-m-vidrio group relative overflow-hidden rounded-[var(--radius-md)] border bg-[color:var(--surface-1)] hover-lift transition-opacity",
         // Border-left de color según status — refuerzo visual del estado.
         "before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:content-['']",
         meta.cardBorderClass,
