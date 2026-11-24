@@ -381,18 +381,17 @@ export function AgendaCalendar({
       </div>
 
       {/* Quick action contextual al día enfocado */}
+      {/* El horario de este día y sus bloqueos, a un toque (feature 042).
+          Antes era un "Bloquear hora" chico que solo creaba. */}
       {onQuickBlock ? (
-        <div className="flex items-center justify-between gap-2 border-t border-[color:var(--border-subtle)] px-3 py-2">
-          <p className="truncate text-[10px] uppercase tracking-[0.16em] text-[color:var(--text-muted)]">
-            Acción rápida del día
-          </p>
+        <div className="border-t border-[color:var(--border-subtle)] px-3 py-2.5">
           <button
             type="button"
             onClick={() => onQuickBlock(focusDate)}
-            className="inline-flex items-center gap-1 rounded-[var(--radius-xs)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)]"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/40 bg-[color:var(--brand-gold-soft)] px-3 text-sm font-semibold text-[color:var(--brand-gold-hi)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]"
           >
-            <CalendarX className="size-3" aria-hidden="true" />
-            Bloquear hora
+            <CalendarX className="size-4" aria-hidden="true" />
+            Horario y bloqueos de este día
           </button>
         </div>
       ) : null}
