@@ -150,7 +150,13 @@ export function GoogleSignInButton({ texto = "continue_with", onIngreso, onOcupa
       <div className="relative">
         {/* Alto reservado: el botón de Google aparece cuando carga su script y
             así el formulario de abajo no salta. */}
-        <div ref={contenedor} className="flex min-h-11 w-full justify-center" />
+        {/* color-scheme claro: el botón vive en un iframe de Google en modo
+            claro, y si la página es oscura el navegador le pinta un fondo
+            blanco opaco alrededor. Con el mismo esquema queda transparente. */}
+        <div
+          ref={contenedor}
+          className="flex min-h-11 w-full justify-center [color-scheme:light]"
+        />
         {estado === "entrando" ? (
           <div className="absolute inset-0 flex items-center justify-center rounded-md bg-black text-sm font-semibold text-[color:var(--text-secondary)]">
             Entrando…
