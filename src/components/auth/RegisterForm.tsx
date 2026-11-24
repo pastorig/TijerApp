@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Check, Eye, EyeOff } from "lucide-react";
 import { signInWithEmailAndPassword } from "@/lib/auth";
+import { resolverDestinoTrasIngresar } from "@/lib/destino-post-login";
+import { GoogleSignInButton, SeparadorDeIngreso } from "./GoogleSignInButton";
 import {
   AUTH_BUTTON_CLASS,
   AUTH_FIELD_CLASS,
@@ -130,6 +132,21 @@ export function RegisterForm() {
           </li>
         ))}
       </ul>
+
+      <GoogleSignInButton
+        texto="signup_with"
+        onOcupado={setIsSubmitting}
+        onIngreso={async () => {
+          // Si ya tenía cuenta (con barbería o como empleado), entra a lo suyo;
+          // si es nuevo, completa los datos de la barbería (feature 040).
+          const resultado = await resolverDestinoTrasIngresar();
+          if (resultado.kind === "ir") router.replace(resultado.path);
+          else if (resultado.kind === "sin-barberia") router.replace("/registro/completar");
+          else if (resultado.kind === "elegir") router.replace("/login");
+          else setErrorMessage(resultado.mensaje);
+        }}
+      />
+      <SeparadorDeIngreso />
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
