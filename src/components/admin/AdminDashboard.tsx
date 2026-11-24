@@ -481,7 +481,8 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* ─────────────── HEADER útil ─────────────── */}
-      <header className="animate-fade-up">
+      {/* tj-m-hero: en el celular, encabezado con luz dorada (feature 041). */}
+      <header className="tj-m-hero animate-fade-up">
         <h1 className="text-3xl font-black uppercase tracking-tight text-balance text-white sm:text-4xl lg:text-5xl">
           {barbershop.name}
         </h1>
@@ -584,7 +585,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
               }}
             />
             <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
-              <MetricCard label="Turnos hoy" icon={CalendarDays}>
+              <MetricCard label="Turnos hoy" icon={CalendarDays} className="tj-m-vidrio">
                 <p className="stat-number text-4xl font-black tabular-nums leading-none text-white">
                   {stats.total}
                 </p>
@@ -612,7 +613,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
                 </div>
               </MetricCard>
 
-              <MetricCard label="Ingresos estimados" icon={DollarSign}>
+              <MetricCard label="Ingresos estimados" icon={DollarSign} className="tj-m-vidrio">
                 <p className="stat-number w-fit bg-gradient-to-br from-[color:var(--brand-gold-hi)] via-[color:var(--brand-gold)] to-[color:var(--brand-gold-lo)] bg-clip-text text-4xl font-black tabular-nums leading-none text-transparent">
                   {formatPrice(stats.estimatedRevenue)}
                 </p>
@@ -623,7 +624,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
                 </p>
               </MetricCard>
 
-              <MetricCard label="Ocupación" icon={Activity}>
+              <MetricCard label="Ocupación" icon={Activity} className="tj-m-vidrio">
                 <div className="flex items-center gap-4">
                   <RadialGauge value={stats.occupancyPct} />
                   <div className="min-w-0">
@@ -699,7 +700,7 @@ export function AdminDashboard({ barbershop }: AdminDashboardProps) {
                     <li key={appointment.id}>
                       <Link
                         href={`/${barbershop.slug}/admin/turnero`}
-                        className="hover-lift block rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] p-3"
+                        className="tj-m-vidrio hover-lift block rounded-[var(--radius-sm)] border border-white/[0.04] bg-[color:var(--surface-1)] p-3"
                       >
                         <div className="flex items-center gap-3 sm:gap-4">
                           {/* Hora */}
@@ -1074,7 +1075,7 @@ function QuickActionIcon({
     <Link
       href={href}
       title={label}
-      className="hover-lift group flex aspect-square min-h-[68px] flex-col items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-2 py-2 text-[color:var(--text-secondary)] shadow-card transition-colors duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)]/40 hover:text-[color:var(--brand-gold)] sm:aspect-auto sm:min-h-[80px]"
+      className="tj-m-vidrio hover-lift group flex aspect-square min-h-[68px] flex-col items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] px-2 py-2 text-[color:var(--text-secondary)] shadow-card transition-colors duration-[var(--duration-fast)] press-shrink hover:border-[color:var(--brand-gold)]/40 hover:text-[color:var(--brand-gold)] sm:aspect-auto sm:min-h-[80px]"
     >
       <span className="flex size-9 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--brand-gold)]/25 bg-[color:var(--brand-gold-soft)] text-[color:var(--brand-gold)] transition-transform duration-[var(--duration-fast)] group-hover:scale-105">
         {icon}

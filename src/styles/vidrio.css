@@ -1,0 +1,448 @@
+/* ── TijerApp en el celular: vidrio "Noche dorada" (specs/041-celular-vidrio) ──
+   Guía: docs/design-system-vidrio.md.
+
+   - Va FUERA de @layer a propósito: así le gana a las utilidades de Tailwind.
+   - Va FUERA de globals.css a propósito: en Dentidad la caché de Turbopack en
+     Vercel sirvió un globals.css viejo y el arreglo del iPhone no llegó.
+   - Lo que cambia la pantalla vive dentro de `max-width: 767.98px`: la compu
+     no cambia (FR-010). Las clases `tj-m-*` solo pintan en el celular. */
+
+:root {
+  --tj-oro: #c9a23e;
+  --tj-oro-hi: #e2c266;
+  --tj-oro-lo: #8a6e25;
+
+  /* El vidrio: reflejo blanco arriba sobre una base oscura semitransparente.
+     La base es la que deja leer el texto aunque no haya desenfoque. */
+  --tj-vidrio:
+    linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.03)),
+    rgb(12 10 6 / 0.45);
+  --tj-vidrio-solido: rgb(14 12 8 / 0.96);
+  --tj-vidrio-borde: rgb(255 255 255 / 0.12);
+  --tj-vidrio-luz: rgb(255 255 255 / 0.18);
+  --tj-vidrio-sombra: 0 18px 40px -18px rgb(0 0 0 / 0.8);
+  --tj-linea: rgb(255 255 255 / 0.07);
+  /* El desenfoque, en una variable: en el celular y en equipos flojos baja
+     (receta de la web de Solvian, donde bajó los cuadros lentos de 3-13 % a 1-2 %). */
+  --tj-vf: blur(20px) saturate(160%);
+
+  /* El fondo: tres luces doradas difuminadas sobre negro. */
+  --tj-ambiente:
+    radial-gradient(80% 32% at 110% 0%, rgb(201 162 62 / 0.26), transparent 70%),
+    radial-gradient(70% 34% at -12% 44%, rgb(226 194 102 / 0.12), transparent 70%),
+    radial-gradient(75% 30% at 85% 100%, rgb(201 162 62 / 0.16), transparent 70%),
+    linear-gradient(180deg, #0b0906, #000 60%);
+
+  --tj-ease-sube: cubic-bezier(0.3, 1.18, 0.5, 1);
+  --tj-ease-baja: cubic-bezier(0.32, 0.72, 0, 1);
+  --tj-ease-sale: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Lo que ocupa la barra de abajo (cápsula de 66 + su despegue). */
+  --tj-nav-alto: 66px;
+  --tj-nav-space: calc(var(--tj-nav-alto) + max(10px, env(safe-area-inset-bottom, 0px) - 14px));
+}
+
+@media (pointer: coarse) {
+  :root { --tj-vf: blur(10px) saturate(150%); }
+}
+:root.tj-lento { --tj-vf: blur(7px); }
+:root.tj-muy-lento { --tj-vf: blur(4px); }
+
+/* ── La franja de la hora del iPhone ──────────────────────────────────────
+   Con la barra de estado transparente la app se dibuja detrás de la hora.
+   Negro LISO: iOS 26 desenfoca lo que queda debajo si arriba no hay una caja
+   fija de ancho completo con color liso (un degradé no cuenta). Fuera del
+   iPhone mide 0. */
+.tj-franja-estado {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 200;
+  pointer-events: none;
+  background-color: #000;
+}
+/* Fuera del panel, lo de arriba arranca debajo de la hora. */
+body {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ── El material ─────────────────────────────────────────────────────────── */
+.tj-boton-oro {
+  background-image:
+    linear-gradient(180deg, rgb(255 255 255 / 0.28), rgb(255 255 255 / 0) 52%),
+    linear-gradient(135deg, var(--tj-oro-hi), var(--tj-oro) 55%, var(--tj-oro-lo));
+  color: #0a0a0a;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.5),
+    inset 0 -8px 14px -8px rgb(0 0 0 / 0.35),
+    0 10px 26px -10px rgb(201 162 62 / 0.7);
+}
+.tj-boton-vidrio {
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.12), rgb(255 255 255 / 0.02));
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    inset 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+
+@media (max-width: 767.98px) {
+  .tj-m-vidrio {
+    background: var(--tj-vidrio) !important;
+    -webkit-backdrop-filter: var(--tj-vf);
+    backdrop-filter: var(--tj-vf);
+    border-color: transparent !important;
+    border-radius: 22px !important;
+    box-shadow:
+      inset 0 1px 0 var(--tj-vidrio-luz),
+      inset 0 0 0 1px var(--tj-vidrio-borde),
+      var(--tj-vidrio-sombra) !important;
+  }
+  .tj-m-barra {
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.015)),
+      rgb(8 7 4 / 0.92) !important;
+    -webkit-backdrop-filter: var(--tj-vf);
+    backdrop-filter: var(--tj-vf);
+    border-color: var(--tj-linea) !important;
+  }
+  /* El encabezado de una sección: luz dorada que asoma arriba a la derecha.
+     Sangra hasta los bordes de la pantalla (el contenido tiene 16 px). */
+  .tj-m-hero {
+    margin: calc(-1 * var(--tj-gutter-top, 24px)) calc(-1 * var(--tj-gutter, 16px)) 0;
+    padding: 22px 20px 26px;
+    border-radius: 0 0 30px 30px;
+    background:
+      radial-gradient(80% 100% at 100% 0%, rgb(201 162 62 / 0.38), transparent 70%),
+      linear-gradient(165deg, #1c160b, #0a0806 75%);
+    box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.06);
+  }
+  /* Apretar: se achica un poco, como en iOS (con `scale`, que se suma a lo que
+     ya esté movido). */
+  .tj-panel :where(a, button):not(:disabled):active {
+    scale: 0.97;
+  }
+  .tj-panel :where(a, button) {
+    transition: scale 160ms ease;
+  }
+}
+
+/* ── El panel del celular: el documento no se mueve ──────────────────────
+   El scroll va por adentro de `.tj-panel-scroll` y la barra se apoya en el
+   fondo del panel. Así lo resolvió Dentidad para la app instalada en el
+   iPhone, donde lo `fixed` no se dibuja hasta el borde de abajo. */
+@media (max-width: 767.98px) {
+  html:has(.tj-panel),
+  html:has(.tj-panel) body {
+    height: 100%;
+    overflow: hidden;
+  }
+  html:has(.tj-panel) body {
+    padding-top: 0;
+  }
+  .tj-panel {
+    position: relative;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background-color: #000;
+    background-image: var(--tj-ambiente);
+    background-repeat: no-repeat;
+  }
+  .tj-panel-scroll {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding-bottom: calc(var(--tj-nav-space) + 8px);
+  }
+  .tj-panel-contenido {
+    /* El relleno del contenido (px-4 py-6; sm: px-8 py-10): el encabezado de
+       sección lo usa para sangrar hasta los bordes. */
+    --tj-gutter: 16px;
+    --tj-gutter-top: 24px;
+    /* + 52: el ＋ sobresale 28 px de la barra. */
+    padding-bottom: calc(var(--tj-nav-space) + 52px) !important;
+  }
+  /* La barra de arriba del panel arranca debajo de la hora. */
+  .tj-panel-top {
+    padding-top: env(safe-area-inset-top, 0px);
+    height: calc(56px + env(safe-area-inset-top, 0px)) !important;
+  }
+  .tj-panel-sub {
+    top: calc(56px + env(safe-area-inset-top, 0px)) !important;
+  }
+}
+@media (min-width: 640px) and (max-width: 767.98px) {
+  .tj-panel-contenido {
+    --tj-gutter: 32px;
+    --tj-gutter-top: 40px;
+  }
+}
+
+/* 🔴 La app instalada en el iPhone/iPad. Con la barra de estado transparente,
+   iOS mide la ventana SIN la franja de la hora (~60 pt) y no dibuja lo `fixed`
+   más allá de esa ventana corta: quedaba una franja vacía abajo (Dentidad,
+   6 PRs, nov 2026). Solo con `data-ios-gap` (lo pone el script del <head> y
+   `IosStandaloneGap`):
+   - html y body dejan de recortar;
+   - el panel va DENTRO de la página con la pantalla entera (`100vh`);
+   - la barra se apoya en el fondo del panel, arriba de la rayita de inicio. */
+@media (max-width: 767.98px) {
+  html[data-ios-gap]:has(.tj-panel),
+  html[data-ios-gap]:has(.tj-panel) body {
+    height: auto;
+    overflow: visible;
+  }
+  html[data-ios-gap] .tj-panel {
+    height: 100vh;
+  }
+  html[data-ios-gap] {
+    --tj-nav-space: calc(var(--tj-nav-alto) + max(28px, env(safe-area-inset-bottom, 0px)));
+  }
+  html[data-ios-gap] .tj-nav-envoltura {
+    padding-bottom: max(28px, env(safe-area-inset-bottom, 0px)) !important;
+  }
+  html[data-ios-gap] .tj-velo {
+    position: absolute;
+  }
+}
+
+/* ── La barra de abajo ───────────────────────────────────────────────────── */
+.tj-nav-envoltura {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  padding-bottom: max(10px, env(safe-area-inset-bottom, 0px) - 14px);
+  pointer-events: none;
+}
+.tj-nav {
+  pointer-events: auto;
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  height: var(--tj-nav-alto);
+  border-radius: 26px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.09), rgb(255 255 255 / 0.02)),
+    rgb(12 10 6 / 0.78);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    inset 0 0 0 1px rgb(255 255 255 / 0.09),
+    0 18px 40px -12px rgb(0 0 0 / 0.9);
+}
+/* El "Más" es la misma cápsula que crece hacia arriba. */
+.tj-nav-crece {
+  transition: height 340ms var(--tj-ease-baja);
+}
+.tj-nav-crece--abierta {
+  transition: height 460ms var(--tj-ease-sube);
+}
+.tj-nav-crece--arrastre {
+  transition: none !important;
+}
+.tj-nav-fila {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--tj-nav-alto);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  padding: 0 6px;
+}
+.tj-nav-item {
+  position: relative;
+  z-index: 1;
+  height: 52px;
+  margin: 0 2px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #8a8a8a;
+  transition: color 220ms ease;
+}
+.tj-nav-item[aria-current="page"],
+.tj-nav-item[aria-expanded="true"] {
+  color: #fff;
+}
+.tj-nav-item[aria-current="page"] svg {
+  color: var(--tj-oro-hi);
+}
+/* La pastilla de la sección elegida: una sola, que se desliza con rebote. */
+.tj-nav-pastilla {
+  position: absolute;
+  left: 0;
+  bottom: 7px;
+  height: 52px;
+  border-radius: 20px;
+  z-index: 0;
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.04));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    inset 0 0 0 1px rgb(255 255 255 / 0.1);
+  transition:
+    transform 420ms var(--tj-ease-sube),
+    width 420ms var(--tj-ease-sube),
+    opacity 200ms ease;
+}
+/* El ＋: sobresale de la cápsula, con un aro del color del fondo. */
+.tj-nav-mas {
+  pointer-events: auto;
+  position: absolute;
+  left: 50%;
+  top: -28px;
+  z-index: 2;
+  width: 58px;
+  height: 58px;
+  margin-left: -29px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.5),
+    inset 0 -8px 14px -8px rgb(0 0 0 / 0.35),
+    0 0 0 6px #050403,
+    0 12px 30px -8px rgb(201 162 62 / 0.85);
+  transition: opacity 200ms ease, scale 160ms ease;
+}
+.tj-nav-mas:active {
+  scale: 0.94;
+}
+.tj-nav-mas--oculto {
+  opacity: 0;
+  pointer-events: none;
+}
+/* El contenido del Más: título, manija y la grilla de secciones. */
+.tj-mas-contenido {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: var(--tj-nav-alto);
+  padding: 8px 14px 4px;
+  overflow-y: auto;
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+.tj-nav-crece--abierta .tj-mas-contenido {
+  opacity: 1;
+  transition: opacity 200ms ease 40ms;
+}
+.tj-mas-item {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.tj-nav-crece--abierta .tj-mas-item {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 260ms ease,
+    transform 360ms var(--tj-ease-sube);
+  transition-delay: calc(60ms + var(--i, 0) * 24ms);
+}
+.tj-mas-icono {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  color: var(--tj-oro);
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.12), rgb(255 255 255 / 0.03));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    inset 0 0 0 1px rgb(255 255 255 / 0.09);
+}
+.tj-mas-item[aria-current="page"] .tj-mas-icono {
+  color: #0a0a0a;
+  background-image:
+    linear-gradient(180deg, rgb(255 255 255 / 0.3), rgb(255 255 255 / 0) 52%),
+    linear-gradient(135deg, var(--tj-oro-hi), var(--tj-oro) 55%, var(--tj-oro-lo));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.5),
+    0 0 0 3px rgb(0 0 0 / 0.9),
+    0 0 0 5px rgb(201 162 62 / 0.55);
+}
+/* El velo que oscurece y desenfoca lo de atrás mientras el Más está abierto. */
+.tj-velo {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  opacity: 0;
+  pointer-events: none;
+  background-color: rgb(0 0 0 / 0.45);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition: opacity 260ms ease;
+}
+.tj-velo--abierto {
+  opacity: 1;
+  pointer-events: auto;
+}
+.tj-velo--arrastre {
+  transition: none;
+}
+/* Difuminado abajo: el contenido se apaga al pasar por debajo de la barra. */
+.tj-fumado-abajo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--tj-nav-space) + 70px);
+  z-index: 30;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgb(0 0 0 / 0.85) 70%);
+}
+
+/* ── Respaldos ───────────────────────────────────────────────────────────── */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .tj-nav { background: var(--tj-vidrio-solido); }
+  @media (max-width: 767.98px) {
+    .tj-m-vidrio, .tj-m-barra { background: var(--tj-vidrio-solido) !important; }
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .tj-nav,
+  .tj-velo {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .tj-nav { background: var(--tj-vidrio-solido); }
+  @media (max-width: 767.98px) {
+    .tj-m-vidrio, .tj-m-barra {
+      background: var(--tj-vidrio-solido) !important;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tj-nav-pastilla,
+  .tj-nav-crece,
+  .tj-nav-crece--abierta,
+  .tj-mas-item,
+  .tj-nav-crece--abierta .tj-mas-item {
+    transition: opacity 160ms ease;
+    transition-delay: 0ms;
+  }
+  .tj-mas-item { transform: none; }
+  .tj-panel :where(a, button):not(:disabled):active,
+  .tj-nav-mas:active {
+    scale: 1;
+  }
+}

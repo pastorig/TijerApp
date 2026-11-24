@@ -34,12 +34,15 @@ export function AdminTopBar({
   const SectionIcon = activeGroup?.icon;
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 backdrop-blur-md sm:px-6">
+    // tj-panel-top / tj-m-barra: en el celular, vidrio y debajo de la hora del
+    // iPhone (feature 041). La hamburguesa queda para la tablet: en el celular
+    // navega la barra de abajo.
+    <header className="tj-panel-top tj-m-barra sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 backdrop-blur-md sm:px-6">
       <button
         type="button"
         onClick={onOpenDrawer}
         aria-label="Abrir menú"
-        className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] lg:hidden"
+        className="inline-flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] max-md:hidden lg:hidden"
       >
         <Menu className="size-4" />
       </button>

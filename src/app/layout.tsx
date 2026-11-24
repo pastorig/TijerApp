@@ -7,7 +7,12 @@ import { PWAInstallProvider } from "@/components/pwa/PWAInstallProvider";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { RecoveryLinkRedirect } from "@/components/auth/RecoveryLinkRedirect";
 import { StructuredData } from "@/components/seo/StructuredData";
+import { CelularBase } from "@/components/pwa/CelularBase";
+import { IOS_GAP_TEMPRANO } from "@/lib/ios-standalone-gap";
 import "./globals.css";
+// El vidrio del celular (feature 041). Aparte de globals.css a propósito: ver
+// el encabezado de vidrio.css.
+import "@/styles/vidrio.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -105,6 +110,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: "#000000",
   colorScheme: "dark",
+  // La app instalada se dibuja hasta los bordes (detrás de la hora y de la
+  // rayita de inicio): sin esto `env(safe-area-inset-*)` da 0 y la barra de
+  // abajo queda pegada a la rayita. Lo de arriba lo cubre `.tj-franja-estado`.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -116,8 +125,14 @@ export default function RootLayout({
     <html
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      // El script de abajo le pone `data-ios-gap` a <html> antes de hidratar.
+      suppressHydrationWarning
     >
       <head>
+        {/* 🔴 La app instalada en el iPhone: el modo de la franja se prende
+            ANTES de dibujar, sin esperar a medir (feature 041, ver
+            ios-standalone-gap.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: IOS_GAP_TEMPRANO }} />
         {/* NOTA: el preload del isotipo lo maneja next/image automáticamente
             via priority={true} en Logo.tsx. Agregar <link rel="preload"> manual
             duplicaba el preload con URL distinta a la que next/image usa
@@ -141,6 +156,9 @@ export default function RootLayout({
         )}
       </head>
       <body className="min-h-full flex flex-col">
+        {/* Fondo negro liso detrás de la hora del iPhone. Fuera del iPhone mide 0. */}
+        <div aria-hidden="true" className="tj-franja-estado" />
+        <CelularBase />
         <PWAInstallProvider>
           <ToastProvider>
             <ConfirmProvider>{children}</ConfirmProvider>
