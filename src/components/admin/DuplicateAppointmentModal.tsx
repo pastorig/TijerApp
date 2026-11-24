@@ -6,6 +6,7 @@ import { createPendingAppointment } from "@/lib/appointments";
 import { cn } from "@/lib/cn";
 import { formatDateWithWeekday } from "@/lib/format";
 import type { AppointmentRow } from "@/lib/supabase";
+import { Ventana } from "@/components/ui/Ventana";
 
 type DuplicateAppointmentModalProps = {
   isOpen: boolean;
@@ -176,16 +177,13 @@ export function DuplicateAppointmentModal({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Repetir turno"
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <Ventana
+      label={"Repetir turno"}
+      onClose={onClose}
+      capa="z-50"
+      sinEscape
+      panelClassName="w-full max-w-md overflow-hidden rounded-t-[var(--radius-lg)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] shadow-2xl sm:rounded-[var(--radius-lg)]"
     >
-      <div className="w-full max-w-md overflow-hidden rounded-t-[var(--radius-lg)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] shadow-2xl sm:rounded-[var(--radius-lg)]">
         <div className="flex items-center justify-between border-b border-[color:var(--border-subtle)] px-5 py-4">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
@@ -376,7 +374,6 @@ export function DuplicateAppointmentModal({
             </div>
           </form>
         </div>
-      </div>
-    </div>
+      </Ventana>
   );
 }
