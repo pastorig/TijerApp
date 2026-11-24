@@ -9,6 +9,8 @@ import { getCurrentUserStaffBarbershops } from "@/lib/staff-access-client";
 import { signOut } from "@/lib/auth";
 import { cn } from "@/lib/cn";
 import { Button, Card, Logo } from "@/components/ui";
+import { useLockDocumentScroll } from "@/hooks/useLockDocumentScroll";
+import { StaffBottomNav } from "./StaffBottomNav";
 import {
   PERMISOS_POR_DEFECTO,
   type StaffPermissions,
@@ -52,6 +54,9 @@ export function StaffShell({
   const [permisos, setPermisos] = useState<StaffPermissions>(
     PERMISOS_POR_DEFECTO,
   );
+  // En el celular el documento no se mueve: el scroll va por adentro del
+  // panel, como en el del dueño (feature 041).
+  useLockDocumentScroll();
 
   useEffect(() => {
     let vivo = true;
@@ -126,9 +131,12 @@ export function StaffShell({
   const SeccionIcon = seccion.icon;
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    // tj-panel: en el celular, el mismo armazón de vidrio que el panel del
+    // dueño (feature 041, tanda 5): scroll interno y barra de abajo.
+    <div className="tj-panel min-h-screen bg-black text-white">
+      <main className="tj-panel-scroll">
       {/* Barra superior — misma altura, mismo sticky y mismo blur que el panel. */}
-      <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 backdrop-blur-md sm:px-6">
+      <header className="tj-panel-top tj-m-barra sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 backdrop-blur-md sm:px-6">
         <div className="flex min-w-0 items-center gap-2">
           <SeccionIcon
             aria-hidden="true"
@@ -160,7 +168,9 @@ export function StaffShell({
       </header>
 
       {/* Pestañas — las subpestañas del panel, tal cual. */}
-      <div className="sticky top-14 z-30 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md">
+      {/* En el celular navega la barra de abajo: las pestañas quedan para la
+          tablet y la compu. */}
+      <div className="tj-panel-sub sticky top-14 z-30 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md max-md:hidden">
         <div className="mx-auto flex w-full max-w-5xl gap-1 overflow-x-auto px-4 sm:px-8 lg:px-12">
           {tabs.map((tab) => {
             const activo = pathname === tab.href;
@@ -183,9 +193,15 @@ export function StaffShell({
         </div>
       </div>
 
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
+      <div className="tj-panel-contenido mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
         {children}
       </div>
+      </main>
+      <StaffBottomNav
+        secciones={tabs}
+        agendaHref={`/${barbershopSlug}/mi-agenda`}
+        puedeCargarTurno={permisos.cargarTurno}
+      />
     </div>
   );
 }

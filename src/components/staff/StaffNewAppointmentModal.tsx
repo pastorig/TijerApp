@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { createPortal } from "react-dom";
+import { Ventana } from "@/components/ui/Ventana";
 import { Loader2, TriangleAlert, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { pisaAOtro } from "@/lib/agenda-layout";
@@ -221,15 +221,21 @@ export function StaffNewAppointmentModal({
   // cancelación, que también va por portal.
   if (!abierto) return null;
 
-  return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-6">
+  // Ventana (feature 041, tanda 5): en el celular, hoja de vidrio que se baja
+  // con el dedo; en la compu, el panel de siempre.
+  return (
+    <Ventana
+      label="Agregar turno"
+      onClose={onCerrar}
+      capa="z-[60]"
+      sinEscape
+      panelClassName="flex max-h-[92vh] w-full max-w-lg flex-col overflow-y-auto rounded-t-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] sm:rounded-[var(--radius-md)]"
+    >
       <form
         onSubmit={guardar}
         ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
         tabIndex={-1}
-        className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-y-auto rounded-t-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] sm:rounded-[var(--radius-md)]"
+        className="contents"
       >
         <header className="flex items-start justify-between gap-3 border-b border-[color:var(--border-subtle)] px-5 py-4">
           <div>
@@ -433,7 +439,6 @@ export function StaffNewAppointmentModal({
           </Button>
         </footer>
       </form>
-    </div>,
-    document.body,
+    </Ventana>
   );
 }
