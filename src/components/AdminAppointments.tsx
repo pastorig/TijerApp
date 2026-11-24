@@ -89,6 +89,7 @@ import {
 import { DuplicateAppointmentModal } from "./admin/DuplicateAppointmentModal";
 import { ManualAppointmentModal } from "./admin/ManualAppointmentModal";
 import { READ_ONLY_REASON, useIsReadOnly } from "./admin/PlanContext";
+import { EVENTO_TURNO_NUEVO } from "./admin/AdminBottomNav";
 import { QuickBlockTimeButton } from "./admin/QuickBlockTimeButton";
 import { getTodayYmd, normalizeTimeShort } from "./admin/date-utils";
 
@@ -1514,6 +1515,24 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     setManualPreset(preset);
     setIsManualModalOpen(true);
   }
+
+  // El ＋ de la barra de abajo del celular (feature 041): si ya está en el
+  // Turnero avisa con un evento; si venía de otra sección llega con ?nuevo=1.
+  useEffect(() => {
+    if (isReadOnly) return;
+    function abrirTurnoNuevo() {
+      setManualPreset({ mode: "turno" });
+      setIsManualModalOpen(true);
+    }
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("nuevo") === "1") {
+      url.searchParams.delete("nuevo");
+      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+      abrirTurnoNuevo();
+    }
+    window.addEventListener(EVENTO_TURNO_NUEVO, abrirTurnoNuevo);
+    return () => window.removeEventListener(EVENTO_TURNO_NUEVO, abrirTurnoNuevo);
+  }, [isReadOnly]);
 
   /**
    * La tarjeta de un turno con todas sus acciones. La usan la vista Lista y
