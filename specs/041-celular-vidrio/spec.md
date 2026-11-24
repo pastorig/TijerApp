@@ -108,10 +108,10 @@ una ventana que cierra bajándola con el dedo.
 
 ## Entrega por tandas (una PR por tanda, con preview que Bautista mira logueado ANTES de mergear)
 
-1. **Base + Inicio del dueño**: material, fondo, iPhone, `Ventana`, `Interruptor`, barra de abajo con
-   Más, Inicio.
-2. **Turnero**: lista y calendario del celular + ventanas de turno (editar, nuevo, mover, cancelar,
-   duplicar, bloquear).
+1. **Base + Inicio del dueño**: material, fondo, iPhone, barra de abajo con Más y ＋, Inicio.
+2. **Turnero + `Ventana` + `Interruptor`**: lista y calendario del celular + ventanas de turno
+   (editar, nuevo, mover, cancelar, duplicar, bloquear). Los dos componentes entran con la primera
+   pantalla que los usa.
 3. **Clientes y fidelización**: Clientes, Reseñas, Fidelización, Cupones, Recordatorios, Lista de
    espera.
 4. **Caja, equipo y mi barbería**: Reportes, Cierre, Cobros, Barberos, Equipo, Galería, Productos,
