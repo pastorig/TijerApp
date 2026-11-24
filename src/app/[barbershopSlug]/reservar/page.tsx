@@ -43,7 +43,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
   const plan = await getBarbershopPlan(barbershopSlug);
 
   return (
-    <main className="relative isolate min-h-screen overflow-x-clip bg-black text-white">
+    <main className="tj-pantalla relative isolate min-h-screen overflow-x-clip bg-black text-white">
       {/* `overflow-x-clip` y no `overflow-hidden` en el <main>: recorta el
           resplandor igual, pero no convierte a la página en un contenedor con
           scroll propio. Con `overflow-hidden` el resumen de la derecha dejaba

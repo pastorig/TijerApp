@@ -33,7 +33,7 @@ export default async function PublicReviewPage({
     resolvedBarbershop?.name ?? context.barbershop_name ?? "la barbería";
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="tj-pantalla min-h-screen bg-black text-white">
       <nav className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-5 sm:px-8 sm:py-6 lg:px-12">
         <Link
           href={`/${context.barbershop_slug}`}
