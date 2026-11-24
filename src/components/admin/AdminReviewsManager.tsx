@@ -94,7 +94,7 @@ export function AdminReviewsManager({ barbershop }: AdminReviewsManagerProps) {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <header className="animate-fade-up">
+      <header className="tj-m-hero animate-fade-up">
         <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
           Reseñas
         </p>
@@ -112,7 +112,7 @@ export function AdminReviewsManager({ barbershop }: AdminReviewsManagerProps) {
             <li
               key={i}
               aria-hidden="true"
-              className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 space-y-3"
+              className="tj-m-vidrio rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 space-y-3"
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="skeleton h-4 w-32 rounded" />
@@ -263,7 +263,7 @@ export function AdminReviewsManager({ barbershop }: AdminReviewsManagerProps) {
                 return (
                   <li
                     key={review.id}
-                    className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4"
+                    className="tj-m-vidrio rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4"
                   >
                     <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                       <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">

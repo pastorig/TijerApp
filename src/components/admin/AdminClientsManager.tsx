@@ -630,7 +630,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
           Volver a clientes
         </button>
 
-        <header className="animate-fade-up">
+        <header className="tj-m-hero animate-fade-up">
           <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)] sm:tracking-[0.32em]">
             Ficha de cliente
           </p>
@@ -685,7 +685,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
 
         {/* KPIs */}
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <div className="rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-4">
+          <div className="tj-m-vidrio rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
               Visitas
             </p>
@@ -715,7 +715,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
 
         {/* Insights derivados */}
         {selectedClientInsights ? (
-          <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5">
+          <section className="tj-m-vidrio rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
               Comportamiento
             </p>
@@ -861,11 +861,11 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
         ) : null}
 
         {/* Editar nombre + notas */}
-        <section className="rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5">
+        <section className="tj-m-vidrio rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-5">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
             Datos del cliente
           </p>
-          <div className="mt-4 grid gap-3">
+          <div className="mt-4 grid grid-cols-1 gap-3">
             <div>
               <label
                 htmlFor="client-name"
@@ -967,7 +967,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
               {selectedClientAppointments.map((appointment) => (
                 <li
                   key={appointment.id}
-                  className="flex items-start gap-3 rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-3"
+                  className="tj-m-vidrio flex items-start gap-3 rounded-[var(--radius-sm)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-3"
                 >
                   <div className="w-20 shrink-0">
                     <p className="font-mono text-base font-bold tabular-nums leading-none text-white">
@@ -1008,7 +1008,13 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
                               : "text-[color:var(--brand-gold)]",
                         )}
                       >
-                        {appointment.status}
+                        {appointment.status === "confirmed"
+                          ? "Confirmado"
+                          : appointment.status === "cancelled"
+                            ? "Cancelado"
+                            : appointment.status === "pending"
+                              ? "Pendiente"
+                              : appointment.status}
                       </span>
                     </p>
                   </div>
@@ -1074,7 +1080,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
 
       {/* Alerta de turnos huérfanos — teléfonos inválidos que no generaron cliente */}
       {orphanAppointments.length > 0 && !isLoading && !loadError ? (
-        <div className="flex flex-wrap items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--text-subtle)]/30 bg-[color:var(--surface-1)] p-4">
+        <div className="tj-m-vidrio flex flex-wrap items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--text-subtle)]/30 bg-[color:var(--surface-1)] p-4">
           <AlertTriangle
             aria-hidden="true"
             className="size-5 shrink-0 text-[color:var(--text-muted)]"
@@ -1230,7 +1236,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
             <li
               key={i}
               aria-hidden="true"
-              className="flex items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4"
+              className="tj-m-vidrio flex items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4"
             >
               <div className="skeleton size-11 shrink-0 rounded-full" />
               <div className="min-w-0 flex-1 space-y-2">
@@ -1283,7 +1289,7 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
               <button
                 type="button"
                 onClick={() => handleSelectClient(client)}
-                className="hover-lift group flex w-full items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 text-left shadow-card transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40"
+                className="tj-m-vidrio hover-lift group flex w-full items-center gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-4 text-left shadow-card transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)]/40"
               >
                 <div
                   aria-hidden="true"

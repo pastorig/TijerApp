@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
 import { getCurrentSession } from "@/lib/auth";
 import { cn } from "@/lib/cn";
+import { Ventana } from "@/components/ui/Ventana";
 
 type ImportClientsModalProps = {
   isOpen: boolean;
@@ -270,16 +271,14 @@ export function ImportClientsModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Importar clientes desde CSV"
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !isImporting) onClose();
-      }}
+    <Ventana
+      label="Importar clientes desde CSV"
+      onClose={onClose}
+      capa="z-50"
+      sinEscape
+      puedeCerrar={() => !isImporting}
+      panelClassName="w-full max-w-lg overflow-hidden rounded-t-[var(--radius-lg)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] shadow-2xl sm:rounded-[var(--radius-lg)]"
     >
-      <div className="w-full max-w-lg overflow-hidden rounded-t-[var(--radius-lg)] border border-[color:var(--border-default)] bg-[color:var(--surface-0)] shadow-2xl sm:rounded-[var(--radius-lg)]">
         <div className="flex items-center justify-between border-b border-[color:var(--border-subtle)] px-5 py-4">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
@@ -457,7 +456,6 @@ export function ImportClientsModal({
             </>
           )}
         </div>
-      </div>
-    </div>
+      </Ventana>
   );
 }
