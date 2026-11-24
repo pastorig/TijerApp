@@ -83,7 +83,9 @@ export function OnboardingTip({
       role="alert"
       aria-live="polite"
       className={cn(
-        "pointer-events-auto absolute z-30 max-w-xs transition-all duration-300",
+        // En el celular va dentro del encabezado, en el flujo: flotando tapaba
+        // las tarjetas de abajo (feature 041).
+        "pointer-events-auto absolute z-30 max-w-xs transition-all duration-300 max-md:static max-md:max-w-none",
         placement === "top" && "bottom-full mb-2",
         placement === "bottom" && "top-full mt-2",
         placement === "left" && "right-full mr-2 top-0",

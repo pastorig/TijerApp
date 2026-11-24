@@ -84,7 +84,7 @@ export function ClientTagsEditor({
   );
 
   return (
-    <div className="grid gap-3">
+    <div className="grid grid-cols-1 gap-3">
       {/* Tags actuales */}
       <div className="flex flex-wrap gap-2">
         {normalized.length === 0 ? (
@@ -121,7 +121,7 @@ export function ClientTagsEditor({
 
       {/* Sugerencias */}
       {!disabled && availableSuggestions.length > 0 ? (
-        <div className="grid gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
             Sugerencias
           </p>
@@ -146,7 +146,7 @@ export function ClientTagsEditor({
 
       {/* Custom */}
       {!disabled ? (
-        <form onSubmit={handleAddCustom} className="grid gap-2">
+        <form onSubmit={handleAddCustom} className="grid grid-cols-1 gap-2">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
             Agregar tag propio
           </p>
@@ -157,7 +157,7 @@ export function ClientTagsEditor({
               onChange={(e) => setCustomInput(e.target.value)}
               placeholder="Ej: Cumple en mayo"
               maxLength={30}
-              className="min-h-9 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-xs text-white outline-none placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
+              className="min-h-9 min-w-0 flex-1 rounded-[var(--radius-sm)] border border-[color:var(--border-default)] bg-black px-3 text-xs text-white outline-none placeholder:text-[color:var(--text-subtle)] focus:border-[color:var(--brand-gold)]"
             />
             <button
               type="submit"

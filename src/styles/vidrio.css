@@ -118,6 +118,17 @@ body {
       linear-gradient(165deg, #1c160b, #0a0806 75%);
     box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.06);
   }
+  /* La tarjeta premium de siempre (brillo dorado en la esquina y borde de luz)
+     pasa a vidrio dentro del panel: conserva su luz y deja ver el fondo. */
+  .tj-panel .card-premium {
+    background-color: rgb(12 10 6 / 0.5);
+    -webkit-backdrop-filter: var(--tj-vf);
+    backdrop-filter: var(--tj-vf);
+    border-radius: 22px;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      var(--tj-vidrio-sombra);
+  }
   /* Apretar: se achica un poco, como en iOS (con `scale`, que se suma a lo que
      ya esté movido). */
   .tj-panel :where(a, button):not(:disabled):active {
