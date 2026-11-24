@@ -4,11 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Eye, EyeOff, Store } from "lucide-react";
-import { getCurrentUserAdminBarbershops } from "@/lib/barbershop-access";
-import { getCurrentUserStaffBarbershops } from "@/lib/staff-access-client";
-import { resolvePostLoginDestination } from "@/lib/staff-routing";
 import { signInWithEmailAndPassword } from "@/lib/auth";
-import { getSupabaseClient } from "@/lib/supabase";
+import {
+  barberiaPedidaEnNext,
+  resolverDestinoTrasIngresar,
+  type OpcionDeBarberia,
+} from "@/lib/destino-post-login";
+import {
+  GoogleSignInButton,
+  SeparadorDeIngreso,
+} from "@/components/auth/GoogleSignInButton";
 import {
   AUTH_BUTTON_CLASS,
   AUTH_FIELD_CLASS,
@@ -20,22 +25,6 @@ type GlobalLoginFormProps = {
   nextPath?: string;
 };
 
-/** Barbería que administra el usuario, ya con su nombre real para mostrar. */
-type BarbershopChoice = {
-  slug: string;
-  name: string;
-  role: string;
-};
-
-function getBarbershopSlugFromNextPath(nextPath?: string) {
-  if (!nextPath) {
-    return "";
-  }
-
-  const match = nextPath.match(/^\/([^/]+)\/admin(?:\/.*)?$/);
-  return match?.[1] ?? "";
-}
-
 export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -43,9 +32,32 @@ export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [choices, setChoices] = useState<BarbershopChoice[]>([]);
+  const [choices, setChoices] = useState<OpcionDeBarberia[]>([]);
   const [hasCheckedAssignments, setHasCheckedAssignments] = useState(false);
-  const requestedBarbershopSlug = getBarbershopSlugFromNextPath(nextPath);
+  const requestedBarbershopSlug = barberiaPedidaEnNext(nextPath);
+
+  /**
+   * Con la sesión ya abierta, decide a dónde va. La misma regla para mail y
+   * para Google; lo único distinto es qué pasa si no tiene ninguna barbería:
+   * con Google es alguien nuevo que todavía no la creó (feature 040).
+   */
+  async function irADestino(origen: "mail" | "google") {
+    const resultado = await resolverDestinoTrasIngresar(nextPath);
+    if (resultado.kind === "ir") {
+      router.replace(resultado.path);
+      return;
+    }
+    if (resultado.kind === "error") {
+      setErrorMessage(resultado.mensaje);
+      return;
+    }
+    if (resultado.kind === "sin-barberia" && origen === "google") {
+      router.replace("/registro/completar");
+      return;
+    }
+    setChoices(resultado.kind === "elegir" ? resultado.opciones : []);
+    setHasCheckedAssignments(true);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -71,74 +83,7 @@ export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
         return;
       }
 
-      const { data, error: accessError } =
-        await getCurrentUserAdminBarbershops();
-
-      if (accessError) {
-        setErrorMessage("No pudimos cargar tus barberías.");
-        return;
-      }
-
-      // Si venía de una URL puntual de admin y tiene acceso, respetamos ese
-      // destino (ej. lo mandamos a /mi-barberia/admin/turnero, no al home).
-      if (
-        nextPath &&
-        requestedBarbershopSlug &&
-        data.some(
-          (adminAccess) =>
-            adminAccess.barbershop_slug === requestedBarbershopSlug,
-        )
-      ) {
-        router.replace(nextPath);
-        return;
-      }
-
-      if (data.length === 1) {
-        router.replace(`/${data[0].barbershop_slug}/admin`);
-        return;
-      }
-
-      // No administra ninguna barbería: puede ser un empleado. Se consulta
-      // recién acá y no antes para no sumarle una consulta al login del dueño,
-      // que es el caso frecuente.
-      if (data.length === 0) {
-        const { data: staff } = await getCurrentUserStaffBarbershops();
-        if (staff.length > 0) {
-          const destino = resolvePostLoginDestination({
-            barbershopSlug: staff[0].barbershopSlug,
-            isAdmin: false,
-            isStaff: true,
-          });
-          if (destino.kind === "staff") {
-            router.replace(destino.path);
-            return;
-          }
-        }
-      }
-
-      // Administra varias: hay que elegir. Buscamos los nombres reales — antes
-      // esto salía de los datos demo, así que a un cliente real le mostraba el
-      // slug ("leocuts") en vez del nombre ("Leo Cuts").
-      const slugs = data.map((adminAccess) => adminAccess.barbershop_slug);
-      const { data: shops } = await getSupabaseClient()
-        .from("barbershops")
-        .select("slug, name")
-        .in("slug", slugs);
-
-      const nameBySlug = new Map(
-        (shops ?? []).map((shop) => [shop.slug, shop.name]),
-      );
-
-      setChoices(
-        data.map((adminAccess) => ({
-          slug: adminAccess.barbershop_slug,
-          name:
-            nameBySlug.get(adminAccess.barbershop_slug) ??
-            adminAccess.barbershop_slug,
-          role: adminAccess.role,
-        })),
-      );
-      setHasCheckedAssignments(true);
+      await irADestino("mail");
     } catch {
       setErrorMessage("No pudimos iniciar sesión. Probá de nuevo.");
     } finally {
@@ -165,6 +110,12 @@ export function GlobalLoginForm({ nextPath = "" }: GlobalLoginFormProps) {
         </>
       }
     >
+      <GoogleSignInButton
+        onIngreso={() => irADestino("google")}
+        onOcupado={setIsSubmitting}
+      />
+      <SeparadorDeIngreso />
+
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
           <label htmlFor="global-email" className={AUTH_LABEL_CLASS}>

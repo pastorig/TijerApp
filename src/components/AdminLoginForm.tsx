@@ -8,6 +8,11 @@ import { useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import type { DemoBarbershop } from "@/data/demo-barbershops";
 import { signInWithEmailAndPassword } from "@/lib/auth";
+import { getCurrentUserAdminBarbershops } from "@/lib/barbershop-access";
+import {
+  GoogleSignInButton,
+  SeparadorDeIngreso,
+} from "@/components/auth/GoogleSignInButton";
 import {
   AUTH_BUTTON_CLASS,
   AUTH_FIELD_CLASS,
@@ -26,6 +31,36 @@ export function AdminLoginForm({ barbershop }: AdminLoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /**
+   * Con la sesión ya abierta, decide a dónde va. Un empleado que entra por el
+   * login de la barbería va a SU agenda, no al panel: el panel le rebotaría
+   * igual, y rebotarlo después de entrar bien se lee como "no me anda el
+   * usuario".
+   */
+  async function irADestino(origen: "mail" | "google") {
+    const { data: staff } = await getCurrentUserStaffBarbershops();
+    const esStaffAca = staff.some((a) => a.barbershopSlug === barbershop.slug);
+
+    // Con Google puede entrar alguien que todavía no tiene barbería (feature
+    // 040): no administra ninguna ni trabaja en ninguna → a crear la suya.
+    if (origen === "google" && staff.length === 0) {
+      const { data: admins, error } = await getCurrentUserAdminBarbershops();
+      if (!error && admins.length === 0) {
+        router.replace("/registro/completar");
+        return;
+      }
+    }
+
+    const destino = resolvePostLoginDestination({
+      barbershopSlug: barbershop.slug,
+      isAdmin: !esStaffAca,
+      isStaff: esStaffAca,
+    });
+    router.replace(
+      destino.kind === "sin-acceso" ? `/${barbershop.slug}/admin` : destino.path,
+    );
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -49,20 +84,7 @@ export function AdminLoginForm({ barbershop }: AdminLoginFormProps) {
         return;
       }
 
-      // Un empleado que entra por el login de la barbería va a SU agenda, no
-      // al panel: el panel le rebotaría igual, y rebotarlo después de entrar
-      // bien se lee como "no me anda el usuario".
-      const { data: staff } = await getCurrentUserStaffBarbershops();
-      const destino = resolvePostLoginDestination({
-        barbershopSlug: barbershop.slug,
-        isAdmin: !staff.some((a) => a.barbershopSlug === barbershop.slug),
-        isStaff: staff.some((a) => a.barbershopSlug === barbershop.slug),
-      });
-      router.replace(
-        destino.kind === "sin-acceso"
-          ? `/${barbershop.slug}/admin`
-          : destino.path,
-      );
+      await irADestino("mail");
     } catch {
       setErrorMessage("No pudimos iniciar sesión. Intentá nuevamente.");
     } finally {
@@ -79,6 +101,12 @@ export function AdminLoginForm({ barbershop }: AdminLoginFormProps) {
       panelTitle="Tu barbería, en orden."
       panelSubtitle="Agenda multi-barbero, reservas online y reportes en un solo lugar. Así se ve por dentro."
     >
+      <GoogleSignInButton
+        onIngreso={() => irADestino("google")}
+        onOcupado={setIsSubmitting}
+      />
+      <SeparadorDeIngreso />
+
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
           <label htmlFor="admin-email" className={AUTH_LABEL_CLASS}>

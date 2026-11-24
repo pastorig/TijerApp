@@ -1,21 +1,11 @@
-import { NextResponse, after } from "next/server";
-import {
-  DEFAULT_SERVICES,
-  DEFAULT_WORKING_HOURS,
-  TRIAL_DAYS,
-} from "@/lib/onboarding-defaults";
+import { NextResponse } from "next/server";
 import {
   RATE_LIMIT_MESSAGE,
   checkRateLimit,
   getRequestIdentifier,
 } from "@/lib/rate-limit";
-import {
-  PASSWORD_MIN_LENGTH,
-  findAvailableSlug,
-  provisionBarbershop,
-} from "@/lib/provision-barbershop";
-import { avisarAltaDeBarberia } from "@/lib/server/signup-notice";
-import { mandarBienvenida } from "@/lib/server/activation-emails";
+import { PASSWORD_MIN_LENGTH } from "@/lib/provision-barbershop";
+import { darDeAltaBarberia } from "@/lib/server/alta-self-serve";
 
 /**
  * Registro self-serve público: el barbero se da de alta solo y arranca su
@@ -31,28 +21,8 @@ import { mandarBienvenida } from "@/lib/server/activation-emails";
  * El service-role solo se usa server-side, dentro de provisionBarbershop.
  */
 
-// TRIAL_DAYS, DEFAULT_WORKING_HOURS y DEFAULT_SERVICES viven en
-// `@/lib/onboarding-defaults`: la guía de primeros pasos del panel necesita los
-// mismos valores para saber si el barbero ya los revisó, y duplicarlos haría que
-// se desincronicen sin que nadie se dé cuenta.
-
-/** Slugs que no puede tomar una barbería porque son rutas de la plataforma. */
-const RESERVED_SLUGS = new Set([
-  "admin",
-  "api",
-  "login",
-  "logout",
-  "owner",
-  "precios",
-  "producto",
-  "registro",
-  "recuperar",
-  "nueva-password",
-  "offline",
-  "r",
-  "rev",
-  "w",
-]);
+// Lo que comparte con el alta por Google (slugs reservados, provisión, avisos)
+// vive en `@/lib/server/alta-self-serve`.
 
 type RegistroPayload = {
   barbershopName?: string;
@@ -113,26 +83,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
-    const barbershopName = payload.barbershopName!.trim();
-    const email = payload.email!.trim().toLowerCase();
-
-    let slug = await findAvailableSlug(barbershopName);
-    if (RESERVED_SLUGS.has(slug)) {
-      slug = await findAvailableSlug(`${barbershopName}-barberia`);
-    }
-
-    const result = await provisionBarbershop({
-      name: barbershopName,
-      slug,
-      whatsapp: payload.whatsapp!.trim(),
-      adminEmail: email,
-      adminPassword: payload.password,
-      firstBarberName: payload.ownerName!.trim(),
-      initialServices: DEFAULT_SERVICES,
-      workingHoursStart: DEFAULT_WORKING_HOURS.start,
-      workingHoursEnd: DEFAULT_WORKING_HOURS.end,
-      slotIntervalMinutes: DEFAULT_WORKING_HOURS.intervalMinutes,
-      trialDays: TRIAL_DAYS,
+    const result = await darDeAltaBarberia({
+      barbershopName: payload.barbershopName!,
+      ownerName: payload.ownerName!,
+      whatsapp: payload.whatsapp!,
+      email: payload.email!,
+      password: payload.password,
     });
 
     if (!result.ok) {
@@ -142,37 +98,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // El aviso al dueño de TijerApp va DESPUÉS de la respuesta: el barbero no
-    // puede quedarse mirando una pantalla de carga por un mail que ni siquiera
-    // es para él. Va con `after` y no con un `void` suelto porque la promesa
-    // huérfana la puede cortar la plataforma al terminar la request — el aviso
-    // llegaría o no según cuánto tardara Resend.
-    after(() =>
-      avisarAltaDeBarberia({
-        slug: result.slug,
-        nombre: result.name,
-        dueño: payload.ownerName!.trim(),
-        email,
-        whatsapp: payload.whatsapp!.trim(),
-        cuentaYaExistía: result.reusedExistingUser,
-        diasDeTrial: TRIAL_DAYS,
-      }),
-    );
-
-    // La bienvenida al barbero (feature 034). Hasta acá, el que se registraba
-    // no recibía NADA de TijerApp: tres barberías dejaron todo configurado,
-    // entraron una vez y no volvieron. Este mail les deja su link y el paso
-    // que falta (compartirlo), y además es lo que habilita la serie de los
-    // días 1, 3 y 7: el cron solo le escribe a quien recibió la bienvenida.
-    after(() =>
-      mandarBienvenida({
-        slug: result.slug,
-        nombre: result.name,
-        email,
-        dueño: payload.ownerName!.trim(),
-      }),
-    );
-
     // El email ya tenía cuenta: la barbería quedó creada y vinculada, pero la
     // contraseña que acaba de tipear NO es la suya. Se lo avisamos para que
     // entre con la que ya tenía (o la recupere) en vez de trabarse.
@@ -181,7 +106,7 @@ export async function POST(request: Request) {
       slug: result.slug,
       name: result.name,
       existingAccount: result.reusedExistingUser,
-      trialDays: TRIAL_DAYS,
+      trialDays: result.trialDays,
     });
   } catch {
     return NextResponse.json(

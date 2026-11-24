@@ -103,6 +103,20 @@ export function CommercialFooter() {
           <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
             © {year} TijerApp · Todos los derechos reservados
           </p>
+          <p className="flex gap-4 text-xs font-semibold uppercase tracking-normal">
+            <Link
+              href="/privacidad"
+              className="text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
+            >
+              Privacidad
+            </Link>
+            <Link
+              href="/terminos"
+              className="text-[color:var(--text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[color:var(--brand-gold)]"
+            >
+              Términos
+            </Link>
+          </p>
           <p className="text-xs font-semibold uppercase tracking-normal text-[color:var(--text-muted)]">
             Hecho en Argentina 🇦🇷
           </p>
