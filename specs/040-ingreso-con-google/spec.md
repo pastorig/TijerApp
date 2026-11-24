@@ -2,7 +2,7 @@
 
 **Branch**: `040-ingreso-con-google`
 **Created**: 2026-11-23
-**Status**: Draft
+**Status**: En producción (23/11/2026), probado con Bautista el 24/11
 **Input**: Bautista (23/11/2026): "me gustaría agregar que puedan ingresar con google o facebook".
 Decisión: solo Google. Facebook queda afuera (revisión de Meta, cuentas sin mail, casi nadie que
 tenga Facebook y no Google).
