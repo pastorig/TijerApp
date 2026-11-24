@@ -161,8 +161,8 @@ export function AdminTeamManager({ barbershop }: Props) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-8 px-4 py-6 sm:px-8 sm:py-10 lg:px-12">
-      <header className="relative">
+    <main className="mx-auto w-full max-w-3xl space-y-8 px-4 py-6 [--tj-gutter:32px] [--tj-gutter-top:48px] sm:px-8 sm:py-10 sm:[--tj-gutter:64px] sm:[--tj-gutter-top:80px] lg:px-12">
+      <header className="tj-m-hero relative">
         <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[color:var(--brand-gold)]">
           Feature Pro
         </p>

@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
+import { Ventana } from "@/components/ui/Ventana";
 import { AlertTriangle, HelpCircle, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -180,22 +180,16 @@ function ConfirmDialogView({
 
   const danger = Boolean(pending.danger);
 
-  return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirm-dialog-title"
-      className={cn(
-        "fixed inset-0 z-[100] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm transition-opacity duration-200 sm:items-center sm:p-4",
-        isVisible ? "opacity-100" : "opacity-0",
-      )}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
-    >
-      <div
-        ref={panelRef}
-        className={cn(
+  // Ventana (feature 041): en el celular, hoja de vidrio que se baja con el
+  // dedo; en la compu, el panel de siempre.
+  return (
+    <Ventana
+      label={pending.title}
+      labelledBy="confirm-dialog-title"
+      onClose={onCancel}
+      capa="z-[100]"
+      sinEscape
+      panelClassName={cn(
           "relative w-full max-w-md overflow-hidden rounded-t-[var(--radius-lg)] border bg-[color:var(--surface-0)] shadow-2xl transition-all duration-200 ease-[var(--ease-out-soft,cubic-bezier(0.16,1,0.3,1))] sm:rounded-[var(--radius-lg)]",
           danger
             ? "border-[color:var(--danger)]/30"
@@ -204,7 +198,8 @@ function ConfirmDialogView({
             ? "translate-y-0 scale-100 opacity-100 sm:translate-y-0"
             : "translate-y-4 scale-95 opacity-0 sm:translate-y-2",
         )}
-      >
+    >
+      <div ref={panelRef} className="contents">
         {/* Header con icon */}
         <div className="flex items-start gap-4 border-b border-[color:var(--border-subtle)] px-5 py-4">
           <div
@@ -272,7 +267,6 @@ function ConfirmDialogView({
           </button>
         </div>
       </div>
-    </div>,
-    document.body,
+    </Ventana>
   );
 }

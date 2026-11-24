@@ -72,6 +72,11 @@ try {
     for (const accion of acciones) {
       const [tipo, ...resto] = accion.split(":");
       const valor = resto.join(":");
+      // Un paso que falla no corta el resto: se anota y sigue.
+      if (tipo === "click" && !(await page.locator(valor).first().isVisible().catch(() => false))) {
+        console.log(`${nombre}: no está visible ${valor} (se saltea)`);
+        continue;
+      }
       if (tipo === "fill") {
         const [sel, texto] = valor.split("@");
         await page.locator(sel).first().fill(texto);
