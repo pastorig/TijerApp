@@ -404,10 +404,12 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
   ).replace(/\/$/, "");
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    // tj-pantalla: en el celular, el fondo con luces y el material de vidrio
+    // del resto del panel (feature 041).
+    <main className="tj-pantalla min-h-screen bg-black text-white">
       <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:py-8">
         {/* ── Header compacto ── */}
-        <header className="flex items-start justify-between gap-3">
+        <header className="tj-m-hero flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[color:var(--brand-gold)]">
               Ajustes
@@ -429,7 +431,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
         </header>
 
         {/* ── Chips de sección (mobile): tira horizontal sticky ── */}
-        <div className="sticky top-0 z-20 -mx-4 mt-4 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 py-2.5 backdrop-blur-sm lg:hidden">
+        <div className="tj-pantalla-arriba tj-m-barra sticky top-0 z-20 -mx-4 mt-4 border-b border-[color:var(--border-subtle)] bg-black/95 px-4 py-2.5 backdrop-blur-sm lg:hidden">
           <div className="flex gap-2 touch-pan-x snap-x scroll-smooth overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {SECTIONS.map((s) => {
               const on = s.key === activeSection;
@@ -959,7 +961,7 @@ export function AdminSettingsForm({ barbershop }: AdminSettingsFormProps) {
 
           {/* ── Barra de guardar sticky ── (no aplica en Notificaciones) */}
           {activeSection !== "notificaciones" && (
-            <div className="sticky bottom-0 z-20 -mx-4 mt-4 flex flex-col gap-2 border-t border-[color:var(--border-default)] bg-black/95 px-4 py-3 backdrop-blur-sm sm:mx-0 sm:flex-row sm:items-center sm:justify-between sm:rounded-b-xl">
+            <div className="tj-m-barra sticky bottom-0 z-20 -mx-4 mt-4 flex flex-col gap-2 border-t border-[color:var(--border-default)] bg-black/95 px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur-sm sm:mx-0 sm:flex-row sm:items-center sm:justify-between sm:rounded-b-xl">
             <div className="min-w-0">
               {errorMessage ? (
                 <p

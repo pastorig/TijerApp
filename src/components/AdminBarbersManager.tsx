@@ -34,6 +34,7 @@ import {
 import { useConfirm } from "@/components/ui";
 import { formatPrice } from "@/lib/format";
 import type { BarberRow, BarberServiceRow } from "@/lib/supabase";
+import { Ventana } from "@/components/ui/Ventana";
 
 type AdminBarbersManagerProps = {
   barbershop: DemoBarbershop;
@@ -659,7 +660,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
 
   return (
     <div>
-      <header className="mb-8 animate-fade-up">
+      <header className="tj-m-hero mb-8 animate-fade-up">
         <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[color:var(--brand-gold)]">
           Admin · Equipo
         </p>
@@ -1249,14 +1250,12 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
 
       {/* Modal de alta de barbero */}
       {showAddModal ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setShowAddModal(false)}
-        >
-          <div
-            className="w-full max-w-md rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-6 shadow-2xl shadow-black/40"
-            onClick={(event) => event.stopPropagation()}
-          >
+        <Ventana
+      label={"Agregar barbero"}
+      onClose={() => setShowAddModal(false)}
+      capa="z-50"
+      panelClassName="w-full max-w-md rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-6 shadow-2xl shadow-black/40"
+    >
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold uppercase text-[color:var(--brand-gold)]">
                 Agregar barbero
@@ -1379,8 +1378,7 @@ export function AdminBarbersManager({ barbershop }: AdminBarbersManagerProps) {
                 {isCreating ? "Creando..." : "Agregar barbero"}
               </button>
             </form>
-          </div>
-        </div>
+          </Ventana>
       ) : null}
     </div>
   );

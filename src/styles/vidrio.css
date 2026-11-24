@@ -120,7 +120,7 @@ body {
   }
   /* La tarjeta premium de siempre (brillo dorado en la esquina y borde de luz)
      pasa a vidrio dentro del panel: conserva su luz y deja ver el fondo. */
-  .tj-panel .card-premium {
+  :is(.tj-panel, .tj-pantalla) .card-premium {
     background-color: rgb(12 10 6 / 0.5);
     -webkit-backdrop-filter: var(--tj-vf);
     backdrop-filter: var(--tj-vf);
@@ -418,6 +418,208 @@ body {
   z-index: 30;
   pointer-events: none;
   background: linear-gradient(180deg, transparent, rgb(0 0 0 / 0.85) 70%);
+}
+
+/* ── Pantallas del panel que no usan el armazón (Configuración) ───────────
+   Mismo fondo y mismo material, con el scroll del documento de siempre. */
+@media (max-width: 767.98px) {
+  .tj-pantalla {
+    background-color: #000;
+    background-image: var(--tj-ambiente);
+    background-repeat: no-repeat;
+  }
+  /* Lo pegado arriba arranca debajo de la hora del iPhone. */
+  .tj-pantalla-arriba {
+    top: env(safe-area-inset-top, 0px) !important;
+  }
+}
+
+/* ── Subpestañas: píldoras de vidrio, la elegida dorada ─────────────────── */
+@media (max-width: 767.98px) {
+  .tj-subtabs {
+    gap: 8px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    scrollbar-width: none;
+    /* El borde derecho se esfuma: se nota que hay más para deslizar. */
+    -webkit-mask: linear-gradient(90deg, #000 85%, transparent);
+    mask: linear-gradient(90deg, #000 85%, transparent);
+  }
+  .tj-subtabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tj-subtabs > a {
+    min-height: 40px;
+    padding: 0 16px !important;
+    border-bottom: 0 !important;
+    border-radius: 999px;
+    color: var(--text-secondary) !important;
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.02));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.14),
+      inset 0 0 0 1px rgb(255 255 255 / 0.09);
+  }
+  .tj-subtabs > a[aria-current="page"] {
+    color: #0a0a0a !important;
+    background-image:
+      linear-gradient(180deg, rgb(255 255 255 / 0.28), rgb(255 255 255 / 0) 52%),
+      linear-gradient(135deg, var(--tj-oro-hi), var(--tj-oro) 55%, var(--tj-oro-lo));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.5),
+      inset 0 -8px 14px -8px rgb(0 0 0 / 0.35),
+      0 8px 20px -10px rgb(201 162 62 / 0.7);
+  }
+}
+
+/* ── El material en TODO el panel del celular ───────────────────────────────
+   Bautista (24/11): "no te quedes con partes como eran antes, desentonan".
+   En vez de tocar los 400+ botones y 100+ dorados uno por uno, el panel del
+   celular (y sus ventanas) los pinta con el mismo material por su forma:
+   - recuadros (fondo surface + borde, no botones) → vidrio;
+   - botones con borde → vidrio secundario, redondeados;
+   - dorados (bg-gold-grad y el degradé dorado a mano) → dorado con reflejo;
+   - campos → redondeados, negro translúcido, foco dorado;
+   - estados vacíos punteados → recuadro suave.
+   Los colores de estado (rojo de cancelar, verde de confirmado) se respetan:
+   solo cambia el material, no el color del borde ni del texto.
+   Lo que no tiene que tocarse lleva `tj-sin-vidrio` (ej. la grilla del
+   calendario). */
+@media (max-width: 767.98px) {
+  /* Recuadros */
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla)
+    :is(div, section, article, aside, li, form, a, ul)[class*="--surface-"][class*="border"]:not(
+      [class*="inline-flex"], .tj-m-vidrio, .tj-ventana, .tj-sin-vidrio, .tj-sin-vidrio *
+    ) {
+    background-color: rgb(12 10 6 / 0.45) !important;
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.015));
+    -webkit-backdrop-filter: var(--tj-vf);
+    backdrop-filter: var(--tj-vf);
+    border-radius: 20px !important;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      0 14px 30px -18px rgb(0 0 0 / 0.8);
+  }
+  /* Recuadros anidados dentro de otro vidrio: sin desenfoque doble. */
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla) :is(.tj-m-vidrio, .card-premium, [class*="--surface-"][class*="border"])
+    :is(div, section, li, a)[class*="--surface-"][class*="border"]:not([class*="inline-flex"]) {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: rgb(255 255 255 / 0.03) !important;
+    border-radius: 16px !important;
+  }
+
+  /* Botones secundarios (con borde, sin dorado) */
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla)
+    :is(button, a)[class*="border"]:not(
+      [class*="bg-gold-grad"], [class*="from-[color:var(--brand-gold"], [role="tab"],
+      .tj-interruptor *, .tj-sin-vidrio, .tj-sin-vidrio *, .tj-m-vidrio, [class*="border-b"]:not([class*="border "])
+    ) {
+    border-radius: 14px !important;
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.09), rgb(255 255 255 / 0.015));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+  }
+
+  /* Dorados */
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla) :is([class*="bg-gold-grad"], [class*="from-[color:var(--brand-gold-hi)]"]):is(button, a, span, div):not(
+      .tj-interruptor-pastilla, .tj-sin-vidrio *
+    ) {
+    background-image:
+      linear-gradient(180deg, rgb(255 255 255 / 0.28), rgb(255 255 255 / 0) 52%),
+      linear-gradient(135deg, var(--tj-oro-hi), var(--tj-oro) 55%, var(--tj-oro-lo)) !important;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.5),
+      inset 0 -8px 14px -8px rgb(0 0 0 / 0.35),
+      0 10px 24px -12px rgb(201 162 62 / 0.7) !important;
+  }
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla) :is(button, a):is([class*="bg-gold-grad"], [class*="from-[color:var(--brand-gold-hi)]"]):not(
+      .tj-interruptor *, .tj-sin-vidrio *
+    ) {
+    border-radius: 14px !important;
+  }
+
+  /* Campos */
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla)
+    :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"]), select, textarea):not(.tj-sin-vidrio *) {
+    border-radius: 14px !important;
+    background-color: rgb(0 0 0 / 0.55) !important;
+    border-color: rgb(255 255 255 / 0.1) !important;
+    box-shadow: inset 0 2px 6px -2px rgb(0 0 0 / 0.7);
+  }
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla)
+    :is(input, select, textarea):focus-visible {
+    border-color: rgb(201 162 62 / 0.7) !important;
+    box-shadow:
+      inset 0 2px 6px -2px rgb(0 0 0 / 0.7),
+      0 0 0 3px rgb(201 162 62 / 0.18);
+  }
+
+  /* Recuadros de fondo negro liso con borde (no barras pegadas ni campos). */
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla)
+    :is(div, section, form, li)[class~="bg-black"][class*="border"]:not(
+      [class*="inline-flex"], [class*="sticky"], .tj-sin-vidrio *, .tj-m-barra
+    ) {
+    background-color: rgb(255 255 255 / 0.03) !important;
+    border-radius: 18px !important;
+    border-color: rgb(255 255 255 / 0.09) !important;
+  }
+
+  /* Pestañas internas de línea (Perfil · Servicios · Horarios, etc.): las
+     mismas píldoras que las subpestañas, la elegida dorada. */
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla) :is(button, a)[class*="border-b-2"]:not(.tj-sin-vidrio *) {
+    border-bottom: 0 !important;
+    border-radius: 999px !important;
+    min-height: 38px;
+    margin-block: 8px;
+    padding-inline: 14px !important;
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.02));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.14),
+      inset 0 0 0 1px rgb(255 255 255 / 0.09);
+  }
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla)
+    :is(button, a)[class*="border-b-2"][class*="border-[color:var(--brand-gold)]"]:not(.tj-sin-vidrio *) {
+    color: #0a0a0a !important;
+    background-image:
+      linear-gradient(180deg, rgb(255 255 255 / 0.28), rgb(255 255 255 / 0) 52%),
+      linear-gradient(135deg, var(--tj-oro-hi), var(--tj-oro) 55%, var(--tj-oro-lo));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.5),
+      0 8px 20px -10px rgb(201 162 62 / 0.7);
+  }
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla)
+    :is(button, a)[class*="border-b-2"][class*="border-[color:var(--brand-gold)]"] svg {
+    color: #0a0a0a;
+  }
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla) :is(button, a)[class*="border-b-2"] {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla) :is(button, a)[class*="border-b-2"] svg {
+    flex-shrink: 0;
+  }
+  /* La fila de esas pestañas se desliza de costado si no entra. */
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla) :has(> :is(button, a)[class*="border-b-2"]) {
+    overflow-x: auto;
+    gap: 8px !important;
+    scrollbar-width: none;
+  }
+
+  /* Todos los botones con la misma esquina (los de color lleno, como Eliminar,
+     y las etiquetas que hacen de botón, como "Agregar foto"). Los redondos y
+     las píldoras quedan como son. */
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla)
+    :is(button, label[class*="inline-flex"][class*="border"]):not(
+      [class*="rounded-full"], [role="tab"], [class*="border-b-2"], .tj-interruptor *, .tj-sin-vidrio *
+    ) {
+    border-radius: 14px !important;
+  }
+
+  /* Estados vacíos punteados */
+  :is(.tj-panel-contenido, .tj-ventana, .tj-pantalla) [class*="border-dashed"]:not(.tj-sin-vidrio *) {
+    border-radius: 20px !important;
+    border-color: rgb(255 255 255 / 0.1) !important;
+    background-color: rgb(255 255 255 / 0.02);
+  }
 }
 
 /* ── Las ventanas (src/components/ui/Ventana.tsx, tanda 2) ──────────────────

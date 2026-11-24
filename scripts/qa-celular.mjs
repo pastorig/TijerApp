@@ -72,6 +72,11 @@ try {
     for (const accion of acciones) {
       const [tipo, ...resto] = accion.split(":");
       const valor = resto.join(":");
+      // Un paso que falla no corta el resto: se anota y sigue.
+      if (tipo === "click" && !(await page.locator(valor).first().isVisible().catch(() => false))) {
+        console.log(`${nombre}: no está visible ${valor} (se saltea)`);
+        continue;
+      }
       if (tipo === "click") await page.click(valor);
       else if (tipo === "tap") await page.tap(valor);
       else if (tipo === "wait") await page.waitForTimeout(Number(valor));

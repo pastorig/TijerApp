@@ -35,7 +35,9 @@ export function AdminSubtabs({ barbershopSlug }: { barbershopSlug: string }) {
 
   return (
     <div className="tj-panel-sub tj-m-barra sticky top-14 z-30 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-6xl gap-1 overflow-x-auto px-4 sm:px-8 lg:px-12">
+      {/* tj-subtabs: en el celular, píldoras de vidrio con la elegida dorada
+          (feature 041); en la compu, la línea dorada de siempre. */}
+      <div className="tj-subtabs mx-auto flex w-full max-w-6xl gap-1 overflow-x-auto px-4 sm:px-8 lg:px-12">
         {items.map((item) => {
           const active = itemIsActive(item, pathname);
           const Icon = item.icon;
@@ -43,6 +45,7 @@ export function AdminSubtabs({ barbershopSlug }: { barbershopSlug: string }) {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? "page" : undefined}
               className={cn(
                 "inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-3 text-sm font-semibold transition-colors duration-[var(--duration-fast)]",
                 active
