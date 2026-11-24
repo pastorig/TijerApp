@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TijerApp · celular con vidrio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;900&family=Geist+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* ── Maqueta de la feature 041 ──────────────────────────────────────────
+   ?v=a → "Negro puro": negro como hoy, vidrio sutil, apenas una luz dorada.
+   ?v=b → "Noche dorada": luces doradas difuminadas de fondo, vidrio más vivo.
+   Recetas: Solvian (vidrio oscuro) + mecánica de Dentidad (cápsula, Más, Ventana). */
+:root{
+  --oro:#c9a23e; --oro-hi:#e2c266; --oro-lo:#8a6e25;
+  --texto:#fff; --texto-2:#c8c8c8; --texto-3:#8a8a8a; --texto-4:#5a5a5a;
+  --fondo:#000;
+  --ambiente: radial-gradient(70% 30% at 110% -4%, rgb(201 162 62 / .10), transparent 70%);
+  --vidrio: linear-gradient(180deg, rgb(255 255 255 / .06), rgb(255 255 255 / .02)), rgb(14 14 14 / .62);
+  --vidrio-borde: rgb(255 255 255 / .09);
+  --vidrio-luz: rgb(255 255 255 / .10);
+  --vidrio-blur: blur(18px) saturate(140%);
+  --barra: linear-gradient(180deg, rgb(255 255 255 / .06), rgb(255 255 255 / .015)), rgb(10 10 10 / .88);
+  --hero: linear-gradient(170deg, #141414, #0a0a0a 70%);
+}
+html[data-v="b"]{
+  --ambiente:
+    radial-gradient(80% 32% at 110% 0%, rgb(201 162 62 / .26), transparent 70%),
+    radial-gradient(70% 34% at -12% 44%, rgb(226 194 102 / .12), transparent 70%),
+    radial-gradient(75% 30% at 85% 100%, rgb(201 162 62 / .16), transparent 70%),
+    linear-gradient(180deg, #0b0906, #000 60%);
+  --vidrio: linear-gradient(180deg, rgb(255 255 255 / .10), rgb(255 255 255 / .03)), rgb(12 10 6 / .45);
+  --vidrio-borde: rgb(255 255 255 / .12);
+  --vidrio-luz: rgb(255 255 255 / .18);
+  --vidrio-blur: blur(20px) saturate(160%);
+  --barra: linear-gradient(180deg, rgb(255 255 255 / .09), rgb(255 255 255 / .02)), rgb(12 10 6 / .72);
+  --hero: radial-gradient(80% 100% at 100% 0%, rgb(201 162 62 / .38), transparent 70%), linear-gradient(165deg, #1c160b, #0a0806 75%);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#1a1a1a;font-family:Geist,system-ui,sans-serif;color:var(--texto);padding:28px;display:flex;flex-direction:column;gap:18px;align-items:flex-start}
+h1.titulo{font-size:22px;font-weight:900;letter-spacing:-.02em}
+h1.titulo span{color:var(--oro)}
+p.bajada{color:#9c9c9c;font-size:14px;margin-top:-10px}
+.fila{display:flex;gap:28px}
+.cel{width:390px;height:844px;border-radius:52px;overflow:hidden;position:relative;background:var(--fondo);
+  box-shadow:0 0 0 10px #050505,0 0 0 11px #2a2a2a,0 30px 80px rgb(0 0 0/.6)}
+.cel .lienzo{position:absolute;inset:0;background:var(--ambiente),var(--fondo);background-repeat:no-repeat}
+.rotulo{margin:0 0 22px 4px;font:600 13px Geist;color:#9c9c9c}
+.marco{position:relative;display:flex;flex-direction:column}
+/* barra de estado */
+.estado{position:absolute;top:0;left:0;right:0;height:54px;display:flex;justify-content:space-between;align-items:center;padding:0 34px 0 40px;font:600 15px Geist;z-index:5}
+.isla{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:34px;border-radius:20px;background:#000;z-index:6}
+.scroll{position:absolute;inset:0;overflow:hidden;padding:54px 0 0}
+/* material */
+.vidrio{background:var(--vidrio);-webkit-backdrop-filter:var(--vidrio-blur);backdrop-filter:var(--vidrio-blur);
+  box-shadow:inset 0 1px 0 var(--vidrio-luz),inset 0 0 0 1px var(--vidrio-borde),0 18px 40px -18px rgb(0 0 0/.8)}
+.boton-oro{background:linear-gradient(180deg,rgb(255 255 255/.28),rgb(255 255 255/0) 52%),linear-gradient(135deg,var(--oro-hi),var(--oro) 55%,var(--oro-lo));
+  color:#0a0a0a;box-shadow:inset 0 1px 0 rgb(255 255 255/.5),inset 0 -8px 14px -8px rgb(0 0 0/.35),0 10px 26px -10px rgb(201 162 62/.7)}
+.boton-vidrio{background:linear-gradient(180deg,rgb(255 255 255/.12),rgb(255 255 255/.02));color:#fff;
+  box-shadow:inset 0 1px 0 rgb(255 255 255/.18),inset 0 0 0 1px rgb(255 255 255/.12)}
+/* encabezado */
+.cabecera{padding:10px 20px 54px;background:var(--hero);border-radius:0 0 30px 30px;position:relative}
+.cabecera .top{display:flex;justify-content:space-between;align-items:center}
+.logo{display:flex;align-items:center;gap:10px}
+.logo .marca{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font:900 15px Geist;color:#0a0a0a}
+.logo b{font-weight:800;font-size:15px}
+.logo small{display:block;color:var(--texto-3);font-size:11.5px;font-weight:500}
+.redondo{width:40px;height:40px;border-radius:999px;display:grid;place-items:center}
+.redondo svg{width:18px;height:18px}
+.saludo{margin-top:22px}
+.saludo p{color:var(--texto-3);font-size:13px}
+.saludo h2{font-size:28px;font-weight:900;letter-spacing:-.03em;margin-top:2px}
+.capsula-fecha{display:inline-flex;gap:8px;align-items:center;margin-top:12px;padding:7px 12px;border-radius:999px;font-size:12.5px;color:var(--texto-2)}
+.capsula-fecha i{width:7px;height:7px;border-radius:99px;background:var(--oro);box-shadow:0 0 10px var(--oro)}
+/* métricas */
+.metricas{margin:-36px 16px 0;border-radius:22px;display:grid;grid-template-columns:repeat(3,1fr);position:relative}
+.metricas div{padding:14px 12px}
+.metricas div + div{border-left:1px solid rgb(255 255 255/.07)}
+.metricas span{font-size:11.5px;color:var(--texto-3)}
+.metricas b{display:block;font:600 22px "Geist Mono";margin-top:4px;letter-spacing:-.02em}
+.metricas b.oro{color:var(--oro-hi)}
+.seccion-t{display:flex;justify-content:space-between;align-items:baseline;margin:22px 20px 10px}
+.seccion-t h3{font-size:16px;font-weight:800}
+.seccion-t a{font-size:12.5px;color:var(--oro)}
+/* agenda */
+.panel{margin:0 16px;border-radius:22px;overflow:hidden}
+.turno{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.turno + .turno{border-top:1px solid rgb(255 255 255/.07)}
+.hora{font:600 14px "Geist Mono";width:46px;color:var(--texto-2)}
+.av{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:13px;background:rgb(255 255 255/.07);color:var(--texto-2)}
+.quien{flex:1;min-width:0}
+.quien b{display:block;font-size:14.5px;font-weight:700}
+.quien small{color:var(--texto-3);font-size:12px}
+.pill{font-size:11px;font-weight:700;padding:5px 9px;border-radius:999px}
+.pill.ok{color:#86efac;background:rgb(134 239 172/.1);box-shadow:inset 0 0 0 1px rgb(134 239 172/.2)}
+.pill.pend{color:var(--oro-hi);background:rgb(201 162 62/.12);box-shadow:inset 0 0 0 1px rgb(201 162 62/.28)}
+.ahora{position:relative}
+.ahora::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--oro);box-shadow:0 0 12px var(--oro)}
+/* accesos */
+.accesos{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 16px}
+.acceso{border-radius:20px;padding:12px 4px;text-align:center;font-size:11.5px;color:var(--texto-2)}
+.acceso svg{width:20px;height:20px;color:var(--oro);display:block;margin:0 auto 7px}
+/* barra de abajo */
+.nav{position:absolute;left:12px;right:12px;bottom:14px;height:66px;border-radius:26px;display:flex;align-items:center;justify-content:space-around;padding:0 8px;z-index:4;
+  background:var(--barra);-webkit-backdrop-filter:blur(22px) saturate(150%);backdrop-filter:blur(22px) saturate(150%);
+  box-shadow:inset 0 1px 0 rgb(255 255 255/.12),inset 0 0 0 1px rgb(255 255 255/.09),0 18px 40px -12px rgb(0 0 0/.9)}
+.nav a{width:58px;height:52px;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10.5px;color:var(--texto-3);position:relative}
+.nav a svg{width:21px;height:21px}
+.nav a.activa{color:#fff;background:linear-gradient(180deg,rgb(255 255 255/.14),rgb(255 255 255/.04));box-shadow:inset 0 1px 0 rgb(255 255 255/.2),inset 0 0 0 1px rgb(255 255 255/.1)}
+.nav a.activa svg{color:var(--oro-hi)}
+.nav .mas-btn{width:58px;height:58px;border-radius:999px;margin-top:-30px;display:grid;place-items:center;
+  box-shadow:inset 0 1px 0 rgb(255 255 255/.5),0 0 0 6px #000,0 12px 30px -8px rgb(201 162 62/.75)}
+html[data-v="b"] .nav .mas-btn{box-shadow:inset 0 1px 0 rgb(255 255 255/.5),0 0 0 6px #050403,0 12px 30px -8px rgb(201 162 62/.85)}
+.nav .mas-btn svg{width:26px;height:26px;color:#0a0a0a}
+.fumado-abajo{position:absolute;left:0;right:0;bottom:0;height:150px;background:linear-gradient(180deg,transparent,rgb(0 0 0/.85) 70%);pointer-events:none;z-index:3}
+/* turnero */
+.barra-top{display:flex;align-items:center;justify-content:space-between;padding:8px 16px 12px}
+.barra-top h2{font-size:24px;font-weight:900;letter-spacing:-.03em}
+.dias{display:flex;gap:8px;padding:0 16px 14px;-webkit-mask:linear-gradient(90deg,#000 85%,transparent)}
+.dia{min-width:54px;padding:9px 0;border-radius:18px;text-align:center}
+.dia small{display:block;font-size:10.5px;color:var(--texto-3);letter-spacing:.06em}
+.dia b{font:600 18px "Geist Mono"}
+.dia.sel{color:#0a0a0a}
+.dia.sel small{color:rgb(10 10 10/.7)}
+.dia i{display:block;width:5px;height:5px;border-radius:9px;margin:4px auto 0;background:#86efac}
+.dia i.med{background:#fbbf24}.dia i.full{background:#f87171}
+.interruptor{margin:0 16px 14px;height:42px;border-radius:999px;position:relative;display:flex;padding:4px;
+  box-shadow:inset 0 2px 6px -2px rgb(0 0 0/.8),inset 0 0 0 1px rgb(255 255 255/.08);background:rgb(255 255 255/.04)}
+.interruptor span{flex:1;display:grid;place-items:center;font-size:13px;font-weight:600;color:var(--texto-3);position:relative;z-index:1}
+.interruptor span.sel{color:#0a0a0a}
+.interruptor .pastilla{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/3);border-radius:999px}
+.bloque-hora{margin:0 16px 8px;font:600 11.5px "Geist Mono";color:var(--texto-4);letter-spacing:.08em}
+.tarjeta-turno{margin:0 16px 10px;border-radius:22px;padding:14px}
+.tarjeta-turno .arriba{display:flex;gap:12px;align-items:center}
+.tarjeta-turno .acciones{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.tarjeta-turno .acciones span{height:38px;border-radius:999px;display:grid;place-items:center;font-size:12.5px;font-weight:700}
+/* ventana */
+.velo{position:absolute;inset:0;background:rgb(0 0 0/.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);z-index:7}
+.hoja{position:absolute;left:0;right:0;bottom:0;height:610px;border-radius:30px 30px 0 0;z-index:8;padding:10px 20px 30px;
+  background:linear-gradient(180deg,rgb(255 255 255/.10),rgb(255 255 255/.03) 40%),rgb(16 16 16/.86);
+  -webkit-backdrop-filter:blur(28px) saturate(150%);backdrop-filter:blur(28px) saturate(150%);
+  box-shadow:inset 0 1px 0 rgb(255 255 255/.16),inset 0 0 0 1px rgb(255 255 255/.08),0 -24px 60px -20px rgb(0 0 0/.9)}
+html[data-v="b"] .hoja{background:radial-gradient(70% 40% at 100% 0%,rgb(201 162 62/.18),transparent 70%),linear-gradient(180deg,rgb(255 255 255/.12),rgb(255 255 255/.03) 40%),rgb(14 11 6/.8)}
+.manija{width:40px;height:5px;border-radius:9px;background:rgb(255 255 255/.25);margin:0 auto 16px}
+.hoja h4{font-size:12px;color:var(--oro);letter-spacing:.12em;font-weight:700}
+.hoja h2{font-size:26px;font-weight:900;letter-spacing:-.03em;margin-top:6px}
+.hoja .sub{color:var(--texto-3);font-size:13.5px;margin-top:4px}
+.datos{margin-top:18px;border-radius:20px}
+.dato{display:flex;justify-content:space-between;padding:13px 16px;font-size:14px}
+.dato + .dato{border-top:1px solid rgb(255 255 255/.07)}
+.dato span{color:var(--texto-3)}
+.botones{display:grid;gap:10px;margin-top:18px}
+.botones .grande{height:52px;border-radius:999px;display:grid;place-items:center;font-weight:800;font-size:15px}
+.botones .dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cruz{position:absolute;right:18px;top:22px;width:36px;height:36px;border-radius:999px;display:grid;place-items:center;font-size:18px;color:var(--texto-2)}
+</style>
+</head>
+<body>
+<h1 class="titulo">TijerApp en el celular · <span id="nombre-v"></span></h1>
+<p class="bajada" id="bajada-v"></p>
+<div class="fila">
+
+<!-- 1 · INICIO -->
+<div class="marco"><div class="rotulo">Inicio</div>
+<div class="cel"><div class="lienzo"></div><div class="isla"></div>
+ <div class="estado"><span>9:41</span><span>100%</span></div>
+ <div class="scroll">
+  <div class="cabecera">
+   <div class="top">
+    <div class="logo"><div class="marca boton-oro">T</div><div><b>Leo Cuts</b><small>Plan Esencial</small></div></div>
+    <div class="redondo boton-vidrio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
+   </div>
+   <div class="saludo"><p>Buenas tardes,</p><h2>Leo</h2>
+    <div class="capsula-fecha vidrio"><i></i>Martes 24 de noviembre · 5 turnos más hoy</div></div>
+  </div>
+  <div class="metricas vidrio">
+   <div><span>Turnos hoy</span><b>9</b></div>
+   <div><span>Ingresos</span><b class="oro">$108k</b></div>
+   <div><span>Ocupación</span><b>82%</b></div>
+  </div>
+  <div class="seccion-t"><h3>Lo que viene</h3><a>Ver agenda</a></div>
+  <div class="panel vidrio">
+   <div class="turno ahora"><span class="hora">16:20</span><div class="av">BR</div><div class="quien"><b>Bruno Rojas</b><small>Corte + barba · Leo</small></div><span class="pill ok">Confirmado</span></div>
+   <div class="turno"><span class="hora">17:00</span><div class="av">MA</div><div class="quien"><b>Matías Acosta</b><small>Corte · Leo</small></div><span class="pill pend">Pendiente</span></div>
+   <div class="turno"><span class="hora">17:40</span><div class="av">JP</div><div class="quien"><b>Juan Pérez</b><small>Fade · Santi</small></div><span class="pill ok">Confirmado</span></div>
+  </div>
+  <div class="seccion-t"><h3>Accesos</h3></div>
+  <div class="accesos">
+   <div class="acceso vidrio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Bloquear</div>
+   <div class="acceso vidrio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>Compartir</div>
+   <div class="acceso vidrio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Reportes</div>
+   <div class="acceso vidrio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/></svg>Caja</div>
+  </div>
+ </div>
+ <div class="fumado-abajo"></div>
+ <nav class="nav">
+  <a class="activa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Inicio</a>
+  <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Turnero</a>
+  <span class="mas-btn boton-oro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg></span>
+  <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-4-5.6"/></svg>Clientes</a>
+  <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>Más</a>
+ </nav>
+</div></div>
+
+<!-- 2 · TURNERO -->
+<div class="marco"><div class="rotulo">Turnero</div>
+<div class="cel"><div class="lienzo"></div><div class="isla"></div>
+ <div class="estado"><span>9:41</span><span>100%</span></div>
+ <div class="scroll">
+  <div class="barra-top"><h2>Turnero</h2><div class="redondo boton-vidrio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div></div>
+  <div class="dias">
+   <div class="dia vidrio"><small>LUN</small><b>23</b><i class="med"></i></div>
+   <div class="dia boton-oro sel"><small>HOY</small><b>24</b><i class="full"></i></div>
+   <div class="dia vidrio"><small>MIÉ</small><b>25</b><i></i></div>
+   <div class="dia vidrio"><small>JUE</small><b>26</b><i class="med"></i></div>
+   <div class="dia vidrio"><small>VIE</small><b>27</b><i class="full"></i></div>
+   <div class="dia vidrio"><small>SÁB</small><b>28</b><i class="full"></i></div>
+  </div>
+  <div class="interruptor"><div class="pastilla boton-oro"></div><span class="sel">Todos</span><span>Leo</span><span>Santi</span></div>
+  <div class="bloque-hora">AHORA · 16:20</div>
+  <div class="tarjeta-turno vidrio ahora">
+   <div class="arriba"><span class="hora">16:20</span><div class="av">BR</div><div class="quien"><b>Bruno Rojas</b><small>Corte + barba · 40 min · $14.000</small></div><span class="pill ok">Confirmado</span></div>
+   <div class="acciones"><span class="boton-oro">Llegó</span><span class="boton-vidrio">WhatsApp</span><span class="boton-vidrio">Mover</span></div>
+  </div>
+  <div class="bloque-hora">MÁS TARDE</div>
+  <div class="panel vidrio">
+   <div class="turno"><span class="hora">17:00</span><div class="av">MA</div><div class="quien"><b>Matías Acosta</b><small>Corte · Leo</small></div><span class="pill pend">Pendiente</span></div>
+   <div class="turno"><span class="hora">17:40</span><div class="av">JP</div><div class="quien"><b>Juan Pérez</b><small>Fade · Santi</small></div><span class="pill ok">Confirmado</span></div>
+   <div class="turno"><span class="hora">18:20</span><div class="av">NG</div><div class="quien"><b>Nico Gómez</b><small>Corte + barba · Leo</small></div><span class="pill ok">Confirmado</span></div>
+   <div class="turno"><span class="hora">19:00</span><div class="av">FL</div><div class="quien"><b>Fede López</b><small>Corte · Santi</small></div><span class="pill pend">Pendiente</span></div>
+  </div>
+ </div>
+ <div class="fumado-abajo"></div>
+ <nav class="nav">
+  <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Inicio</a>
+  <a class="activa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Turnero</a>
+  <span class="mas-btn boton-oro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg></span>
+  <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-4-5.6"/></svg>Clientes</a>
+  <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>Más</a>
+ </nav>
+</div></div>
+
+<!-- 3 · VENTANA -->
+<div class="marco"><div class="rotulo">Un turno abierto (se baja con el dedo)</div>
+<div class="cel"><div class="lienzo"></div><div class="isla"></div>
+ <div class="estado"><span>9:41</span><span>100%</span></div>
+ <div class="scroll">
+  <div class="barra-top"><h2>Turnero</h2></div>
+  <div class="dias">
+   <div class="dia vidrio"><small>LUN</small><b>23</b><i class="med"></i></div>
+   <div class="dia boton-oro sel"><small>HOY</small><b>24</b><i class="full"></i></div>
+   <div class="dia vidrio"><small>MIÉ</small><b>25</b><i></i></div>
+   <div class="dia vidrio"><small>JUE</small><b>26</b><i class="med"></i></div>
+   <div class="dia vidrio"><small>VIE</small><b>27</b><i class="full"></i></div>
+  </div>
+  <div class="tarjeta-turno vidrio ahora"><div class="arriba"><span class="hora">16:20</span><div class="av">BR</div><div class="quien"><b>Bruno Rojas</b><small>Corte + barba</small></div></div></div>
+  <div class="panel vidrio">
+   <div class="turno"><span class="hora">17:00</span><div class="av">MA</div><div class="quien"><b>Matías Acosta</b><small>Corte · Leo</small></div></div>
+   <div class="turno"><span class="hora">17:40</span><div class="av">JP</div><div class="quien"><b>Juan Pérez</b><small>Fade · Santi</small></div></div>
+  </div>
+ </div>
+ <div class="velo"></div>
+ <div class="hoja">
+  <div class="manija"></div>
+  <div class="cruz boton-vidrio">✕</div>
+  <h4>HOY · 16:20</h4>
+  <h2>Bruno Rojas</h2>
+  <p class="sub">Corte + barba · 40 min con Leo</p>
+  <div class="datos vidrio">
+   <div class="dato"><span>Teléfono</span><b>351 600-9911</b></div>
+   <div class="dato"><span>Precio</span><b>$14.000</b></div>
+   <div class="dato"><span>Visitas</span><b>7 · última hace 3 semanas</b></div>
+   <div class="dato"><span>Estado</span><span class="pill ok">Confirmado</span></div>
+  </div>
+  <div class="botones">
+   <div class="grande boton-oro">Marcar que llegó</div>
+   <div class="dos"><div class="grande boton-vidrio">WhatsApp</div><div class="grande boton-vidrio">Mover</div></div>
+   <div class="grande" style="color:#fca5a5;height:44px">Cancelar turno</div>
+  </div>
+ </div>
+</div></div>
+
+</div>
+<script>
+const v = new URLSearchParams(location.search).get("v") === "b" ? "b" : "a";
+document.documentElement.dataset.v = v;
+document.getElementById("nombre-v").textContent = v === "a" ? "A · Negro puro" : "B · Noche dorada";
+document.getElementById("bajada-v").textContent = v === "a"
+  ? "Negro como hoy. El vidrio es sutil y casi no tiñe; una sola luz dorada arriba."
+  : "Luces doradas difuminadas detrás del vidrio; el encabezado y la ventana toman un tono dorado.";
+</script>
+</body>
+</html>
