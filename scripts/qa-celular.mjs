@@ -44,8 +44,18 @@ const tapados = (page) => page.evaluate(() => {
   return [...new Set(out)];
 });
 
+// --staff: entra como EMPLEADO de la demo (barbero Esteban, todos los
+// permisos) y las rutas cuelgan de /primebarber/ (ej. "mi-agenda").
+const comoEmpleado = args.includes("--staff");
 try {
-  const { error: e1 } = await admin.from("barbershop_admins").insert({ user_id: userId, barbershop_slug: "primebarber", role: "admin" });
+  const { error: e1 } = comoEmpleado
+    ? await admin.from("barber_staff_access").insert({
+        // Matías: Esteban ya tiene un empleado asignado en la demo.
+        user_id: userId, granted_by: userId, barbershop_slug: "primebarber", barber_id: "a583cb34-f499-4bd0-be40-d0ae8688b2c1",
+        can_see_earnings: true, can_confirm: true, can_cancel: true, can_contact_client: true,
+        can_create_appointment: true, can_block_time: true, can_reschedule: true,
+      })
+    : await admin.from("barbershop_admins").insert({ user_id: userId, barbershop_slug: "primebarber", role: "admin" });
   if (e1) throw e1;
   const motor = usarWebkit ? webkit : chromium;
   const browser = await motor.launch(usarWebkit ? {} : { channel: "chrome" });
@@ -60,11 +70,11 @@ try {
   await page.fill("#admin-email", email);
   await page.fill("#admin-password", clave);
   await page.click("button[type=submit]");
-  await page.waitForURL((u) => u.pathname === "/primebarber/admin", { timeout: 40000 });
+  await page.waitForURL((u) => u.pathname === (comoEmpleado ? "/primebarber/mi-agenda" : "/primebarber/admin"), { timeout: 40000 });
   for (const ruta of rutas) {
     const [camino, ...acciones] = ruta.split("|");
     const nombre = camino.replace(/[^a-z0-9]+/gi, "-") || "inicio";
-    await page.goto(`${base}/primebarber/admin/${camino}`, { waitUntil: "networkidle" });
+    await page.goto(`${base}/primebarber/${comoEmpleado ? "" : "admin/"}${camino}`, { waitUntil: "networkidle" });
     await page.addStyleTag({ content: "nextjs-portal{display:none!important}" });
     await page.waitForTimeout(3500);
     await page.screenshot({ path: `${carpeta}/${nombre}.png` });
@@ -101,6 +111,7 @@ try {
   await browser.close();
 } finally {
   await admin.from("barbershop_admins").delete().eq("user_id", userId);
+  await admin.from("barber_staff_access").delete().eq("user_id", userId);
   await admin.auth.admin.deleteUser(userId);
   console.log("cuenta de prueba borrada");
 }

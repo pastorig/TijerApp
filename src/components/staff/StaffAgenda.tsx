@@ -29,6 +29,8 @@ import { formatPrice } from "@/lib/format";
 import { agruparPorFranja } from "@/lib/staff-agenda-grouping";
 import { createWhatsAppClientContactLink } from "@/lib/whatsapp";
 import { AgendaCalendar } from "@/components/calendar/AgendaCalendar";
+import { EVENTO_TURNO_NUEVO_STAFF } from "./StaffBottomNav";
+import { Interruptor } from "@/components/ui/Interruptor";
 import { addDays } from "@/components/calendar/date-utils";
 import { MetricCard } from "@/components/admin/MetricCard";
 import { Badge, Button, Card } from "@/components/ui";
@@ -554,6 +556,25 @@ export function StaffAgenda({
     setBloqueoDesde((actual) => ({ n: actual.n + 1, hora }));
     setBloqueandoHorario(true);
   }
+
+  // El ＋ de la barra de abajo del celular (feature 041, tanda 5): en la agenda
+  // avisa con un evento; desde otra sección llega con ?nuevo=1.
+  const puedeAbrirAlta = permisos.cargarTurno && !soloLectura;
+  useEffect(() => {
+    if (!puedeAbrirAlta) return;
+    function alPedirTurnoNuevo() {
+      setAlta((actual) => ({ n: actual.n + 1, hora: "", modo: "turno" }));
+      setCargandoTurno(true);
+    }
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("nuevo") === "1") {
+      url.searchParams.delete("nuevo");
+      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+      alPedirTurnoNuevo();
+    }
+    window.addEventListener(EVENTO_TURNO_NUEVO_STAFF, alPedirTurnoNuevo);
+    return () => window.removeEventListener(EVENTO_TURNO_NUEVO_STAFF, alPedirTurnoNuevo);
+  }, [puedeAbrirAlta]);
   function alTocarHueco(args: { time: string; mode: AgendaCreateMode }) {
     if (args.mode === "bloquear") abrirBloqueo(args.time);
     else abrirAlta(args.time, args.mode);
@@ -799,34 +820,34 @@ export function StaffAgenda({
               calendario, porque el turno se carga PARA el día que se está
               mirando: la acción pertenece a lo que hay abajo. */}
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <div
-              role="group"
-              aria-label="Cómo ver la agenda"
-              className="inline-flex rounded-[var(--radius-md)] border border-[color:var(--border-default)] bg-[color:var(--surface-1)] p-0.5"
-            >
-              {(
-                [
-                  { valor: "lista", texto: "Lista", Icono: List },
-                  { valor: "calendario", texto: "Calendario", Icono: CalendarDays },
-                ] as const
-              ).map(({ valor, texto, Icono }) => (
-                <button
-                  key={valor}
-                  type="button"
-                  aria-pressed={vista === valor}
-                  onClick={() => guardarVista(valor)}
-                  className={cn(
-                    "inline-flex min-h-10 items-center gap-1.5 rounded-[var(--radius-sm)] px-3 text-xs font-semibold transition-colors",
-                    vista === valor
-                      ? "bg-[color:var(--surface-3)] text-white"
-                      : "text-[color:var(--text-muted)] hover:text-white",
-                  )}
-                >
-                  <Icono aria-hidden="true" className="size-3.5" />
-                  {texto}
-                </button>
-              ))}
-            </div>
+            {/* El mismo selector que el Turnero del dueño (feature 041). */}
+            <Interruptor
+              rol="tab"
+              ariaLabel="Cómo ver la agenda"
+              opciones={[
+                {
+                  valor: "lista",
+                  label: (
+                    <>
+                      <List aria-hidden="true" className="size-3.5" />
+                      Lista
+                    </>
+                  ),
+                },
+                {
+                  valor: "calendario",
+                  label: (
+                    <>
+                      <CalendarDays aria-hidden="true" className="size-3.5" />
+                      Calendario
+                    </>
+                  ),
+                },
+              ]}
+              valor={vista}
+              onChange={guardarVista}
+              className="w-60"
+            />
             {!soloLectura && (permisos.cargarTurno || permisos.bloquearHorario) ? (
               <div className="flex flex-wrap justify-end gap-2">
                 {permisos.bloquearHorario ? (
