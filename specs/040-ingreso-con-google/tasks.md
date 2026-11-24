@@ -28,8 +28,8 @@ Orden por dependencias. [P] = se puede hacer en paralelo con la anterior.
 ## Fase 5 — Verificación
 
 - [x] T014 `npx eslint src scripts`, `npm run test:unit`, `npm run build`.
-- [ ] T015 Local (`localhost:3000`, origen autorizado): cuenta de prueba creada con mail+clave → Google con el mismo mail → mismo `user.id` (T002 de la spec).
-- [x] T016 Local: Gmail nuevo → completar → barbería creada → borrarla.
+- [ ] T015 En prod, con Bautista (la CLI de Vercel no tiene el ID para probarlo en local): cuenta de prueba creada con mail+clave → Google con el mismo mail → mismo `user.id` (T002 de la spec).
+- [ ] T016 Gmail nuevo → completar → barbería creada → borrarla (en prod, con Bautista). Probado en local: sin sesión → /login; token sin Google → 403; sin token → 401.
 - [x] T017 390 px: botón y aviso sin tapar nada.
 - [ ] T018 Merge a `main` (un solo push) y en prod: iPhone con la app instalada (T001), Android instalada, link desde Instagram.
 - [ ] T019 Si T001 falla: plan B por redirección solo en iOS instalado.
