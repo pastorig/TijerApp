@@ -12,7 +12,7 @@ import { CommercialNavMobileMenu } from "./CommercialNavMobileMenu";
  */
 export function CommercialNav() {
   return (
-    <nav className="sticky top-0 z-20 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md">
+    <nav className="tj-m-barra tj-pantalla-arriba sticky top-0 z-20 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 px-3 py-3 sm:px-8 sm:py-4 lg:px-12">
         <Link
           href="/"

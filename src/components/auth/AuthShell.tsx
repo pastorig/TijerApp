@@ -44,7 +44,7 @@ export function AuthShell({
   panelSubtitle?: string;
 }) {
   return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-black text-white">
+    <main className="tj-pantalla relative isolate min-h-screen overflow-hidden bg-black text-white">
       {/* Glow dorado ambiente, igual que la landing */}
       <div
         aria-hidden="true"

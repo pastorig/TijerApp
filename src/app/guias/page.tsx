@@ -23,7 +23,7 @@ export default function GuiasPage() {
   const guias = getGuiasOrdenadas();
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="tj-pantalla min-h-screen bg-black text-white">
       <CommercialNav />
 
       <section className="relative isolate overflow-hidden">
