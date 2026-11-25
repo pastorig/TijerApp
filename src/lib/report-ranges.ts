@@ -109,3 +109,85 @@ export function rangoAnterior(
   }
   return { start: aYmd(inicio), end: aYmd(fin), days: diasDelActual };
 }
+
+// ── Períodos anteriores (feature 043) ─────────────────────────────────────────
+// "Atrás" es cuántos períodos del mismo tipo se retrocede desde el actual:
+// 0 = el que está en curso (cortado en hoy, como siempre), 1 = el anterior
+// (ayer, la semana pasada, el mes pasado), y así. Un período que ya terminó se
+// cuenta ENTERO y se compara contra el anterior ENTERO.
+
+/** Hasta dónde se puede ir para atrás: 24 meses en cualquiera de los tres. */
+export const MAX_ATRAS: Record<PeriodKey, number> = {
+  today: 730,
+  week: 104,
+  month: 24,
+};
+
+const MESES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+/** El período completo (sin cortar en hoy), `atras` lugares antes del actual. */
+function rangoCompleto(periodo: PeriodKey, hoy: Date, atras: number): DateRange {
+  if (periodo === "today") {
+    const dia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - atras);
+    return { start: aYmd(dia), end: aYmd(dia), days: 1 };
+  }
+  if (periodo === "week") {
+    const lunes = inicioDeSemana(hoy);
+    const inicio = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() - 7 * atras);
+    const fin = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate() + 6);
+    return { start: aYmd(inicio), end: aYmd(fin), days: 7 };
+  }
+  const inicio = new Date(hoy.getFullYear(), hoy.getMonth() - atras, 1);
+  const fin = new Date(inicio.getFullYear(), inicio.getMonth() + 1, 0);
+  return { start: aYmd(inicio), end: aYmd(fin), days: diasEntre(inicio, fin) };
+}
+
+function acotarAtras(periodo: PeriodKey, atras: number): number {
+  return Math.min(Math.max(0, Math.trunc(atras)), MAX_ATRAS[periodo]);
+}
+
+/** Lo que se cuenta: el período en curso hasta hoy, o uno ya terminado entero. */
+export function rangoMirado(periodo: PeriodKey, hoy: Date, atras: number): DateRange {
+  const n = acotarAtras(periodo, atras);
+  return n === 0 ? rangoDelPeriodo(periodo, hoy) : rangoCompleto(periodo, hoy, n);
+}
+
+/** Contra qué se compara lo que se está mirando. */
+export function rangoDeComparacion(periodo: PeriodKey, hoy: Date, atras: number): DateRange {
+  const n = acotarAtras(periodo, atras);
+  if (n === 0) return rangoAnterior(periodo, rangoDelPeriodo(periodo, hoy).days, hoy);
+  return rangoCompleto(periodo, hoy, n + 1);
+}
+
+/**
+ * Cómo se llama el período para el dueño: "Este mes" / "Octubre 2026",
+ * "Esta semana" / "Semana pasada" / "17 – 23 nov", "Hoy" / "Ayer" / "lunes 24/11".
+ */
+export function nombreDelPeriodo(periodo: PeriodKey, hoy: Date, atras: number): string {
+  const n = acotarAtras(periodo, atras);
+  const r = rangoCompleto(periodo, hoy, n);
+  const [y, m, d] = r.start.split("-").map(Number);
+  if (periodo === "today") {
+    if (n === 0) return "Hoy";
+    if (n === 1) return "Ayer";
+    const dia = new Date(y, m - 1, d);
+    return `${DIAS[dia.getDay()]} ${d}/${m}${y !== hoy.getFullYear() ? `/${y}` : ""}`;
+  }
+  if (periodo === "week") {
+    if (n === 0) return "Esta semana";
+    if (n === 1) return "Semana pasada";
+    const [y2, m2, d2] = r.end.split("-").map(Number);
+    const anio = y2 !== hoy.getFullYear() ? ` ${y2}` : "";
+    return m === m2
+      ? `${d} – ${d2} ${MESES_CORTOS[m2 - 1]}${anio}`
+      : `${d} ${MESES_CORTOS[m - 1]} – ${d2} ${MESES_CORTOS[m2 - 1]}${anio}`;
+  }
+  if (n === 0) return "Este mes";
+  const nombre = MESES[m - 1];
+  return `${nombre[0].toUpperCase()}${nombre.slice(1)} ${y}`;
+}
