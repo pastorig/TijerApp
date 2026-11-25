@@ -481,8 +481,10 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
       {!isLoading && !errorMessage ? (
         <>
           {/* Controles: período + barbero */}
-          <section className="grid gap-3 sm:grid-cols-[1fr_minmax(0,16rem)]">
-            <div className="flex gap-2 overflow-x-auto pb-1">
+          {/* Una barra de vidrio (044): en la compu, período · flechas ·
+              barbero · PDF en una fila; en el celular, uno debajo del otro. */}
+          <section className="tj-m-vidrio flex flex-col gap-3 rounded-[var(--radius-md)] border border-[color:var(--border-subtle)] bg-[color:var(--surface-1)] p-3 sm:p-4 lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-4">
+            <div className="flex gap-2 overflow-x-auto pb-1 lg:pb-0">
               {PERIOD_OPTIONS.map((opt) => {
                 const isActive = period === opt.value;
                 return (
@@ -512,7 +514,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                 son dos cajas negras que dan números distintos y el barbero no
                 tiene cómo saber por qué: es justo lo que pasó con SV Barber. */}
             {/* Moverse a períodos anteriores (043). Nunca al futuro. */}
-            <div className="flex items-center gap-2 sm:col-span-2 sm:max-w-sm" role="group" aria-label="Período">
+            <div className="flex items-center gap-2 lg:w-72 lg:flex-none" role="group" aria-label="Período">
               <button
                 type="button"
                 onClick={() => setAtras((n) => Math.min(n + 1, MAX_ATRAS[period]))}
@@ -539,7 +541,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
               </button>
             </div>
 
-            <p className="text-[11px] leading-4 text-[color:var(--text-muted)] sm:col-span-2">
+            <p className="order-last text-[11px] leading-4 text-[color:var(--text-muted)] lg:w-full">
               Contando del <strong className="text-white">{formatDateForDisplay(currentRange.start)}</strong>{" "}
               al <strong className="text-white">{formatDateForDisplay(currentRange.end)}</strong>
               {currentRange.days > 1 ? ` · ${currentRange.days} días` : ""}
@@ -548,7 +550,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                 : ` — comparado con ${formatDateForDisplay(previousRange.start)} al ${formatDateForDisplay(previousRange.end)}.`}
             </p>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 lg:ml-auto lg:min-w-[22rem]">
               {barberOptions.length > 1 ? (
                 <Select
                   aria-label="Filtrar por barbero"
