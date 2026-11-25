@@ -38,7 +38,7 @@ export function PublicBarbershopLanding({
   bookingEnabled = true,
 }: PublicBarbershopLandingProps) {
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="tj-pantalla min-h-screen bg-black text-white">
       {/* PWA: registra que el usuario visitó esta barbería como "public" para
           que al abrir la PWA del home screen lo redirija acá. */}
       <LastContextTracker slug={barbershop.slug} role="public" />
@@ -48,7 +48,7 @@ export function PublicBarbershopLanding({
       <InstallBanner barbershopName={barbershop.name} />
 
       {/* Nav top */}
-      <nav className="sticky top-0 z-10 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md">
+      <nav className="tj-m-barra tj-pantalla-arriba sticky top-0 z-10 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-8 sm:py-4 lg:px-12">
           <Link
             href="/"

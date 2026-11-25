@@ -58,6 +58,7 @@ import {
   bajarHastaElPaso,
 } from "./booking/BookingMotion";
 import { DepositPaymentPanel } from "./DepositPaymentPanel";
+import { Ventana } from "./ui/Ventana";
 import { SimulatePaymentButton } from "./SimulatePaymentButton";
 import type { CouponValidation } from "@/lib/public-coupons";
 
@@ -1015,16 +1016,13 @@ export function BookingForm({ barbershop }: BookingFormProps) {
     // mover y de animar el layout, y solo conserva los cambios de opacidad.
     <MotionConfig reducedMotion="user">
       {showWaitlistForm ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
-          onClick={() => setShowWaitlistForm(false)}
+        <Ventana
+          label="Lista de espera"
+          onClose={() => setShowWaitlistForm(false)}
+          puedeCerrar={() => !isSubmittingWaitlist}
+          panelClassName="w-full max-w-md rounded-[var(--radius-md)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--surface-1)] p-6"
         >
-          <div
-            className="w-full max-w-md rounded-[var(--radius-md)] border border-[color:var(--brand-gold)]/30 bg-[color:var(--surface-1)] p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-gold)]">
               Lista de espera
             </p>
@@ -1087,7 +1085,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
               </button>
             </div>
           </div>
-        </div>
+        </Ventana>
       ) : null}
 
     <form
@@ -1667,7 +1665,7 @@ export function BookingForm({ barbershop }: BookingFormProps) {
       </aside>
 
       {/* Sticky bottom CTA (mobile) — barra prominente: precio + RESERVAR grande */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--border-strong)] bg-black/95 px-4 py-3 backdrop-blur-md lg:hidden">
+      <div className="tj-reserva-barra fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--border-strong)] bg-black/95 px-4 py-3 backdrop-blur-md lg:hidden">
         <div className="mx-auto flex max-w-6xl items-center gap-3">
           <div className="min-w-0 flex-1">
             {selectedService ? (

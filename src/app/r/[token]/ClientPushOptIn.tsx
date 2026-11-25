@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+
+const sinSuscripcion = () => () => {};
 import { Bell, BellOff, Check } from "lucide-react";
 import { useToast } from "@/components/ui";
 
@@ -45,6 +47,7 @@ export function ClientPushOptIn({ token }: Props) {
     }
   });
   const [isLoading, setIsLoading] = useState(false);
+  const hidratado = useSyncExternalStore(sinSuscripcion, () => true, () => false);
 
   async function handleOptIn() {
     setIsLoading(true);
@@ -125,6 +128,10 @@ export function ClientPushOptIn({ token }: Props) {
     }
   }
 
+  // El servidor no dibuja nada: en la hidratación tiene que salir lo mismo
+  // (si no, React tira "Hydration failed" y rearma la página). Recién después
+  // aparece el cartel.
+  if (!hidratado) return null;
   if (supported === null) return null;
   if (!supported) return null;
 
