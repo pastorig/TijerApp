@@ -170,14 +170,16 @@ export function StaffShell({
       {/* Pestañas — las subpestañas del panel, tal cual. */}
       {/* En el celular navega la barra de abajo: las pestañas quedan para la
           tablet y la compu. */}
-      <div className="tj-panel-sub sticky top-14 z-30 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md max-md:hidden">
-        <div className="mx-auto flex w-full max-w-5xl gap-1 overflow-x-auto px-4 sm:px-8 lg:px-12">
+      {/* tj-subtabs (044): píldoras de vidrio, la elegida dorada, como el panel. */}
+      <div className="tj-panel-sub tj-m-barra sticky top-14 z-30 border-b border-[color:var(--border-subtle)] bg-black/95 backdrop-blur-md max-md:hidden">
+        <div className="tj-subtabs mx-auto flex w-full max-w-5xl gap-1 overflow-x-auto px-4 sm:px-8 lg:px-12">
           {tabs.map((tab) => {
             const activo = pathname === tab.href;
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
+                aria-current={activo ? "page" : undefined}
                 className={cn(
                   "inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-3 text-sm font-semibold transition-colors duration-[var(--duration-fast)]",
                   activo
