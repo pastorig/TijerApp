@@ -401,7 +401,16 @@ export function generateBarbershopReportPDF(input: ReportInput): void {
   }
 
   // ─── SAVE ────────────────────────────────────────────────────────
-  const filename = `reporte-${input.barbershopName.toLowerCase().replace(/\s+/g, "-")}-${input.periodLabel.toLowerCase().replace(/\s+/g, "-")}.pdf`;
+  // Solo letras, números y guiones: el período trae fechas con "/" (043) y
+  // eso no puede ir en un nombre de archivo.
+  const aNombre = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  const filename = `reporte-${aNombre(input.barbershopName)}-${aNombre(input.periodLabel)}.pdf`;
   doc.save(filename);
 }
 

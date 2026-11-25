@@ -20,10 +20,13 @@ import {
   timeValueToMinutes,
 } from "@/lib/format";
 import {
-  rangoAnterior,
-  rangoDelPeriodo,
+  MAX_ATRAS,
+  nombreDelPeriodo,
+  rangoDeComparacion,
+  rangoMirado,
   type PeriodKey,
 } from "@/lib/report-ranges";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { AppointmentRow, BarberRow } from "@/lib/supabase";
 import { Button, Select } from "@/components/ui";
 import { getTodayYmd, parseYmd } from "./date-utils";
@@ -34,9 +37,9 @@ type AdminReportesProps = {
 };
 
 const PERIOD_OPTIONS: Array<{ value: PeriodKey; label: string }> = [
-  { value: "today", label: "Hoy" },
-  { value: "week", label: "Esta semana" },
-  { value: "month", label: "Este mes" },
+  { value: "today", label: "Día" },
+  { value: "week", label: "Semana" },
+  { value: "month", label: "Mes" },
 ];
 
 // Los rangos viven en `@/lib/report-ranges`: adentro del componente no había
@@ -126,6 +129,8 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
   >({});
   const tieneCatalogo = hasFeature(useCurrentPlan().tier, "catalogo_productos");
   const [period, setPeriod] = useState<PeriodKey>("month");
+  // Cuántos períodos para atrás se está mirando (043): 0 = el que está en curso.
+  const [atras, setAtras] = useState(0);
   const [selectedBarber, setSelectedBarber] = useState("all");
 
   useEffect(() => {
@@ -169,12 +174,16 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
 
   // Rangos
   const currentRange = useMemo(
-    () => rangoDelPeriodo(period, parseYmd(getTodayYmd())),
-    [period],
+    () => rangoMirado(period, parseYmd(getTodayYmd()), atras),
+    [period, atras],
   );
   const previousRange = useMemo(
-    () => rangoAnterior(period, currentRange.days, parseYmd(getTodayYmd())),
-    [period, currentRange.days],
+    () => rangoDeComparacion(period, parseYmd(getTodayYmd()), atras),
+    [period, atras],
+  );
+  const nombrePeriodo = useMemo(
+    () => nombreDelPeriodo(period, parseYmd(getTodayYmd()), atras),
+    [period, atras],
   );
 
   const matchesBarber = useMemo(() => {
@@ -480,7 +489,12 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setPeriod(opt.value)}
+                    aria-pressed={isActive}
+                    onClick={() => {
+                      // Cambiar el tipo de período vuelve al que está en curso.
+                      setPeriod(opt.value);
+                      setAtras(0);
+                    }}
                     className={cn(
                       "inline-flex min-h-11 shrink-0 items-center rounded-[var(--radius-sm)] border px-3 text-xs font-bold normal-case tracking-normal transition-colors duration-[var(--duration-fast)]",
                       isActive
@@ -497,11 +511,41 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
             {/* Qué días se están contando. Sin esto, "esta semana" y "este mes"
                 son dos cajas negras que dan números distintos y el barbero no
                 tiene cómo saber por qué: es justo lo que pasó con SV Barber. */}
+            {/* Moverse a períodos anteriores (043). Nunca al futuro. */}
+            <div className="flex items-center gap-2 sm:col-span-2 sm:max-w-sm" role="group" aria-label="Período">
+              <button
+                type="button"
+                onClick={() => setAtras((n) => Math.min(n + 1, MAX_ATRAS[period]))}
+                disabled={atras >= MAX_ATRAS[period]}
+                aria-label="Período anterior"
+                className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                <ChevronLeft aria-hidden="true" className="size-5" />
+              </button>
+              <p
+                aria-live="polite"
+                className="min-w-0 flex-1 truncate text-center text-sm font-black uppercase tracking-[0.08em] text-white"
+              >
+                {nombrePeriodo}
+              </p>
+              <button
+                type="button"
+                onClick={() => setAtras((n) => Math.max(n - 1, 0))}
+                disabled={atras === 0}
+                aria-label="Período siguiente"
+                className="inline-flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--border-default)] text-[color:var(--text-secondary)] transition-colors duration-[var(--duration-fast)] hover:border-[color:var(--brand-gold)] hover:text-[color:var(--brand-gold)] disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                <ChevronRight aria-hidden="true" className="size-5" />
+              </button>
+            </div>
+
             <p className="text-[11px] leading-4 text-[color:var(--text-muted)] sm:col-span-2">
               Contando del <strong className="text-white">{formatDateForDisplay(currentRange.start)}</strong>{" "}
               al <strong className="text-white">{formatDateForDisplay(currentRange.end)}</strong>
-              {currentRange.days > 1 ? ` · ${currentRange.days} días` : ""} — hasta hoy.
-              Lo que ya está reservado para más adelante se ve en la Agenda.
+              {currentRange.days > 1 ? ` · ${currentRange.days} días` : ""}
+              {atras === 0
+                ? " — hasta hoy. Lo que ya está reservado para más adelante se ve en la Agenda."
+                : ` — comparado con ${formatDateForDisplay(previousRange.start)} al ${formatDateForDisplay(previousRange.end)}.`}
             </p>
 
             <div className="flex items-center gap-2">
@@ -522,9 +566,8 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
               ) : null}
               <ExportReportPdfButton
                 barbershopName={barbershop.name}
-                periodLabel={
-                  PERIOD_OPTIONS.find((p) => p.value === period)?.label ?? "Período"
-                }
+                // "Este mes" no dice nada en un PDF guardado: van las fechas.
+                periodLabel={`${nombrePeriodo} (${formatDateForDisplay(currentRange.start)} al ${formatDateForDisplay(currentRange.end)})`}
                 appointments={currentAppointments}
                 previousAppointments={previousAppointments}
                 barbers={barbers}
@@ -733,7 +776,7 @@ export function AdminReportes({ barbershop }: AdminReportesProps) {
                           </td>
                           <td className="px-3 py-2 text-right sm:px-4">
                             {(() => {
-                              const detalle = `Hola ${row.name}! Tu liquidación de ${PERIOD_OPTIONS.find((p) => p.value === period)?.label.toLowerCase() ?? "el período"} en ${barbershop.name}:
+                              const detalle = `Hola ${row.name}! Tu liquidación de ${nombrePeriodo.toLowerCase()} en ${barbershop.name}:
 
 Produjiste: ${formatPrice(row.revenue)}
 Tu comisión: ${row.commissionPercent}%

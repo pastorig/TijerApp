@@ -15,7 +15,14 @@
  *
  * Correr: node --experimental-strip-types scripts/test-reportes-rangos.ts
  */
-import { rangoAnterior, rangoDelPeriodo } from "../src/lib/report-ranges.ts";
+import {
+  MAX_ATRAS,
+  nombreDelPeriodo,
+  rangoAnterior,
+  rangoDeComparacion,
+  rangoDelPeriodo,
+  rangoMirado,
+} from "../src/lib/report-ranges.ts";
 
 let passed = 0;
 let failed = 0;
@@ -107,6 +114,47 @@ check(
   rangoAnterior("month", mesPrimero.days, primero).end,
   "2026-08-01",
 );
+
+// ─── 043: períodos anteriores ───────────────────────────────────────────────
+// Bautista (25/11): "si querés ver el mes anterior no deja".
+const hoy25 = new Date(2026, 10, 25, 15, 0, 0); // miércoles 25/11/2026, a la tarde
+
+// El actual (atrás 0) no cambia nada.
+check("atrás 0 = el mes de siempre", rangoMirado("month", hoy25, 0).end, "2026-11-25");
+check("atrás 0 compara igual que antes", rangoDeComparacion("month", hoy25, 0).end, "2026-10-25");
+
+const octubre = rangoMirado("month", hoy25, 1);
+check("octubre arranca el 1", octubre.start, "2026-10-01");
+check("y se cuenta entero hasta el 31", octubre.end, "2026-10-31");
+check("31 días", octubre.days, 31);
+const septiembre = rangoDeComparacion("month", hoy25, 1);
+check("se compara contra septiembre entero", `${septiembre.start}/${septiembre.end}`, "2026-09-01/2026-09-30");
+check("febrero tiene 28", rangoMirado("month", hoy25, 9).days, 28);
+check("cruza el año para atrás", rangoMirado("month", hoy25, 11).start, "2025-12-01");
+
+const semanaPasada = rangoMirado("week", hoy25, 1);
+check("la semana pasada es de lunes", semanaPasada.start, "2026-11-16");
+check("a domingo", semanaPasada.end, "2026-11-22");
+check("7 días", semanaPasada.days, 7);
+check("contra la de antes", rangoDeComparacion("week", hoy25, 1).start, "2026-11-09");
+
+check("ayer", rangoMirado("today", hoy25, 1).start, "2026-11-24");
+check("contra anteayer", rangoDeComparacion("today", hoy25, 1).start, "2026-11-23");
+
+// Nombres
+check("nombre del mes actual", nombreDelPeriodo("month", hoy25, 0), "Este mes");
+check("nombre del mes pasado", nombreDelPeriodo("month", hoy25, 1), "Octubre 2026");
+check("nombre de semana pasada", nombreDelPeriodo("week", hoy25, 1), "Semana pasada");
+check("semana dentro de un mes", nombreDelPeriodo("week", hoy25, 2), "9 – 15 nov");
+check("semana que cruza meses", nombreDelPeriodo("week", hoy25, 4), "26 oct – 1 nov");
+check("ayer", nombreDelPeriodo("today", hoy25, 1), "Ayer");
+check("día con nombre", nombreDelPeriodo("today", hoy25, 2), "lunes 23/11");
+check("día de otro año", nombreDelPeriodo("today", hoy25, 330), "martes 30/12/2025");
+
+// Topes: nunca al futuro, nunca más de 24 meses.
+check("atrás negativo = el actual", rangoMirado("month", hoy25, -3).end, "2026-11-25");
+check("tope de 24 meses", rangoMirado("month", hoy25, 99).start, rangoMirado("month", hoy25, MAX_ATRAS.month).start);
+check("el tope es noviembre 2024", rangoMirado("month", hoy25, 24).start, "2024-11-01");
 
 console.log(`\n${passed}/${passed + failed} OK${failed ? ` · ${failed} FALLARON` : ""}`);
 if (failed) process.exit(1);
