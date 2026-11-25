@@ -78,7 +78,7 @@ const HomeContact = dynamic(
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="tj-pantalla min-h-screen bg-black text-white">
       {/* PWA: si abrió desde el icon del home screen + tenía last_context,
           redirige a esa barbería. Si vino desde el browser, no hace nada. */}
       <Suspense fallback={null}>
