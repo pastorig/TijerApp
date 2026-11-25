@@ -5,7 +5,7 @@
  * Correr: node --experimental-strip-types --import ./scripts/register-alias.mjs scripts/test-ios-standalone-gap.ts
  */
 import fs from "node:fs";
-import { computeIosStandaloneGap, nivelDeEquipo } from "../src/lib/ios-standalone-gap.ts";
+import { computeIosStandaloneGap } from "../src/lib/ios-standalone-gap.ts";
 
 let passed = 0;
 let failed = 0;
@@ -23,11 +23,7 @@ check("Android instalado sin diferencia: nada", computeIosStandaloneGap({ standa
 check("dos píxeles son redondeo", computeIosStandaloneGap({ standalone: true, fullHeight: 800, innerHeight: 798 }), { panelCorto: false, bajarFijos: 0 });
 check("más de 80 px no es la franja", computeIosStandaloneGap({ standalone: true, fullHeight: 900, innerHeight: 700 }), { panelCorto: false, bajarFijos: 0 });
 
-check("equipo normal", nivelDeEquipo({ memoriaGb: 8, nucleos: 8 }), 0);
-check("sin datos del equipo: normal", nivelDeEquipo({}), 0);
-check("2 GB: flojo", nivelDeEquipo({ memoriaGb: 2, nucleos: 8 }), 1);
-check("2 núcleos: flojo", nivelDeEquipo({ nucleos: 2 }), 1);
-check("1 GB: muy flojo", nivelDeEquipo({ memoriaGb: 1, nucleos: 4 }), 2);
+// El nivel del equipo se prueba en test-rendimiento.ts (feature 045).
 
 // Las formas conocidas de volver a traer la franja vacía (Dentidad #319):
 // nada con fondo fijo en la app.

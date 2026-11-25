@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { MostrarMas } from "@/components/ui/MostrarMas";
+
+/** Cuántos clientes dibuja la lista de una vez (045). */
+const TANDA_CLIENTES = 50;
 import {
   AlertTriangle,
   ArrowLeft,
@@ -239,6 +243,24 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
       );
     });
   }, [clientsWithStats, searchQuery, segmentFilter]);
+
+  // 045: la lista se dibuja de a tandas (SV Barber ya pasa los cientos de
+  // clientes). Al buscar o cambiar de segmento vuelve a la primera.
+  const claveClientes = `${searchQuery}|${segmentFilter}`;
+  const [limiteClientes, setLimiteClientes] = useState(TANDA_CLIENTES);
+  const [claveClientesAnterior, setClaveClientesAnterior] = useState(claveClientes);
+  if (claveClientesAnterior !== claveClientes) {
+    setClaveClientesAnterior(claveClientes);
+    setLimiteClientes(TANDA_CLIENTES);
+  }
+  const clientesVisibles = useMemo(
+    () => filteredClients.slice(0, limiteClientes),
+    [filteredClients, limiteClientes],
+  );
+  const sumarTandaClientes = useCallback(
+    () => setLimiteClientes((n) => n + TANDA_CLIENTES),
+    [],
+  );
 
   const selectedClient = useMemo(() => {
     if (!selectedClientId) return null;
@@ -1273,8 +1295,9 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
           </p>
         </div>
       ) : (
+        <>
         <ul className="grid gap-2 animate-stagger">
-          {filteredClients.map(
+          {clientesVisibles.map(
             ({
               client,
               visits,
@@ -1372,6 +1395,12 @@ export function AdminClientsManager({ barbershop }: AdminClientsManagerProps) {
             },
           )}
         </ul>
+        <MostrarMas
+          quedan={filteredClients.length - clientesVisibles.length}
+          onMas={sumarTandaClientes}
+          tanda={TANDA_CLIENTES}
+        />
+        </>
       )}
 
       <ImportClientsModal

@@ -7,12 +7,21 @@
  * - App instalada en el iPhone: deja `data-ios-gap` en <html> (el script del
  *   <head> ya lo prendió si correspondía) y `--tj-ios-gap` con cuánto le falta
  *   a lo fijo para llegar abajo. Portado de Dentidad (`IosStandaloneGap`).
- * - Equipos flojos: `tj-lento` / `tj-muy-lento` en <html> bajan el desenfoque
- *   del vidrio para que el scroll no se trabe.
+ * - Modo liviano (045): `tj-lento` / `tj-muy-lento` en <html> según lo que
+ *   informa el equipo y lo que se mide al scrollear (`@/lib/rendimiento`).
  */
 
 import { useEffect } from "react";
-import { computeIosStandaloneGap, nivelDeEquipo } from "@/lib/ios-standalone-gap";
+import { computeIosStandaloneGap } from "@/lib/ios-standalone-gap";
+import {
+  CLAVE_NIVEL,
+  combinar,
+  guardar,
+  leerGuardado,
+  nivelPorCuadros,
+  nivelPorEquipo,
+  type Nivel,
+} from "@/lib/rendimiento";
 
 function sonda(alto: string) {
   const el = document.createElement("div");
@@ -23,13 +32,86 @@ function sonda(alto: string) {
 }
 
 export function CelularBase() {
-  // Nivel de desenfoque según el equipo.
+  // Modo liviano (feature 045): lo que dice el equipo + lo que se mide.
   useEffect(() => {
-    const nav = navigator as Navigator & { deviceMemory?: number };
-    const nivel = nivelDeEquipo({ memoriaGb: nav.deviceMemory, nucleos: nav.hardwareConcurrency });
     const html = document.documentElement;
-    html.classList.toggle("tj-lento", nivel === 1);
-    html.classList.toggle("tj-muy-lento", nivel === 2);
+    const nav = navigator as Navigator & {
+      deviceMemory?: number;
+      connection?: { saveData?: boolean };
+    };
+    let guardado: Nivel | null = null;
+    try {
+      guardado = leerGuardado(localStorage.getItem(CLAVE_NIVEL), Date.now());
+    } catch {
+      // Sin almacenamiento (modo privado): se mide igual, no se guarda.
+    }
+    let nivel: Nivel = combinar(
+      guardado ?? 0,
+      nivelPorEquipo({
+        memoriaGb: nav.deviceMemory,
+        nucleos: nav.hardwareConcurrency,
+        ahorroDeDatos: nav.connection?.saveData === true,
+      }),
+    );
+
+    function aplicar() {
+      html.classList.toggle("tj-lento", nivel === 1);
+      html.classList.toggle("tj-muy-lento", nivel === 2);
+      if (nivel === 2) {
+        // Las animaciones de Framer Motion (reserva, landing) también se
+        // apagan. Se carga solo si hace falta: no pesa en los equipos buenos.
+        void import("framer-motion").then((m) => {
+          m.MotionGlobalConfig.skipAnimations = true;
+        });
+      }
+      try {
+        localStorage.setItem(CLAVE_NIVEL, guardar(nivel, Date.now()));
+      } catch {
+        // idem
+      }
+    }
+    aplicar();
+
+    // Medir mientras se scrollea: hasta 4 tandas de 1,5 s por visita. Ya en
+    // el nivel más liviano no hace falta medir más.
+    let tandas = 0;
+    let midiendo = false;
+    let anterior: Nivel | null = null;
+    function medir() {
+      if (midiendo || tandas >= 4 || nivel === 2 || document.visibilityState !== "visible") return;
+      midiendo = true;
+      tandas++;
+      const deltas: number[] = [];
+      let ultimo = performance.now();
+      const fin = ultimo + 1500;
+      function cuadro(t: number) {
+        deltas.push(t - ultimo);
+        ultimo = t;
+        if (t < fin) {
+          requestAnimationFrame(cuadro);
+          return;
+        }
+        midiendo = false;
+        const medido = nivelPorCuadros(deltas);
+        if (medido === null || medido <= nivel) {
+          anterior = null;
+          return;
+        }
+        // Hacen falta DOS tandas seguidas peores: un tirón suelto (una
+        // pantalla que recién carga) no puede alivianar un equipo bueno.
+        if (anterior !== null) {
+          const antes = nivel;
+          nivel = combinar(nivel, Math.min(anterior, medido) as Nivel);
+          if (nivel !== antes) aplicar();
+          anterior = null;
+        } else {
+          anterior = medido;
+        }
+      }
+      requestAnimationFrame(cuadro);
+    }
+    document.addEventListener("scroll", medir, { capture: true, passive: true });
+    return () => document.removeEventListener("scroll", medir, { capture: true });
   }, []);
 
   // La app instalada en el iPhone.

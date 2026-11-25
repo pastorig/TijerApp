@@ -111,6 +111,22 @@ export function AdminBottomNav({ barbershopSlug }: { barbershopSlug: string }) {
     if (dy > 90 || (dy > 12 && velocidad > 0.45)) setAbierto(false);
   }
 
+  // 045: el ＋ desde otra sección navega al Turnero, que es la pantalla más
+  // pesada. Se precarga cuando el celular está libre, así abre al toque.
+  useEffect(() => {
+    const precargar = () => router.prefetch(`${base}/turnero`);
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(precargar, { timeout: 4000 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const t = window.setTimeout(precargar, 2500);
+    return () => window.clearTimeout(t);
+  }, [router, base]);
+
   function turnoNuevo() {
     setAbierto(false);
     if (pathname.startsWith(`${base}/turnero`)) {
