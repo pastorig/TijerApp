@@ -92,6 +92,10 @@ import { READ_ONLY_REASON, useIsReadOnly } from "./admin/PlanContext";
 import { EVENTO_TURNO_NUEVO } from "./admin/AdminBottomNav";
 import { Interruptor } from "@/components/ui/Interruptor";
 import { AjustarDiaVentana } from "./admin/AjustarDiaVentana";
+import { MostrarMas } from "@/components/ui/MostrarMas";
+
+/** Cuántos turnos dibuja la lista de una vez (045). */
+const TANDA_LISTA = 40;
 import { getTodayYmd, normalizeTimeShort } from "./admin/date-utils";
 
 type AdminAppointmentsProps = {
@@ -564,13 +568,32 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
     barberFilterOptions.length > 1 && selectedBarberFilter === "all";
   const effectiveGroupByBarber = groupByBarber && canGroupByBarber;
 
+  // 045: la lista se dibuja de a tandas. Con "Todos" (364 turnos en la demo)
+  // armaba ~28.000 elementos de una vez y trababa el celular. Al cambiar de
+  // filtro, de barbero, de día o de búsqueda vuelve a la primera tanda.
+  const claveLista = `${activeFilter}|${selectedBarberFilter}|${searchQuery}|${focusDate}`;
+  const [limiteLista, setLimiteLista] = useState(TANDA_LISTA);
+  const [claveListaAnterior, setClaveListaAnterior] = useState(claveLista);
+  if (claveListaAnterior !== claveLista) {
+    setClaveListaAnterior(claveLista);
+    setLimiteLista(TANDA_LISTA);
+  }
+  const listaVisible = useMemo(
+    () => filteredAppointments.slice(0, limiteLista),
+    [filteredAppointments, limiteLista],
+  );
+  const sumarTandaLista = useCallback(
+    () => setLimiteLista((n) => n + TANDA_LISTA),
+    [],
+  );
+
   // Turnos partidos en secciones por barbero, preservando el orden original
   // dentro de cada sección. Las secciones se ordenan como el dropdown de
   // filtro (dueño primero); un barbero sin opción conocida queda al final.
   const barberGroupsForList = useMemo(() => {
     if (!effectiveGroupByBarber) return [];
     const groups = new Map<string, AppointmentRow[]>();
-    for (const appointment of filteredAppointments) {
+    for (const appointment of listaVisible) {
       const bucket = groups.get(appointment.barber_id);
       if (bucket) bucket.push(appointment);
       else groups.set(appointment.barber_id, [appointment]);
@@ -592,7 +615,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
           (orderIndex.get(a.barberId) ?? Number.MAX_SAFE_INTEGER) -
           (orderIndex.get(b.barberId) ?? Number.MAX_SAFE_INTEGER),
       );
-  }, [effectiveGroupByBarber, filteredAppointments, barberFilterOptions]);
+  }, [effectiveGroupByBarber, listaVisible, barberFilterOptions]);
 
   const dayOptimizationAlerts = useMemo(() => {
     const activeFocusDateAppointments = focusDateAppointments
@@ -2050,7 +2073,7 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                       {
                         barberId: "__all__",
                         barberName: "",
-                        appointments: filteredAppointments,
+                        appointments: listaVisible,
                       },
                     ]
                 ).map((group) => (
@@ -2173,6 +2196,11 @@ export function AdminAppointments({ barbershop }: AdminAppointmentsProps) {
                     </ul>
                   </section>
                 ))}
+                <MostrarMas
+                  quedan={filteredAppointments.length - listaVisible.length}
+                  onMas={sumarTandaLista}
+                  tanda={TANDA_LISTA}
+                />
               </div>
             )}
           </>

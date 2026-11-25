@@ -51,16 +51,5 @@ export function computeIosStandaloneGap(input: {
  */
 export const IOS_GAP_TEMPRANO = `try{var n=navigator,i=/iPhone|iPad|iPod/.test(n.userAgent)||(n.platform==="MacIntel"&&n.maxTouchPoints>1),s=n.standalone===true||matchMedia("(display-mode: standalone)").matches;if(i&&s)document.documentElement.setAttribute("data-ios-gap","")}catch(e){}`;
 
-/**
- * Nivel de desenfoque según el equipo: 0 normal, 1 flojo, 2 muy flojo.
- * Un equipo con poca memoria o pocos núcleos traba el scroll con el vidrio
- * (web de Solvian, nov 2026).
- */
-export function nivelDeEquipo(input: { memoriaGb?: number; nucleos?: number }): 0 | 1 | 2 {
-  const { memoriaGb, nucleos } = input;
-  if ((memoriaGb !== undefined && memoriaGb <= 1) || (nucleos !== undefined && nucleos <= 2 && memoriaGb !== undefined && memoriaGb <= 2)) {
-    return 2;
-  }
-  if ((memoriaGb !== undefined && memoriaGb <= 2) || (nucleos !== undefined && nucleos <= 2)) return 1;
-  return 0;
-}
+// El nivel del equipo (antes `nivelDeEquipo`) se mudó a `@/lib/rendimiento`
+// (feature 045), que además mide los cuadros mientras se usa.

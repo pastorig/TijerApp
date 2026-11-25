@@ -9,6 +9,7 @@ import { RecoveryLinkRedirect } from "@/components/auth/RecoveryLinkRedirect";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { CelularBase } from "@/components/pwa/CelularBase";
 import { IOS_GAP_TEMPRANO } from "@/lib/ios-standalone-gap";
+import { NIVEL_TEMPRANO } from "@/lib/rendimiento";
 import "./globals.css";
 // El vidrio del celular (feature 041). Aparte de globals.css a propósito: ver
 // el encabezado de vidrio.css.
@@ -133,6 +134,9 @@ export default function RootLayout({
             ANTES de dibujar, sin esperar a medir (feature 041, ver
             ios-standalone-gap.ts). */}
         <script dangerouslySetInnerHTML={{ __html: IOS_GAP_TEMPRANO }} />
+        {/* Modo liviano (045): si este equipo ya se midió flojo, arranca
+            liviano antes de dibujar (sin salto). */}
+        <script dangerouslySetInnerHTML={{ __html: NIVEL_TEMPRANO }} />
         {/* NOTA: el preload del isotipo lo maneja next/image automáticamente
             via priority={true} en Logo.tsx. Agregar <link rel="preload"> manual
             duplicaba el preload con URL distinta a la que next/image usa
