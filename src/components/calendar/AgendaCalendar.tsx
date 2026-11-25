@@ -265,9 +265,9 @@ export function AgendaCalendar({
   }
 
   return (
-    // tj-m-vidrio: en el celular, el calendario va en un bloque de vidrio
-    // (feature 041); en la compu, igual que siempre.
-    <div className="tj-m-vidrio bg-[color:var(--surface-0)] max-md:p-3">
+    // tj-m-vidrio: el calendario va en un bloque de vidrio (041 en el celular,
+    // 044 en la compu, con más aire).
+    <div className="tj-m-vidrio bg-[color:var(--surface-0)] max-md:p-3 md:p-5">
       {/* Header — día activo o mes */}
       <header className="flex items-center justify-between gap-3 px-1 pb-4">
         {isMonthExpanded ? (

@@ -66,7 +66,7 @@ export function AdminSidebar(props: SidebarProps) {
 
   return (
     <>
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-white/10 bg-black lg:flex">
+      <aside className="tj-lateral sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-white/10 bg-black lg:flex">
         <SidebarContent {...props} mobile={false} />
       </aside>
       <dialog
