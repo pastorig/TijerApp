@@ -767,17 +767,17 @@ export function StaffAgenda({
         en el mismo orden de siempre. */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] lg:items-start">
         <div className="flex flex-col gap-4 lg:sticky lg:top-32">
-          <Card padding="sm">
-            <AgendaCalendar
-              focusDate={fecha}
-              onFocusDateChange={setFecha}
-              compact
-              countsByDay={conteos}
-              occupancyByDay={ocupacion}
-              todayYmd={hoy}
-              onVisibleMonthChange={alCambiarMes}
-            />
-          </Card>
+          {/* Sin tarjeta alrededor (044): el calendario ya es su propio
+              bloque de vidrio y quedaba una tarjeta dentro de otra. */}
+          <AgendaCalendar
+            focusDate={fecha}
+            onFocusDateChange={setFecha}
+            compact
+            countsByDay={conteos}
+            occupancyByDay={ocupacion}
+            todayYmd={hoy}
+            onVisibleMonthChange={alCambiarMes}
+          />
 
           {/* El resumen del día: cuántos turnos y cuánto se lleva. Es lo que un
             barbero quiere saber sin entrar a otra pantalla.

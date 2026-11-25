@@ -7,8 +7,8 @@
  * - En el celular (< 768 px): hoja de vidrio que sube desde abajo (hasta 92 % de
  *   la pantalla), con manija, que se cierra bajándola con el dedo, tocando
  *   afuera o con Escape. Sale animada y RECIÉN DESPUÉS llama a `onClose`.
- * - En la compu: el mismo panel de siempre (`panelClassName`), al centro, sin
- *   animaciones nuevas: la compu no cambia (FR-010).
+ * - En la compu: panel de vidrio al centro (feature 044) con el tamaño de
+ *   `panelClassName`; entra creciendo apenas y sale en 180 ms.
  * - Se monta dentro del panel (`.tj-panel`) con `tj-ios-capa`: en el iPhone
  *   instalado lo `fixed` no llega al borde de abajo.
  *
@@ -30,6 +30,8 @@ import { createPortal } from "react-dom";
 
 /** Lo que tarda en irse en el celular. */
 export const VENTANA_CIERRE_MS = 340;
+/** En la compu (044): el panel del centro se va en 180 ms. */
+export const VENTANA_CIERRE_COMPU_MS = 180;
 
 const CerrarContext = createContext<(() => void) | null>(null);
 
@@ -98,11 +100,8 @@ export function Ventana({
       setBajada(null);
       return;
     }
-    // En la compu, como siempre: se cierra en el acto.
-    if (!esCelular()) {
-      alCerrar.current();
-      return;
-    }
+    // En la compu (044) también sale animada, pero más rápido.
+    const celular = esCelular();
     cerrando.current = true;
     setBajada(null);
     setAbierta(false);
@@ -110,7 +109,7 @@ export function Ventana({
     espera.current = window.setTimeout(() => {
       espera.current = null;
       alCerrar.current();
-    }, reducido ? 160 : VENTANA_CIERRE_MS);
+    }, !celular ? (reducido ? 120 : VENTANA_CIERRE_COMPU_MS) : reducido ? 160 : VENTANA_CIERRE_MS);
   }, []);
 
   const id = useId();
